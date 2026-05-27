@@ -7,7 +7,7 @@ export type SortFilterItem = {
 };
 
 export const defaultSort: SortFilterItem = {
-  title: 'Relevance',
+  title: 'Liên quan',
   slug: null,
   sortKey: 'RELEVANCE',
   reverse: false,
@@ -15,16 +15,10 @@ export const defaultSort: SortFilterItem = {
 
 export const sorting: SortFilterItem[] = [
   defaultSort,
-  { title: 'Trending', slug: 'trending-desc', sortKey: 'BEST_SELLING', reverse: false },
-  { title: 'Latest arrivals', slug: 'latest-desc', sortKey: 'CREATED_AT', reverse: true },
-  { title: 'Price: Low to high', slug: 'price-asc', sortKey: 'PRICE', reverse: false },
-  { title: 'Price: High to low', slug: 'price-desc', sortKey: 'PRICE', reverse: true },
+  { title: 'Bán chạy', slug: 'trending-desc', sortKey: 'BEST_SELLING', reverse: false },
+  { title: 'Hàng mới về', slug: 'latest-desc', sortKey: 'CREATED_AT', reverse: true },
+  { title: 'Giá: Thấp đến cao', slug: 'price-asc', sortKey: 'PRICE', reverse: false },
+  { title: 'Giá: Cao đến thấp', slug: 'price-desc', sortKey: 'PRICE', reverse: true },
 ];
-
-export const TAGS = {
-  cart: 'cart',
-  collections: 'collections',
-  products: 'products',
-} as const;
 
 export const HIDDEN_PRODUCT_TAG = 'hidden';

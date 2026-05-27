@@ -1,6 +1,7 @@
 // lib/cart.ts
 import { cookies } from 'next/headers';
-import { getProductById, type UIProduct } from '@/src/lib/db-adapter';
+import { getPayloadProductById } from '@/lib/payload-products';
+import type { Image } from '@/lib/shopify/types';
 
 const COOKIE = 'cart';
 const MAX_AGE = 60 * 60 * 24 * 30;
@@ -14,7 +15,12 @@ export type CartLine = {
   quantity: number;
   unitPrice: Money;
   lineTotal: Money;
-  product: Pick<UIProduct, 'id' | 'handle' | 'title' | 'featuredImage'>;
+  product: {
+    id: string;
+    handle: string;
+    title: string;
+    featuredImage: Image;
+  };
 };
 
 export type Cart = {
@@ -63,7 +69,7 @@ async function hydrate(stored: Stored): Promise<Cart> {
   const currency = 'VND';
 
   for (const it of stored.items) {
-    const p = await getProductById(it.productId);
+    const p = await getPayloadProductById(it.productId);
     if (!p) continue;
     const unit = Number(p.priceRange.minVariantPrice.amount);
     const lineTotal = unit * it.quantity;

@@ -12,7 +12,7 @@ export async function GET(
   const { orderCode } = await ctx.params;
   const code = Number(orderCode);
   if (!Number.isInteger(code)) {
-    return NextResponse.json({ error: 'Invalid orderCode' }, { status: 400 });
+    return NextResponse.json({ error: 'Mã đơn hàng không hợp lệ' }, { status: 400 });
   }
 
   const order = await prisma.order.findUnique({
@@ -25,7 +25,7 @@ export async function GET(
       createdAt: true,
     },
   });
-  if (!order) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!order) return NextResponse.json({ error: 'Không tìm thấy' }, { status: 404 });
 
   return NextResponse.json(order);
 }

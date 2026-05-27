@@ -10,8 +10,21 @@ datasource db {
 
 enum OrderStatus {
   PENDING
+  PENDING_COD
+  PENDING_ONLINE
   PAID
+  SHIPPED
   CANCELLED
+}
+
+enum DeliveryMethod {
+  SHIPMENT
+  PICKUP
+}
+
+enum PaymentMethod {
+  COD
+  PAY_ONLINE
 }
 
 model User {
@@ -24,8 +37,30 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
+  accounts  Account[]
+  sessions  Session[]
+  addresses UserAddress[]
+  orders    Order[]
+}
+
+model UserAddress {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  fullName    String
+  phone       String
+  addressLine String
+  ward        String?
+  district    String?
+  city        String
+  country     String   @default("Vietnam")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Account {
@@ -67,52 +102,43 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Product {
-  id          String   @id @default(cuid())
-  handle      String   @unique
-  title       String
-  description String
-  priceVnd    Int
-  currency    String   @default("VND")
-  images      String[]
-  available   Boolean  @default(true)
-  tags        String[] @default([])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  orderItems OrderItem[]
-
-  @@index([handle])
-}
-
 model Order {
-  id         String      @id @default(cuid())
-  orderCode  Int         @unique
-  amount     Int
-  status     OrderStatus @default(PENDING)
-  buyerName  String?
-  buyerEmail String?
-  buyerPhone String?
-  paymentUrl String?
-  paidAt     DateTime?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id              String          @id @default(cuid())
+  orderCode       Int             @unique
+  userId          String?
+  amount          Int
+  status          OrderStatus     @default(PENDING)
+  buyerName       String?
+  buyerEmail      String?
+  buyerPhone      String?
+  paymentUrl      String?
+  paidAt          DateTime?
+  deliveryMethod  DeliveryMethod?
+  paymentMethod   PaymentMethod?
+  customerName    String?
+  phoneNumber     String?
+  shippingAddress String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   items OrderItem[]
+  user  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([orderCode])
   @@index([status])
+  @@index([userId])
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  unitPrice Int
+  id            String @id @default(cuid())
+  orderId       String
+  productId     String
+  productTitle  String @default("")
+  productHandle String @default("")
+  quantity      Int
+  unitPrice     Int
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([productId])

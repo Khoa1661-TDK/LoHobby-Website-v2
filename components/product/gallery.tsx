@@ -61,7 +61,7 @@ export default function Gallery({ images }: Props): ReactElement {
                 formAction={() => {
                   router.replace(buildUrl(previousImageIndex), { scroll: false });
                 }}
-                aria-label="Previous product image"
+                aria-label="Ảnh sản phẩm trước"
                 className={buttonClassName}
               >
                 <ArrowLeftIcon className="h-5" />
@@ -71,7 +71,7 @@ export default function Gallery({ images }: Props): ReactElement {
                 formAction={() => {
                   router.replace(buildUrl(nextImageIndex), { scroll: false });
                 }}
-                aria-label="Next product image"
+                aria-label="Ảnh sản phẩm sau"
                 className={buttonClassName}
               >
                 <ArrowRightIcon className="h-5" />
@@ -91,7 +91,7 @@ export default function Gallery({ images }: Props): ReactElement {
                   formAction={() => {
                     router.replace(buildUrl(index), { scroll: false });
                   }}
-                  aria-label="Select product image"
+                  aria-label="Chọn ảnh sản phẩm"
                   className="h-full w-full"
                 >
                   <GridTileImage

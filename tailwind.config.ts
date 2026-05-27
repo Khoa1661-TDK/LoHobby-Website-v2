@@ -13,51 +13,60 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-geist-sans)'],
+        serif: ['var(--font-playfair)', 'Georgia', 'serif'],
       },
       keyframes: {
         fade: { from: { opacity: '0' }, to: { opacity: '1' } },
-        marquee: {
-          '0%': { transform: 'translateX(0%)' },
-          '100%': { transform: 'translateX(-100%)' },
-        },
         blink: {
           '0%': { opacity: '0.2' },
           '20%': { opacity: '1' },
           '100%': { opacity: '0.2' },
         },
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
+        },
+        'marquee-reverse': {
+          from: { transform: 'translateX(-50%)' },
+          to: { transform: 'translateX(0)' },
+        },
       },
       animation: {
         fade: 'fade 100ms forwards',
-        carousel: 'marquee 60s linear infinite',
         blink: 'blink 1.4s both infinite',
+        marquee: 'marquee var(--marquee-duration, 45s) linear infinite',
+        'marquee-reverse':
+          'marquee-reverse var(--marquee-duration, 45s) linear infinite',
+        carousel: 'marquee var(--marquee-duration, 60s) linear infinite',
       },
       colors: {
-        ink: '#1a1410',
-        paper: '#fff8f0',
-        // 3D-printing filament palette
+        ink: '#000000',
+        paper: '#f5f5f5',
+        // Monochrome primary scale (maps legacy filament-* classes to black/white brand)
         filament: {
-          50: '#fff4ec',
-          100: '#ffe2cc',
-          200: '#ffbf8f',
-          300: '#ff9b52',
-          400: '#ff7d24',
-          500: '#ff6b1a', // primary
-          600: '#e35400',
-          700: '#b84300',
-          800: '#8a3200',
-          900: '#5c2100',
+          50: '#fafafa',
+          100: '#f5f5f5',
+          200: '#e5e5e5',
+          300: '#d4d4d4',
+          400: '#a3a3a3',
+          500: '#000000',
+          600: '#171717',
+          700: '#262626',
+          800: '#404040',
+          900: '#525252',
         },
+        // Neutral accent scale (maps legacy spool-* classes)
         spool: {
-          50: '#effcfa',
-          100: '#cff7f1',
-          200: '#9fefe3',
-          300: '#5ee0d0',
-          400: '#26c8b8',
-          500: '#0aa89a', // accent
-          600: '#0a857b',
-          700: '#0b6961',
-          800: '#0d544d',
-          900: '#0e433f',
+          50: '#fafafa',
+          100: '#f5f5f5',
+          200: '#e5e5e5',
+          300: '#d4d4d4',
+          400: '#a3a3a3',
+          500: '#737373',
+          600: '#525252',
+          700: '#404040',
+          800: '#262626',
+          900: '#171717',
         },
       },
     },

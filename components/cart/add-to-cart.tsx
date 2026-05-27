@@ -14,14 +14,14 @@ export default function AddToCart({ product }: { product: Product }): ReactEleme
   const [isPending, startTransition] = useTransition();
   const available = product.availableForSale;
   const label = !available
-    ? 'Sold out'
+    ? 'Hết hàng'
     : isPending
-      ? 'Adding…'
-      : 'Add to toybox';
+      ? 'Đang thêm…'
+      : 'Thêm vào giỏ';
 
   return (
     <button
-      aria-label="Add to cart"
+      aria-label="Thêm vào giỏ hàng"
       disabled={!available || isPending}
       onClick={() =>
         startTransition(async () => {
@@ -30,7 +30,7 @@ export default function AddToCart({ product }: { product: Product }): ReactEleme
             toast.error(result.error);
             return;
           }
-          toast.success(`Added ${product.title} to your toybox`);
+          toast.success(`Đã thêm ${product.title} vào giỏ hàng`);
           router.refresh();
         })
       }

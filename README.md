@@ -1,8 +1,8 @@
-# Ecommerce Web — Next.js + Prisma + payOS
+# Ecommerce Web — Next.js + Payload CMS + Prisma + payOS
 
-A self-contained Next.js 15 storefront wired to **Prisma (PostgreSQL)** for product/order
-persistence and **payOS** for VietQR payments. Drop-in compatible with the Vercel Commerce
-template's data layer (`lib/shopify` swap point in `src/lib/db-adapter.ts`).
+A Next.js 15 storefront with **Payload CMS** as the product catalog (products, categories, media),
+**Prisma (PostgreSQL)** for users/orders/auth, and **payOS** for VietQR payments.
+The storefront reads catalog data via `lib/payload-products.ts` (wired through `lib/shopify`).
 
 ## Prerequisites
 
@@ -23,18 +23,26 @@ Copy `.env.example` to `.env` and fill in:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/commerce?schema=public"
+PAYLOAD_SECRET="..."                  # or AUTH_SECRET
+AUTH_SECRET="..."                     # NextAuth
+ADMIN_EMAILS="you@example.com"        # synced into Payload admin users
 PAYOS_CLIENT_ID="..."
 PAYOS_API_KEY="..."
 PAYOS_CHECKSUM_KEY="..."
+NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 NEXT_PUBLIC_SITE_NAME="Local Store"
 ```
 
-## 3. Migrate + seed the database
+## 3. Migrate the database
 
 ```bash
-pnpm prisma:migrate    # creates Product / Order / OrderItem tables
-pnpm db:seed           # loads 4 demo products
+pnpm prisma db push       # User / Order / OrderItem tables (no Product table)
+pnpm db:seed              # optional — prints catalog seeding instructions
 ```
+
+Add products, categories, and media in **Payload admin** at `/admin/collections/products`.
+Sign in with an email listed in `ADMIN_EMAILS` (via `/login`), then visit `/admin`.
+The app will auto-connect your Payload session via `/api/admin-connect`.
 
 ## 4. Run
 
@@ -66,30 +74,14 @@ matching order `PAID`.
 
 ```
 prisma/
-  schema.prisma                       — Product / Order / OrderItem + OrderStatus enum
-src/lib/
-  db-adapter.ts                       — Prisma client, UI type mapping, seed
+  schema.prisma                       — User / Order / OrderItem + OrderStatus enum
+src/payload/collections/              — Products, Categories, Media, Users
 lib/
+  payload-products.ts                 — storefront catalog queries (Payload)
+  shopify/index.ts                    — commerce API surface (delegates catalog to Payload)
   cart.ts                             — cookie-backed cart (server-only)
-components/
-  header.tsx                          — site header + cart button
-  price.tsx                           — vi-VN currency formatter
-  product-card.tsx                    — grid card
-  add-to-cart.tsx                     — client button → server action
-  cart/
-    actions.ts                        — addItem / updateItem / removeItem / checkout
-    cart-drawer.tsx                   — slide-out cart UI
-app/
-  layout.tsx, globals.css             — root layout + Tailwind
-  page.tsx                            — product grid
-  products/[handle]/page.tsx          — PDP
-  checkout/page.tsx                   — server action trigger
-  checkout/success/page.tsx           — verifies order via Prisma
-  checkout/cancel/page.tsx            — marks PENDING → CANCELLED
-  checkout/error/page.tsx             — payOS failure landing
-  api/checkout/route.ts               — creates payOS payment request
-  api/webhook/route.ts                — verifies + marks PAID
-  api/orders/[orderCode]/route.ts     — status polling
+src/lib/
+  db-adapter.ts                       — Prisma client re-export (orders & auth)
 ```
 
 ## Data flow
@@ -108,5 +100,5 @@ app/
 - `orderCode` is a generated 12-digit integer, unique per order.
 - The webhook route also responds to `GET` so the payOS dashboard "Test webhook" probe passes.
 - The cart is server-side only (cookie holds `productId`/`quantity` pairs; prices are always
-  re-resolved from Prisma to prevent client-side tampering).
+  re-resolved from Payload to prevent client-side tampering).
 - Strict TypeScript, zero `any` values, `noUncheckedIndexedAccess: true`.

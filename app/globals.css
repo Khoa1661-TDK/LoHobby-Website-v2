@@ -1,47 +1,92 @@
 @tailwind base;
+
 @tailwind components;
+
 @tailwind utilities;
 
+
+
 @layer base {
+
   :root {
+
     color-scheme: light;
+
   }
+
+
 
   *,
+
   ::after,
+
   ::before,
+
   ::backdrop {
+
     border-color: theme('colors.neutral.200');
+
   }
+
+
 
   @media (prefers-color-scheme: dark) {
+
     :root {
+
       color-scheme: dark;
+
     }
+
+
 
     *,
+
     ::after,
+
     ::before,
+
     ::backdrop {
+
       border-color: theme('colors.neutral.800');
+
     }
+
   }
+
+
 
   html,
+
   body {
+
     @apply bg-paper text-ink dark:bg-neutral-950 dark:text-white;
+
     -webkit-font-smoothing: antialiased;
+
   }
 
+
+
   @supports (font: -apple-system-body) and (-webkit-appearance: none) {
+
     img[loading='lazy'] {
+
       clip-path: inset(0.6px);
+
     }
+
   }
 
   a,
+
   input,
+
   button {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-filament-400 focus-visible:ring-offset-2 focus-visible:ring-offset-paper dark:focus-visible:ring-filament-500 dark:focus-visible:ring-offset-neutral-950;
+
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 focus-visible:ring-offset-paper dark:focus-visible:ring-neutral-500 dark:focus-visible:ring-offset-neutral-950;
+
   }
+
 }
+

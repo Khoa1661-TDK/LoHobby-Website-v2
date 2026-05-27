@@ -33,7 +33,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
         });
         if (!res.ok) {
           const payload = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(payload.error ?? 'Registration failed');
+          throw new Error(payload.error ?? 'Đăng ký thất bại');
         }
       }
 
@@ -44,20 +44,20 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
       });
 
       if (!result || result.error) {
-        throw new Error('Invalid email or password');
+        throw new Error('Email hoặc mật khẩu không đúng');
       }
 
       window.location.assign(callbackUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
     } finally {
       setLoading(false);
     }
   }
 
-  function handleOAuth(provider: 'google' | 'facebook'): void {
+  function handleGoogleSignIn(): void {
     setError(null);
-    void signIn(provider, { callbackUrl });
+    void signIn('google', { callbackUrl });
   }
 
   return (
@@ -72,7 +72,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
               : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400'
           }`}
         >
-          Log in
+          Đăng nhập
         </button>
         <button
           type="button"
@@ -83,17 +83,17 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
               : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400'
           }`}
         >
-          Register
+          Đăng ký
         </button>
       </div>
 
       <h1 className="mb-1 text-2xl font-bold tracking-tight">
-        {isRegister ? 'Create your account' : 'Welcome back'}
+        {isRegister ? 'Tạo tài khoản' : 'Chào mừng trở lại'}
       </h1>
       <p className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
         {isRegister
-          ? 'Sign up to track orders and save favourite toys.'
-          : 'Sign in to continue shopping.'}
+          ? 'Đăng ký để theo dõi đơn hàng và lưu mô hình yêu thích.'
+          : 'Đăng nhập để tiếp tục.'}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,7 +103,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
               htmlFor="name"
               className="mb-1 block text-xs font-semibold uppercase tracking-wider text-neutral-600 dark:text-neutral-300"
             >
-              Name
+              Họ tên
             </label>
             <input
               id="name"
@@ -140,7 +140,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
             htmlFor="password"
             className="mb-1 block text-xs font-semibold uppercase tracking-wider text-neutral-600 dark:text-neutral-300"
           >
-            Password
+            Mật khẩu
           </label>
           <input
             id="password"
@@ -168,44 +168,29 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
           disabled={loading}
           className="w-full rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
         >
-          {loading ? 'Please wait…' : isRegister ? 'Create account' : 'Log in'}
+          {loading ? 'Vui lòng đợi…' : isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}
         </button>
       </form>
 
       <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wider text-neutral-400">
         <span className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
-        or continue with
+        hoặc tiếp tục với
         <span className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => handleOAuth('google')}
-          className="flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800"
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
-            <path
-              fill="#EA4335"
-              d="M12 10.2v3.9h5.5c-.2 1.4-1.7 4.1-5.5 4.1-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.6 14.6 2.7 12 2.7 6.9 2.7 2.7 6.9 2.7 12s4.2 9.3 9.3 9.3c5.4 0 8.9-3.8 8.9-9.1 0-.6-.1-1.1-.2-2H12z"
-            />
-          </svg>
-          Google
-        </button>
-        <button
-          type="button"
-          onClick={() => handleOAuth('facebook')}
-          className="flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800"
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
-            <path
-              fill="#1877F2"
-              d="M22 12a10 10 0 1 0-11.6 9.9v-7H8v-2.9h2.4V9.8c0-2.4 1.4-3.7 3.6-3.7 1 0 2.1.2 2.1.2v2.3h-1.2c-1.2 0-1.6.7-1.6 1.5v1.8h2.7l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"
-            />
-          </svg>
-          Facebook
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleGoogleSignIn}
+        className="flex w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+          <path
+            fill="#EA4335"
+            d="M12 10.2v3.9h5.5c-.2 1.4-1.7 4.1-5.5 4.1-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.6 14.6 2.7 12 2.7 6.9 2.7 2.7 6.9 2.7 12s4.2 9.3 9.3 9.3c5.4 0 8.9-3.8 8.9-9.1 0-.6-.1-1.1-.2-2H12z"
+          />
+        </svg>
+        Google
+      </button>
     </div>
   );
 }

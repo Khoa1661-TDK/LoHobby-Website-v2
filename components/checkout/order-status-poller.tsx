@@ -4,12 +4,23 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, type ReactElement } from 'react';
 
-type OrderStatus = 'PENDING' | 'PAID' | 'CANCELLED';
+type OrderStatus =
+  | 'PENDING'
+  | 'PENDING_COD'
+  | 'PENDING_ONLINE'
+  | 'PAID'
+  | 'SHIPPED'
+  | 'CANCELLED';
 
 type Props = {
   orderCode: number;
   initialStatus: OrderStatus;
 };
+
+const PENDING_STATUSES: ReadonlySet<OrderStatus> = new Set([
+  'PENDING',
+  'PENDING_ONLINE',
+]);
 
 export default function OrderStatusPoller({
   orderCode,
@@ -18,7 +29,7 @@ export default function OrderStatusPoller({
   const router = useRouter();
 
   useEffect(() => {
-    if (initialStatus !== 'PENDING') {
+    if (!PENDING_STATUSES.has(initialStatus)) {
       return;
     }
 
@@ -30,7 +41,7 @@ export default function OrderStatusPoller({
           return;
         }
         const data = (await res.json()) as { status: OrderStatus };
-        if (data.status === 'PAID' || data.status === 'CANCELLED') {
+        if (!PENDING_STATUSES.has(data.status)) {
           window.clearInterval(interval);
           router.refresh();
         }

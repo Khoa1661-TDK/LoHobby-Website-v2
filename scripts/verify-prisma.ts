@@ -3,8 +3,8 @@ import 'dotenv/config';
 import { prisma } from '@/lib/prisma';
 
 async function main(): Promise<void> {
-  const count = await prisma.product.count();
-  console.log(`✅ Connected (${count} product row(s) readable).`);
+  const [users, orders] = await Promise.all([prisma.user.count(), prisma.order.count()]);
+  console.log(`✅ Connected (${users} user(s), ${orders} order(s) readable).`);
 }
 
 main()

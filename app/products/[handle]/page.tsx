@@ -1,9 +1,11 @@
-// app/products/[handle]/page.tsx — backwards-compat redirect to Commerce route
-import { permanentRedirect } from 'next/navigation';
+// app/products/[handle]/page.tsx — legacy route; canonical product URLs live at /product/{slug}
+import { redirect } from 'next/navigation';
 
 type Params = Promise<{ handle: string }>;
 
-export default async function LegacyProductRedirect(props: { params: Params }): Promise<never> {
+export default async function LegacyProductRedirect(props: {
+  params: Params;
+}): Promise<never> {
   const { handle } = await props.params;
-  permanentRedirect(`/product/${handle}`);
+  redirect(`/product/${handle}`);
 }

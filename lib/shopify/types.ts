@@ -36,6 +36,7 @@ export type Product = {
   images: Image[];
   seo: SEO;
   tags: string[];
+  categorySlugs: string[];
   updatedAt: string;
 };
 

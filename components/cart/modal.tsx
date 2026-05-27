@@ -14,10 +14,8 @@ import {
   useTransition,
   type ReactElement,
 } from 'react';
-import LoadingDots from '@/components/loading-dots';
 import Price from '@/components/price';
 import {
-  checkoutAction,
   removeItemAction,
   updateItemAction,
 } from '@/components/cart/actions';
@@ -49,7 +47,7 @@ export default function CartModal({ cart }: Props): ReactElement {
 
   return (
     <>
-      <button aria-label="Open toybox" onClick={openCart}>
+      <button aria-label="Mở giỏ hàng" onClick={openCart}>
         <OpenCart quantity={cart.totalQuantity} />
       </button>
       <Transition show={isOpen}>
@@ -76,8 +74,8 @@ export default function CartModal({ cart }: Props): ReactElement {
           >
             <Dialog.Panel className="fixed bottom-0 right-0 top-0 flex h-full w-full flex-col border-l border-neutral-200 bg-white/80 p-6 text-black backdrop-blur-xl md:w-[390px] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
               <div className="flex items-center justify-between">
-                <p className="text-lg font-semibold">My toybox</p>
-                <button aria-label="Close toybox" onClick={closeCart}>
+                <p className="text-lg font-semibold">Giỏ hàng</p>
+                <button aria-label="Đóng giỏ hàng" onClick={closeCart}>
                   <CloseCart />
                 </button>
               </div>
@@ -85,9 +83,9 @@ export default function CartModal({ cart }: Props): ReactElement {
               {cart.lines.length === 0 ? (
                 <div className="mt-20 flex w-full flex-col items-center justify-center overflow-hidden">
                   <ShoppingCartIcon className="h-16 text-filament-400" />
-                  <p className="mt-6 text-center text-2xl font-bold">Your toybox is empty.</p>
+                  <p className="mt-6 text-center text-2xl font-bold">Giỏ hàng trống.</p>
                   <p className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
-                    Pick something articulated, fidgety, or glow-in-the-dark.
+                    Khám phá bộ sưu tập mô hình hobby của chúng tôi.
                   </p>
                 </div>
               ) : (
@@ -103,7 +101,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                           <div className="relative flex w-full flex-row justify-between px-1 py-4">
                             <div className="absolute z-40 -ml-1 -mt-2">
                               <button
-                                aria-label="Remove cart item"
+                                aria-label="Xóa sản phẩm"
                                 disabled={isPending}
                                 onClick={() =>
                                   startTransition(async () => {
@@ -181,7 +179,7 @@ export default function CartModal({ cart }: Props): ReactElement {
 
                   <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 dark:border-neutral-700">
-                      <p>Taxes</p>
+                      <p>Thuế</p>
                       <Price
                         className="text-right text-base text-black dark:text-white"
                         amount="0"
@@ -189,11 +187,11 @@ export default function CartModal({ cart }: Props): ReactElement {
                       />
                     </div>
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Shipping</p>
-                      <p className="text-right">Calculated at checkout</p>
+                      <p>Phí vận chuyển</p>
+                      <p className="text-right">Tính khi thanh toán</p>
                     </div>
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Total</p>
+                      <p>Tổng cộng</p>
                       <Price
                         className="text-right text-base text-black dark:text-white"
                         amount={cart.cost.totalAmount.amount}
@@ -202,9 +200,13 @@ export default function CartModal({ cart }: Props): ReactElement {
                     </div>
                   </div>
 
-                  <form action={checkoutAction}>
-                    <CheckoutButton />
-                  </form>
+                  <Link
+                    href="/checkout"
+                    onClick={closeCart}
+                    className="block w-full rounded-full bg-filament-500 p-3 text-center text-sm font-medium text-white shadow-sm hover:bg-filament-600"
+                  >
+                    Thanh toán
+                  </Link>
                 </div>
               )}
             </Dialog.Panel>
@@ -280,7 +282,7 @@ function QtyButton({
   return (
     <button
       type="button"
-      aria-label={type === 'plus' ? 'Increase item quantity' : 'Decrease item quantity'}
+      aria-label={type === 'plus' ? 'Tăng số lượng' : 'Giảm số lượng'}
       disabled={disabled}
       onClick={onClick}
       className="ease flex h-full min-w-[36px] max-w-[36px] flex-none items-center justify-center rounded-full p-2 transition-all duration-200 hover:border-neutral-800 hover:opacity-80 disabled:opacity-50 dark:hover:border-neutral-600"
@@ -320,18 +322,3 @@ function MinusIcon(): ReactElement {
   );
 }
 
-function CheckoutButton(): ReactElement {
-  // useFormStatus available via 'react-dom' — but to avoid extra dep flow we use simple submit.
-  return (
-    <button
-      type="submit"
-      className="block w-full rounded-full bg-filament-500 p-3 text-center text-sm font-medium text-white shadow-sm hover:bg-filament-600"
-    >
-      Proceed to Checkout
-    </button>
-  );
-}
-
-export function CheckoutSpinner(): ReactElement {
-  return <LoadingDots className="bg-white" />;
-}

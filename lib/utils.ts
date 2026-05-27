@@ -1,8 +1,8 @@
 // lib/utils.ts
 function resolveBaseUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
-  if (explicit) {
-    return explicit.startsWith('http') ? explicit : `https://${explicit}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
+  if (appUrl) {
+    return appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
   }
   if (process.env.NEXT_PUBLIC_VERCEL_URL) {
     return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
