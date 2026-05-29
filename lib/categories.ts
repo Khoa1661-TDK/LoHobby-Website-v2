@@ -1,25 +1,12 @@
 // lib/categories.ts
+import type { Product } from '@/lib/shopify/types';
+
 export type StoreCategory = {
   slug: string;
   title: string;
   subtitle: string;
   bannerSeed?: string;
 };
-
-const CATEGORY_ICONS: Record<string, string> = {
-  'moc-khoa': '🔑',
-  'mo-hinh': '✈️',
-  figure: '🎭',
-  'do-choi': '🎲',
-  'phu-kien': '🎧',
-  'qua-tang': '🎁',
-};
-
-export function getCategoryIcon(slug: string): string {
-  return CATEGORY_ICONS[slug] ?? '🏷️';
-}
-
-import type { Product } from '@/lib/shopify/types';
 
 export function groupProductsByCategory(
   products: Product[],
@@ -52,6 +39,21 @@ export function toStoreCategory(collection: {
     title: collection.title,
     subtitle: collection.description,
   };
+}
+
+/**
+ * Discount percentage (1–99) for a product when it is on sale, derived from the
+ * gap between its original `compareAtPrice` and the current sale price. Returns
+ * `null` when the product is not discounted. Used for the "-X%" sale badge.
+ */
+export function getDiscountPercent(product: Product): number | null {
+  const compareAt = product.priceRange.minVariantPrice.compareAtAmount;
+  if (!compareAt) return null;
+  const original = Number(compareAt);
+  const current = Number(product.priceRange.minVariantPrice.amount);
+  if (!Number.isFinite(original) || !Number.isFinite(current)) return null;
+  if (original <= 0 || current >= original) return null;
+  return Math.round(((original - current) / original) * 100);
 }
 
 export type ProductBadge = 'new' | 'sold-out';

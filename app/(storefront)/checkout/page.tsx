@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import CheckoutForm, { type SavedAddress } from '@/components/checkout-form';
 import { getCart } from '@/lib/cart';
+import { getCheckoutPaymentMethods } from '@/lib/payment-methods';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -40,10 +41,13 @@ export default async function CheckoutPage(): Promise<ReactElement> {
     );
   }
 
-  const addressRows = await prisma.userAddress.findMany({
-    where: { userId: session.user.id },
-    orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
-  });
+  const [addressRows, paymentMethods] = await Promise.all([
+    prisma.userAddress.findMany({
+      where: { userId: session.user.id },
+      orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
+    }),
+    getCheckoutPaymentMethods(),
+  ]);
 
   const savedAddresses: SavedAddress[] = addressRows.map((row) => ({
     id: row.id,
@@ -68,6 +72,7 @@ export default async function CheckoutPage(): Promise<ReactElement> {
       </header>
       <CheckoutForm
         cart={cart}
+        paymentMethods={paymentMethods}
         savedAddresses={savedAddresses}
         defaultName={session.user.name ?? ''}
       />

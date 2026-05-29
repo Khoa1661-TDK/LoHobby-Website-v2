@@ -2,20 +2,26 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Suspense, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import Footer from '@/components/layout/footer';
 import GridTileImage from '@/components/grid/tile';
-import Gallery from '@/components/product/gallery';
-import ProductDescription from '@/components/product/product-description';
+import VariantSelector from '@/components/product/variant-selector';
 import { getSiteName } from '@/lib/brand';
 import { HIDDEN_PRODUCT_TAG } from '@/lib/constants';
 import {
+  computeSalePrice,
   getPayloadProductRecommendations,
   loadPayloadProductDoc,
   mapPayloadProductToCommerceProduct,
   resolveCategories,
+  resolveVariants,
 } from '@/lib/payload-products';
-import { buildProductJsonLd, productCanonicalPath, resolveSeoImage } from '@/lib/seo';
+import {
+  buildProductJsonLd,
+  jsonLdToScriptString,
+  productCanonicalPath,
+  resolveSeoImage,
+} from '@/lib/seo';
 import type { Product } from '@/lib/shopify/types';
 import { absoluteUrl, baseUrl } from '@/lib/utils';
 
@@ -97,13 +103,15 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
   }
 
   const categories = resolveCategories(doc.category);
+  const variants = resolveVariants(doc);
+  const { price: basePrice, compareAt: baseCompareAtPrice } = computeSalePrice(doc.price, doc);
   const canonical = absoluteUrl(productCanonicalPath(product.handle));
 
   const productJsonLd = buildProductJsonLd({
     title: product.title,
     description: product.description,
     slug: product.handle,
-    price: doc.price,
+    price: basePrice,
     available: product.availableForSale,
     images: product.images.map((image) => image.url),
     sku: product.id,
@@ -151,12 +159,12 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(productJsonLd) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(breadcrumbJsonLd) }}
       />
       <div className="mx-auto max-w-(--breakpoint-2xl) px-4">
         <nav aria-label="Đường dẫn" className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
@@ -204,32 +212,12 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
           </ul>
         ) : null}
 
-        <article
-          itemScope
-          itemType="https://schema.org/Product"
-          className="flex flex-col rounded-lg border border-neutral-200 bg-white p-8 md:p-12 lg:flex-row lg:gap-8 dark:border-neutral-800 dark:bg-black"
-        >
-          <meta itemProp="sku" content={product.id} />
-          <meta itemProp="name" content={product.title} />
-          <meta itemProp="description" content={product.description} />
-          <div className="h-full w-full basis-full lg:basis-4/6">
-            <Suspense
-              fallback={
-                <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden" />
-              }
-            >
-              <Gallery
-                images={product.images.map((image) => ({
-                  src: image.url,
-                  altText: image.altText || product.title,
-                }))}
-              />
-            </Suspense>
-          </div>
-          <div className="basis-full lg:basis-2/6">
-            <ProductDescription product={product} />
-          </div>
-        </article>
+        <VariantSelector
+          product={product}
+          basePrice={basePrice}
+          baseCompareAtPrice={baseCompareAtPrice}
+          variants={variants}
+        />
         <RelatedProducts slug={product.handle} categoryIds={categories.map((c) => c.id)} />
       </div>
       <Footer />

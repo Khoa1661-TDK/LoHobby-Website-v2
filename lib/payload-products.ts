@@ -1,15 +1,18 @@
 // lib/payload-products.ts — Payload CMS as the single catalog source for the storefront
 import config from '@payload-config';
-import { unstable_cache } from 'next/cache';
+import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical';
+import { revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload, type Where } from 'payload';
 import { toStoreCategory, type StoreCategory } from '@/lib/categories';
 import { getDefaultCategoryOrder } from '@/lib/default-categories';
 import { HIDDEN_PRODUCT_TAG } from '@/lib/constants';
 import {
   normalizeProductImageUrl,
+  resolveMediaId,
+  sameImageUrl,
   type StoredImage,
 } from '@/lib/product-image-snapshot';
-import type { Collection, Image, Product, SortKey } from '@/lib/shopify/types';
+import type { Collection, Image, Money, Product, SortKey } from '@/lib/shopify/types';
 
 const PLACEHOLDER = '/images/placeholder.svg';
 const CATALOG_REVALIDATE = 60;
@@ -21,11 +24,18 @@ type MediaDoc = {
   height?: number | null;
 };
 
+export type CategoryFaqItem = {
+  question?: string | null;
+  answer?: string | null;
+};
+
 export type CategoryDoc = {
   id: string | number;
   title: string;
   slug: string;
   subtitle?: string | null;
+  content?: SerializedEditorState | null;
+  faq?: CategoryFaqItem[] | null;
   meta?: SeoMeta | null;
   updatedAt?: string;
 };
@@ -37,11 +47,30 @@ type SeoMeta = {
   keywords?: string | null;
 };
 
+export type PayloadProductVariantDoc = {
+  id?: string | number | null;
+  name: string;
+  sku: string;
+  /** VND integer. `null`/`undefined` means "inherit base product price". */
+  priceOverride?: number | null;
+  stock?: number | null;
+  image?: MediaDoc | string | number | null;
+  /**
+   * URL snapshot written by the `snapshotProductImages` hook. Survives the
+   * underlying media doc being deleted; storefront prefers this over `image`.
+   */
+  storedImage?: StoredImage | null;
+};
+
 export type PayloadProductDoc = {
   id: string | number;
   title: string;
   slug: string;
   price: number;
+  /** When true, `salePercent` is applied to derive the reduced storefront price. */
+  onSale?: boolean | null;
+  /** Whole-number discount percentage (1–99) applied when `onSale` is true. */
+  salePercent?: number | null;
   description?: string | null;
   available?: boolean | null;
   tags?: string[] | null;
@@ -50,10 +79,55 @@ export type PayloadProductDoc = {
   storedImage?: StoredImage | null;
   gallery?: Array<{ media?: MediaDoc | string | null } | null> | null;
   storedGallery?: StoredImage[] | null;
+  variants?: PayloadProductVariantDoc[] | null;
   meta?: SeoMeta | null;
   createdAt: string;
   updatedAt: string;
 };
+
+/** Storefront-friendly variant shape (raw VND integer for `price`). */
+export type StorefrontVariant = {
+  sku: string;
+  name: string;
+  /**
+   * Whole VND integer the customer pays. Either `priceOverride` or the base
+   * product price, with any active sale discount already applied.
+   */
+  price: number;
+  /**
+   * Original whole-VND price before the sale discount, or `null` when the
+   * product isn't on sale. UI renders this struck-through.
+   */
+  compareAtPrice: number | null;
+  inStock: boolean;
+  stock: number;
+  image: Image | null;
+};
+
+/**
+ * Resolve a product's effective sale pricing from the `onSale` / `salePercent`
+ * fields. `price` is the amount the customer pays; `compareAt` is the original
+ * price to strike through (null when not discounted). Applying the percentage
+ * to any base amount (product or variant) keeps every surface consistent.
+ */
+export function computeSalePrice(
+  baseAmount: number,
+  doc: Pick<PayloadProductDoc, 'onSale' | 'salePercent'>,
+): { price: number; compareAt: number | null } {
+  const base = Math.max(0, Math.round(baseAmount));
+  if (doc.onSale !== true) return { price: base, compareAt: null };
+
+  const rawPercent =
+    typeof doc.salePercent === 'number' && Number.isFinite(doc.salePercent)
+      ? doc.salePercent
+      : 0;
+  const percent = Math.min(99, Math.max(0, Math.round(rawPercent)));
+  if (percent <= 0) return { price: base, compareAt: null };
+
+  const sale = Math.max(0, Math.round(base * (1 - percent / 100)));
+  if (sale >= base) return { price: base, compareAt: null };
+  return { price: sale, compareAt: base };
+}
 
 function resolveMedia(value: MediaDoc | string | null | undefined): MediaDoc | null {
   if (!value || typeof value === 'string') return null;
@@ -89,36 +163,71 @@ function collectImages(doc: PayloadProductDoc): Image[] {
   const images: Image[] = [];
   const seen = new Set<string>();
 
-  const pushStored = (
-    stored: StoredImage | null | undefined,
-    fallbackAlt: string,
-  ) => {
-    if (!stored?.url || seen.has(stored.url)) return;
-    seen.add(stored.url);
-    images.push(toImage(stored.url, stored.alt ?? fallbackAlt, stored.width, stored.height));
+  const remember = (image: Image): void => {
+    const key = normalizeProductImageUrl(image.url).split('?')[0] ?? image.url;
+    if (seen.has(key)) return;
+    seen.add(key);
+    images.push(image);
   };
 
-  const pushMedia = (media: MediaDoc | null, fallbackAlt: string) => {
-    if (!media?.url || seen.has(media.url)) return;
-    seen.add(media.url);
-    images.push(toImage(media.url, media.alt ?? fallbackAlt, media.width, media.height));
+  const primaryMedia = resolveMedia(doc.image);
+  const primaryId = resolveMediaId(doc.image);
+
+  // Primary image first — live upload relationship wins over the snapshot.
+  if (primaryMedia?.url?.trim()) {
+    remember(
+      toImage(
+        primaryMedia.url,
+        primaryMedia.alt ?? doc.title,
+        primaryMedia.width,
+        primaryMedia.height,
+      ),
+    );
+  } else if (doc.storedImage?.url?.trim()) {
+    remember(
+      toImage(
+        doc.storedImage.url,
+        doc.storedImage.alt ?? doc.title,
+        doc.storedImage.width,
+        doc.storedImage.height,
+      ),
+    );
+  }
+
+  const isPrimaryDuplicate = (url: string | null | undefined, mediaId: string | number | null): boolean => {
+    if (primaryId !== null && mediaId !== null && String(primaryId) === String(mediaId)) {
+      return true;
+    }
+    if (doc.storedImage?.url && url && sameImageUrl(doc.storedImage.url, url)) {
+      return true;
+    }
+    if (primaryMedia?.url && url && sameImageUrl(primaryMedia.url, url)) {
+      return true;
+    }
+    return false;
   };
 
-  pushStored(doc.storedImage, doc.title);
+  const pushGalleryStored = (stored: StoredImage | null | undefined) => {
+    if (!stored?.url?.trim() || isPrimaryDuplicate(stored.url, null)) return;
+    remember(toImage(stored.url, stored.alt ?? doc.title, stored.width, stored.height));
+  };
+
+  const pushGalleryMedia = (media: MediaDoc | null) => {
+    if (!media?.url?.trim()) return;
+    const mediaId = resolveMediaId(media);
+    if (isPrimaryDuplicate(media.url, mediaId)) return;
+    remember(toImage(media.url, media.alt ?? doc.title, media.width, media.height));
+  };
 
   if (Array.isArray(doc.storedGallery)) {
     for (const item of doc.storedGallery) {
-      pushStored(item, doc.title);
+      pushGalleryStored(item);
     }
   }
 
-  if (images.length === 0) {
-    pushMedia(resolveMedia(doc.image), doc.title);
-
-    if (Array.isArray(doc.gallery)) {
-      for (const item of doc.gallery) {
-        pushMedia(resolveMedia(item?.media), doc.title);
-      }
+  if (Array.isArray(doc.gallery)) {
+    for (const item of doc.gallery) {
+      pushGalleryMedia(resolveMedia(item?.media));
     }
   }
 
@@ -129,12 +238,75 @@ function collectImages(doc: PayloadProductDoc): Image[] {
   return images;
 }
 
+/**
+ * Resolve the inline `variants` array into clean storefront rows.
+ *
+ * Requires the source `doc` to have been loaded with `depth >= 2` so each
+ * variant's `image` relationship is hydrated to a Media doc (URL + dimensions).
+ * Variants whose `priceOverride` is null/undefined inherit `basePrice`. All
+ * prices stay as raw VND integers — never floats, never minor units.
+ */
+export function resolveVariants(doc: PayloadProductDoc): StorefrontVariant[] {
+  if (!Array.isArray(doc.variants) || doc.variants.length === 0) return [];
+
+  const basePrice = Math.max(0, Math.round(doc.price));
+  const fallbackAlt = doc.title;
+
+  return doc.variants
+    .filter((v): v is PayloadProductVariantDoc => Boolean(v && v.sku && v.name))
+    .map((variant) => {
+      const overridden =
+        typeof variant.priceOverride === 'number' && Number.isFinite(variant.priceOverride)
+          ? Math.max(0, Math.round(variant.priceOverride))
+          : null;
+
+      const stock = typeof variant.stock === 'number' && Number.isFinite(variant.stock)
+        ? Math.max(0, Math.round(variant.stock))
+        : 0;
+
+      // Prefer the URL snapshot (immune to media deletion) over the live
+      // upload relationship — same priority as the main product image.
+      let image: Image | null = null;
+
+      const stored = variant.storedImage;
+      if (stored && typeof stored.url === 'string' && stored.url.trim().length > 0) {
+        image = toImage(stored.url, stored.alt ?? fallbackAlt, stored.width, stored.height);
+      } else {
+        const media = resolveMedia(
+          // Variant images come back as MediaDoc objects when depth >= 2; otherwise as IDs.
+          typeof variant.image === 'object' && variant.image !== null && 'url' in variant.image
+            ? (variant.image as MediaDoc)
+            : null,
+        );
+        if (media?.url) {
+          image = toImage(media.url, media.alt ?? fallbackAlt, media.width, media.height);
+        }
+      }
+
+      const { price, compareAt } = computeSalePrice(overridden ?? basePrice, doc);
+
+      return {
+        sku: variant.sku.trim(),
+        name: variant.name.trim(),
+        price,
+        compareAtPrice: compareAt,
+        stock,
+        inStock: stock > 0,
+        image,
+      };
+    });
+}
+
 export function mapPayloadProductToCommerceProduct(doc: PayloadProductDoc): Product {
   const slug = doc.slug?.trim() || String(doc.id);
   const title = doc.title.trim();
   const description = typeof doc.description === 'string' ? doc.description : '';
-  const priceAmount = Math.max(0, Math.round(doc.price)).toString();
-  const price = { amount: priceAmount, currencyCode: 'VND' };
+  const { price: salePrice, compareAt } = computeSalePrice(doc.price, doc);
+  const price: Money = {
+    amount: salePrice.toString(),
+    currencyCode: 'VND',
+    compareAtAmount: compareAt !== null ? compareAt.toString() : null,
+  };
   const images = collectImages(doc);
   const categories = resolveCategories(doc.category);
   const tags = Array.isArray(doc.tags) ? doc.tags.filter(Boolean) : [];
@@ -189,6 +361,35 @@ async function getPayloadClient() {
 
 function isVisibleProduct(product: Product): boolean {
   return !product.tags.includes(HIDDEN_PRODUCT_TAG);
+}
+
+/**
+ * Returns true when a product can be purchased: visible in the storefront AND
+ * marked as available. Use this in cart / checkout flows so admins can disable
+ * a SKU mid-day without a stale cart sneaking it through.
+ */
+export function isPurchasableProduct(product: Product): boolean {
+  return isVisibleProduct(product) && product.availableForSale;
+}
+
+/** Cache tags shared by every catalog-read cache; flush them after a Payload write. */
+export const CATALOG_CACHE_TAGS = ['catalog', 'products', 'collections'] as const;
+
+/**
+ * Invalidate every cached catalog read. Wire this into Payload `afterChange`
+ * / `afterDelete` hooks on products & categories so the storefront updates
+ * within one request instead of after the 60s TTL.
+ */
+export function revalidateCatalogCache(): void {
+  try {
+    for (const tag of CATALOG_CACHE_TAGS) {
+      revalidateTag(tag);
+    }
+  } catch (error) {
+    // Safe outside a Next.js request (seed scripts) and during Payload admin saves
+    // where the static-generation store may be unavailable.
+    console.warn('[catalog] revalidate skipped:', error instanceof Error ? error.message : error);
+  }
 }
 
 function sortProducts(products: Product[], sortKey?: SortKey, reverse?: boolean): Product[] {
@@ -441,6 +642,14 @@ async function fetchPayloadCollections(): Promise<Collection[]> {
         ? doc.subtitle.trim()
         : `Sản phẩm thuộc ${doc.title}`;
     const meta = doc.meta ?? {};
+    const faq = Array.isArray(doc.faq)
+      ? doc.faq
+          .map((item) => ({
+            question: typeof item?.question === 'string' ? item.question.trim() : '',
+            answer: typeof item?.answer === 'string' ? item.answer.trim() : '',
+          }))
+          .filter((item) => item.question.length > 0 && item.answer.length > 0)
+      : [];
     collections.push({
       handle: doc.slug,
       title: doc.title,
@@ -451,6 +660,8 @@ async function fetchPayloadCollections(): Promise<Collection[]> {
       },
       path: `/search/${doc.slug}`,
       updatedAt: doc.updatedAt ?? new Date().toISOString(),
+      content: doc.content ?? null,
+      faq,
     });
   }
 
@@ -467,7 +678,10 @@ export async function getPayloadStoreCategories(): Promise<StoreCategory[]> {
   return collections.filter((c) => c.handle !== '').map(toStoreCategory);
 }
 
-export async function getPayloadProductsByIds(ids: string[]): Promise<Product[]> {
+export async function getPayloadProductsByIds(
+  ids: string[],
+  options: { requirePurchasable?: boolean } = {},
+): Promise<Product[]> {
   const unique = Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)));
   if (unique.length === 0) return [];
 
@@ -480,10 +694,12 @@ export async function getPayloadProductsByIds(ids: string[]): Promise<Product[]>
     pagination: false,
   });
 
+  const filter = options.requirePurchasable ? isPurchasableProduct : isVisibleProduct;
+
   const byId = new Map(
     pickDocs<PayloadProductDoc>(result)
       .map(mapPayloadProductToCommerceProduct)
-      .filter(isVisibleProduct)
+      .filter(filter)
       .map((product) => [product.id, product]),
   );
 

@@ -17,9 +17,11 @@ function PathItem({ item }: { item: PathFilterItem }): ReactElement {
       <Link
         href={item.path}
         prefetch
-        className={clsx('w-full text-sm underline-offset-4 hover:underline', {
-          underline: active,
-        })}
+        className={clsx(
+          'w-full text-sm underline-offset-4 transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:hover:translate-x-0',
+          'hover:translate-x-1 hover:underline hover:text-neutral-700 dark:hover:text-neutral-200',
+          { underline: active },
+        )}
       >
         {item.title}
       </Link>
@@ -44,7 +46,11 @@ function SortItem({ item }: { item: SortFilterItem }): ReactElement {
       <Link
         prefetch
         href={href}
-        className={clsx('w-full hover:underline hover:underline-offset-4', { underline: active })}
+        className={clsx(
+          'w-full transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:hover:translate-x-0',
+          'hover:translate-x-1 hover:underline hover:underline-offset-4 hover:text-neutral-700 dark:hover:text-neutral-200',
+          { underline: active },
+        )}
       >
         {item.title}
       </Link>

@@ -26,10 +26,11 @@ type Props = {
 
 export default function ProductHeroCarousel({
   slides,
-  autoPlayMs = 5000,
+  autoPlayMs = 4500,
 }: Props): ReactElement | null {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [autoplayEpoch, setAutoplayEpoch] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const count = slides.length;
 
@@ -41,26 +42,76 @@ export default function ProductHeroCarousel({
     [count],
   );
 
-  const goNext = useCallback(() => goTo(index + 1), [goTo, index]);
-  const goPrev = useCallback(() => goTo(index - 1), [goTo, index]);
+  const goNext = useCallback(() => {
+    setIndex((current) => (count === 0 ? 0 : (current + 1) % count));
+  }, [count]);
+
+  const goPrev = useCallback(() => {
+    setIndex((current) => (count === 0 ? 0 : (current - 1 + count) % count));
+  }, [count]);
+
+  const restartAutoplay = useCallback(() => {
+    setAutoplayEpoch((epoch) => epoch + 1);
+  }, []);
+
+  useEffect(() => {
+    if (index >= count) {
+      setIndex(0);
+    }
+  }, [count, index]);
 
   useEffect(() => {
     if (count <= 1 || paused) return undefined;
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reducedMotion) return undefined;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reducedMotion.matches) return undefined;
 
-    const timer = window.setInterval(goNext, autoPlayMs);
-    return () => window.clearInterval(timer);
-  }, [autoPlayMs, count, goNext, paused]);
+    let timer: number | undefined;
+
+    const stop = () => {
+      if (timer !== undefined) {
+        window.clearInterval(timer);
+        timer = undefined;
+      }
+    };
+
+    const start = () => {
+      stop();
+      timer = window.setInterval(goNext, autoPlayMs);
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+
+    start();
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [autoPlayMs, autoplayEpoch, count, goNext, paused]);
 
   if (count === 0) return null;
 
+  const handleManualNav = (action: () => void) => {
+    action();
+    restartAutoplay();
+  };
+
   return (
     <div
-      className="group relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-neutral-900 sm:aspect-[21/9] sm:max-h-[420px] md:max-h-[460px]"
+      className="group/carousel relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-neutral-900 sm:aspect-[21/9] sm:max-h-[420px] md:max-h-[460px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setPaused(false);
+        }
+      }}
       onTouchStart={(event) => {
         touchStartX.current = event.touches[0]?.clientX ?? null;
       }}
@@ -70,11 +121,12 @@ export default function ProductHeroCarousel({
         if (start === null) return;
         const delta = (event.changedTouches[0]?.clientX ?? start) - start;
         if (Math.abs(delta) < 40) return;
-        if (delta < 0) goNext();
-        else goPrev();
+        if (delta < 0) handleManualNav(goNext);
+        else handleManualNav(goPrev);
       }}
       aria-roledescription="carousel"
       aria-label="Sản phẩm mới nổi bật"
+      aria-live="polite"
     >
       <div
         className="flex h-full transition-transform duration-700 ease-out motion-reduce:transition-none"
@@ -85,7 +137,7 @@ export default function ProductHeroCarousel({
             key={slide.handle}
             href={`/product/${slide.handle}`}
             prefetch
-            className="relative h-full w-full shrink-0"
+            className="group/slide relative h-full w-full shrink-0 overflow-hidden"
             aria-hidden={slideIndex !== index}
             tabIndex={slideIndex === index ? 0 : -1}
           >
@@ -95,11 +147,11 @@ export default function ProductHeroCarousel({
               fill
               priority={slideIndex === 0}
               sizes="100vw"
-              className="object-contain p-6 sm:p-10"
+              className="img-banner transition duration-700 ease-out group-hover/slide:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover/slide:scale-100"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-all duration-500 group-hover/slide:from-black/90 group-hover/slide:via-black/30" />
 
-            <p className="absolute bottom-5 left-5 max-w-[min(52%,20rem)] text-lg font-bold leading-snug text-white sm:bottom-6 sm:left-6 sm:max-w-md sm:text-2xl md:text-3xl">
+            <p className="absolute bottom-5 left-5 max-w-[min(52%,20rem)] text-lg font-bold leading-snug text-white transition duration-300 group-hover/slide:translate-x-1 sm:bottom-6 sm:left-6 sm:max-w-md sm:text-2xl md:text-3xl">
               {slide.title}
             </p>
           </Link>
@@ -112,9 +164,9 @@ export default function ProductHeroCarousel({
             type="button"
             onClick={(event) => {
               event.preventDefault();
-              goPrev();
+              handleManualNav(goPrev);
             }}
-            className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm transition hover:bg-black/55 sm:left-4 sm:h-11 sm:w-11"
+            className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white opacity-100 backdrop-blur-sm transition hover:bg-black/55 hover:scale-105 sm:left-4 sm:h-11 sm:w-11 sm:opacity-0 sm:group-hover/carousel:opacity-100 motion-reduce:transition-none motion-reduce:hover:scale-100"
             aria-label="Slide trước"
           >
             <ChevronLeftIcon className="h-5 w-5" strokeWidth={2.5} />
@@ -123,9 +175,9 @@ export default function ProductHeroCarousel({
             type="button"
             onClick={(event) => {
               event.preventDefault();
-              goNext();
+              handleManualNav(goNext);
             }}
-            className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm transition hover:bg-black/55 sm:right-4 sm:h-11 sm:w-11"
+            className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white opacity-100 backdrop-blur-sm transition hover:bg-black/55 hover:scale-105 sm:right-4 sm:h-11 sm:w-11 sm:opacity-0 sm:group-hover/carousel:opacity-100 motion-reduce:transition-none motion-reduce:hover:scale-100"
             aria-label="Slide sau"
           >
             <ChevronRightIcon className="h-5 w-5" strokeWidth={2.5} />
@@ -138,7 +190,7 @@ export default function ProductHeroCarousel({
                 type="button"
                 onClick={(event) => {
                   event.preventDefault();
-                  goTo(dotIndex);
+                  handleManualNav(() => goTo(dotIndex));
                 }}
                 aria-label={`Slide ${dotIndex + 1}: ${slide.title}`}
                 aria-current={dotIndex === index ? 'true' : undefined}

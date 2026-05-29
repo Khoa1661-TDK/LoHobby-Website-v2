@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import Image from 'next/image';
 import type { ComponentProps, ReactElement } from 'react';
 import Label from '@/components/label';
+import { toNextImageSrc } from '@/lib/product-image-snapshot';
 
 type Props = {
   isInteractive?: boolean;
@@ -27,9 +28,8 @@ export default function GridTileImage({
   return (
     <div
       className={clsx(
-        'group flex h-full w-full items-center justify-center overflow-hidden rounded-lg border bg-white hover:border-filament-400 dark:bg-black',
+        'group relative flex h-full w-full items-center justify-center overflow-hidden rounded-lg border bg-white hover:border-filament-400 dark:bg-black',
         {
-          relative: label,
           'border-2 border-filament-500': active,
           'border-neutral-200 dark:border-neutral-800': !active,
         },
@@ -37,12 +37,12 @@ export default function GridTileImage({
     >
       {props.src ? (
         <Image
-          className={clsx('relative h-full w-full object-contain', {
+          className={clsx('img-fit', {
             'transition duration-300 ease-in-out group-hover:scale-105': isInteractive,
           })}
           {...props}
           alt={props.alt}
-          src={props.src}
+          src={toNextImageSrc(props.src)}
         />
       ) : null}
       {label ? (

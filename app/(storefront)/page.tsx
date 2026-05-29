@@ -6,6 +6,7 @@ import NewArrivalsHero from '@/components/home/new-arrivals-hero';
 import Footer from '@/components/layout/footer';
 import { BRAND_DESCRIPTION, getSiteName } from '@/lib/brand';
 import { groupProductsByCategory } from '@/lib/categories';
+import { jsonLdToScriptString } from '@/lib/seo';
 import { getProducts, getStoreCategories } from '@/lib/shopify';
 import { baseUrl } from '@/lib/utils';
 
@@ -63,12 +64,12 @@ export default async function HomePage(): Promise<ReactElement> {
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(websiteJsonLd) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(organizationJsonLd) }}
       />
 
       <NewArrivalsHero products={heroProducts} categories={categories} />

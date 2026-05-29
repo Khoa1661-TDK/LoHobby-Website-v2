@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { ReactElement } from 'react';
 import ProductHeroCarousel, { type HeroSlide } from '@/components/home/product-hero-carousel';
 import { BRAND_TAGLINE, getSiteName } from '@/lib/brand';
-import { getCategoryIcon, type StoreCategory } from '@/lib/categories';
+import type { StoreCategory } from '@/lib/categories';
 import type { Product } from '@/lib/shopify/types';
 
 type Props = {
@@ -12,16 +12,18 @@ type Props = {
 };
 
 function toHeroSlides(products: Product[]): HeroSlide[] {
-  return products.map((product) => {
-    const image = product.featuredImage;
+  return products
+    .filter((product) => product.featuredImage?.url)
+    .map((product) => {
+      const image = product.featuredImage;
 
-    return {
-      handle: product.handle,
-      title: product.title,
-      imageUrl: image.url,
-      imageAlt: image.altText || product.title,
-    };
-  });
+      return {
+        handle: product.handle,
+        title: product.title,
+        imageUrl: image.url,
+        imageAlt: image.altText || product.title,
+      };
+    });
 }
 
 export default function NewArrivalsHero({ products, categories }: Props): ReactElement {
@@ -59,7 +61,7 @@ export default function NewArrivalsHero({ products, categories }: Props): ReactE
           </div>
 
           {slides.length > 0 ? (
-            <ProductHeroCarousel slides={slides} />
+            <ProductHeroCarousel slides={slides} autoPlayMs={4500} />
           ) : (
             <div className="flex aspect-[16/10] flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center dark:border-neutral-700 dark:bg-neutral-900/50 sm:aspect-[21/9]">
               <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
@@ -86,18 +88,16 @@ export default function NewArrivalsHero({ products, categories }: Props): ReactE
                 key={category.slug}
                 href={`/search/${category.slug}`}
                 prefetch
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3.5 py-2 text-xs font-medium text-neutral-700 transition hover:border-red-400 hover:text-red-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-red-500 dark:hover:text-red-400 sm:text-sm"
+                className="inline-flex shrink-0 items-center rounded-full border border-neutral-200 bg-white px-3.5 py-2 text-xs font-medium text-neutral-700 transition hover:border-red-400 hover:text-red-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-red-500 dark:hover:text-red-400 sm:text-sm"
               >
-                <span aria-hidden="true">{getCategoryIcon(category.slug)}</span>
                 {category.title}
               </Link>
             ))}
             <Link
               href="/search"
               prefetch
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-dashed border-neutral-300 bg-neutral-50 px-3.5 py-2 text-xs font-medium text-neutral-700 transition hover:border-red-400 dark:border-neutral-700 dark:bg-neutral-900/50 dark:text-neutral-300 sm:text-sm"
+              className="inline-flex shrink-0 items-center rounded-full border border-dashed border-neutral-300 bg-neutral-50 px-3.5 py-2 text-xs font-medium text-neutral-700 transition hover:border-red-400 dark:border-neutral-700 dark:bg-neutral-900/50 dark:text-neutral-300 sm:text-sm"
             >
-              <span aria-hidden="true">🛍️</span>
               Tất cả
             </Link>
           </nav>

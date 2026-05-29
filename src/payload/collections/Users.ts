@@ -31,7 +31,7 @@ export const Users: CollectionConfig = {
         if (operation !== 'create') return data;
         const email = typeof data?.email === 'string' ? data.email : '';
         if (!isAdminEmail(email)) {
-          throw new APIError('Chỉ email quản trị viên mới có thể tạo tài khoản CMS.', 403);
+          throw new APIError('Only administrator emails can create CMS accounts.', 403);
         }
         return data;
       },

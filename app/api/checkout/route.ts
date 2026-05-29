@@ -1,12 +1,10 @@
 // app/api/checkout/route.ts
-import { PayOSError } from '@payos/node';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import {
-  allocateOrderCode,
-  getPayOS,
-  isUniqueConstraintError,
-} from '@/lib/payos';
+import { getGatewayConfigForMethod } from '@/lib/payment-gateway-credentials';
+import { getPaymentMethodByKey, type PaymentMethodKind } from '@/lib/payment-methods';
+import { credentialsForProvider, getPaymentProvider } from '@/lib/payment-providers';
+import { generateOrderCode, isUniqueConstraintError } from '@/lib/payos';
 import { prisma } from '@/src/lib/db-adapter';
 
 export const runtime = 'nodejs';
@@ -14,10 +12,10 @@ export const dynamic = 'force-dynamic';
 
 const PICKUP_ADDRESS = 'Trụ sở chính, TP.HCM, Việt Nam';
 const VALID_DELIVERY = ['SHIPMENT', 'PICKUP'] as const;
-const VALID_PAYMENT = ['COD', 'PAY_ONLINE'] as const;
+const MAX_LINE_QUANTITY = 999;
+const MAX_DISTINCT_LINES = 100;
 
 type DeliveryMethod = (typeof VALID_DELIVERY)[number];
-type PaymentMethod = (typeof VALID_PAYMENT)[number];
 
 type CheckoutLine = { productId: string; quantity: number };
 type CustomerInfo = { name: string; phone: string; address?: string | null };
@@ -26,31 +24,30 @@ type CheckoutBody = {
   items: CheckoutLine[];
   customerInfo: CustomerInfo;
   deliveryMethod: DeliveryMethod;
-  paymentMethod: PaymentMethod;
+  paymentMethodKey: string;
 };
 
-type CodSuccess = {
+type CheckoutSuccess = {
   success: true;
-  method: 'COD';
+  method: PaymentMethodKind;
   orderCode: number;
   amount: number;
-};
-type OnlineSuccess = {
-  success: true;
-  method: 'PAY_ONLINE';
-  orderCode: number;
-  amount: number;
-  checkoutUrl: string;
+  checkoutUrl?: string;
   qrCode?: string;
 };
-type CheckoutResponse = CodSuccess | OnlineSuccess;
+type CheckoutResponse = CheckoutSuccess;
 
 function parseBody(value: unknown): CheckoutBody | null {
   if (typeof value !== 'object' || value === null) return null;
   const record = value as Record<string, unknown>;
 
   if (!Array.isArray(record.items) || record.items.length === 0) return null;
-  const items: CheckoutLine[] = [];
+  if (record.items.length > MAX_DISTINCT_LINES) return null;
+
+  // Dedupe productIds: if the client submits the same productId twice we
+  // sum the quantities into a single OrderItem row instead of creating
+  // duplicates (which would otherwise inflate the DB and confuse fulfilment).
+  const byProductId = new Map<string, number>();
   for (const raw of record.items) {
     if (typeof raw !== 'object' || raw === null) return null;
     const line = raw as Record<string, unknown>;
@@ -58,15 +55,26 @@ function parseBody(value: unknown): CheckoutBody | null {
     if (typeof line.quantity !== 'number' || !Number.isFinite(line.quantity) || line.quantity <= 0) {
       return null;
     }
-    items.push({ productId: line.productId, quantity: Math.floor(line.quantity) });
+    const productId = line.productId.trim();
+    if (!productId) return null;
+
+    const quantity = Math.floor(line.quantity);
+    const next = (byProductId.get(productId) ?? 0) + quantity;
+    if (next > MAX_LINE_QUANTITY) return null;
+    byProductId.set(productId, next);
   }
+
+  const items: CheckoutLine[] = Array.from(byProductId, ([productId, quantity]) => ({
+    productId,
+    quantity,
+  }));
 
   const delivery = record.deliveryMethod;
   if (typeof delivery !== 'string' || !VALID_DELIVERY.includes(delivery as DeliveryMethod)) {
     return null;
   }
-  const payment = record.paymentMethod;
-  if (typeof payment !== 'string' || !VALID_PAYMENT.includes(payment as PaymentMethod)) {
+  const paymentKey = record.paymentMethodKey;
+  if (typeof paymentKey !== 'string' || paymentKey.trim().length === 0) {
     return null;
   }
 
@@ -84,7 +92,7 @@ function parseBody(value: unknown): CheckoutBody | null {
   return {
     items,
     deliveryMethod: delivery as DeliveryMethod,
-    paymentMethod: payment as PaymentMethod,
+    paymentMethodKey: paymentKey.trim(),
     customerInfo: {
       name: info.name.trim(),
       phone: info.phone.trim(),
@@ -119,9 +127,15 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
 
   const ids = body.items.map((item) => item.productId);
   const { getPayloadProductsByIds } = await import('@/lib/payload-products');
-  const products = await getPayloadProductsByIds(ids);
-  if (products.length !== new Set(ids).size) {
-    return NextResponse.json({ error: 'Sản phẩm trong giỏ hàng không tồn tại' }, { status: 400 });
+  // requirePurchasable: also rejects products with `available: false`, not just
+  // the hidden-tag check. This is what enforces "out of stock" on the server
+  // even if a stale cart cookie or tampered request slips one through.
+  const products = await getPayloadProductsByIds(ids, { requirePurchasable: true });
+  if (products.length !== ids.length) {
+    return NextResponse.json(
+      { error: 'Một sản phẩm trong giỏ hàng không còn bán. Hãy cập nhật giỏ hàng và thử lại.' },
+      { status: 409 },
+    );
   }
 
   const priceMap = new Map(
@@ -133,7 +147,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
   let amount = 0;
   const itemRows = body.items.map((line) => {
     const unit = priceMap.get(line.productId);
-    if (typeof unit !== 'number') {
+    if (typeof unit !== 'number' || !Number.isFinite(unit) || unit < 0) {
       throw new Error(`Missing price for product ${line.productId}`);
     }
     amount += unit * line.quantity;
@@ -146,15 +160,32 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
     };
   });
 
-  if (amount <= 0 || !Number.isInteger(amount)) {
+  if (amount <= 0 || !Number.isInteger(amount) || !Number.isSafeInteger(amount)) {
     return NextResponse.json({ error: 'Tổng tiền không hợp lệ' }, { status: 400 });
   }
 
-  const isOnline = body.paymentMethod === 'PAY_ONLINE';
-  const initialStatus = isOnline ? 'PENDING_ONLINE' : 'PENDING_COD';
+  // Resolve the selected method from the CMS. This is the server-side source of
+  // truth: a key that is unknown or disabled is rejected here.
+  const method = await getPaymentMethodByKey(body.paymentMethodKey);
+  if (!method || !method.enabled) {
+    return NextResponse.json(
+      { error: 'Hình thức thanh toán không khả dụng.' },
+      { status: 400 },
+    );
+  }
+
+  const kind = method.kind;
+  const initialStatus =
+    kind === 'gateway'
+      ? 'PENDING_ONLINE'
+      : kind === 'manual_transfer'
+        ? 'PENDING_TRANSFER'
+        : 'PENDING_COD';
+  // Legacy enum retained for backward compatibility; manual_transfer has no enum value.
+  const legacyPaymentMethod = kind === 'gateway' ? 'PAY_ONLINE' : kind === 'cod' ? 'COD' : null;
 
   for (let attempt = 0; attempt < 5; attempt++) {
-    const orderCode = await allocateOrderCode();
+    const orderCode = generateOrderCode();
 
     let createdOrderId: string | null = null;
     try {
@@ -165,7 +196,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
           amount,
           status: initialStatus,
           deliveryMethod: body.deliveryMethod,
-          paymentMethod: body.paymentMethod,
+          paymentMethod: legacyPaymentMethod,
+          paymentMethodKey: method.key,
+          paymentKind: kind,
           customerName: body.customerInfo.name,
           phoneNumber: body.customerInfo.phone,
           shippingAddress,
@@ -183,31 +216,53 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
       throw error;
     }
 
-    // ----- Cash on Delivery: persist & return without payOS -----
-    if (!isOnline) {
+    // ----- COD / manual transfer: settle offline, no gateway call -----
+    if (kind !== 'gateway') {
       return NextResponse.json(
-        { success: true, method: 'COD', orderCode, amount },
+        { success: true, method: kind, orderCode, amount },
         { status: 200 },
       );
     }
 
-    // ----- Pay Online: create payOS link -----
+    // ----- Gateway: resolve provider + decrypted credentials (CMS or env fallback) -----
+    const provider = method.provider ? getPaymentProvider(method.provider) : null;
+    const gatewayConfig = provider ? await getGatewayConfigForMethod(method.key) : null;
+    if (
+      !provider ||
+      !gatewayConfig ||
+      gatewayConfig.credentials.provider !== method.provider
+    ) {
+      await prisma.order.update({
+        where: { id: createdOrderId },
+        data: { status: 'CANCELLED' },
+      });
+      return NextResponse.json(
+        { error: 'Cổng thanh toán chưa được cấu hình.' },
+        { status: 500 },
+      );
+    }
+
     const origin = req.nextUrl.origin;
-    const payOSItems = itemRows.map((line) => ({
+    const gatewayItems = itemRows.map((line) => ({
       name: (titleMap.get(line.productId) ?? 'Sản phẩm').slice(0, 25),
       quantity: line.quantity,
       price: line.unitPrice,
     }));
 
     try {
-      const payment = await getPayOS().paymentRequests.create({
-        orderCode,
-        amount,
-        description: `Đơn hàng ${orderCode}`.slice(0, 25),
-        items: payOSItems,
-        returnUrl: `${origin}/checkout/success?orderCode=${orderCode}`,
-        cancelUrl: `${origin}/checkout/cancel?orderCode=${orderCode}`,
-      });
+      const payment = await provider.createPaymentLink(
+        {
+          orderCode,
+          amount,
+          description: `Đơn hàng ${orderCode}`.slice(0, 25),
+          items: gatewayItems,
+          returnUrl: `${origin}/checkout/success?orderCode=${orderCode}`,
+          cancelUrl: `${origin}/checkout/cancel?orderCode=${orderCode}`,
+          origin,
+          sandboxMode: gatewayConfig.sandboxMode,
+        },
+        credentialsForProvider(method.provider, gatewayConfig.credentials),
+      );
 
       await prisma.order.update({
         where: { id: createdOrderId },
@@ -217,7 +272,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
       return NextResponse.json(
         {
           success: true,
-          method: 'PAY_ONLINE',
+          method: kind,
           orderCode,
           amount,
           checkoutUrl: payment.checkoutUrl,
@@ -225,19 +280,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
         },
         { status: 200 },
       );
-    } catch (payosError) {
+    } catch (gatewayError) {
       await prisma.order.update({
         where: { id: createdOrderId },
         data: { status: 'CANCELLED' },
       });
 
-      if (payosError instanceof PayOSError) {
-        return NextResponse.json(
-          { error: payosError.message },
-          { status: 502 },
-        );
-      }
-      throw payosError;
+      const message =
+        gatewayError instanceof Error
+          ? gatewayError.message
+          : 'Không thể tạo liên kết thanh toán.';
+      console.error('[checkout] gateway error', gatewayError);
+      return NextResponse.json({ error: message }, { status: 502 });
     }
   }
 

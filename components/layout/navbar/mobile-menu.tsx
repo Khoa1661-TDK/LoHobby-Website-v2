@@ -2,30 +2,33 @@
 'use client';
 
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Fragment, useEffect, useState, type ReactElement } from 'react';
-import type { Menu } from '@/lib/shopify/types';
+import { Fragment, Suspense, useEffect, useState, type ReactElement } from 'react';
 import Search, { SearchSkeleton } from '@/components/layout/navbar/search';
-import type { CategoryNavItem } from '@/components/layout/search/collections-nav';
+import type { ResolvedHeaderTab } from '@/lib/site-header';
 
 export default function MobileMenu({
-  menu,
-  categories = [],
+  tabs,
 }: {
-  menu: Menu[];
-  categories?: CategoryNavItem[];
+  tabs: ResolvedHeaderTab[];
 }): ReactElement {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>(null);
 
   const openMobileMenu = (): void => setIsOpen(true);
-  const closeMobileMenu = (): void => setIsOpen(false);
+  const closeMobileMenu = (): void => {
+    setIsOpen(false);
+    setOpenSection(null);
+  };
 
   useEffect(() => {
-    setIsOpen(false);
+    closeMobileMenu();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams]);
 
   return (
@@ -69,41 +72,92 @@ export default function MobileMenu({
                   <XMarkIcon className="h-6" />
                 </button>
                 <div className="mb-4 w-full">
-                  <Search />
+                  <Suspense fallback={<SearchSkeleton />}>
+                    <Search />
+                  </Suspense>
                 </div>
                 <ul className="flex w-full flex-col">
-                  {menu.map((item) => (
-                    <li
-                      className="py-2 text-xl text-black transition-colors hover:text-neutral-500 dark:text-white"
-                      key={item.title}
-                    >
-                      <Link href={item.path} prefetch onClick={closeMobileMenu}>
-                        {item.title}
-                      </Link>
-                    </li>
-                  ))}
-                  {categories.length > 0 ? (
-                    <li className="mt-2 border-t border-neutral-200 pt-4 dark:border-neutral-800">
-                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500">
-                        Danh mục
-                      </p>
-                      <ul className="max-h-56 space-y-1 overflow-y-auto [scrollbar-width:thin]">
-                        {categories.map((item) => (
-                          <li key={item.path}>
-                            <Link
-                              href={item.path}
-                              prefetch
-                              onClick={closeMobileMenu}
-                              className="block py-1.5 text-base text-black transition-colors hover:text-neutral-500 dark:text-white"
-                            >
-                              {item.title}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  ) : null}
-                  <li className="py-2 text-xl text-black transition-colors hover:text-neutral-500 dark:text-white">
+                  {tabs.map((tab, tabIndex) => {
+                    if (tab.kind === 'link') {
+                      return (
+                        <li
+                          className="py-2 text-xl text-black transition-colors hover:text-neutral-500 dark:text-white"
+                          key={`${tab.kind}:${tab.label}:${tabIndex}`}
+                        >
+                          <Link
+                            href={tab.href}
+                            prefetch={!tab.external}
+                            target={tab.external ? '_blank' : undefined}
+                            rel={tab.external ? 'noreferrer noopener' : undefined}
+                            onClick={closeMobileMenu}
+                          >
+                            {tab.label}
+                          </Link>
+                        </li>
+                      );
+                    }
+
+                    const sectionKey = `${tab.kind}:${tab.label}:${tabIndex}`;
+                    const expanded = openSection === sectionKey;
+
+                    return (
+                      <li
+                        key={sectionKey}
+                        className="border-t border-neutral-200 first:border-t-0 dark:border-neutral-800"
+                      >
+                        <button
+                          type="button"
+                          aria-expanded={expanded}
+                          onClick={() =>
+                            setOpenSection((prev) => (prev === sectionKey ? null : sectionKey))
+                          }
+                          className="flex w-full items-center justify-between py-3 text-xl text-black transition-colors hover:text-neutral-500 dark:text-white"
+                        >
+                          {tab.label}
+                          <ChevronDownIcon
+                            className={clsx(
+                              'h-5 w-5 transition-transform duration-300 ease-out motion-reduce:transition-none',
+                              expanded && 'rotate-180',
+                            )}
+                          />
+                        </button>
+                        <div
+                          className={clsx(
+                            'grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none',
+                            expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+                          )}
+                        >
+                          <div className="overflow-hidden">
+                            <ul className="mb-3 ml-2 max-h-72 space-y-1 overflow-y-auto [scrollbar-width:thin]">
+                              {tab.items.map((item, itemIndex) => (
+                                <li
+                                  key={item.href}
+                                  className={clsx(
+                                    expanded && 'motion-reduce:animate-none animate-dropdown-item',
+                                  )}
+                                  style={
+                                    expanded
+                                      ? { animationDelay: `${Math.min(itemIndex * 35, 420)}ms` }
+                                      : undefined
+                                  }
+                                >
+                                  <Link
+                                    href={item.href}
+                                    prefetch
+                                    onClick={closeMobileMenu}
+                                    className="block border-l-2 border-transparent py-1.5 pl-2 text-base text-black transition-[background-color,border-color,padding-left,color] duration-200 hover:border-red-500 hover:pl-3 hover:text-neutral-600 dark:text-white dark:hover:text-neutral-300"
+                                  >
+                                    {item.label}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                  <li className="mt-2 border-t border-neutral-200 py-2 pt-4 text-xl text-black transition-colors hover:text-neutral-500 dark:border-neutral-800 dark:text-white">
                     <Link href="/login" prefetch onClick={closeMobileMenu}>
                       Đăng nhập
                     </Link>

@@ -6,7 +6,7 @@ const path = require('node:path');
 const raw = process.env.STUDIO_DATABASE_URL ?? process.env.DATABASE_URL;
 if (!raw) {
   console.error(
-    'Missing DATABASE_URL. Add it to .env (see .env.example), then retry.',
+    'Missing DATABASE_URL. Add it to .env, then retry.',
   );
   process.exit(1);
 }

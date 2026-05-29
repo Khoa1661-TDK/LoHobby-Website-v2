@@ -1,7 +1,16 @@
 // lib/shopify/types.ts — Vercel Commerce type contract (Shopify-shaped)
 export type SortKey = 'RELEVANCE' | 'BEST_SELLING' | 'CREATED_AT' | 'PRICE';
 
-export type Money = { amount: string; currencyCode: string };
+export type Money = {
+  amount: string;
+  currencyCode: string;
+  /**
+   * Original ("compare at") price before a discount, as a whole-VND string.
+   * Present only when the product is on sale; `amount` holds the reduced price.
+   * UI renders this struck-through next to `amount`.
+   */
+  compareAtAmount?: string | null;
+};
 
 export type Image = {
   url: string;
@@ -75,6 +84,8 @@ export type Cart = {
   totalQuantity: number;
 };
 
+export type CollectionFaqItem = { question: string; answer: string };
+
 export type Collection = {
   handle: string;
   title: string;
@@ -82,6 +93,10 @@ export type Collection = {
   seo: SEO;
   path: string;
   updatedAt: string;
+  /** Long-form lexical SEO copy rendered on the category landing page. */
+  content?: unknown | null;
+  /** FAQ entries rendered on-page and emitted as FAQPage JSON-LD. */
+  faq?: CollectionFaqItem[];
 };
 
 export type Menu = { title: string; path: string };

@@ -1,132 +1,127 @@
 // src/payload/collections/Categories.ts
-
-import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload';
+import type {
+  CollectionAfterChangeHook,
+  CollectionAfterDeleteHook,
+  CollectionBeforeChangeHook,
+  CollectionConfig,
+} from 'payload';
+import { after } from 'next/server';
 
 import { payloadPublicReadAdminWrite } from '@/lib/payload-access';
-
+import { revalidateCatalogCache } from '@/lib/payload-products';
 import { resolveCollectionSlug, slugifyVietnamese } from '@/lib/slugify';
 
-
-
 const autoSlugFromTitle: CollectionBeforeChangeHook = async ({ data, operation, originalDoc, req }) => {
-
   if (!data) return data;
 
-
-
   const slug = await resolveCollectionSlug(req.payload, 'categories', {
-
     title: typeof data.title === 'string' ? data.title : undefined,
-
     slug: typeof data.slug === 'string' ? data.slug : undefined,
-
     excludeId: operation === 'update' ? originalDoc?.id : undefined,
-
   });
 
-
-
   if (slug) {
-
     data.slug = slug;
-
   }
 
-
-
   return data;
-
 };
 
+const invalidateCatalogOnChange: CollectionAfterChangeHook = ({ doc }) => {
+  after(() => {
+    revalidateCatalogCache();
+  });
+  return doc;
+};
 
+const invalidateCatalogOnDelete: CollectionAfterDeleteHook = ({ doc }) => {
+  after(() => {
+    revalidateCatalogCache();
+  });
+  return doc;
+};
 
 export const Categories: CollectionConfig = {
-
   slug: 'categories',
-
   admin: {
-
     useAsTitle: 'title',
-
     defaultColumns: ['title', 'slug', 'updatedAt'],
-
-    description:
-
-      'Danh mục cửa hàng. Gán sản phẩm vào danh mục từ mục Sản phẩm.',
-
+    description: 'Store categories. Assign products to categories from the Products collection.',
   },
-
   access: payloadPublicReadAdminWrite,
-
   hooks: {
-
     beforeChange: [autoSlugFromTitle],
-
+    afterChange: [invalidateCatalogOnChange],
+    afterDelete: [invalidateCatalogOnDelete],
   },
-
   fields: [
-
     {
-
       name: 'title',
-
       type: 'text',
-
       required: true,
-
     },
-
     {
-
       name: 'slug',
-
       type: 'text',
-
       unique: true,
-
       index: true,
-
       admin: {
-
         description:
-
-          'Tự động tạo từ tiêu đề khi để trống. Có thể chỉnh sửa thủ công — lưu sẽ chuẩn hóa thành dạng URL.',
-
+          'Auto-generated from the title when empty. You can edit manually — saving normalizes it to a URL-safe slug.',
       },
-
       hooks: {
-
         beforeValidate: [
-
           ({ value }) => {
-
             if (typeof value !== 'string' || !value.trim()) return value;
-
             return slugifyVietnamese(value);
-
           },
-
         ],
-
       },
-
     },
-
     {
-
       name: 'subtitle',
-
       type: 'textarea',
-
       admin: {
-
-        description: 'Dòng mô tả ngắn hiển thị trên trang chủ và tiêu đề trang danh mục.',
-
+        description: 'Short line shown on the homepage and category page heading.',
       },
-
     },
-
+    {
+      name: 'content',
+      type: 'richText',
+      admin: {
+        description:
+          'Long-form SEO copy rendered on the category landing page (below the banner, above the product grid). Use H2/H3 headings, lists and links to build topical depth for the target keyword.',
+      },
+    },
+    {
+      name: 'faq',
+      type: 'array',
+      label: 'FAQ',
+      labels: { singular: 'FAQ item', plural: 'FAQ items' },
+      admin: {
+        description:
+          'Frequently asked questions shown on the category landing page. Rendered on-page and emitted as FAQPage JSON-LD for rich results.',
+        initCollapsed: true,
+      },
+      fields: [
+        {
+          name: 'question',
+          type: 'text',
+          required: true,
+          admin: {
+            placeholder: 'Đồ chơi in 3D có an toàn cho bé không?',
+          },
+        },
+        {
+          name: 'answer',
+          type: 'textarea',
+          required: true,
+          admin: {
+            placeholder:
+              'Có. Chúng tôi dùng nhựa PLA gốc thực vật, không độc, an toàn cho trẻ em.',
+          },
+        },
+      ],
+    },
   ],
-
 };
-

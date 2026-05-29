@@ -1,9 +1,9 @@
 // app/(storefront)/layout.tsx
-import { Playfair_Display } from 'next/font/google';
-import { GeistSans } from 'geist/font/sans';
+import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactElement, ReactNode } from 'react';
 import { Toaster } from 'sonner';
+import AnnouncementBanner from '@/components/layout/announcement-banner';
 import { Navbar } from '@/components/layout/navbar';
 import Providers from '@/components/providers';
 import WelcomeToast from '@/components/welcome-toast';
@@ -15,9 +15,15 @@ import {
 import { baseUrl } from '@/lib/utils';
 import '../globals.css';
 
-const playfair = Playfair_Display({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin', 'vietnamese'],
-  variable: '--font-playfair',
+  variable: '--font-jakarta',
+  display: 'swap',
+});
+
+const fraunces = Fraunces({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-fraunces',
   display: 'swap',
 });
 
@@ -110,10 +116,11 @@ export default async function StorefrontLayout({
   children: ReactNode;
 }): Promise<ReactElement> {
   return (
-    <html lang="vi" className={`${GeistSans.variable} ${playfair.variable}`}>
-      <body className="bg-paper text-ink selection:bg-neutral-200 selection:text-black dark:bg-neutral-950 dark:text-white dark:selection:bg-neutral-700 dark:selection:text-white">
+    <html lang="vi" className={`${jakarta.variable} ${fraunces.variable}`}>
+      <body className="bg-paper font-sans text-ink selection:bg-neutral-200 selection:text-black dark:bg-neutral-950 dark:text-white dark:selection:bg-neutral-700 dark:selection:text-white">
         <Providers>
           <Navbar />
+          <AnnouncementBanner />
           <main>
             {children}
             <Toaster closeButton richColors />

@@ -15,6 +15,7 @@ import {
   type ReactElement,
 } from 'react';
 import Price from '@/components/price';
+import { toNextImageSrc } from '@/lib/product-image-snapshot';
 import {
   removeItemAction,
   updateItemAction,
@@ -115,13 +116,13 @@ export default function CartModal({ cart }: Props): ReactElement {
                               </button>
                             </div>
                             <div className="flex flex-row">
-                              <div className="relative h-16 w-16 overflow-hidden rounded-md border border-neutral-300 bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800">
+                              <div className="relative h-16 w-16 overflow-hidden rounded-md border border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-950">
                                 <Image
-                                  className="h-full w-full object-cover"
+                                  className="img-fit"
                                   width={64}
                                   height={64}
                                   alt={item.product.featuredImage.altText || item.product.title}
-                                  src={item.product.featuredImage.url}
+                                  src={toNextImageSrc(item.product.featuredImage.url)}
                                 />
                               </div>
                               <Link

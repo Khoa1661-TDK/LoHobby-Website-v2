@@ -12,8 +12,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-geist-sans)'],
-        serif: ['var(--font-playfair)', 'Georgia', 'serif'],
+        sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-fraunces)', 'Georgia', 'serif'],
       },
       keyframes: {
         fade: { from: { opacity: '0' }, to: { opacity: '1' } },
@@ -30,6 +30,14 @@ const config: Config = {
           from: { transform: 'translateX(-50%)' },
           to: { transform: 'translateX(0)' },
         },
+        'dropdown-in': {
+          from: { opacity: '0', transform: 'translateY(-6px) scale(0.98)' },
+          to: { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'dropdown-item': {
+          from: { opacity: '0', transform: 'translateX(-10px)' },
+          to: { opacity: '1', transform: 'translateX(0)' },
+        },
       },
       animation: {
         fade: 'fade 100ms forwards',
@@ -38,6 +46,8 @@ const config: Config = {
         'marquee-reverse':
           'marquee-reverse var(--marquee-duration, 45s) linear infinite',
         carousel: 'marquee var(--marquee-duration, 60s) linear infinite',
+        'dropdown-in': 'dropdown-in 200ms ease-out both',
+        'dropdown-item': 'dropdown-item 300ms cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       colors: {
         ink: '#000000',

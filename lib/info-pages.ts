@@ -5,6 +5,20 @@ export type InfoPage = {
 };
 
 export const infoPages: Record<string, InfoPage> = {
+  'in-3d-an-toan-cho-be': {
+    title: 'Đồ chơi in 3D có an toàn cho bé không?',
+    description:
+      'Giải thích chất liệu nhựa PLA, PETG dùng trong in 3D đồ chơi và vì sao chúng an toàn cho trẻ em.',
+    body:
+      'Đồ chơi in 3D tại xưởng của chúng tôi được in chủ yếu từ nhựa PLA — loại nhựa sinh học có nguồn gốc từ tinh bột ngô, không chứa BPA, không mùi độc và được dùng phổ biến cho sản phẩm tiếp xúc trẻ em. Với các chi tiết cần độ bền và chịu lực cao hơn, chúng tôi dùng nhựa PETG, an toàn thực phẩm và khó vỡ. Mỗi sản phẩm đều được làm sạch bề mặt, bo tròn cạnh sắc và kiểm tra trước khi giao. Lưu ý chung: đồ chơi in 3D phù hợp cho bé trên 3 tuổi, tránh chi tiết nhỏ cho trẻ dưới 3 tuổi. Xem thêm sản phẩm tại trang Đồ chơi in 3D (/search/do-choi-in-3d) hoặc quy trình in 3D theo yêu cầu (/info/quy-trinh-in-3d-theo-yeu-cau).',
+  },
+  'quy-trinh-in-3d-theo-yeu-cau': {
+    title: 'Quy trình in 3D đồ chơi theo yêu cầu',
+    description:
+      'Các bước nhận in 3D đồ chơi, mô hình và móc khóa theo mẫu riêng: từ gửi ý tưởng đến giao hàng toàn quốc.',
+    body:
+      'Bạn có mẫu riêng? Quy trình in 3D theo yêu cầu của chúng tôi gồm bốn bước. Bước 1 — Gửi mẫu hoặc ý tưởng: gửi ảnh, file 3D (STL/OBJ) hoặc mô tả sản phẩm bạn muốn. Bước 2 — Dựng và duyệt mô hình 3D: đội ngũ dựng/chỉnh file in, báo giá và xác nhận kích thước, màu sắc, chất liệu PLA hoặc PETG. Bước 3 — In và hoàn thiện: in 3D bằng công nghệ FDM, xử lý bề mặt, sơn (nếu cần) và kiểm tra chất lượng. Bước 4 — Giao hàng toàn quốc: đóng gói và giao qua đơn vị vận chuyển, thanh toán tiện lợi bằng VietQR. Tham khảo các sản phẩm có sẵn tại trang Đồ chơi in 3D (/search/do-choi-in-3d) và thông tin an toàn chất liệu (/info/in-3d-an-toan-cho-be).',
+  },
   support: {
     title: 'Hỗ trợ',
     description: 'Nhận trợ giúp về đơn hàng, vận chuyển và sản phẩm.',

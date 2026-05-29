@@ -2,35 +2,21 @@
 import Link from 'next/link';
 import { Suspense, type ReactElement } from 'react';
 import BrandLogo from '@/components/brand-logo';
-import CategoriesDropdown from '@/components/layout/navbar/categories-dropdown';
-import { getCollections } from '@/lib/shopify';
-import type { Menu } from '@/lib/shopify/types';
+import HoverDropdown from '@/components/layout/navbar/hover-dropdown';
 import Cart from '@/components/cart';
 import { AuthNav } from '@/components/layout/navbar/auth-nav';
 import MobileMenu from '@/components/layout/navbar/mobile-menu';
 import Search, { SearchSkeleton } from '@/components/layout/navbar/search';
-
-const HEADER_MENU: Menu[] = [
-  { title: 'Trang chủ', path: '/' },
-  { title: 'Cửa hàng', path: '/search' },
-];
+import { getSiteHeaderTabs } from '@/lib/site-header';
 
 export async function Navbar(): Promise<ReactElement> {
-  const collections = await getCollections();
-  const menu = HEADER_MENU;
-
-  const categoryItems = collections
-    .filter((collection) => collection.handle !== '')
-    .map((collection) => ({
-      title: collection.title,
-      path: `/search/${collection.handle}`,
-    }));
+  const tabs = await getSiteHeaderTabs();
 
   return (
     <nav className="relative flex items-center justify-between border-b border-neutral-100 p-4 lg:px-6 dark:border-neutral-900">
       <div className="block flex-none md:hidden">
         <Suspense fallback={null}>
-          <MobileMenu menu={menu} categories={categoryItems} />
+          <MobileMenu tabs={tabs} />
         </Suspense>
       </div>
       <div className="flex w-full items-center">
@@ -43,22 +29,25 @@ export async function Navbar(): Promise<ReactElement> {
           >
             <BrandLogo variant="navbar" />
           </Link>
-          {menu.length ? (
+          {tabs.length ? (
             <ul className="hidden items-center gap-6 text-sm md:flex">
-              {menu.map((item) => (
-                <li key={item.title}>
-                  <Link
-                    href={item.path}
-                    prefetch
-                    className="text-neutral-500 underline-offset-4 hover:text-black hover:underline dark:text-neutral-400 dark:hover:text-white"
-                  >
-                    {item.title}
-                  </Link>
+              {tabs.map((tab, tabIndex) => (
+                <li key={`${tab.kind}:${tab.label}:${tabIndex}`}>
+                  {tab.kind === 'link' ? (
+                    <Link
+                      href={tab.href}
+                      prefetch={!tab.external}
+                      target={tab.external ? '_blank' : undefined}
+                      rel={tab.external ? 'noreferrer noopener' : undefined}
+                      className="text-neutral-500 underline-offset-4 hover:text-black hover:underline dark:text-neutral-400 dark:hover:text-white"
+                    >
+                      {tab.label}
+                    </Link>
+                  ) : (
+                    <HoverDropdown label={tab.label} items={tab.items} />
+                  )}
                 </li>
               ))}
-              <li>
-                <CategoriesDropdown items={categoryItems} />
-              </li>
             </ul>
           ) : null}
         </div>

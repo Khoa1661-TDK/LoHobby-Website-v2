@@ -1,0 +1,59 @@
+@layer payload {
+  /* Collapsible array rows: keep toggle hit-area without showing duplicate label text */
+  .collapsible__toggle {
+    color: transparent !important;
+
+    span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+  }
+
+  .collapsible__toggle-wrap {
+    min-height: calc(var(--base) * 1.75);
+    align-items: center;
+  }
+
+  .collapsible__header-wrap {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .row-label {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+    line-height: 1.35;
+  }
+
+  /* Row layouts: descriptions in adjacent columns were overlapping */
+  .field-type.row .row__fields {
+    row-gap: calc(var(--base) * 1.25);
+
+    > * {
+      min-width: 0;
+      padding-bottom: calc(var(--base) / 3);
+    }
+  }
+
+  .field-description {
+    margin-top: calc(var(--base) / 3);
+    line-height: 1.45;
+  }
+
+  .array-field__row .array-field {
+    margin-top: calc(var(--base) * 0.75);
+  }
+
+  .collapsible__content > .render-fields > .field-type:first-child {
+    margin-top: calc(var(--base) / 4);
+  }
+}

@@ -1,7 +1,10 @@
 // src/payload/collections/Media.ts
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { CollectionBeforeDeleteHook, CollectionConfig } from 'payload';
+import type {
+  CollectionBeforeDeleteHook,
+  CollectionConfig,
+} from 'payload';
 import { payloadPublicReadAdminWrite } from '@/lib/payload-access';
 import {
   loadMediaDoc,
@@ -32,7 +35,7 @@ function appendStoredIfMissing(list: StoredImage[], next: StoredImage | null): S
 /** Detach product FKs and ensure snapshots exist before media row is deleted. */
 const detachMediaFromProducts: CollectionBeforeDeleteHook = async ({ id, req }) => {
   const media = await loadMediaDoc(req.payload, id);
-  const fallbackAlt = typeof media?.filename === 'string' ? media.filename : 'Sản phẩm';
+  const fallbackAlt = typeof media?.filename === 'string' ? media.filename : 'Product';
   const snapshot = mediaDocToStored(media, fallbackAlt);
 
   const withPrimary = await req.payload.find({

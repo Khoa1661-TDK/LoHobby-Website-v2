@@ -9,6 +9,7 @@ import { getAdminUser } from '@/lib/admin';
 import { getPayloadAdminUser } from '@/lib/payload-admin-sync';
 import { importMap } from './admin/importMap.js';
 import '@payloadcms/next/css';
+import './custom.scss';
 
 export const dynamic = 'force-dynamic';
 

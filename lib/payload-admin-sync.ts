@@ -65,6 +65,7 @@ function readCookieRaw(cookieHeader: string, name: string): string | null {
 
 export async function ensurePayloadAdminUser(
   admin: Pick<AdminSessionUser, 'email' | 'name'>,
+  options: { forcePasswordReset?: boolean } = {},
 ): Promise<void> {
   if (!isAdminEmail(admin.email)) {
     throw new Error('Only administrator emails can have CMS accounts');
@@ -94,10 +95,16 @@ export async function ensurePayloadAdminUser(
     return;
   }
 
+  // The derived password is deterministic (HMAC of email + PAYLOAD_SECRET) so
+  // there is no reason to re-hash and rewrite it on every admin session — that
+  // turns a fast cookie set into a DB write per visit AND races with any
+  // concurrent admin-connect. Only write when:
+  //   - the display name changed, OR
+  //   - the caller explicitly asked for a recovery reset
   const existingDoc = existing.docs[0]!;
   const nextName = admin.name ?? email;
-  const needsPasswordSync = true;
   const needsNameSync = existingDoc.name !== nextName;
+  const needsPasswordSync = options.forcePasswordReset === true;
 
   if (needsPasswordSync || needsNameSync) {
     await payload.update({
@@ -135,21 +142,10 @@ export async function createPayloadAdminSessionCookie(
   let token = result.token;
 
   if (!token) {
-    const existing = await payload.find({
-      collection: 'users',
-      limit: 1,
-      overrideAccess: true,
-      where: { email: { equals: email } },
-    });
-    const userId = existing.docs[0]?.id;
-    if (typeof userId === 'number' || typeof userId === 'string') {
-      await payload.update({
-        collection: 'users',
-        id: userId,
-        overrideAccess: true,
-        data: { password },
-      });
-    }
+    // Recovery path: an older deployment may have stored a different password
+    // hash for this email (or it was rotated). Force-reset to the deterministic
+    // derived password and retry once.
+    await ensurePayloadAdminUser(admin, { forcePasswordReset: true });
 
     const retry = await payload.login({
       collection: 'users',

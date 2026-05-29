@@ -29,6 +29,12 @@ importers:
       '@payloadcms/richtext-lexical':
         specifier: ^3.84.1
         version: 3.84.1(@faceless-ui/modal@3.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@faceless-ui/scroll-info@2.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@payloadcms/next@3.84.1(@types/react@19.2.15)(graphql@16.14.0)(monaco-editor@0.55.1)(next@15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4))(payload@3.84.1(graphql@16.14.0)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(@types/react@19.2.15)(monaco-editor@0.55.1)(next@15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4))(payload@3.84.1(graphql@16.14.0)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(yjs@13.6.30)
+      '@payloadcms/translations':
+        specifier: ^3.84.1
+        version: 3.84.1
+      '@payloadcms/ui':
+        specifier: ^3.84.1
+        version: 3.84.1(@types/react@19.2.15)(monaco-editor@0.55.1)(next@15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4))(payload@3.84.1(graphql@16.14.0)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       '@payos/node':
         specifier: ^2.0.5
         version: 2.0.5
@@ -47,9 +53,6 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
-      geist:
-        specifier: ^1.7.1
-        version: 1.7.1(next@15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4))
       graphql:
         specifier: ^16.14.0
         version: 16.14.0
@@ -80,6 +83,9 @@ importers:
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      stripe:
+        specifier: ^22.2.0
+        version: 22.2.0(@types/node@22.19.19)
     devDependencies:
       '@tailwindcss/container-queries':
         specifier: ^0.1.1
@@ -2111,11 +2117,6 @@ packages:
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
 
-  geist@1.7.1:
-    resolution: {integrity: sha512-XF8DM30ODhDu0Ng5S2kOS8j4ZkG/6z2fKWAiFJA7wG0Hc92ZXgjYLrwbD9bVU4nGVzwboPtG+QtaPGsfgnXLaA==}
-    peerDependencies:
-      next: '>=13.2.0'
-
   generate-function@2.3.1:
     resolution: {integrity: sha512-eeB5GfMNeevm/GRYq20ShmsaGcmI81kIX2K9XQx5miC8KdHaC6Jm0qQ8ZNeGOi7wYB8OsdxKs+Y2oVuTFuVwKQ==}
 
@@ -3022,6 +3023,15 @@ packages:
   strip-json-comments@5.0.3:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
+
+  stripe@22.2.0:
+    resolution: {integrity: sha512-WFGpMOom9QZqso1kcnSwJsCdC1QHDlMoCOxBZRf3JraMzhkfw7dgSdD2a1CFZrqC+mzAfqeEtYILrZhWKIDruA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
 
   strtok3@10.3.5:
     resolution: {integrity: sha512-ki4hZQfh5rX0QDLLkOCj+h+CVNkqmp/CMf8v8kZpkNVK6jGQooMytqzLZYUVYIZcFZ6yDB70EfD8POcFXiF5oA==}
@@ -5133,10 +5143,6 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  geist@1.7.1(next@15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4)):
-    dependencies:
-      next: 15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4)
-
   generate-function@2.3.1:
     dependencies:
       is-property: 1.0.2
@@ -6178,6 +6184,10 @@ snapshots:
       character-entities-legacy: 3.0.0
 
   strip-json-comments@5.0.3: {}
+
+  stripe@22.2.0(@types/node@22.19.19):
+    optionalDependencies:
+      '@types/node': 22.19.19
 
   strtok3@10.3.5:
     dependencies:

@@ -3,14 +3,15 @@
 
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Price from '@/components/price';
 import { clearCartAction } from '@/components/cart/actions';
 import type { Cart } from '@/lib/cart';
+import type { CheckoutPaymentMethod, PaymentMethodKind } from '@/lib/payment-methods';
 
 const PICKUP_ADDRESS = 'Trụ sở Lô Hobby, TP. Hồ Chí Minh, Việt Nam';
 
 type DeliveryMethod = 'SHIPMENT' | 'PICKUP';
-type PaymentMethod = 'COD' | 'PAY_ONLINE';
 
 export type SavedAddress = {
   id: string;
@@ -28,22 +29,17 @@ export type SavedAddress = {
 type CheckoutResponse =
   | {
       success: true;
-      method: 'COD';
+      method: PaymentMethodKind;
       orderCode: number;
       amount: number;
-    }
-  | {
-      success: true;
-      method: 'PAY_ONLINE';
-      orderCode: number;
-      amount: number;
-      checkoutUrl: string;
+      checkoutUrl?: string;
       qrCode?: string;
     }
   | { error: string };
 
 type Props = {
   cart: Cart;
+  paymentMethods: CheckoutPaymentMethod[];
   savedAddresses?: SavedAddress[];
   defaultName?: string;
 };
@@ -56,6 +52,7 @@ function formatAddressLine(address: SavedAddress): string {
 
 export default function CheckoutForm({
   cart,
+  paymentMethods,
   savedAddresses = [],
   defaultName = '',
 }: Props): ReactElement {
@@ -72,9 +69,14 @@ export default function CheckoutForm({
     initialAddress ? formatAddressLine(initialAddress) : '',
   );
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('SHIPMENT');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD');
+  const [paymentMethodKey, setPaymentMethodKey] = useState<string>(
+    paymentMethods[0]?.key ?? '',
+  );
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const selectedMethod = paymentMethods.find((method) => method.key === paymentMethodKey) ?? null;
+  const selectedKind = selectedMethod?.kind ?? null;
 
   useEffect(() => {
     if (!selectedAddressId) return;
@@ -121,6 +123,10 @@ export default function CheckoutForm({
       setError('Vui lòng nhập địa chỉ giao hàng.');
       return;
     }
+    if (!paymentMethodKey) {
+      setError('Vui lòng chọn hình thức thanh toán.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -136,7 +142,7 @@ export default function CheckoutForm({
             address: deliveryMethod === 'SHIPMENT' ? trimmedAddress : null,
           },
           deliveryMethod,
-          paymentMethod,
+          paymentMethodKey,
         }),
       });
 
@@ -152,7 +158,7 @@ export default function CheckoutForm({
 
       await clearCartAction();
 
-      if (data.method === 'PAY_ONLINE') {
+      if (data.checkoutUrl) {
         window.location.assign(data.checkoutUrl);
         return;
       }
@@ -285,26 +291,38 @@ export default function CheckoutForm({
 
         {/* Payment method */}
         <Section title="Hình thức thanh toán" subtitle="Chọn cách bạn muốn thanh toán.">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <OptionCard
-              name="payment"
-              value="COD"
-              checked={paymentMethod === 'COD'}
-              onChange={() => setPaymentMethod('COD')}
-              title="Thanh toán khi nhận hàng (COD)"
-              description="Trả tiền mặt khi nhận hàng."
-              icon={<CashIcon />}
-            />
-            <OptionCard
-              name="payment"
-              value="PAY_ONLINE"
-              checked={paymentMethod === 'PAY_ONLINE'}
-              onChange={() => setPaymentMethod('PAY_ONLINE')}
-              title="Thanh toán ngay qua VietQR / payOS"
-              description="Chuyển khoản ngân hàng nhanh bằng mã QR."
-              icon={<QrIcon />}
-            />
-          </div>
+          {paymentMethods.length === 0 ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              Hiện chưa có hình thức thanh toán nào khả dụng. Vui lòng liên hệ cửa hàng.
+            </p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {paymentMethods.map((method) => (
+                <OptionCard
+                  key={method.key}
+                  name="payment"
+                  value={method.key}
+                  checked={paymentMethodKey === method.key}
+                  onChange={() => setPaymentMethodKey(method.key)}
+                  title={method.label}
+                  description={method.description ?? defaultMethodDescription(method.kind)}
+                  icon={
+                    method.iconUrl ? (
+                      <Image
+                        src={method.iconUrl}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="h-5 w-5 object-contain"
+                      />
+                    ) : (
+                      defaultMethodIcon(method.kind)
+                    )
+                  }
+                />
+              ))}
+            </div>
+          )}
         </Section>
 
         {error && (
@@ -372,20 +390,22 @@ export default function CheckoutForm({
 
         <button
           type="submit"
-          disabled={submitting || cart.lines.length === 0}
+          disabled={submitting || cart.lines.length === 0 || paymentMethods.length === 0}
           className="mt-6 w-full rounded-full bg-filament-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-filament-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
         >
           {submitting
             ? 'Đang đặt hàng…'
-            : paymentMethod === 'PAY_ONLINE'
-              ? 'Tiếp tục thanh toán VietQR'
-              : 'Đặt hàng (COD)'}
+            : selectedKind === 'gateway'
+              ? 'Tiếp tục thanh toán'
+              : 'Đặt hàng'}
         </button>
 
         <p className="mt-3 text-center text-xs text-neutral-500 dark:text-neutral-400">
-          {paymentMethod === 'PAY_ONLINE'
-            ? 'Bạn sẽ được chuyển đến payOS để hoàn tất thanh toán.'
-            : 'Chúng tôi sẽ thu tiền mặt khi giao hàng.'}
+          {selectedKind === 'gateway'
+            ? 'Bạn sẽ được chuyển đến cổng thanh toán để hoàn tất.'
+            : selectedKind === 'manual_transfer'
+              ? 'Chúng tôi sẽ hiển thị thông tin chuyển khoản sau khi đặt hàng.'
+              : 'Chúng tôi sẽ thu tiền mặt khi giao hàng.'}
         </p>
       </aside>
     </form>
@@ -573,4 +593,45 @@ function QrIcon(): ReactElement {
       />
     </svg>
   );
+}
+
+function BankIcon(): ReactElement {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.6}
+      stroke="currentColor"
+      className="h-5 w-5"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 21h18M4.5 21V10.5M19.5 21V10.5M6.75 21v-7.5M11.25 21v-7.5M12.75 21v-7.5M17.25 21v-7.5M3 10.5 12 4l9 6.5z"
+      />
+    </svg>
+  );
+}
+
+function defaultMethodIcon(kind: PaymentMethodKind): ReactElement {
+  switch (kind) {
+    case 'gateway':
+      return <QrIcon />;
+    case 'manual_transfer':
+      return <BankIcon />;
+    default:
+      return <CashIcon />;
+  }
+}
+
+function defaultMethodDescription(kind: PaymentMethodKind): string {
+  switch (kind) {
+    case 'gateway':
+      return 'Thanh toán online qua cổng thanh toán.';
+    case 'manual_transfer':
+      return 'Chuyển khoản ngân hàng theo thông tin hiển thị sau khi đặt hàng.';
+    default:
+      return 'Trả tiền mặt khi nhận hàng.';
+  }
 }

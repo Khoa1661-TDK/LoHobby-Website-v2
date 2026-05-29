@@ -19,18 +19,63 @@ pnpm install        # or: npm install
 
 ## 2. Configure environment
 
-Copy `.env.example` to `.env` and fill in:
+Create a `.env` file with:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/commerce?schema=public"
 PAYLOAD_SECRET="..."                  # or AUTH_SECRET
 AUTH_SECRET="..."                     # NextAuth
 ADMIN_EMAILS="you@example.com"        # synced into Payload admin users
-PAYOS_CLIENT_ID="..."
+PAYOS_CLIENT_ID="..."                 # fallback when no CMS credentials are set
 PAYOS_API_KEY="..."
 PAYOS_CHECKSUM_KEY="..."
+PAYMENT_SECRETS_KEY="..."             # base64, 32 bytes: openssl rand -base64 32
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 NEXT_PUBLIC_SITE_NAME="Local Store"
+```
+
+Gateway API keys can also be entered per payment method in the Payload admin
+(**Settings -> Payment methods**). They are encrypted with `PAYMENT_SECRETS_KEY`
+before being stored and are never sent to the storefront. When a method has no
+saved credentials, provider-specific environment variables are used as a
+fallback (see `.env` examples below).
+
+Supported automated gateways (configure in **Settings → Payment methods**):
+
+| Provider | CMS credential fields | Webhook URL |
+|----------|----------------------|-------------|
+| payOS | Client ID, API Key, Checksum Key | `/api/webhook/payos` |
+| MoMo | Partner Code, Access Key, Secret Key | `/api/webhook/momo` |
+| ZaloPay | App ID, Key 1, Key 2 | `/api/webhook/zalopay` |
+| VNPay | TMN Code, Hash Secret | `/api/webhook/vnpay` (GET) |
+| ShopeePay | Partner Code, Partner Key, Merchant Ext ID | `/api/webhook/shopeepay` |
+| Stripe | Secret Key, Webhook Secret | `/api/webhook/stripe` |
+
+Optional env fallbacks (when CMS credentials are empty):
+
+```env
+# MoMo
+MOMO_PARTNER_CODE="..."
+MOMO_ACCESS_KEY="..."
+MOMO_SECRET_KEY="..."
+
+# ZaloPay
+ZALOPAY_APP_ID="..."
+ZALOPAY_KEY1="..."
+ZALOPAY_KEY2="..."
+
+# VNPay
+VNPAY_TMN_CODE="..."
+VNPAY_HASH_SECRET="..."
+
+# ShopeePay
+SHOPEEPAY_PARTNER_CODE="..."
+SHOPEEPAY_PARTNER_KEY="..."
+SHOPEEPAY_MERCHANT_EXT_ID="..."
+
+# Stripe
+STRIPE_SECRET_KEY="sk_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
 ```
 
 ## 3. Migrate the database
@@ -52,9 +97,18 @@ pnpm dev
 
 Open <http://localhost:3000>.
 
-## 5. Webhook (payOS)
+## 5. Webhooks (gateways)
 
-payOS needs a public URL to deliver settlement events. For local testing use
+Each gateway needs a public webhook/IPN URL. Register in the provider dashboard:
+
+- payOS: `https://<domain>/api/webhook/payos` (legacy `/api/webhook` also works)
+- MoMo: `https://<domain>/api/webhook/momo`
+- ZaloPay: `https://<domain>/api/webhook/zalopay`
+- VNPay: `https://<domain>/api/webhook/vnpay`
+- ShopeePay: `https://<domain>/api/webhook/shopeepay`
+- Stripe: `https://<domain>/api/webhook/stripe`
+
+For local testing use
 [ngrok](https://ngrok.com/) or [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/):
 
 ```bash

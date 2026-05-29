@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, type ReactElement } from 'react';
 import GridTileImage from '@/components/grid/tile';
+import { toNextImageSrc } from '@/lib/product-image-snapshot';
 import { createUrl } from '@/lib/utils';
 
 type Props = {
@@ -45,11 +46,11 @@ export default function Gallery({ images }: Props): ReactElement {
       <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden">
         {current ? (
           <Image
-            className="h-full w-full object-contain"
+            className="img-fit"
             fill
             sizes="(min-width: 1024px) 66vw, 100vw"
             alt={current.altText}
-            src={current.src}
+            src={toNextImageSrc(current.src)}
             priority
           />
         ) : null}

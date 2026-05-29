@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     categories: Category;
     products: Product;
+    'payment-methods': PaymentMethod;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,6 +83,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -91,8 +93,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-header': SiteHeader;
+  };
+  globalsSelect: {
+    'site-header': SiteHeaderSelect<false> | SiteHeaderSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -167,7 +173,7 @@ export interface Media {
   focalY?: number | null;
 }
 /**
- * Danh mục cửa hàng. Gán sản phẩm vào danh mục từ mục Sản phẩm.
+ * Store categories. Assign products to categories from the Products collection.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories".
@@ -176,13 +182,41 @@ export interface Category {
   id: number;
   title: string;
   /**
-   * Tự động tạo từ tiêu đề khi để trống. Có thể chỉnh sửa thủ công — lưu sẽ chuẩn hóa thành dạng URL.
+   * Auto-generated from the title when empty. You can edit manually — saving normalizes it to a URL-safe slug.
    */
   slug?: string | null;
   /**
-   * Dòng mô tả ngắn hiển thị trên trang chủ và tiêu đề trang danh mục.
+   * Short line shown on the homepage and category page heading.
    */
   subtitle?: string | null;
+  /**
+   * Long-form SEO copy rendered on the category landing page (below the banner, above the product grid). Use H2/H3 headings, lists and links to build topical depth for the target keyword.
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Frequently asked questions shown on the category landing page. Rendered on-page and emitted as FAQPage JSON-LD for rich results.
+   */
+  faq?:
+    | {
+        question: string;
+        answer: string;
+        id?: string | null;
+      }[]
+    | null;
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -195,7 +229,7 @@ export interface Category {
   createdAt: string;
 }
 /**
- * Tạo sản phẩm tại đây, sau đó gán vào Danh mục để hiển thị trên trang chủ.
+ * Create products here, then assign categories so they appear on the storefront.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "products".
@@ -204,28 +238,36 @@ export interface Product {
   id: number;
   title: string;
   /**
-   * Nơi sản phẩm được liệt kê (mục trang chủ, bộ lọc tìm kiếm). Hãy tạo danh mục trong mục Danh mục trước.
+   * Where the product is listed (homepage sections, search filters). Create categories first under Categories. The "On Sale" category is managed automatically by the On Sale checkbox below.
    */
   category: (number | Category)[];
   /**
-   * Tự động tạo từ tiêu đề khi để trống. Có thể chỉnh sửa thủ công — lưu sẽ chuẩn hóa thành dạng URL.
+   * Auto-generated from the title when empty. You can edit manually — saving normalizes it to a URL-safe slug.
    */
   slug?: string | null;
   /**
-   * Giá trị VND (số nguyên). Ví dụ: 150000 tương ứng 150.000₫.
+   * Price in VND (integer). Example: 150000 displays as 150,000₫.
    */
   price: number;
+  /**
+   * Tick to put this product on sale. It is added to the "On Sale" category automatically and the storefront shows the reduced price with the original struck through.
+   */
+  onSale?: boolean | null;
+  /**
+   * Percentage off the price. Example: 20 turns 150,000₫ into 120,000₫.
+   */
+  salePercent?: number | null;
   description?: string | null;
   /**
-   * Khi bỏ chọn, sản phẩm sẽ ẩn khỏi cửa hàng.
+   * When unchecked, the product is hidden from the storefront.
    */
   available?: boolean | null;
   /**
-   * Chọn ảnh từ thư viện Media. URL được lưu vào sản phẩm khi bạn lưu — có thể xóa file Media sau đó.
+   * Main product photo shown first on the storefront. Replacing it removes the previous main image from the extra gallery automatically.
    */
   image?: (number | null) | Media;
   /**
-   * Bản sao URL ảnh trên sản phẩm (tự động khi lưu). Cửa hàng dùng trường này.
+   * Snapshotted image URL (auto-filled on save). The storefront reads this field.
    */
   storedImage?: {
     url?: string | null;
@@ -234,6 +276,9 @@ export interface Product {
     height?: number | null;
     id?: string | null;
   };
+  /**
+   * Add a row, upload the image, wait for the upload to finish, then save the product once with the main Save button (top-right). Do not save the media drawer separately before saving the product.
+   */
   gallery?:
     | {
         media?: (number | null) | Media;
@@ -241,7 +286,7 @@ export interface Product {
       }[]
     | null;
   /**
-   * Bản sao URL gallery — tự động khi lưu sản phẩm.
+   * Snapshotted gallery URLs — auto-filled when the product is saved.
    */
   storedGallery?:
     | {
@@ -249,6 +294,44 @@ export interface Product {
         alt?: string | null;
         width?: number | null;
         height?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional. Multiple variants per product (e.g. color / switch). Leave "Price override" empty to use the main price.
+   */
+  variants?:
+    | {
+        /**
+         * Label on the variant selector button.
+         */
+        name: string;
+        /**
+         * Unique SKU for this variant.
+         */
+        sku: string;
+        /**
+         * VND integer. Empty = use the product price.
+         */
+        priceOverride?: number | null;
+        /**
+         * Stock for this variant only.
+         */
+        stock: number;
+        /**
+         * Optional. When this variant is selected on the storefront, it replaces the main image.
+         */
+        image?: (number | null) | Media;
+        /**
+         * Snapshotted variant image URL (auto-filled on save). Keeps images working if the Media file is deleted.
+         */
+        storedImage?: {
+          url?: string | null;
+          alt?: string | null;
+          width?: number | null;
+          height?: number | null;
+          id?: string | null;
+        };
         id?: string | null;
       }[]
     | null;
@@ -260,6 +343,97 @@ export interface Product {
      */
     image?: (number | null) | Media;
   };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Payment options shown at checkout. Gateway API keys entered here are encrypted before saving and are never sent to the storefront.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-methods".
+ */
+export interface PaymentMethod {
+  id: number;
+  /**
+   * Stable identifier used in orders and code. Lowercase, no spaces (e.g. cod, bank-transfer, payos). Do not change once orders exist.
+   */
+  key: string;
+  /**
+   * Name shown to customers at checkout.
+   */
+  label: string;
+  /**
+   * Short helper text shown under the label at checkout.
+   */
+  description?: string | null;
+  /**
+   * Uncheck to hide this method from checkout without deleting it.
+   */
+  enabled?: boolean | null;
+  /**
+   * Lower numbers appear first.
+   */
+  sortOrder?: number | null;
+  /**
+   * How this method is processed. "Manual transfer" and "Cash" need no API keys; "Gateway" uses a server-configured provider.
+   */
+  kind: 'cod' | 'manual_transfer' | 'gateway';
+  /**
+   * Optional icon/logo shown beside the method.
+   */
+  icon?: (number | null) | Media;
+  /**
+   * Gateway provider used to process this method.
+   */
+  provider?: ('payos' | 'stripe' | 'momo' | 'zalopay' | 'vnpay' | 'shopeepay') | null;
+  /**
+   * API credentials for this gateway. Encrypted before saving — leave credential fields blank when editing to keep existing keys. Register the webhook URL shown in the provider dashboard (see README).
+   */
+  gatewayCredentials?: {
+    /**
+     * Indicates whether encrypted credentials are currently stored.
+     */
+    credentialsConfigured?: boolean | null;
+    /**
+     * Use sandbox/test endpoints for this gateway (uncheck for production).
+     */
+    sandboxMode?: boolean | null;
+    clientId?: string | null;
+    apiKey?: string | null;
+    checksumKey?: string | null;
+    secretKey?: string | null;
+    webhookSecret?: string | null;
+    partnerCode?: string | null;
+    accessKey?: string | null;
+    partnerKey?: string | null;
+    merchantExtId?: string | null;
+    appId?: string | null;
+    key1?: string | null;
+    key2?: string | null;
+    tmnCode?: string | null;
+    hashSecret?: string | null;
+    credentialsEnc?: string | null;
+  };
+  /**
+   * Bank account details shown to the customer to complete the transfer.
+   */
+  transferDetails?: {
+    bankName?: string | null;
+    accountNumber?: string | null;
+    accountHolder?: string | null;
+    /**
+     * Optional prefix for the transfer content. The order code is always appended automatically.
+     */
+    transferNote?: string | null;
+    /**
+     * Static VietQR image customers can scan to pay.
+     */
+    qrImage?: (number | null) | Media;
+  };
+  /**
+   * Extra instructions shown to the customer after they place the order.
+   */
+  instructions?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -302,6 +476,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'products';
         value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'payment-methods';
+        value: number | PaymentMethod;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -394,6 +572,14 @@ export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   subtitle?: T;
+  content?: T;
+  faq?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
   meta?:
     | T
     | {
@@ -413,6 +599,8 @@ export interface ProductsSelect<T extends boolean = true> {
   category?: T;
   slug?: T;
   price?: T;
+  onSale?: T;
+  salePercent?: T;
   description?: T;
   available?: T;
   image?: T;
@@ -440,6 +628,25 @@ export interface ProductsSelect<T extends boolean = true> {
         height?: T;
         id?: T;
       };
+  variants?:
+    | T
+    | {
+        name?: T;
+        sku?: T;
+        priceOverride?: T;
+        stock?: T;
+        image?: T;
+        storedImage?:
+          | T
+          | {
+              url?: T;
+              alt?: T;
+              width?: T;
+              height?: T;
+              id?: T;
+            };
+        id?: T;
+      };
   meta?:
     | T
     | {
@@ -447,6 +654,53 @@ export interface ProductsSelect<T extends boolean = true> {
         description?: T;
         image?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-methods_select".
+ */
+export interface PaymentMethodsSelect<T extends boolean = true> {
+  key?: T;
+  label?: T;
+  description?: T;
+  enabled?: T;
+  sortOrder?: T;
+  kind?: T;
+  icon?: T;
+  provider?: T;
+  gatewayCredentials?:
+    | T
+    | {
+        credentialsConfigured?: T;
+        sandboxMode?: T;
+        clientId?: T;
+        apiKey?: T;
+        checksumKey?: T;
+        secretKey?: T;
+        webhookSecret?: T;
+        partnerCode?: T;
+        accessKey?: T;
+        partnerKey?: T;
+        merchantExtId?: T;
+        appId?: T;
+        key1?: T;
+        key2?: T;
+        tmnCode?: T;
+        hashSecret?: T;
+        credentialsEnc?: T;
+      };
+  transferDetails?:
+    | T
+    | {
+        bankName?: T;
+        accountNumber?: T;
+        accountHolder?: T;
+        transferNote?: T;
+        qrImage?: T;
+      };
+  instructions?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -489,6 +743,117 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Configure the announcement banner and navigation tabs on the storefront header. Each tab can be a single link or a multi-category dropdown. Dropdown tabs open on hover.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-header".
+ */
+export interface SiteHeader {
+  id: number;
+  /**
+   * Thin bar shown below the header (e.g. "International Shipping Available"). Turn off to hide.
+   */
+  announcement?: {
+    enabled?: boolean | null;
+    text?: string | null;
+    /**
+     * Optional. Leave empty for plain text.
+     */
+    link?: string | null;
+    /**
+     * Optional hex color. Defaults to white (light) / dark (dark mode).
+     */
+    backgroundColor?: string | null;
+    /**
+     * Optional hex color. Defaults to near-black (light) / white (dark mode).
+     */
+    textColor?: string | null;
+  };
+  /**
+   * Select any built-in tabs you want to remove from the navbar. Leave empty to keep all of them.
+   */
+  hiddenDefaults?: ('home' | 'shop' | 'categories')[] | null;
+  /**
+   * Tabs you add here appear alongside the default tabs. Use "Hide default tabs" above to remove any of the built-in ones.
+   */
+  tabs?:
+    | {
+        /**
+         * Label shown in the storefront navbar.
+         */
+        label: string;
+        /**
+         * Tab type. "Dropdown" opens on hover.
+         */
+        kind: 'home' | 'all-products' | 'category' | 'custom' | 'dropdown';
+        /**
+         * Links to /search/{category-slug}. Create the category under Categories, then select it here.
+         */
+        category?: (number | null) | Category;
+        /**
+         * Use "/" for internal pages or "http(s)://" for external links.
+         */
+        href?: string | null;
+        /**
+         * When enabled, the dropdown lists every category automatically. Otherwise add child items below.
+         */
+        showAllCategories?: boolean | null;
+        /**
+         * Skip if "List all categories" is enabled above.
+         */
+        dropdownItems?:
+          | {
+              /**
+               * Leave empty to use the category name.
+               */
+              label?: string | null;
+              category: number | Category;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-header_select".
+ */
+export interface SiteHeaderSelect<T extends boolean = true> {
+  announcement?:
+    | T
+    | {
+        enabled?: T;
+        text?: T;
+        link?: T;
+        backgroundColor?: T;
+        textColor?: T;
+      };
+  hiddenDefaults?: T;
+  tabs?:
+    | T
+    | {
+        label?: T;
+        kind?: T;
+        category?: T;
+        href?: T;
+        showAllCategories?: T;
+        dropdownItems?:
+          | T
+          | {
+              label?: T;
+              category?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

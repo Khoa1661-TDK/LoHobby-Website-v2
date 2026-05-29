@@ -1,7 +1,7 @@
 // app/(payload)/admin/orders/page.tsx
 import Link from 'next/link';
 import type { ReactElement } from 'react';
-import type { DeliveryMethod, OrderStatus, PaymentMethod } from '@/generated/prisma/enums';
+import type { DeliveryMethod, OrderStatus } from '@/generated/prisma/enums';
 import { prisma } from '@/lib/prisma';
 import OrderStatusSelect from './status-select';
 
@@ -16,7 +16,7 @@ type OrderRow = {
   customerName: string;
   phoneNumber: string;
   deliveryMethod: DeliveryMethod | null;
-  paymentMethod: PaymentMethod | null;
+  paymentLabel: string;
   status: OrderStatus;
   createdAt: Date;
 };
@@ -34,6 +34,7 @@ async function loadOrders(): Promise<OrderRow[]> {
       buyerPhone: true,
       deliveryMethod: true,
       paymentMethod: true,
+      paymentMethodKey: true,
       status: true,
       createdAt: true,
     },
@@ -45,7 +46,7 @@ async function loadOrders(): Promise<OrderRow[]> {
     customerName: order.customerName ?? order.buyerName ?? '—',
     phoneNumber: order.phoneNumber ?? order.buyerPhone ?? '—',
     deliveryMethod: order.deliveryMethod,
-    paymentMethod: order.paymentMethod,
+    paymentLabel: order.paymentMethodKey ?? order.paymentMethod ?? '—',
     status: order.status,
     createdAt: order.createdAt,
   }));
@@ -110,7 +111,7 @@ export default async function AdminOrdersPage(): Promise<ReactElement> {
                       {order.deliveryMethod ?? '—'}
                     </td>
                     <td className="px-4 py-3 text-neutral-700">
-                      {order.paymentMethod ?? '—'}
+                      {order.paymentLabel}
                     </td>
                     <td className="px-4 py-3 text-neutral-600">
                       {dateFormatter.format(order.createdAt)}

@@ -5,12 +5,15 @@ import { postgresAdapter } from '@payloadcms/db-postgres';
 import { seoPlugin } from '@payloadcms/plugin-seo';
 import type { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import { en } from '@payloadcms/translations/languages/en';
 import { buildConfig } from 'payload';
 import sharp from 'sharp';
 import { Categories } from './src/payload/collections/Categories';
 import { Media } from './src/payload/collections/Media';
+import { PaymentMethods } from './src/payload/collections/PaymentMethods';
 import { Products } from './src/payload/collections/Products';
 import { Users } from './src/payload/collections/Users';
+import { SiteHeader } from './src/payload/globals/SiteHeader';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -54,15 +57,20 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     meta: {
-      titleSuffix: ' — Quản trị',
+      titleSuffix: ' — Admin',
     },
+  },
+  i18n: {
+    fallbackLanguage: 'en',
+    supportedLanguages: { en },
   },
   routes: {
     admin: '/admin',
     api: '/admin/api',
   },
   editor: lexicalEditor(),
-  collections: [Users, Media, Categories, Products],
+  collections: [Users, Media, Categories, Products, PaymentMethods],
+  globals: [SiteHeader],
   db: postgresAdapter({
     pool: { connectionString: databaseUrl },
     schemaName: 'payload',
