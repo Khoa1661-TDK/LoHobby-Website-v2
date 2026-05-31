@@ -9,12 +9,33 @@ import {
   getSiteName,
 } from '@/lib/brand';
 import { darkenHex, hexToRgbTriplet, normalizeHexColor } from '@/lib/color-utils';
+import { fontCssVariables, resolveFontPreset, type FontPreset } from '@/lib/store-fonts';
 import { normalizeProductImageUrl } from '@/lib/product-image-snapshot';
 import { getStoreSettings, type ResolvedStoreSettings } from '@/lib/store-settings';
 
 export type SocialLink = {
   label: string;
   url: string;
+};
+
+export type HeroBannerSettings = {
+  enabled: boolean;
+  eyebrow: string | null;
+  title: string | null;
+  subtitle: string | null;
+  ctaLabel: string;
+  ctaUrl: string;
+  imageUrl: string | null;
+  showCarousel: boolean;
+  carouselTitle: string;
+};
+
+export type FooterSettings = {
+  tagline: string;
+  description: string;
+  origin: string | null;
+  credit: string | null;
+  showNewsletter: boolean;
 };
 
 export type StoreBranding = {
@@ -29,7 +50,13 @@ export type StoreBranding = {
   faviconUrl: string | null;
   primaryColor: string;
   primaryColorHover: string;
+  /** Secondary brand color (buttons accents, badges). */
+  secondaryColor: string;
+  /** @deprecated Use secondaryColor */
   accentColor: string;
+  fontPreset: FontPreset;
+  hero: HeroBannerSettings;
+  footer: FooterSettings;
   footerCredit: string | null;
   socialLinks: SocialLink[];
   contact: {
@@ -41,13 +68,13 @@ export type StoreBranding = {
 
 type MediaLike = {
   url?: string | null;
-  alt?: string | null;
-  width?: number | null;
-  height?: number | null;
 };
 
 const DEFAULT_PRIMARY = normalizeHexColor(process.env.NEXT_PUBLIC_BRAND_PRIMARY, '#000000');
-const DEFAULT_ACCENT = normalizeHexColor(process.env.NEXT_PUBLIC_BRAND_ACCENT, '#737373');
+const DEFAULT_SECONDARY = normalizeHexColor(
+  process.env.NEXT_PUBLIC_BRAND_SECONDARY ?? process.env.NEXT_PUBLIC_BRAND_ACCENT,
+  '#737373',
+);
 
 function resolveMediaUrl(field: unknown): string | null {
   if (typeof field !== 'object' || field === null) return null;
@@ -71,6 +98,45 @@ function resolveSocialLinks(raw: unknown): SocialLink[] {
   return links;
 }
 
+function resolveHero(raw: Record<string, unknown> | null, storeName: string, tagline: string): HeroBannerSettings {
+  const eyebrow =
+    typeof raw?.heroEyebrow === 'string' && raw.heroEyebrow.trim().length > 0
+      ? raw.heroEyebrow.trim()
+      : null;
+  const title =
+    typeof raw?.heroTitle === 'string' && raw.heroTitle.trim().length > 0
+      ? raw.heroTitle.trim()
+      : null;
+  const subtitle =
+    typeof raw?.heroSubtitle === 'string' && raw.heroSubtitle.trim().length > 0
+      ? raw.heroSubtitle.trim()
+      : tagline;
+  const ctaLabel =
+    typeof raw?.heroCtaLabel === 'string' && raw.heroCtaLabel.trim().length > 0
+      ? raw.heroCtaLabel.trim()
+      : 'Shop now';
+  const ctaUrl =
+    typeof raw?.heroCtaUrl === 'string' && raw.heroCtaUrl.trim().length > 0
+      ? raw.heroCtaUrl.trim()
+      : '/search';
+  const carouselTitle =
+    typeof raw?.heroCarouselTitle === 'string' && raw.heroCarouselTitle.trim().length > 0
+      ? raw.heroCarouselTitle.trim()
+      : 'New arrivals';
+
+  return {
+    enabled: raw?.heroEnabled !== false,
+    eyebrow,
+    title: title ?? storeName,
+    subtitle,
+    ctaLabel,
+    ctaUrl,
+    imageUrl: resolveMediaUrl(raw?.heroImage),
+    showCarousel: raw?.heroShowCarousel !== false,
+    carouselTitle,
+  };
+}
+
 /** Map Payload global + env defaults into a reusable white-label branding object. */
 export function resolveStoreBranding(
   settings: ResolvedStoreSettings,
@@ -85,7 +151,7 @@ export function resolveStoreBranding(
   const origin =
     typeof raw?.brandOrigin === 'string' && raw.brandOrigin.trim().length > 0
       ? raw.brandOrigin.trim()
-      : BRAND_ORIGIN;
+      : BRAND_ORIGIN || null;
   const description =
     typeof raw?.storeDescription === 'string' && raw.storeDescription.trim().length > 0
       ? raw.storeDescription.trim()
@@ -105,14 +171,26 @@ export function resolveStoreBranding(
     typeof raw?.primaryColor === 'string' ? raw.primaryColor : null,
     DEFAULT_PRIMARY,
   );
-  const accentColor = normalizeHexColor(
-    typeof raw?.accentColor === 'string' ? raw.accentColor : null,
-    DEFAULT_ACCENT,
+  const secondaryColor = normalizeHexColor(
+    typeof raw?.secondaryColor === 'string'
+      ? raw.secondaryColor
+      : typeof raw?.accentColor === 'string'
+        ? raw.accentColor
+        : null,
+    DEFAULT_SECONDARY,
   );
   const footerCredit =
     typeof raw?.footerCredit === 'string' && raw.footerCredit.trim().length > 0
       ? raw.footerCredit.trim()
       : process.env.NEXT_PUBLIC_FOOTER_CREDIT?.trim() || null;
+
+  const footerDescription =
+    typeof raw?.footerDescription === 'string' && raw.footerDescription.trim().length > 0
+      ? raw.footerDescription.trim()
+      : descriptionShort;
+
+  const fontPreset = resolveFontPreset(raw?.fontPreset);
+  const hero = resolveHero(raw, storeName, tagline);
 
   return {
     storeName,
@@ -126,7 +204,17 @@ export function resolveStoreBranding(
     faviconUrl,
     primaryColor,
     primaryColorHover: darkenHex(primaryColor, 12),
-    accentColor,
+    secondaryColor,
+    accentColor: secondaryColor,
+    fontPreset,
+    hero,
+    footer: {
+      tagline,
+      description: footerDescription,
+      origin,
+      credit: footerCredit,
+      showNewsletter: raw?.footerShowNewsletter !== false,
+    },
     footerCredit,
     socialLinks: resolveSocialLinks(raw?.socialLinks),
     contact: {
@@ -146,16 +234,13 @@ export async function getStoreBranding(): Promise<StoreBranding> {
 /** CSS custom properties injected by BrandTheme for Tailwind brand tokens. */
 export function brandingCssVariables(branding: StoreBranding): Record<string, string> {
   return {
+    ...fontCssVariables(branding.fontPreset),
     '--brand-primary': branding.primaryColor,
     '--brand-primary-hover': branding.primaryColorHover,
     '--brand-primary-rgb': hexToRgbTriplet(branding.primaryColor),
-    '--brand-accent': branding.accentColor,
-    '--brand-accent-rgb': hexToRgbTriplet(branding.accentColor),
+    '--brand-secondary': branding.secondaryColor,
+    '--brand-accent': branding.secondaryColor,
+    '--brand-secondary-rgb': hexToRgbTriplet(branding.secondaryColor),
+    '--brand-accent-rgb': hexToRgbTriplet(branding.secondaryColor),
   };
-}
-
-export function brandingStyleAttribute(
-  branding: StoreBranding,
-): Record<string, string | number> {
-  return brandingCssVariables(branding);
 }

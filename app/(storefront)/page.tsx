@@ -76,7 +76,7 @@ export default async function HomePage(): Promise<ReactElement> {
         dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(organizationJsonLd) }}
       />
 
-      <NewArrivalsHero products={heroProducts} categories={categories} />
+      <NewArrivalsHero branding={branding} products={heroProducts} categories={categories} />
 
       <PersonalizedRecommendations />
 

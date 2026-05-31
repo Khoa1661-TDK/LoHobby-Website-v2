@@ -2,6 +2,7 @@
 import type { GlobalAfterChangeHook, GlobalConfig } from 'payload';
 import { payloadAdminAccess } from '@/lib/payload-access';
 import { revalidateStoreSettingsCache } from '@/lib/store-settings';
+import { FONT_PRESET_VALUES } from '@/lib/store-fonts';
 
 const invalidateOnChange: GlobalAfterChangeHook = ({ doc }) => {
   try {
@@ -17,7 +18,7 @@ export const StoreSettings: GlobalConfig = {
   label: 'Store settings',
   admin: {
     description:
-      'Store identity, branding, contact details, and policy links for the storefront and SEO.',
+      'White-label storefront appearance: logo, colors, fonts, hero, footer, and social links.',
     group: 'Settings',
   },
   access: {
@@ -32,15 +33,14 @@ export const StoreSettings: GlobalConfig = {
       type: 'tabs',
       tabs: [
         {
-          label: 'Identity',
+          label: 'Logo',
           fields: [
             {
               name: 'storeName',
               type: 'text',
               label: 'Store name',
               admin: {
-                placeholder: 'My Store',
-                description: 'Overrides NEXT_PUBLIC_SITE_NAME when set.',
+                description: 'Used in navbar, SEO, and hero when no custom hero title is set.',
               },
             },
             {
@@ -49,19 +49,6 @@ export const StoreSettings: GlobalConfig = {
               label: 'Store subtitle',
               admin: {
                 description: 'Optional line shown under the logo on marketing pages.',
-              },
-            },
-            {
-              name: 'footerTagline',
-              type: 'text',
-              label: 'Footer tagline',
-            },
-            {
-              name: 'brandOrigin',
-              type: 'text',
-              label: 'Origin / badge line',
-              admin: {
-                description: 'Small uppercase line under the tagline (e.g. "Made in Vietnam").',
               },
             },
             {
@@ -81,7 +68,7 @@ export const StoreSettings: GlobalConfig = {
                   label: 'Logo (dark mode)',
                   admin: {
                     width: '33%',
-                    description: 'Optional. If empty, the main logo is used (may auto-invert).',
+                    description: 'Optional. Falls back to main logo with invert filter.',
                   },
                 },
                 {
@@ -94,51 +81,212 @@ export const StoreSettings: GlobalConfig = {
               ],
             },
             {
-              type: 'row',
-              fields: [
-                {
-                  name: 'primaryColor',
-                  type: 'text',
-                  label: 'Primary color',
-                  defaultValue: '#000000',
-                  admin: {
-                    width: '50%',
-                    placeholder: '#2563eb',
-                    description: 'Hex color for buttons, links, and accents.',
-                  },
-                },
-                {
-                  name: 'accentColor',
-                  type: 'text',
-                  label: 'Accent color',
-                  defaultValue: '#737373',
-                  admin: {
-                    width: '50%',
-                    placeholder: '#f59e0b',
-                  },
-                },
-              ],
-            },
-            {
               name: 'storeDescription',
               type: 'textarea',
               label: 'SEO description',
-              admin: {
-                description: 'Default meta description for the storefront.',
-              },
             },
             {
               name: 'storeDescriptionShort',
               type: 'text',
               label: 'Short description',
               admin: {
-                description: 'Used in PWA manifest, welcome toast, and compact UI.',
+                description: 'PWA manifest, welcome toast, and compact UI.',
               },
             },
           ],
         },
         {
-          label: 'Contact & policies',
+          label: 'Primary color',
+          fields: [
+            {
+              name: 'primaryColor',
+              type: 'text',
+              label: 'Primary color',
+              defaultValue: '#000000',
+              admin: {
+                placeholder: '#2563eb',
+                description: 'Buttons, links, and primary accents (hex).',
+              },
+            },
+          ],
+        },
+        {
+          label: 'Secondary color',
+          fields: [
+            {
+              name: 'secondaryColor',
+              type: 'text',
+              label: 'Secondary color',
+              defaultValue: '#737373',
+              admin: {
+                placeholder: '#f59e0b',
+                description: 'Secondary accents, badges, and highlights (hex).',
+              },
+            },
+            {
+              name: 'accentColor',
+              type: 'text',
+              admin: {
+                hidden: true,
+                description: 'Legacy field — use Secondary color instead.',
+              },
+            },
+          ],
+        },
+        {
+          label: 'Font',
+          fields: [
+            {
+              name: 'fontPreset',
+              type: 'select',
+              label: 'Font pairing',
+              defaultValue: 'jakarta',
+              options: FONT_PRESET_VALUES.map((value) => ({
+                label:
+                  value === 'jakarta'
+                    ? 'Plus Jakarta Sans + Fraunces (default)'
+                    : value === 'inter'
+                      ? 'Inter'
+                      : value === 'roboto'
+                        ? 'Roboto'
+                        : 'System fonts',
+                value,
+              })),
+              admin: {
+                description: 'Controls body and heading fonts across the storefront.',
+              },
+            },
+          ],
+        },
+        {
+          label: 'Hero banner',
+          fields: [
+            {
+              name: 'heroEnabled',
+              type: 'checkbox',
+              label: 'Show homepage hero',
+              defaultValue: true,
+            },
+            {
+              name: 'heroEyebrow',
+              type: 'text',
+              label: 'Eyebrow text',
+              admin: {
+                description: 'Small label above the hero title (e.g. "New collection · Free shipping").',
+              },
+            },
+            {
+              name: 'heroTitle',
+              type: 'text',
+              label: 'Hero title',
+              admin: {
+                description: 'Leave empty to use the store name.',
+              },
+            },
+            {
+              name: 'heroSubtitle',
+              type: 'textarea',
+              label: 'Hero subtitle',
+            },
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'heroCtaLabel',
+                  type: 'text',
+                  label: 'CTA button label',
+                  admin: { width: '50%', placeholder: 'Shop now' },
+                },
+                {
+                  name: 'heroCtaUrl',
+                  type: 'text',
+                  label: 'CTA button URL',
+                  admin: { width: '50%', placeholder: '/search' },
+                },
+              ],
+            },
+            {
+              name: 'heroImage',
+              type: 'upload',
+              relationTo: 'media',
+              label: 'Hero background image',
+              admin: {
+                description: 'Optional wide banner image behind the hero text.',
+              },
+            },
+            {
+              name: 'heroShowCarousel',
+              type: 'checkbox',
+              label: 'Show product carousel',
+              defaultValue: true,
+            },
+            {
+              name: 'heroCarouselTitle',
+              type: 'text',
+              label: 'Carousel section title',
+              defaultValue: 'New arrivals',
+            },
+          ],
+        },
+        {
+          label: 'Footer',
+          fields: [
+            {
+              name: 'footerTagline',
+              type: 'text',
+              label: 'Footer tagline',
+            },
+            {
+              name: 'brandOrigin',
+              type: 'text',
+              label: 'Origin / badge line',
+              admin: {
+                description: 'Small uppercase line in the footer (e.g. "Made in Vietnam").',
+              },
+            },
+            {
+              name: 'footerDescription',
+              type: 'textarea',
+              label: 'Footer description',
+              admin: {
+                description: 'Short blurb in the footer about column. Falls back to short store description.',
+              },
+            },
+            {
+              name: 'footerCredit',
+              type: 'text',
+              label: 'Footer credit line',
+              admin: {
+                description: 'Optional small print at the bottom (e.g. agency credit).',
+              },
+            },
+            {
+              name: 'footerShowNewsletter',
+              type: 'checkbox',
+              label: 'Show newsletter signup',
+              defaultValue: true,
+            },
+          ],
+        },
+        {
+          label: 'Social links',
+          fields: [
+            {
+              name: 'socialLinks',
+              type: 'array',
+              label: 'Social profiles',
+              admin: {
+                description: 'Shown as icon links in the footer. Leave empty to use env defaults.',
+              },
+              fields: [
+                { name: 'label', type: 'text', required: true, label: 'Platform' },
+                { name: 'url', type: 'text', required: true, label: 'URL' },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Contact & checkout',
           fields: [
             {
               type: 'row',
@@ -167,17 +315,11 @@ export const StoreSettings: GlobalConfig = {
               type: 'text',
               label: 'Currency code',
               defaultValue: 'VND',
-              admin: {
-                description: 'ISO 4217 code shown in checkout copy (amounts stay VND integers).',
-              },
             },
             {
               name: 'checkoutNote',
               type: 'textarea',
               label: 'Checkout note',
-              admin: {
-                description: 'Optional message shown on the checkout page (e.g. processing times).',
-              },
             },
             {
               type: 'row',
@@ -196,26 +338,6 @@ export const StoreSettings: GlobalConfig = {
                 },
               ],
             },
-            {
-              name: 'footerCredit',
-              type: 'text',
-              label: 'Footer credit line',
-              admin: {
-                description: 'Optional small print in the footer (e.g. developer credit).',
-              },
-            },
-            {
-              name: 'socialLinks',
-              type: 'array',
-              label: 'Social links',
-              admin: {
-                description: 'Shown in the footer. Leave empty to use env defaults.',
-              },
-              fields: [
-                { name: 'label', type: 'text', required: true },
-                { name: 'url', type: 'text', required: true },
-              ],
-            },
           ],
         },
         {
@@ -226,9 +348,6 @@ export const StoreSettings: GlobalConfig = {
               type: 'checkbox',
               label: 'Enable tax calculation',
               defaultValue: false,
-              admin: {
-                description: 'When enabled, VAT/sales tax is added at checkout based on the rate below.',
-              },
             },
             {
               name: 'taxRatePercent',
@@ -240,8 +359,6 @@ export const StoreSettings: GlobalConfig = {
               admin: {
                 step: 1,
                 condition: (_data, sibling) => Boolean(sibling?.taxEnabled),
-                description:
-                  'Applied to subtotal minus coupon discount (before shipping). Example: 10 = 10% VAT.',
               },
             },
           ],

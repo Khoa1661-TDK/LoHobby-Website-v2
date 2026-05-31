@@ -132,7 +132,7 @@ async function fetchStoreSettings(): Promise<ResolvedStoreSettings> {
   }
 }
 
-const getCachedStoreSettings = unstable_cache(fetchStoreSettings, ['store-settings-v3'], {
+const getCachedStoreSettings = unstable_cache(fetchStoreSettings, ['store-settings-v4'], {
   revalidate: false,
   tags: [STORE_SETTINGS_TAG],
 });

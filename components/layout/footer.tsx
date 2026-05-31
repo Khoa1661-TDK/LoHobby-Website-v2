@@ -96,11 +96,11 @@ export default async function Footer(): Promise<ReactElement> {
           <div className="lg:max-w-sm">
             <p className="font-serif text-lg font-bold text-white">{branding.storeName}</p>
             <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-              {branding.descriptionShort} {branding.tagline}.
+              {branding.footer.description} {branding.footer.tagline}.
             </p>
-            {branding.origin ? (
+            {branding.footer.origin ? (
               <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.3em] text-neutral-500">
-                {branding.origin}
+                {branding.footer.origin}
               </p>
             ) : null}
 
@@ -145,12 +145,14 @@ export default async function Footer(): Promise<ReactElement> {
           <FooterLinkList title="Hỗ trợ" links={supportLinks} />
           <FooterLinkList title="Chính sách" links={policyLinks} />
 
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white">Bản tin</h3>
-            <div className="mt-4">
-              <FooterNewsletter />
+          {branding.footer.showNewsletter ? (
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-white">Newsletter</h3>
+              <div className="mt-4">
+                <FooterNewsletter />
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
 
@@ -159,7 +161,7 @@ export default async function Footer(): Promise<ReactElement> {
           <p>
             &copy; {currentYear} {branding.storeName}. Bảo lưu mọi quyền.
           </p>
-          {branding.footerCredit ? <p>{branding.footerCredit}</p> : null}
+          {branding.footer.credit ? <p>{branding.footer.credit}</p> : null}
         </div>
       </div>
     </footer>

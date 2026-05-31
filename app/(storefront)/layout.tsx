@@ -1,5 +1,5 @@
 // app/(storefront)/layout.tsx
-import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
+import { Fraunces, Inter, Plus_Jakarta_Sans, Roboto } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactElement, ReactNode } from 'react';
 import { Suspense } from 'react';
@@ -25,6 +25,19 @@ const jakarta = Plus_Jakarta_Sans({
 const fraunces = Fraunces({
   subsets: ['latin', 'vietnamese'],
   variable: '--font-fraunces',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const roboto = Roboto({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '500', '700'],
+  variable: '--font-roboto',
   display: 'swap',
 });
 
@@ -116,7 +129,7 @@ export default async function StorefrontLayout({
   return (
     <html
       lang="vi"
-      className={`${jakarta.variable} ${fraunces.variable}`}
+      className={`${jakarta.variable} ${fraunces.variable} ${inter.variable} ${roboto.variable}`}
       suppressHydrationWarning
     >
       <head>

@@ -13,8 +13,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
-        serif: ['var(--font-fraunces)', 'Georgia', 'serif'],
+        sans: ['var(--font-sans-active, var(--font-jakarta))', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif-active, var(--font-fraunces))', 'Georgia', 'serif'],
       },
       keyframes: {
         fade: { from: { opacity: '0' }, to: { opacity: '1' } },
@@ -73,7 +73,7 @@ const config: Config = {
           200: '#e5e5e5',
           300: '#d4d4d4',
           400: '#a3a3a3',
-          500: 'var(--brand-accent, #737373)',
+          500: 'var(--brand-secondary, var(--brand-accent, #737373))',
           600: '#525252',
           700: '#404040',
           800: '#262626',
