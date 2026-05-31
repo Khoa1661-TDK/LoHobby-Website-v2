@@ -3,7 +3,8 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition, type FormEvent, type ReactElement } from 'react';
+import { useSession } from 'next-auth/react';
+import { useEffect, useState, useTransition, type FormEvent, type ReactElement } from 'react';
 import { toast } from 'sonner';
 import { updateProfileAction } from '@/app/(storefront)/profile/actions';
 import type { ProfileUser } from '@/app/(storefront)/profile/types';
@@ -14,9 +15,15 @@ type Props = {
 
 export default function AccountPanel({ user }: Props): ReactElement {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const [name, setName] = useState<string>(user.name ?? '');
   const [image, setImage] = useState<string>(user.image ?? '');
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setName(user.name ?? '');
+    setImage(user.image ?? '');
+  }, [user.name, user.image]);
 
   const initial = (name.trim().charAt(0) || user.email.charAt(0) || 'P').toUpperCase();
   const previewSrc = image.trim().length > 0 ? image.trim() : null;
@@ -27,6 +34,7 @@ export default function AccountPanel({ user }: Props): ReactElement {
     startTransition(async () => {
       const result = await updateProfileAction(formData);
       if (result.ok) {
+        await updateSession();
         toast.success('Đã cập nhật hồ sơ.');
         router.refresh();
       } else {

@@ -201,6 +201,15 @@ export default function OrdersPanel({ orders }: Props): ReactElement {
                       className="sm:col-span-1"
                     />
                   </dl>
+
+                  <div className="mt-4 text-right">
+                    <Link
+                      href={`/profile/orders/${order.orderCode}`}
+                      className="text-sm font-medium text-filament-600 hover:underline dark:text-filament-300"
+                    >
+                      Xem chi tiết →
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>

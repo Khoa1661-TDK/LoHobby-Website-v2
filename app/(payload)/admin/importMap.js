@@ -26,8 +26,20 @@ import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { MetaImageComponent as MetaImageComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
+import { ExportListMenuItem as ExportListMenuItem_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
+import { ImportListMenuItem as ImportListMenuItem_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
+import { SortBy as SortBy_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
+import { FieldsToExport as FieldsToExport_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
+import { CollectionField as CollectionField_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
+import { WhereField as WhereField_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
+import { Preview as Preview_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { HeaderDropdownItemRowLabel as HeaderDropdownItemRowLabel_e020642e91f91dd59cec6f75d1f6c02c } from '@/src/payload/components/HeaderDropdownItemRowLabel'
 import { HeaderTabRowLabel as HeaderTabRowLabel_9e5a08b5dcee3047768f1fdddf070d7d } from '@/src/payload/components/HeaderTabRowLabel'
+import { Nav as Nav_843028945cda50810eba35c5314c6296 } from '@shopnex/sidebar-plugin/rsc'
+import { QuickActions as QuickActions_c473cfc8237cb5375a757ad784076201 } from '@shopnex/quick-actions-plugin/client'
+import { ImportExportProvider as ImportExportProvider_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
+import { CommandBar as CommandBar_c473cfc8237cb5375a757ad784076201 } from '@shopnex/quick-actions-plugin/client'
+import { AnalyticsDashboard as AnalyticsDashboard_be54e284e51e255b95c0e9ff4e1ceda3 } from '@/src/payload/components/AnalyticsDashboard'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -60,7 +72,19 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#MetaImageComponent": MetaImageComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
+  "@shopnex/import-export-plugin/rsc#ExportListMenuItem": ExportListMenuItem_2cddc2e1d3f965d7263141af56b26a90,
+  "@shopnex/import-export-plugin/rsc#ImportListMenuItem": ImportListMenuItem_2cddc2e1d3f965d7263141af56b26a90,
+  "@shopnex/import-export-plugin/rsc#SortBy": SortBy_2cddc2e1d3f965d7263141af56b26a90,
+  "@shopnex/import-export-plugin/rsc#FieldsToExport": FieldsToExport_2cddc2e1d3f965d7263141af56b26a90,
+  "@shopnex/import-export-plugin/rsc#CollectionField": CollectionField_2cddc2e1d3f965d7263141af56b26a90,
+  "@shopnex/import-export-plugin/rsc#WhereField": WhereField_2cddc2e1d3f965d7263141af56b26a90,
+  "@shopnex/import-export-plugin/rsc#Preview": Preview_2cddc2e1d3f965d7263141af56b26a90,
   "@/src/payload/components/HeaderDropdownItemRowLabel#HeaderDropdownItemRowLabel": HeaderDropdownItemRowLabel_e020642e91f91dd59cec6f75d1f6c02c,
   "@/src/payload/components/HeaderTabRowLabel#HeaderTabRowLabel": HeaderTabRowLabel_9e5a08b5dcee3047768f1fdddf070d7d,
+  "@shopnex/sidebar-plugin/rsc#Nav": Nav_843028945cda50810eba35c5314c6296,
+  "@shopnex/quick-actions-plugin/client#QuickActions": QuickActions_c473cfc8237cb5375a757ad784076201,
+  "@shopnex/import-export-plugin/rsc#ImportExportProvider": ImportExportProvider_2cddc2e1d3f965d7263141af56b26a90,
+  "@shopnex/quick-actions-plugin/client#CommandBar": CommandBar_c473cfc8237cb5375a757ad784076201,
+  "@/src/payload/components/AnalyticsDashboard#AnalyticsDashboard": AnalyticsDashboard_be54e284e51e255b95c0e9ff4e1ceda3,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

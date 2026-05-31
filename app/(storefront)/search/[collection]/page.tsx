@@ -5,10 +5,14 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';
 import CategoryBanner from '@/components/home/category-banner';
+import Breadcrumbs from '@/components/layout/breadcrumbs';
+import Pagination from '@/components/pagination';
 import ProductGrid from '@/components/product/product-grid';
 import { getSiteName } from '@/lib/brand';
 import { toStoreCategory } from '@/lib/categories';
 import { defaultSort, sorting } from '@/lib/constants';
+import { paginateList } from '@/lib/listing-pagination';
+import { applyProductFilters, parseProductFilters } from '@/lib/product-filters';
 import {
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
@@ -24,7 +28,7 @@ const siteName = getSiteName();
 export const revalidate = 60;
 
 type Params = Promise<{ collection: string }>;
-type SearchParams = Promise<{ sort?: string }>;
+type SearchParams = Promise<Record<string, string | undefined>>;
 
 export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
   const { collection } = await props.params;
@@ -37,6 +41,7 @@ export async function generateMetadata(props: { params: Params }): Promise<Metad
     data.description ||
     `Mua ${data.title} in 3D theo yêu cầu tại ${siteName}. Nhựa PLA/PETG an toàn, in theo mẫu riêng, giao toàn quốc, thanh toán VietQR.`;
   const canonical = categoryCanonicalPath(data.handle);
+  const seoImage = data.seoImage;
 
   return {
     title,
@@ -53,11 +58,24 @@ export async function generateMetadata(props: { params: Params }): Promise<Metad
       description,
       url: absoluteUrl(canonical),
       siteName,
+      ...(seoImage
+        ? {
+            images: [
+              {
+                url: seoImage.url,
+                width: seoImage.width,
+                height: seoImage.height,
+                alt: seoImage.altText || data.title,
+              },
+            ],
+          }
+        : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      ...(seoImage ? { images: [seoImage.url] } : {}),
     },
   };
 }
@@ -70,25 +88,36 @@ export default async function CategoryPage(props: {
   const data = await getCollection(collection);
   if (!data) return notFound();
 
-  const { sort } = await props.searchParams;
-  const sortOption = sorting.find((item) => item.slug === sort) ?? defaultSort;
+  const searchParams = await props.searchParams;
+  const sortOption = sorting.find((item) => item.slug === searchParams.sort) ?? defaultSort;
 
-  const products = await getCollectionProducts({
+  const allProducts = await getCollectionProducts({
     collection,
     reverse: sortOption.reverse,
     sortKey: sortOption.sortKey,
   });
+
+  const filters = parseProductFilters(searchParams);
+  const filteredProducts = applyProductFilters(allProducts, filters);
+
+  const { page: products, currentPage, totalPages } = paginateList(
+    filteredProducts,
+    searchParams.page,
+  );
 
   const categoryMeta = toStoreCategory({
     handle: collection,
     title: data.title,
     description: data.description,
   });
-  const featured = products[0];
+  const featured = allProducts[0];
+  // Prefer the category's own product imagery (CMS media) over an external
+  // placeholder so the banner stays self-hosted and fast.
   const bannerImage =
-    categoryMeta?.bannerSeed && featured
+    featured?.featuredImage.url ??
+    (categoryMeta?.bannerSeed
       ? `https://picsum.photos/seed/${categoryMeta.bannerSeed}/1600/640`
-      : featured?.featuredImage.url;
+      : undefined);
 
   const content = (data.content ?? null) as SerializedEditorState | null;
   const faq = data.faq ?? [];
@@ -133,11 +162,19 @@ export default async function CategoryPage(props: {
         />
       ) : null}
 
+      <Breadcrumbs
+        items={[
+          { name: 'Trang chủ', href: '/' },
+          { name: 'Cửa hàng', href: '/search' },
+          { name: data.title },
+        ]}
+      />
+
       {categoryMeta && bannerImage && featured ? (
         <CategoryBanner
           category={categoryMeta}
           bannerImage={bannerImage}
-          productCount={products.length}
+          productCount={allProducts.length}
         />
       ) : (
         <header className="mb-6">
@@ -159,9 +196,16 @@ export default async function CategoryPage(props: {
         Sản phẩm {data.title} nổi bật
       </h2>
       {products.length === 0 ? (
-        <p className="py-8 text-center text-neutral-500">Chưa có sản phẩm trong danh mục này.</p>
+        <p className="py-8 text-center text-neutral-500">
+          {allProducts.length === 0
+            ? 'Chưa có sản phẩm trong danh mục này.'
+            : 'Không có sản phẩm phù hợp với bộ lọc. Hãy thử điều chỉnh bộ lọc.'}
+        </p>
       ) : (
-        <ProductGrid products={products} />
+        <>
+          <ProductGrid products={products} />
+          <Pagination currentPage={currentPage} totalPages={totalPages} />
+        </>
       )}
 
       {faq.length > 0 ? (

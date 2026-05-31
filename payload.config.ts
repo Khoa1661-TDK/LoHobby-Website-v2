@@ -2,18 +2,25 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { postgresAdapter } from '@payloadcms/db-postgres';
-import { seoPlugin } from '@payloadcms/plugin-seo';
-import type { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { en } from '@payloadcms/translations/languages/en';
 import { buildConfig } from 'payload';
 import sharp from 'sharp';
+import { Carts } from './src/payload/collections/Carts';
 import { Categories } from './src/payload/collections/Categories';
+import { ContentPages } from './src/payload/collections/ContentPages';
 import { Media } from './src/payload/collections/Media';
+import { Orders } from './src/payload/collections/Orders';
 import { PaymentMethods } from './src/payload/collections/PaymentMethods';
+import { ProductVariants } from './src/payload/collections/ProductVariants';
 import { Products } from './src/payload/collections/Products';
+import { StoreCustomers } from './src/payload/collections/StoreCustomers';
 import { Users } from './src/payload/collections/Users';
+import { DropshipSettings } from './src/payload/globals/DropshipSettings';
+import { ShippingSettings } from './src/payload/globals/ShippingSettings';
 import { SiteHeader } from './src/payload/globals/SiteHeader';
+import { StoreSettings } from './src/payload/globals/StoreSettings';
+import { shopnexPlugins } from './src/payload/plugins';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -28,36 +35,19 @@ if (!payloadSecret) {
   throw new Error('PAYLOAD_SECRET (or AUTH_SECRET fallback) must be set');
 }
 
-const storeName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Our Store';
-
-const appBaseUrl =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  'http://localhost:3000';
-
-const generateSeoTitle: GenerateTitle = ({ doc }) => {
-  const title = typeof doc?.title === 'string' ? doc.title : '';
-  return title ? `${title} | ${storeName}` : storeName;
-};
-
-const generateSeoURL: GenerateURL = ({ doc, collectionConfig }) => {
-  const slug = typeof doc?.slug === 'string' ? doc.slug : '';
-  if (!slug) return appBaseUrl;
-
-  if (collectionConfig?.slug === 'categories') {
-    return `${appBaseUrl}/search/${slug}`;
-  }
-
-  return `${appBaseUrl}/product/${slug}`;
-};
-
 export default buildConfig({
-  serverURL: appBaseUrl,
+  serverURL:
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    'http://localhost:3000',
   secret: payloadSecret,
   admin: {
     user: Users.slug,
     meta: {
       titleSuffix: ' — Admin',
+    },
+    importMap: {
+      baseDir: path.resolve(dirname, 'src/payload'),
     },
   },
   i18n: {
@@ -69,25 +59,27 @@ export default buildConfig({
     api: '/admin/api',
   },
   editor: lexicalEditor(),
-  collections: [Users, Media, Categories, Products, PaymentMethods],
-  globals: [SiteHeader],
+  collections: [
+    Users,
+    Media,
+    Categories,
+    Products,
+    ProductVariants,
+    PaymentMethods,
+    Carts,
+    Orders,
+    ContentPages,
+    StoreCustomers,
+  ],
+  globals: [SiteHeader, StoreSettings, ShippingSettings, DropshipSettings],
   db: postgresAdapter({
     pool: { connectionString: databaseUrl },
     schemaName: 'payload',
-    // Only push when explicitly requested — auto-push blocks the dev server on prompts.
     push: process.env.PAYLOAD_DB_PUSH === 'true',
   }),
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, 'src/payload/payload-types.ts'),
   },
-  plugins: [
-    seoPlugin({
-      collections: ['products', 'categories'],
-      uploadsCollection: 'media',
-      generateTitle: generateSeoTitle,
-      generateURL: generateSeoURL,
-      tabbedUI: true,
-    }),
-  ],
+  plugins: shopnexPlugins,
 });

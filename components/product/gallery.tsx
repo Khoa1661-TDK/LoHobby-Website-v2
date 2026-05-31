@@ -3,15 +3,14 @@
 
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, type ReactElement } from 'react';
-import GridTileImage from '@/components/grid/tile';
-import { toNextImageSrc } from '@/lib/product-image-snapshot';
+import { GalleryMediaThumb, GalleryMediaViewer } from '@/components/product/gallery-media';
+import type { Image as ProductImage } from '@/lib/shopify/types';
 import { createUrl } from '@/lib/utils';
 
 type Props = {
-  images: { src: string; altText: string }[];
+  images: ProductImage[];
 };
 
 export default function Gallery({ images }: Props): ReactElement {
@@ -21,6 +20,7 @@ export default function Gallery({ images }: Props): ReactElement {
   const [imageIndex, setImageIndex] = useState(
     imageSearchParam ? Math.max(0, Math.min(images.length - 1, Number(imageSearchParam))) : 0,
   );
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setImageIndex(
@@ -39,21 +39,13 @@ export default function Gallery({ images }: Props): ReactElement {
   const buttonClassName =
     'h-full px-6 transition-all ease-in-out hover:scale-110 hover:text-black dark:hover:text-white flex items-center justify-center';
 
-  const current = images[imageIndex];
+  const previewIndex = hoverIndex ?? imageIndex;
+  const current = images[previewIndex];
 
   return (
     <form>
       <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden">
-        {current ? (
-          <Image
-            className="img-fit"
-            fill
-            sizes="(min-width: 1024px) 66vw, 100vw"
-            alt={current.altText}
-            src={toNextImageSrc(current.src)}
-            priority
-          />
-        ) : null}
+        {current ? <GalleryMediaViewer item={current} priority /> : null}
 
         {images.length > 1 ? (
           <div className="absolute bottom-[15%] flex w-full justify-center">
@@ -62,7 +54,7 @@ export default function Gallery({ images }: Props): ReactElement {
                 formAction={() => {
                   router.replace(buildUrl(previousImageIndex), { scroll: false });
                 }}
-                aria-label="Ảnh sản phẩm trước"
+                aria-label="Mục gallery trước"
                 className={buttonClassName}
               >
                 <ArrowLeftIcon className="h-5" />
@@ -72,7 +64,7 @@ export default function Gallery({ images }: Props): ReactElement {
                 formAction={() => {
                   router.replace(buildUrl(nextImageIndex), { scroll: false });
                 }}
-                aria-label="Ảnh sản phẩm sau"
+                aria-label="Mục gallery sau"
                 className={buttonClassName}
               >
                 <ArrowRightIcon className="h-5" />
@@ -83,25 +75,30 @@ export default function Gallery({ images }: Props): ReactElement {
       </div>
 
       {images.length > 1 ? (
-        <ul className="my-12 flex items-center flex-wrap justify-center gap-2 overflow-auto py-1 lg:mb-0">
+        <ul
+          className="my-12 flex items-center flex-wrap justify-center gap-2 overflow-auto py-1 lg:mb-0"
+          onMouseLeave={() => setHoverIndex(null)}
+        >
           {images.map((image, index) => {
-            const isActive = index === imageIndex;
+            const isActive = index === previewIndex;
             return (
-              <li key={image.src + index} className="h-20 w-20">
+              <li key={image.url + index} className="h-20 w-20">
                 <button
-                  formAction={() => {
+                  type="button"
+                  aria-label={
+                    image.kind === 'video' ? 'Xem video sản phẩm' : 'Xem ảnh sản phẩm'
+                  }
+                  aria-pressed={index === imageIndex}
+                  className="h-full w-full"
+                  onMouseEnter={() => setHoverIndex(index)}
+                  onFocus={() => setHoverIndex(index)}
+                  onBlur={() => setHoverIndex(null)}
+                  onClick={() => {
+                    setImageIndex(index);
                     router.replace(buildUrl(index), { scroll: false });
                   }}
-                  aria-label="Chọn ảnh sản phẩm"
-                  className="h-full w-full"
                 >
-                  <GridTileImage
-                    alt={image.altText}
-                    src={image.src}
-                    width={80}
-                    height={80}
-                    active={isActive}
-                  />
+                  <GalleryMediaThumb item={image} active={isActive} />
                 </button>
               </li>
             );

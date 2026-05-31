@@ -1,8 +1,12 @@
-// app/api/orders/[orderCode]/route.ts
+// app/api/orders/[orderCode]/route.ts — poll Payload order payment state
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { isAdminEmail } from '@/lib/admin-emails';
-import { prisma } from '@/src/lib/db-adapter';
+import { getPayloadOrderByCode } from '@/lib/payload-orders';
+import {
+  mapPayloadOrderToStorefrontStatus,
+  ownsPayloadOrder,
+} from '@/lib/payload-order-storefront';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,29 +26,31 @@ export async function GET(
     return NextResponse.json({ error: 'Mã đơn hàng không hợp lệ' }, { status: 400 });
   }
 
-  const order = await prisma.order.findUnique({
-    where: { orderCode: code },
-    select: {
-      orderCode: true,
-      userId: true,
-      amount: true,
-      status: true,
-      paidAt: true,
-      createdAt: true,
-    },
-  });
-  // Always respond 404 for "not found" or "not yours" — never confirm a
-  // foreign order's existence to an unrelated user.
+  const order = await getPayloadOrderByCode(code);
   if (!order) {
     return NextResponse.json({ error: 'Không tìm thấy' }, { status: 404 });
   }
 
-  const isOwner = order.userId === session.user.id;
+  const isOwner = ownsPayloadOrder(order, {
+    userId: session.user.id,
+    email: session.user.email,
+  });
   const isAdmin = isAdminEmail(session.user.email);
   if (!isOwner && !isAdmin) {
     return NextResponse.json({ error: 'Không tìm thấy' }, { status: 404 });
   }
 
-  const { userId: _userId, ...safe } = order;
-  return NextResponse.json(safe);
+  const status = mapPayloadOrderToStorefrontStatus(order);
+  const paidAt =
+    typeof order.paidAt === 'string' ? order.paidAt : null;
+  const createdAt =
+    typeof order.createdAt === 'string' ? order.createdAt : new Date().toISOString();
+
+  return NextResponse.json({
+    orderCode: code,
+    amount: typeof order.totalAmount === 'number' ? order.totalAmount : 0,
+    status,
+    paidAt,
+    createdAt,
+  });
 }

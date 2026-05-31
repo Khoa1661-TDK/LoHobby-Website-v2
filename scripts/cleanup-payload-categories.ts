@@ -48,7 +48,7 @@ async function main(): Promise<void> {
 
     const linked = await payload.find({
       collection: 'products',
-      where: { category: { contains: category.id } },
+      where: { category: { equals: category.id } },
       limit: 200,
       pagination: false,
       overrideAccess: true,

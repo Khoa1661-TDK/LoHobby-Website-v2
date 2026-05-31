@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
+import Link from 'next/link';
 import { auth } from '@/auth';
 import AuthForm from '@/components/auth-form';
 import Footer from '@/components/layout/footer';
@@ -59,6 +60,14 @@ export default async function LoginPage(props: {
           </p>
         ) : null}
         <AuthForm callbackUrl={safeCallback} />
+        <p className="mx-auto mt-4 max-w-md text-center text-sm">
+          <Link
+            href="/forgot-password"
+            className="text-neutral-500 underline hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+          >
+            Quên mật khẩu?
+          </Link>
+        </p>
       </section>
       <Footer />
     </>

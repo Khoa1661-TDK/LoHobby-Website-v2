@@ -85,14 +85,25 @@ export const SiteHeader: GlobalConfig = {
       ],
     },
     {
+      name: 'includeDefaultTabs',
+      type: 'checkbox',
+      label: 'Include default tabs',
+      defaultValue: true,
+      admin: {
+        description:
+          'When enabled, Home / Shop / Categories appear automatically. Disable this to use only the tabs you add below — deleting a tab then removes it from the navbar.',
+      },
+    },
+    {
       name: 'hiddenDefaults',
       type: 'select',
       hasMany: true,
       label: 'Hide default tabs',
       admin: {
         description:
-          'Select any built-in tabs you want to remove from the navbar. Leave empty to keep all of them.',
+          'Only applies when "Include default tabs" is on. Select built-in tabs to remove from the navbar.',
         isClearable: true,
+        condition: (data) => data?.includeDefaultTabs !== false,
       },
       options: [
         { label: 'Home (Trang chủ)', value: 'home' },
@@ -107,7 +118,7 @@ export const SiteHeader: GlobalConfig = {
       labels: { singular: 'Tab', plural: 'Tabs' },
       admin: {
         description:
-          'Tabs you add here appear alongside the default tabs. Use "Hide default tabs" above to remove any of the built-in ones.',
+          'Custom navigation tabs. When "Include default tabs" is off, this list is your complete menu — remove a row and save to delete it from the storefront.',
         initCollapsed: true,
         components: {
           RowLabel:

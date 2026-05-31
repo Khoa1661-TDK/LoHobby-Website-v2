@@ -68,3 +68,10 @@ export function getDefaultCategoryOrder(slug: string): number {
   const index = DEFAULT_CATEGORIES.findIndex((c) => c.slug === slug);
   return index === -1 ? DEFAULT_CATEGORIES.length + 1 : index;
 }
+
+/** Resolve legacy/duplicate category slugs to the canonical storefront slug. */
+export function canonicalCategorySlug(slug: string): string {
+  const trimmed = slug.trim();
+  if (!trimmed) return trimmed;
+  return CATEGORY_SLUG_ALIASES[trimmed] ?? trimmed;
+}

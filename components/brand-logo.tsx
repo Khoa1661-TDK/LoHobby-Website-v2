@@ -1,77 +1,177 @@
-// components/brand-logo.tsx — Lô mark (upscaled PNG + typographic fallbacks)
+// components/brand-logo.tsx — CMS-driven logo with env fallbacks
 import clsx from 'clsx';
 import Image from 'next/image';
 import type { ReactElement } from 'react';
-import { BRAND_ORIGIN, BRAND_TAGLINE } from '@/lib/brand';
+import type { StoreBranding } from '@/lib/store-branding';
 
 type Props = {
+  branding: StoreBranding;
   variant?: 'navbar' | 'full' | 'mark' | 'hero';
   className?: string;
 };
 
-const LOGO_SRC = '/brand/lo-logo.png';
+function LogoImage({
+  src,
+  alt,
+  width,
+  height,
+  className,
+  style,
+}: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+  style?: React.CSSProperties;
+}): ReactElement {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      priority
+      className={className}
+      style={style}
+    />
+  );
+}
 
 export default function BrandLogo({
+  branding,
   variant = 'navbar',
   className,
 }: Props): ReactElement {
+  const alt = branding.storeName;
+  const { logoUrl, logoDarkUrl, tagline, origin, storeSubtitle } = branding;
+
   if (variant === 'mark' || variant === 'navbar') {
     const height = variant === 'mark' ? 44 : 52;
     const width = variant === 'mark' ? 72 : 88;
+    const imageStyle = {
+      height: variant === 'mark' ? 36 : 42,
+      width: 'auto' as const,
+      maxWidth: width,
+    };
 
     return (
-      <Image
-        src={LOGO_SRC}
-        alt="Lô"
-        width={width}
-        height={height}
-        priority
-        className={clsx('h-auto w-auto shrink-0 object-contain dark:invert', className)}
-        style={{ height: variant === 'mark' ? 36 : 42, width: 'auto', maxWidth: width }}
-      />
+      <span className={clsx('inline-flex shrink-0 items-center', className)}>
+        {logoDarkUrl ? (
+          <>
+            <LogoImage
+              src={logoUrl}
+              alt={alt}
+              width={width}
+              height={height}
+              className="h-auto w-auto object-contain dark:hidden"
+              style={imageStyle}
+            />
+            <LogoImage
+              src={logoDarkUrl}
+              alt={alt}
+              width={width}
+              height={height}
+              className="hidden h-auto w-auto object-contain dark:inline-block"
+              style={imageStyle}
+            />
+          </>
+        ) : (
+          <LogoImage
+            src={logoUrl}
+            alt={alt}
+            width={width}
+            height={height}
+            className="h-auto w-auto object-contain dark:invert"
+            style={imageStyle}
+          />
+        )}
+      </span>
     );
   }
 
   if (variant === 'hero') {
     return (
       <div className={clsx('flex flex-col items-start', className)}>
-        <Image
-          src={LOGO_SRC}
-          alt="Lô"
-          width={280}
-          height={180}
-          priority
-          className="h-auto w-[min(280px,70vw)] object-contain dark:invert"
-        />
+        {logoDarkUrl ? (
+          <>
+            <LogoImage
+              src={logoUrl}
+              alt={alt}
+              width={280}
+              height={180}
+              className="h-auto w-[min(280px,70vw)] object-contain dark:hidden"
+            />
+            <LogoImage
+              src={logoDarkUrl}
+              alt={alt}
+              width={280}
+              height={180}
+              className="hidden h-auto w-[min(280px,70vw)] object-contain dark:block"
+            />
+          </>
+        ) : (
+          <LogoImage
+            src={logoUrl}
+            alt={alt}
+            width={280}
+            height={180}
+            className="h-auto w-[min(280px,70vw)] object-contain dark:invert"
+          />
+        )}
         <p className="mt-4 max-w-md text-sm font-medium text-neutral-700 dark:text-neutral-300">
-          {BRAND_TAGLINE}
+          {tagline}
         </p>
-        <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.35em] text-neutral-400">
-          {BRAND_ORIGIN}
-        </p>
+        {origin ? (
+          <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.35em] text-neutral-400">
+            {origin}
+          </p>
+        ) : null}
       </div>
     );
   }
 
   return (
     <div className={clsx('flex flex-col items-start text-black dark:text-white', className)}>
-      <Image
-        src={LOGO_SRC}
-        alt="Lô"
-        width={220}
-        height={140}
-        priority
-        className="h-auto w-[min(220px,55vw)] object-contain dark:invert"
-      />
-      <span className="mt-2 font-serif text-lg italic tracking-wide text-neutral-800 dark:text-neutral-200">
-        Mô Hình Hobby
-      </span>
+      {logoDarkUrl ? (
+        <>
+          <LogoImage
+            src={logoUrl}
+            alt={alt}
+            width={220}
+            height={140}
+            className="h-auto w-[min(220px,55vw)] object-contain dark:hidden"
+          />
+          <LogoImage
+            src={logoDarkUrl}
+            alt={alt}
+            width={220}
+            height={140}
+            className="hidden h-auto w-[min(220px,55vw)] object-contain dark:block"
+          />
+        </>
+      ) : (
+        <LogoImage
+          src={logoUrl}
+          alt={alt}
+          width={220}
+          height={140}
+          className="h-auto w-[min(220px,55vw)] object-contain dark:invert"
+        />
+      )}
+      {storeSubtitle ? (
+        <span className="mt-2 font-serif text-lg italic tracking-wide text-neutral-800 dark:text-neutral-200">
+          {storeSubtitle}
+        </span>
+      ) : null}
       <p className="mt-3 max-w-xs text-sm font-medium text-neutral-700 dark:text-neutral-300">
-        {BRAND_TAGLINE}
+        {tagline}
       </p>
-      <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.35em] text-neutral-400">
-        {BRAND_ORIGIN}
-      </p>
+      {origin ? (
+        <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.35em] text-neutral-400">
+          {origin}
+        </p>
+      ) : null}
     </div>
   );
 }

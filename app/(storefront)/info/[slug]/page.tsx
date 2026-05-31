@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';
 import InfoPageLayout from '@/components/content/info-page';
+import { getSiteName } from '@/lib/brand';
 import { getAllInfoSlugs, getInfoPage } from '@/lib/info-pages';
+import { buildWebPageJsonLd, jsonLdToScriptString } from '@/lib/seo';
+import { absoluteUrl } from '@/lib/utils';
+
+const siteName = getSiteName();
 
 type Params = Promise<{ slug: string }>;
 
@@ -15,10 +20,24 @@ export async function generateMetadata(props: { params: Params }): Promise<Metad
   const page = getInfoPage(slug);
   if (!page) return {};
 
+  const canonical = `/info/${slug}`;
+
   return {
     title: page.title,
     description: page.description,
-    alternates: { canonical: `/info/${slug}` },
+    alternates: { canonical },
+    openGraph: {
+      type: 'article',
+      title: page.title,
+      description: page.description,
+      url: absoluteUrl(canonical),
+      siteName,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: page.title,
+      description: page.description,
+    },
   };
 }
 
@@ -27,5 +46,19 @@ export default async function InfoPage(props: { params: Params }): Promise<React
   const page = getInfoPage(slug);
   if (!page) return notFound();
 
-  return <InfoPageLayout page={page} />;
+  const webPageJsonLd = buildWebPageJsonLd({
+    name: page.title,
+    description: page.description,
+    path: `/info/${slug}`,
+  });
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(webPageJsonLd) }}
+      />
+      <InfoPageLayout page={page} />
+    </>
+  );
 }

@@ -3,6 +3,7 @@
 
 import {
   Cog6ToothIcon,
+  HeartIcon,
   MapPinIcon,
   ShoppingBagIcon,
 } from '@heroicons/react/24/outline';
@@ -10,17 +11,20 @@ import { useState, type ComponentType, type ReactElement, type SVGProps } from '
 import AccountPanel from '@/app/(storefront)/profile/account-panel';
 import AddressesPanel from '@/app/(storefront)/profile/addresses-panel';
 import OrdersPanel from '@/app/(storefront)/profile/orders-panel';
+import WishlistPanel from '@/app/(storefront)/profile/wishlist-panel';
 import type {
   ProfileAddress,
   ProfileOrder,
   ProfileTabId,
   ProfileUser,
+  ProfileWishlistProduct,
 } from '@/app/(storefront)/profile/types';
 
 type Props = {
   user: ProfileUser;
   orders: ProfileOrder[];
   addresses: ProfileAddress[];
+  wishlist: ProfileWishlistProduct[];
   initialTab?: ProfileTabId;
 };
 
@@ -50,12 +54,19 @@ const TABS: TabDef[] = [
     description: 'Địa chỉ giao hàng đã lưu',
     icon: MapPinIcon,
   },
+  {
+    id: 'wishlist',
+    label: 'Yêu thích',
+    description: 'Sản phẩm đã lưu',
+    icon: HeartIcon,
+  },
 ];
 
 export default function ProfileShell({
   user,
   orders,
   addresses,
+  wishlist,
   initialTab = 'account',
 }: Props): ReactElement {
   const [active, setActive] = useState<ProfileTabId>(initialTab);
@@ -106,6 +117,7 @@ export default function ProfileShell({
         {active === 'account' && <AccountPanel user={user} />}
         {active === 'orders' && <OrdersPanel orders={orders} />}
         {active === 'addresses' && <AddressesPanel addresses={addresses} />}
+        {active === 'wishlist' && <WishlistPanel products={wishlist} />}
       </div>
     </div>
   );

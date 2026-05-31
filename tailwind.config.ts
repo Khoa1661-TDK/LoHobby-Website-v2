@@ -4,6 +4,7 @@ import typography from '@tailwindcss/typography';
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -52,27 +53,27 @@ const config: Config = {
       colors: {
         ink: '#000000',
         paper: '#f5f5f5',
-        // Monochrome primary scale (maps legacy filament-* classes to black/white brand)
+        // Monochrome primary scale — overridden at runtime via --brand-primary CSS vars
         filament: {
           50: '#fafafa',
           100: '#f5f5f5',
           200: '#e5e5e5',
           300: '#d4d4d4',
           400: '#a3a3a3',
-          500: '#000000',
-          600: '#171717',
+          500: 'var(--brand-primary, #000000)',
+          600: 'var(--brand-primary-hover, #171717)',
           700: '#262626',
           800: '#404040',
           900: '#525252',
         },
-        // Neutral accent scale (maps legacy spool-* classes)
+        // Accent scale — overridden via --brand-accent
         spool: {
           50: '#fafafa',
           100: '#f5f5f5',
           200: '#e5e5e5',
           300: '#d4d4d4',
           400: '#a3a3a3',
-          500: '#737373',
+          500: 'var(--brand-accent, #737373)',
           600: '#525252',
           700: '#404040',
           800: '#262626',

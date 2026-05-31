@@ -33,6 +33,19 @@ export const authConfig = {
         token.email = nextEmail.trim().toLowerCase();
       }
 
+      if (user) {
+        if (typeof user.name === 'string') {
+          token.name = user.name;
+        } else if (user.name === null) {
+          token.name = null;
+        }
+        if (typeof user.image === 'string') {
+          token.picture = user.image;
+        } else if (user.image === null) {
+          token.picture = null;
+        }
+      }
+
       return token;
     },
     session({ session, token }) {
@@ -42,6 +55,16 @@ export const authConfig = {
         }
         if (typeof token.email === 'string') {
           session.user.email = token.email;
+        }
+        if (typeof token.name === 'string') {
+          session.user.name = token.name;
+        } else if (token.name === null) {
+          session.user.name = null;
+        }
+        if (typeof token.picture === 'string') {
+          session.user.image = token.picture;
+        } else if (token.picture === null) {
+          session.user.image = null;
         }
       }
       return session;

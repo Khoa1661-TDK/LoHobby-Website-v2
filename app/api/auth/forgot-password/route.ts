@@ -1,0 +1,47 @@
+// app/api/auth/forgot-password/route.ts — issue a password-reset token
+import { randomBytes } from 'node:crypto';
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { absoluteUrl } from '@/lib/utils';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+export async function POST(req: Request): Promise<NextResponse> {
+  let email = '';
+  try {
+    const body = (await req.json()) as { email?: unknown };
+    email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  } catch {
+    return NextResponse.json({ error: 'Nội dung không hợp lệ' }, { status: 400 });
+  }
+
+  if (!EMAIL_RE.test(email)) {
+    return NextResponse.json({ error: 'Email không hợp lệ' }, { status: 400 });
+  }
+
+  // Always respond with success to avoid revealing whether an email is registered.
+  try {
+    const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (user) {
+      const token = randomBytes(32).toString('hex');
+      const expires = new Date(Date.now() + TOKEN_TTL_MS);
+
+      // Clear any previous reset tokens for this email, then store the new one.
+      await prisma.verificationToken.deleteMany({ where: { identifier: email } });
+      await prisma.verificationToken.create({ data: { identifier: email, token, expires } });
+
+      const resetUrl = absoluteUrl(`/reset-password?token=${token}`);
+      // No email provider is wired yet; log the link so it can be delivered
+      // manually or by a future Resend/Nodemailer integration.
+      console.info(`[forgot-password] reset link for ${email}: ${resetUrl}`);
+    }
+  } catch (error) {
+    console.error('[api/auth/forgot-password] failed:', error);
+  }
+
+  return NextResponse.json({ ok: true });
+}

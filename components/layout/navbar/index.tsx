@@ -7,13 +7,16 @@ import Cart from '@/components/cart';
 import { AuthNav } from '@/components/layout/navbar/auth-nav';
 import MobileMenu from '@/components/layout/navbar/mobile-menu';
 import Search, { SearchSkeleton } from '@/components/layout/navbar/search';
+import ThemeToggle from '@/components/theme-toggle';
+import { getStoreBranding } from '@/lib/store-branding';
 import { getSiteHeaderTabs } from '@/lib/site-header';
 
 export async function Navbar(): Promise<ReactElement> {
-  const tabs = await getSiteHeaderTabs();
+  const [tabs, branding] = await Promise.all([getSiteHeaderTabs(), getStoreBranding()]);
 
   return (
-    <nav className="relative flex items-center justify-between border-b border-neutral-100 p-4 lg:px-6 dark:border-neutral-900">
+    <nav className="relative border-b border-neutral-100 dark:border-neutral-900">
+      <div className="flex items-center justify-between p-4 lg:px-6">
       <div className="block flex-none md:hidden">
         <Suspense fallback={null}>
           <MobileMenu tabs={tabs} />
@@ -25,9 +28,9 @@ export async function Navbar(): Promise<ReactElement> {
             href="/"
             prefetch
             className="mr-2 flex w-full items-center justify-center gap-2.5 md:w-auto lg:mr-6"
-            aria-label="Lô Hobby — trang chủ"
+            aria-label={`${branding.storeName} — trang chủ`}
           >
-            <BrandLogo variant="navbar" />
+            <BrandLogo branding={branding} variant="navbar" />
           </Link>
           {tabs.length ? (
             <ul className="hidden items-center gap-6 text-sm md:flex">
@@ -57,9 +60,16 @@ export async function Navbar(): Promise<ReactElement> {
           </Suspense>
         </div>
         <div className="flex items-center justify-end gap-3 md:w-1/3">
+          <ThemeToggle />
           <AuthNav />
           <Cart />
         </div>
+      </div>
+      </div>
+      <div className="border-t border-neutral-100 px-4 pb-3 pt-3 md:hidden dark:border-neutral-900">
+        <Suspense fallback={<SearchSkeleton />}>
+          <Search />
+        </Suspense>
       </div>
     </nav>
   );

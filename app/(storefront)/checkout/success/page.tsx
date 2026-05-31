@@ -7,7 +7,11 @@ import { auth } from '@/auth';
 import OrderStatusPoller from '@/components/checkout/order-status-poller';
 import { isAdminEmail } from '@/lib/admin-emails';
 import { getPaymentMethodByKey, type PaymentMethodKind } from '@/lib/payment-methods';
-import { prisma } from '@/src/lib/db-adapter';
+import { getPayloadOrderByCode } from '@/lib/payload-orders';
+import {
+  mapPayloadOrderToStorefrontStatus,
+  ownsPayloadOrder,
+} from '@/lib/payload-order-storefront';
 
 type SearchParams = Promise<{ orderCode?: string }>;
 
@@ -30,29 +34,34 @@ export default async function CheckoutSuccessPage(props: {
     redirect(`/login?callbackUrl=/checkout/success?orderCode=${code}`);
   }
 
-  const order = await prisma.order.findUnique({ where: { orderCode: code } });
+  const order = await getPayloadOrderByCode(code);
   if (!order) redirect('/');
 
-  // Order details include PII (name, phone, shipping address) — only show them
-  // to the user who placed the order, or to an administrator.
-  const isOwner = order.userId === session.user.id;
+  const isOwner = ownsPayloadOrder(order, {
+    userId: session.user.id,
+    email: session.user.email,
+  });
   const isAdmin = isAdminEmail(session.user.email);
   if (!isOwner && !isAdmin) {
     redirect('/');
   }
 
+  const status = mapPayloadOrderToStorefrontStatus(order);
   const method = order.paymentMethodKey
     ? await getPaymentMethodByKey(order.paymentMethodKey)
     : null;
   const kind: PaymentMethodKind =
     (order.paymentKind as PaymentMethodKind | null) ??
-    (order.paymentMethod === 'PAY_ONLINE' ? 'gateway' : 'cod');
+    (status === 'PENDING_ONLINE' ? 'gateway' : 'cod');
 
-  const isPaid = order.status === 'PAID';
-  const isCod = kind === 'cod' || order.status === 'PENDING_COD';
-  const isTransfer = kind === 'manual_transfer' || order.status === 'PENDING_TRANSFER';
-  const isGateway = kind === 'gateway' || order.status === 'PENDING_ONLINE';
+  const isPaid = status === 'PAID';
+  const isCod = kind === 'cod' || status === 'PENDING_COD';
+  const isTransfer = kind === 'manual_transfer' || status === 'PENDING_TRANSFER';
+  const isGateway = kind === 'gateway' || status === 'PENDING_ONLINE';
   const isPickup = order.deliveryMethod === 'PICKUP';
+  const amount = typeof order.totalAmount === 'number' ? order.totalAmount : 0;
+  const paidAt =
+    typeof order.paidAt === 'string' ? new Date(order.paidAt) : null;
 
   const heading = isPaid
     ? 'Cảm ơn bạn — đơn hàng đang được chuẩn bị!'
@@ -62,8 +71,6 @@ export default async function CheckoutSuccessPage(props: {
         ? 'Đã ghi nhận đơn hàng — vui lòng chuyển khoản'
         : 'Đang chờ xác nhận thanh toán';
 
-  // Only poll for gateway payments still pending — COD/transfer orders are
-  // confirmed manually and never auto-flip to PAID.
   const shouldPoll = isGateway && !isPaid;
 
   const paymentLabel =
@@ -73,31 +80,29 @@ export default async function CheckoutSuccessPage(props: {
       : isTransfer
         ? 'Chuyển khoản ngân hàng'
         : 'Thanh toán online');
-  const transfer = isTransfer ? method?.transfer ?? null : null;
+  const transfer = isTransfer ? (method?.transfer ?? null) : null;
   const transferContent = method?.transfer?.transferNote
-    ? `${method.transfer.transferNote} ${order.orderCode}`
-    : String(order.orderCode);
+    ? `${method.transfer.transferNote} ${code}`
+    : String(code);
 
   return (
     <section className="mx-auto max-w-xl px-4 py-8">
-      {shouldPoll && (
-        <OrderStatusPoller orderCode={order.orderCode} initialStatus={order.status} />
-      )}
+      {shouldPoll && <OrderStatusPoller orderCode={code} initialStatus={status} />}
 
       <h1 className="text-2xl font-semibold">{heading}</h1>
 
       <dl className="mt-6 space-y-2 text-sm">
         <div className="flex justify-between border-b py-2">
           <dt>Mã đơn hàng</dt>
-          <dd className="font-mono">{order.orderCode}</dd>
+          <dd className="font-mono">{code}</dd>
         </div>
         <div className="flex justify-between border-b py-2">
           <dt>Tổng tiền</dt>
-          <dd>{order.amount.toLocaleString('vi-VN')} VND</dd>
+          <dd>{amount.toLocaleString('vi-VN')} VND</dd>
         </div>
         <div className="flex justify-between border-b py-2">
           <dt>Trạng thái</dt>
-          <dd>{order.status}</dd>
+          <dd>{status}</dd>
         </div>
         <div className="flex justify-between border-b py-2">
           <dt>Thanh toán</dt>
@@ -127,10 +132,10 @@ export default async function CheckoutSuccessPage(props: {
             <dd>{order.phoneNumber}</dd>
           </div>
         )}
-        {order.paidAt && (
+        {paidAt && (
           <div className="flex justify-between border-b py-2">
             <dt>Thanh toán lúc</dt>
-            <dd>{order.paidAt.toLocaleString('vi-VN')}</dd>
+            <dd>{paidAt.toLocaleString('vi-VN')}</dd>
           </div>
         )}
       </dl>
@@ -171,7 +176,7 @@ export default async function CheckoutSuccessPage(props: {
             )}
             <div className="flex justify-between gap-4">
               <dt className="shrink-0 text-spool-700 dark:text-spool-200">Số tiền</dt>
-              <dd className="text-right font-medium">{order.amount.toLocaleString('vi-VN')} VND</dd>
+              <dd className="text-right font-medium">{amount.toLocaleString('vi-VN')} VND</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="shrink-0 text-spool-700 dark:text-spool-200">Nội dung</dt>

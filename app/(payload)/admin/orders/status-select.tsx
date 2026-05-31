@@ -1,23 +1,26 @@
-// app/admin/orders/status-select.tsx
+// app/(payload)/admin/orders/status-select.tsx
 'use client';
 
 import { useState, useTransition } from 'react';
 import type { ChangeEvent, ReactElement } from 'react';
 import { toast } from 'sonner';
-import { OrderStatus } from '@/generated/prisma/enums';
+import {
+  mapPayloadOrderToStorefrontStatus,
+  type StorefrontOrderStatus,
+} from '@/lib/payload-order-storefront';
 import { updateOrderStatus } from './actions';
 
-const STATUS_OPTIONS: readonly OrderStatus[] = [
-  OrderStatus.PENDING,
-  OrderStatus.PENDING_COD,
-  OrderStatus.PENDING_ONLINE,
-  OrderStatus.PENDING_TRANSFER,
-  OrderStatus.PAID,
-  OrderStatus.SHIPPED,
-  OrderStatus.CANCELLED,
+const STATUS_OPTIONS: readonly StorefrontOrderStatus[] = [
+  'PENDING',
+  'PENDING_COD',
+  'PENDING_ONLINE',
+  'PENDING_TRANSFER',
+  'PAID',
+  'SHIPPED',
+  'CANCELLED',
 ];
 
-const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
+const STATUS_BADGE_CLASS: Record<StorefrontOrderStatus, string> = {
   PENDING: 'bg-neutral-200 text-neutral-700 ring-neutral-300',
   PENDING_COD: 'bg-amber-100 text-amber-800 ring-amber-200',
   PENDING_ONLINE: 'bg-sky-100 text-sky-800 ring-sky-200',
@@ -28,24 +31,33 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
 };
 
 type Props = {
-  orderId: string;
-  currentStatus: OrderStatus;
+  orderDocId: string | number;
+  paymentStatus?: string | null;
+  orderStatus?: string | null;
+  paymentKind?: string | null;
 };
 
 export default function OrderStatusSelect({
-  orderId,
-  currentStatus,
+  orderDocId,
+  paymentStatus,
+  orderStatus,
+  paymentKind,
 }: Props): ReactElement {
-  const [value, setValue] = useState<OrderStatus>(currentStatus);
+  const initial = mapPayloadOrderToStorefrontStatus({
+    paymentStatus,
+    orderStatus,
+    paymentKind,
+  });
+  const [value, setValue] = useState<StorefrontOrderStatus>(initial);
   const [pending, startTransition] = useTransition();
 
   const onChange = (event: ChangeEvent<HTMLSelectElement>): void => {
-    const next = event.target.value as OrderStatus;
+    const next = event.target.value as StorefrontOrderStatus;
     const previous = value;
     setValue(next);
 
     startTransition(async () => {
-      const result = await updateOrderStatus(orderId, next);
+      const result = await updateOrderStatus(orderDocId, next);
       if (!result.ok) {
         setValue(previous);
         toast.error(result.message);

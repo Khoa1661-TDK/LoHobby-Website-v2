@@ -28,6 +28,7 @@ import {
   type GatewayCredentialFieldName,
   type PaymentProviderId,
 } from '@/lib/payment-provider-catalog';
+import { groups } from '@/src/payload/groups';
 
 const adminOnlyField: FieldAccess = ({ req: { user } }) => isPayloadAdminUser(user);
 const denyAll: FieldAccess = () => false;
@@ -155,7 +156,7 @@ export const PaymentMethods: CollectionConfig = {
   admin: {
     useAsTitle: 'label',
     defaultColumns: ['label', 'key', 'kind', 'enabled', 'sortOrder'],
-    group: 'Settings',
+    group: groups.settings.name,
     description:
       'Payment options shown at checkout. Gateway API keys entered here are encrypted before saving and are never sent to the storefront.',
   },

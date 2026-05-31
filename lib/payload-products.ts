@@ -4,12 +4,19 @@ import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload, type Where } from 'payload';
 import { toStoreCategory, type StoreCategory } from '@/lib/categories';
-import { getDefaultCategoryOrder } from '@/lib/default-categories';
+import {
+  canonicalCategorySlug,
+  CATEGORY_SLUG_ALIASES,
+  getDefaultCategoryOrder,
+} from '@/lib/default-categories';
 import { HIDDEN_PRODUCT_TAG } from '@/lib/constants';
 import {
+  loadMediaDoc,
   normalizeProductImageUrl,
   resolveMediaId,
+  resolveMediaKind,
   sameImageUrl,
+  type MediaKind,
   type StoredImage,
 } from '@/lib/product-image-snapshot';
 import type { Collection, Image, Money, Product, SortKey } from '@/lib/shopify/types';
@@ -22,6 +29,7 @@ type MediaDoc = {
   alt?: string | null;
   width?: number | null;
   height?: number | null;
+  mimeType?: string | null;
 };
 
 export type CategoryFaqItem = {
@@ -51,14 +59,13 @@ export type PayloadProductVariantDoc = {
   id?: string | number | null;
   name: string;
   sku: string;
+  /** Parent product when loaded from the `product-variants` collection. */
+  product?: string | number | { id: string | number } | null;
   /** VND integer. `null`/`undefined` means "inherit base product price". */
   priceOverride?: number | null;
   stock?: number | null;
   image?: MediaDoc | string | number | null;
-  /**
-   * URL snapshot written by the `snapshotProductImages` hook. Survives the
-   * underlying media doc being deleted; storefront prefers this over `image`.
-   */
+  /** Legacy inline-array snapshot; still read if present. */
   storedImage?: StoredImage | null;
 };
 
@@ -73,13 +80,22 @@ export type PayloadProductDoc = {
   salePercent?: number | null;
   description?: string | null;
   available?: boolean | null;
+  /** Product-level stock when no variants exist; null/undefined = unlimited. */
+  stock?: number | null;
   tags?: string[] | null;
   category?: Array<CategoryDoc | string | number> | null;
   image?: MediaDoc | string | null;
   storedImage?: StoredImage | null;
   gallery?: Array<{ media?: MediaDoc | string | null } | null> | null;
   storedGallery?: StoredImage[] | null;
-  variants?: PayloadProductVariantDoc[] | null;
+  /**
+   * Join field (`product-variants` on `product`) or legacy relationship / inline rows.
+   * With depth >= 1, join returns `{ docs: [...] }`.
+   */
+  variants?:
+    | Array<PayloadProductVariantDoc | string | number>
+    | { docs?: Array<PayloadProductVariantDoc | string | number | null> | null }
+    | null;
   meta?: SeoMeta | null;
   createdAt: string;
   updatedAt: string;
@@ -150,12 +166,21 @@ const escapeHtml = (value: string): string =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] ?? char),
   );
 
-function toImage(url: string, alt: string, width?: number | null, height?: number | null): Image {
+function toImage(
+  url: string,
+  alt: string,
+  width?: number | null,
+  height?: number | null,
+  kind?: MediaKind | null,
+  mimeType?: string | null,
+): Image {
+  const resolvedKind = resolveMediaKind({ url, mimeType }, kind);
   return {
     url: normalizeProductImageUrl(url),
     altText: alt,
-    width: width ?? 1200,
-    height: height ?? 1200,
+    width: width ?? (resolvedKind === 'video' ? 1920 : 1200),
+    height: height ?? (resolvedKind === 'video' ? 1080 : 1200),
+    kind: resolvedKind,
   };
 }
 
@@ -181,6 +206,8 @@ function collectImages(doc: PayloadProductDoc): Image[] {
         primaryMedia.alt ?? doc.title,
         primaryMedia.width,
         primaryMedia.height,
+        null,
+        primaryMedia.mimeType,
       ),
     );
   } else if (doc.storedImage?.url?.trim()) {
@@ -190,6 +217,7 @@ function collectImages(doc: PayloadProductDoc): Image[] {
         doc.storedImage.alt ?? doc.title,
         doc.storedImage.width,
         doc.storedImage.height,
+        doc.storedImage.kind,
       ),
     );
   }
@@ -209,14 +237,25 @@ function collectImages(doc: PayloadProductDoc): Image[] {
 
   const pushGalleryStored = (stored: StoredImage | null | undefined) => {
     if (!stored?.url?.trim() || isPrimaryDuplicate(stored.url, null)) return;
-    remember(toImage(stored.url, stored.alt ?? doc.title, stored.width, stored.height));
+    remember(
+      toImage(stored.url, stored.alt ?? doc.title, stored.width, stored.height, stored.kind),
+    );
   };
 
   const pushGalleryMedia = (media: MediaDoc | null) => {
     if (!media?.url?.trim()) return;
     const mediaId = resolveMediaId(media);
     if (isPrimaryDuplicate(media.url, mediaId)) return;
-    remember(toImage(media.url, media.alt ?? doc.title, media.width, media.height));
+    remember(
+      toImage(
+        media.url,
+        media.alt ?? doc.title,
+        media.width,
+        media.height,
+        null,
+        media.mimeType,
+      ),
+    );
   };
 
   if (Array.isArray(doc.storedGallery)) {
@@ -238,22 +277,77 @@ function collectImages(doc: PayloadProductDoc): Image[] {
   return images;
 }
 
+function isHydratedVariantDoc(value: unknown): value is PayloadProductVariantDoc {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'sku' in value &&
+    'name' in value &&
+    typeof (value as PayloadProductVariantDoc).sku === 'string' &&
+    typeof (value as PayloadProductVariantDoc).name === 'string'
+  );
+}
+
+export function normalizeVariantDocs(
+  raw: PayloadProductDoc['variants'],
+): PayloadProductVariantDoc[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw.filter(isHydratedVariantDoc);
+  }
+  if (typeof raw === 'object' && Array.isArray(raw.docs)) {
+    return raw.docs.filter(isHydratedVariantDoc);
+  }
+  return [];
+}
+
+function variantImageIsHydrated(image: PayloadProductVariantDoc['image']): boolean {
+  return (
+    typeof image === 'object' &&
+    image !== null &&
+    'url' in image &&
+    typeof (image as MediaDoc).url === 'string' &&
+    Boolean((image as MediaDoc).url?.trim())
+  );
+}
+
+/** Join fields default to maxDepth 1; hydrate upload IDs when the media object was not populated. */
+async function hydrateVariantImages(
+  doc: PayloadProductDoc,
+  payload: Awaited<ReturnType<typeof getPayload>>,
+): Promise<void> {
+  const variants = doc.variants;
+  if (!variants) return;
+
+  const rows = normalizeVariantDocs(variants);
+  if (rows.length === 0) return;
+
+  await Promise.all(
+    rows.map(async (variant) => {
+      if (variantImageIsHydrated(variant.image)) return;
+      const mediaId = resolveMediaId(variant.image);
+      if (mediaId === null) return;
+      const media = await loadMediaDoc(payload, mediaId);
+      if (media) variant.image = media;
+    }),
+  );
+}
+
 /**
- * Resolve the inline `variants` array into clean storefront rows.
+ * Resolve linked `product-variants` (or legacy inline rows) into storefront rows.
  *
- * Requires the source `doc` to have been loaded with `depth >= 2` so each
- * variant's `image` relationship is hydrated to a Media doc (URL + dimensions).
- * Variants whose `priceOverride` is null/undefined inherit `basePrice`. All
- * prices stay as raw VND integers — never floats, never minor units.
+ * Requires product `depth >= 2` and the variants join `maxDepth >= 2` so each
+ * variant's `image` upload is hydrated. `loadPayloadProductDoc` also backfills
+ * media by ID when the join left images unpopulated.
  */
 export function resolveVariants(doc: PayloadProductDoc): StorefrontVariant[] {
-  if (!Array.isArray(doc.variants) || doc.variants.length === 0) return [];
+  const variantDocs = normalizeVariantDocs(doc.variants);
+  if (variantDocs.length === 0) return [];
 
   const basePrice = Math.max(0, Math.round(doc.price));
   const fallbackAlt = doc.title;
 
-  return doc.variants
-    .filter((v): v is PayloadProductVariantDoc => Boolean(v && v.sku && v.name))
+  return variantDocs
     .map((variant) => {
       const overridden =
         typeof variant.priceOverride === 'number' && Number.isFinite(variant.priceOverride)
@@ -264,22 +358,32 @@ export function resolveVariants(doc: PayloadProductDoc): StorefrontVariant[] {
         ? Math.max(0, Math.round(variant.stock))
         : 0;
 
-      // Prefer the URL snapshot (immune to media deletion) over the live
-      // upload relationship — same priority as the main product image.
+      // Variant images use the live media relationship (depth >= 2). Legacy storedImage
+      // snapshots are still honored when the media row was deleted.
       let image: Image | null = null;
 
-      const stored = variant.storedImage;
-      if (stored && typeof stored.url === 'string' && stored.url.trim().length > 0) {
-        image = toImage(stored.url, stored.alt ?? fallbackAlt, stored.width, stored.height);
-      } else {
-        const media = resolveMedia(
-          // Variant images come back as MediaDoc objects when depth >= 2; otherwise as IDs.
-          typeof variant.image === 'object' && variant.image !== null && 'url' in variant.image
-            ? (variant.image as MediaDoc)
-            : null,
+      const media = resolveMedia(
+        variantImageIsHydrated(variant.image) ? (variant.image as MediaDoc) : null,
+      );
+      if (media?.url) {
+        image = toImage(
+          media.url,
+          media.alt ?? fallbackAlt,
+          media.width,
+          media.height,
+          null,
+          media.mimeType,
         );
-        if (media?.url) {
-          image = toImage(media.url, media.alt ?? fallbackAlt, media.width, media.height);
+      } else {
+        const stored = variant.storedImage;
+        if (stored && typeof stored.url === 'string' && stored.url.trim().length > 0) {
+          image = toImage(
+            stored.url,
+            stored.alt ?? fallbackAlt,
+            stored.width,
+            stored.height,
+            stored.kind,
+          );
         }
       }
 
@@ -510,6 +614,32 @@ export async function getPayloadProducts(opts?: {
   )();
 }
 
+async function findCategoryBySlug(
+  payload: Awaited<ReturnType<typeof getPayloadClient>>,
+  slug: string,
+): Promise<CategoryDoc | null> {
+  const trimmed = slug.trim();
+  if (!trimmed) return null;
+
+  const slugsToTry = [trimmed, CATEGORY_SLUG_ALIASES[trimmed]].filter(
+    (value, index, list): value is string => typeof value === 'string' && list.indexOf(value) === index,
+  );
+
+  for (const candidate of slugsToTry) {
+    const categoryResult = await payload.find({
+      collection: 'categories',
+      where: { slug: { equals: candidate } },
+      depth: 0,
+      limit: 1,
+      pagination: false,
+    });
+    const categoryDoc = pickFirstDoc<CategoryDoc>(categoryResult);
+    if (categoryDoc) return categoryDoc;
+  }
+
+  return null;
+}
+
 async function fetchPayloadProductsByCategorySlug(
   slug: string,
   opts?: { reverse?: boolean; sortKey?: SortKey },
@@ -518,27 +648,33 @@ async function fetchPayloadProductsByCategorySlug(
   if (!categorySlug) return getPayloadProducts(opts);
 
   const payload = await getPayloadClient();
-  const categoryResult = await payload.find({
-    collection: 'categories',
-    where: { slug: { equals: categorySlug } },
-    depth: 0,
-    limit: 1,
-    pagination: false,
-  });
-  const categoryDoc = pickFirstDoc<CategoryDoc>(categoryResult);
+  const categoryDoc = await findCategoryBySlug(payload, categorySlug);
   if (!categoryDoc) return [];
+
+  const canonicalSlug = canonicalCategorySlug(categoryDoc.slug);
+  const categoryId = categoryDoc.id;
 
   const result = await payload.find({
     collection: 'products',
-    where: { category: { contains: categoryDoc.id } },
+    where: { category: { equals: categoryId } },
     depth: 2,
     limit: 200,
     pagination: false,
   });
 
-  const products = pickDocs<PayloadProductDoc>(result)
+  let products = pickDocs<PayloadProductDoc>(result)
     .map(mapPayloadProductToCommerceProduct)
     .filter(isVisibleProduct);
+
+  // Fallback when the DB adapter does not match relationship arrays (e.g. legacy data).
+  if (products.length === 0) {
+    const all = await fetchPayloadProducts({ ...opts, limit: 200 });
+    products = all.filter(
+      (product) =>
+        product.categorySlugs.includes(canonicalSlug) ||
+        product.categorySlugs.includes(categorySlug),
+    );
+  }
 
   return sortProducts(products, opts?.sortKey, opts?.reverse);
 }
@@ -556,7 +692,7 @@ export async function getPayloadProductsByCategorySlug(
 
   return unstable_cache(
     () => fetchPayloadProductsByCategorySlug(categorySlug, opts),
-    ['payload-products-by-category', cacheKey],
+    ['payload-products-by-category-v2', cacheKey],
     { revalidate: CATALOG_REVALIDATE, tags: ['catalog', 'products', `category:${categorySlug}`] },
   )();
 }
@@ -607,7 +743,11 @@ export async function loadPayloadProductDoc(slug: string): Promise<PayloadProduc
     pagination: false,
   });
 
-  return pickFirstDoc<PayloadProductDoc>(result);
+  const doc = pickFirstDoc<PayloadProductDoc>(result);
+  if (!doc) return null;
+
+  await hydrateVariantImages(doc, payload);
+  return doc;
 }
 
 async function fetchPayloadCollections(): Promise<Collection[]> {
@@ -617,7 +757,8 @@ async function fetchPayloadCollections(): Promise<Collection[]> {
     limit: 100,
     sort: 'title',
     pagination: false,
-    depth: 0,
+    // depth 1 hydrates the SEO meta image relationship for social-share cards.
+    depth: 1,
   });
 
   const all: Collection = {
@@ -650,6 +791,11 @@ async function fetchPayloadCollections(): Promise<Collection[]> {
           }))
           .filter((item) => item.question.length > 0 && item.answer.length > 0)
       : [];
+    const seoMedia = resolveMedia(meta.image);
+    const seoImage =
+      seoMedia?.url?.trim()
+        ? toImage(seoMedia.url, seoMedia.alt ?? doc.title, seoMedia.width, seoMedia.height)
+        : null;
     collections.push({
       handle: doc.slug,
       title: doc.title,
@@ -662,6 +808,7 @@ async function fetchPayloadCollections(): Promise<Collection[]> {
       updatedAt: doc.updatedAt ?? new Date().toISOString(),
       content: doc.content ?? null,
       faq,
+      seoImage,
     });
   }
 
@@ -704,4 +851,25 @@ export async function getPayloadProductsByIds(
   );
 
   return unique.map((id) => byId.get(id)).filter((p): p is Product => Boolean(p));
+}
+
+/** Raw product docs with variants for checkout pricing and inventory. */
+export async function loadPayloadProductDocsByIds(
+  ids: string[],
+): Promise<PayloadProductDoc[]> {
+  const unique = Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)));
+  if (unique.length === 0) return [];
+
+  const payload = await getPayloadClient();
+  const result = await payload.find({
+    collection: 'products',
+    where: { id: { in: unique } },
+    depth: 2,
+    limit: unique.length,
+    pagination: false,
+  });
+
+  const docs = pickDocs<PayloadProductDoc>(result);
+  await Promise.all(docs.map((doc) => hydrateVariantImages(doc, payload)));
+  return docs;
 }

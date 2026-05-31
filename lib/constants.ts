@@ -22,3 +22,6 @@ export const sorting: SortFilterItem[] = [
 ];
 
 export const HIDDEN_PRODUCT_TAG = 'hidden';
+
+/** Products per page on /search and category listing routes (server-safe constant). */
+export const PAGE_SIZE = 24;

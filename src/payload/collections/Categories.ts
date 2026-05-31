@@ -10,6 +10,7 @@ import { after } from 'next/server';
 import { payloadPublicReadAdminWrite } from '@/lib/payload-access';
 import { revalidateCatalogCache } from '@/lib/payload-products';
 import { resolveCollectionSlug, slugifyVietnamese } from '@/lib/slugify';
+import { groups } from '@/src/payload/groups';
 
 const autoSlugFromTitle: CollectionBeforeChangeHook = async ({ data, operation, originalDoc, req }) => {
   if (!data) return data;
@@ -44,6 +45,7 @@ const invalidateCatalogOnDelete: CollectionAfterDeleteHook = ({ doc }) => {
 export const Categories: CollectionConfig = {
   slug: 'categories',
   admin: {
+    group: groups.products.name,
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'updatedAt'],
     description: 'Store categories. Assign products to categories from the Products collection.',

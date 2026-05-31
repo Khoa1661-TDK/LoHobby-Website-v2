@@ -74,9 +74,15 @@ export function buildProductJsonLd(input: {
   available: boolean;
   images: string[];
   sku: string;
+  /** Optional material (e.g. "PLA / PETG"); omitted from schema when unknown. */
+  material?: string | null;
+  /** Aggregate review rating; emitted only when at least one review exists. */
+  rating?: { average: number; count: number } | null;
 }): Record<string, unknown> {
   const canonical = absoluteUrl(productCanonicalPath(input.slug));
   const siteName = getSiteName();
+  const material = input.material?.trim();
+  const rating = input.rating && input.rating.count > 0 ? input.rating : null;
 
   return {
     '@context': 'https://schema.org',
@@ -88,9 +94,20 @@ export function buildProductJsonLd(input: {
     sku: input.sku,
     url: canonical,
     brand: { '@type': 'Brand', name: siteName },
-    // 3D-printing specifics: surface the material and the made-to-order /
-    // custom-manufacturing nature so the result can stand out in search.
-    material: 'PLA / PETG',
+    // Material is surfaced only when known; the made-to-order / custom
+    // manufacturing nature is signalled via additionalProperty + availability.
+    ...(material ? { material } : {}),
+    ...(rating
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: rating.average,
+            reviewCount: rating.count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
     itemCondition: 'https://schema.org/NewCondition',
     additionalProperty: [
       { '@type': 'PropertyValue', name: 'Công nghệ sản xuất', value: 'In 3D (FDM)' },
@@ -183,6 +200,28 @@ export function buildItemListJsonLd(
         },
       };
     }),
+  };
+}
+
+/** WebPage schema for static content routes (about, info, legal). */
+export function buildWebPageJsonLd(input: {
+  name: string;
+  description?: string;
+  path: string;
+}): Record<string, unknown> {
+  const url = absoluteUrl(input.path);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': url,
+    url,
+    name: input.name,
+    ...(input.description ? { description: input.description } : {}),
+    isPartOf: {
+      '@type': 'WebSite',
+      name: getSiteName(),
+      url: baseUrl,
+    },
   };
 }
 

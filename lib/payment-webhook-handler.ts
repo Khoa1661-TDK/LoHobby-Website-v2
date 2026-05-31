@@ -1,6 +1,9 @@
-// lib/payment-webhook-handler.ts — shared logic for marking gateway orders PAID.
+// lib/payment-webhook-handler.ts — mark Payload orders paid (ShopNex-compatible collection)
 import type { VerifiedWebhook } from '@/lib/payment-provider-types';
-import { prisma } from '@/src/lib/db-adapter';
+import { submitDropshipOrder } from '@/lib/dropshipping';
+import { getDropshipSettings } from '@/lib/dropshipping/settings';
+import { commitOrderInventory } from '@/lib/order-inventory';
+import { markPayloadOrderPaid } from '@/lib/payload-orders';
 
 export async function applyVerifiedWebhookPayment(
   data: VerifiedWebhook,
@@ -13,14 +16,35 @@ export async function applyVerifiedWebhookPayment(
     return { matched: false };
   }
 
-  const result = await prisma.order.updateMany({
-    where: {
-      orderCode: data.orderCode,
-      amount: data.amount,
-      status: { in: ['PENDING_ONLINE'] },
-    },
-    data: { status: 'PAID', paidAt: new Date() },
-  });
+  const { matched, docId } = await markPayloadOrderPaid(data.orderCode, data.amount);
+  if (!matched || docId === null) {
+    return { matched: false };
+  }
 
-  return { matched: result.count > 0 };
+  await commitOrderInventory(docId);
+
+  const dropship = await getDropshipSettings();
+  if (dropship.enabled && dropship.autoSubmitOnPaid) {
+    const config = await import('@payload-config');
+    const { getPayload } = await import('payload');
+    const payload = await getPayload({ config: config.default });
+    const doc = await payload.findByID({ collection: 'orders', id: docId, depth: 0 });
+    const items = Array.isArray(doc.lineItems)
+      ? doc.lineItems.map((row) => {
+          const item = row as Record<string, unknown>;
+          return {
+            productId: String(item.productId ?? ''),
+            variantSku: typeof item.variantSku === 'string' ? item.variantSku : null,
+            quantity: typeof item.quantity === 'number' ? item.quantity : 0,
+          };
+        })
+      : [];
+    await submitDropshipOrder({
+      orderCode: data.orderCode,
+      items,
+      shippingAddress: typeof doc.shippingAddress === 'string' ? doc.shippingAddress : '',
+    }).catch((err: unknown) => console.warn('[webhook] dropship stub failed', err));
+  }
+
+  return { matched: true };
 }

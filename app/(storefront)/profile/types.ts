@@ -42,4 +42,14 @@ export type ProfileAddress = {
   createdAt: string;
 };
 
-export type ProfileTabId = 'account' | 'orders' | 'addresses';
+export type ProfileWishlistProduct = {
+  id: string;
+  handle: string;
+  title: string;
+  imageUrl: string;
+  imageAlt: string;
+  price: string;
+  currencyCode: string;
+};
+
+export type ProfileTabId = 'account' | 'orders' | 'addresses' | 'wishlist';

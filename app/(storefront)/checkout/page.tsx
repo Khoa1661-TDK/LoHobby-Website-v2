@@ -2,12 +2,13 @@
 import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import CheckoutForm, { type SavedAddress } from '@/components/checkout-form';
 import { getCart } from '@/lib/cart';
 import { getCheckoutPaymentMethods } from '@/lib/payment-methods';
 import { prisma } from '@/lib/prisma';
+import { getShippingSettings } from '@/lib/shipping-settings';
+import { getStoreSettings } from '@/lib/store-settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,11 +19,9 @@ export const metadata: Metadata = {
 
 export default async function CheckoutPage(): Promise<ReactElement> {
   const session = await auth();
-  if (!session?.user?.id) {
-    redirect('/login?callbackUrl=/checkout');
-  }
+  const userId = session?.user?.id ?? null;
 
-  const cart = await getCart();
+  const cart = await getCart(userId);
 
   if (cart.lines.length === 0) {
     return (
@@ -41,12 +40,16 @@ export default async function CheckoutPage(): Promise<ReactElement> {
     );
   }
 
-  const [addressRows, paymentMethods] = await Promise.all([
-    prisma.userAddress.findMany({
-      where: { userId: session.user.id },
-      orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
-    }),
+  const [addressRows, paymentMethods, shippingSettings, storeSettings] = await Promise.all([
+    userId
+      ? prisma.userAddress.findMany({
+          where: { userId },
+          orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
+        })
+      : Promise.resolve([]),
     getCheckoutPaymentMethods(),
+    getShippingSettings(),
+    getStoreSettings(),
   ]);
 
   const savedAddresses: SavedAddress[] = addressRows.map((row) => ({
@@ -62,6 +65,8 @@ export default async function CheckoutPage(): Promise<ReactElement> {
     isDefault: row.isDefault,
   }));
 
+  const isGuest = !userId;
+
   return (
     <section className="mx-auto w-full max-w-5xl px-4 py-8">
       <header className="mb-8">
@@ -69,12 +74,36 @@ export default async function CheckoutPage(): Promise<ReactElement> {
         <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
           Cho chúng tôi biết nơi giao hàng và cách bạn muốn thanh toán.
         </p>
+        {isGuest ? (
+          <p className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
+            Bạn đang thanh toán với tư cách khách.{' '}
+            <Link href="/login?callbackUrl=/checkout" className="font-medium underline">
+              Đăng nhập
+            </Link>{' '}
+            để lưu địa chỉ và theo dõi đơn hàng dễ dàng hơn.
+          </p>
+        ) : null}
       </header>
       <CheckoutForm
         cart={cart}
         paymentMethods={paymentMethods}
+        shipping={{
+          flatRateVnd: shippingSettings.flatRateVnd,
+          freeShippingThresholdVnd: shippingSettings.freeShippingThresholdVnd,
+          pickupAddress: shippingSettings.pickupAddress,
+          pickupInstructions: shippingSettings.pickupInstructions,
+          shipmentEnabled: shippingSettings.shipmentEnabled,
+          pickupEnabled: shippingSettings.pickupEnabled,
+          zones: shippingSettings.zones,
+        }}
+        tax={{
+          taxEnabled: storeSettings.taxEnabled,
+          taxRatePercent: storeSettings.taxRatePercent,
+        }}
+        checkoutNote={storeSettings.checkoutNote}
         savedAddresses={savedAddresses}
-        defaultName={session.user.name ?? ''}
+        defaultName={session?.user?.name ?? ''}
+        requireEmail={isGuest}
       />
     </section>
   );

@@ -3,6 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
+import { addToCart } from '@/lib/cart';
 import { prisma } from '@/lib/prisma';
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -152,6 +153,59 @@ export async function deleteAddressAction(addressId: string): Promise<ActionResu
 
   revalidatePath('/profile');
   revalidatePath('/checkout');
+  return { ok: true };
+}
+
+export async function reorderAction(orderId: string): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ok: false, error: 'Bạn cần đăng nhập.' };
+  }
+  if (typeof orderId !== 'string' || orderId.length === 0) {
+    return { ok: false, error: 'Đơn hàng không hợp lệ.' };
+  }
+
+  const config = await import('@payload-config');
+  const { getPayload } = await import('payload');
+  const payload = await getPayload({ config: config.default });
+  let doc;
+  try {
+    doc = await payload.findByID({ collection: 'orders', id: orderId, depth: 0 });
+  } catch {
+    return { ok: false, error: 'Không tìm thấy đơn hàng.' };
+  }
+
+  const meta = doc.metadata as { prismaUserId?: string } | null | undefined;
+  const ownsOrder =
+    meta?.prismaUserId === session.user.id ||
+    (typeof doc.buyerEmail === 'string' &&
+      doc.buyerEmail.toLowerCase() === session.user.email?.toLowerCase());
+  if (!ownsOrder) {
+    return { ok: false, error: 'Không tìm thấy đơn hàng.' };
+  }
+
+  const lineItems = Array.isArray(doc.lineItems) ? doc.lineItems : [];
+  let added = 0;
+  for (const raw of lineItems) {
+    if (typeof raw !== 'object' || raw === null) continue;
+    const item = raw as Record<string, unknown>;
+    const productId = typeof item.productId === 'string' ? item.productId : '';
+    const variantSku = typeof item.variantSku === 'string' ? item.variantSku : null;
+    const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+    if (!productId) continue;
+    try {
+      await addToCart(productId, quantity, variantSku, session.user.id);
+      added += 1;
+    } catch {
+      // Skip products that are no longer purchasable; keep adding the rest.
+    }
+  }
+
+  if (added === 0) {
+    return { ok: false, error: 'Các sản phẩm trong đơn này hiện không còn bán.' };
+  }
+
+  revalidatePath('/', 'layout');
   return { ok: true };
 }
 

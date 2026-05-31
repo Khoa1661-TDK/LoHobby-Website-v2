@@ -10,9 +10,6 @@ export default function InfoPageLayout({ page }: { page: InfoPage }): ReactEleme
         <p className="mt-3 text-neutral-600 dark:text-neutral-400">{page.description}</p>
         <div className="prose prose-neutral mt-8 max-w-none dark:prose-invert">
           <p>{page.body}</p>
-          <p className="text-sm text-neutral-500">
-            Đây là nội dung mẫu. Hãy thay bằng bản chính thức khi sẵn sàng.
-          </p>
         </div>
       </section>
       <Footer />

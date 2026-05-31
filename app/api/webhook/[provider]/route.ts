@@ -9,7 +9,7 @@ import {
   type PaymentProviderId,
 } from '@/lib/payment-providers';
 import { applyVerifiedWebhookPayment } from '@/lib/payment-webhook-handler';
-import { prisma } from '@/src/lib/db-adapter';
+import { getPayloadOrderByCode } from '@/lib/payload-orders';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,11 +55,10 @@ async function resolveMethodKey(
   orderCode: number | null,
 ): Promise<string> {
   if (orderCode !== null && Number.isInteger(orderCode)) {
-    const order = await prisma.order.findUnique({
-      where: { orderCode },
-      select: { paymentMethodKey: true },
-    });
-    if (order?.paymentMethodKey) return order.paymentMethodKey;
+    const order = await getPayloadOrderByCode(orderCode);
+    if (typeof order?.paymentMethodKey === 'string' && order.paymentMethodKey.length > 0) {
+      return order.paymentMethodKey;
+    }
   }
   return provider;
 }

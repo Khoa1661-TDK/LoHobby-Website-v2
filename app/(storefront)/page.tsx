@@ -3,33 +3,37 @@ import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
 import CategorySection from '@/components/home/category-section';
 import NewArrivalsHero from '@/components/home/new-arrivals-hero';
+import PersonalizedRecommendations from '@/components/home/personalized-recommendations';
 import Footer from '@/components/layout/footer';
-import { BRAND_DESCRIPTION, getSiteName } from '@/lib/brand';
+import RecentlyViewed from '@/components/product/recently-viewed';
+import { getStoreBranding } from '@/lib/store-branding';
 import { groupProductsByCategory } from '@/lib/categories';
 import { jsonLdToScriptString } from '@/lib/seo';
 import { getProducts, getStoreCategories } from '@/lib/shopify';
-import { baseUrl } from '@/lib/utils';
+import { absoluteUrl, baseUrl } from '@/lib/utils';
 
-const siteName = getSiteName();
-
-export const metadata: Metadata = {
-  title: `${siteName} — Mô hình, móc khóa & hobby`,
-  description: BRAND_DESCRIPTION,
-  alternates: { canonical: '/' },
-  openGraph: {
-    type: 'website',
-    title: siteName,
-    description: BRAND_DESCRIPTION,
-    url: baseUrl,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getStoreBranding();
+  return {
+    title: branding.storeName,
+    description: branding.description,
+    alternates: { canonical: '/' },
+    openGraph: {
+      type: 'website',
+      title: branding.storeName,
+      description: branding.description,
+      url: baseUrl,
+    },
+  };
+}
 
 export const revalidate = 60;
 
 export default async function HomePage(): Promise<ReactElement> {
-  const [categories, latestProducts] = await Promise.all([
+  const [categories, latestProducts, branding] = await Promise.all([
     getStoreCategories(),
     getProducts({ sortKey: 'CREATED_AT', reverse: false }),
+    getStoreBranding(),
   ]);
 
   const heroProducts = latestProducts.slice(0, 8);
@@ -38,7 +42,7 @@ export default async function HomePage(): Promise<ReactElement> {
   const websiteJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: siteName,
+    name: branding.storeName,
     url: baseUrl,
     potentialAction: {
       '@type': 'SearchAction',
@@ -53,10 +57,10 @@ export default async function HomePage(): Promise<ReactElement> {
   const organizationJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: siteName,
+    name: branding.storeName,
     url: baseUrl,
-    logo: `${baseUrl}/brand/lo-logo.png`,
-    description: BRAND_DESCRIPTION,
+    logo: absoluteUrl(branding.logoUrl),
+    description: branding.description,
   };
 
   return (
@@ -74,6 +78,8 @@ export default async function HomePage(): Promise<ReactElement> {
 
       <NewArrivalsHero products={heroProducts} categories={categories} />
 
+      <PersonalizedRecommendations />
+
       {categories.map((category) => (
         <CategorySection
           key={category.slug}
@@ -81,6 +87,10 @@ export default async function HomePage(): Promise<ReactElement> {
           products={productsByCategory.get(category.slug) ?? []}
         />
       ))}
+
+      <div className="mx-auto max-w-screen-2xl px-4">
+        <RecentlyViewed />
+      </div>
 
       <Footer />
     </>

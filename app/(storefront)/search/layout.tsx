@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import Footer from '@/components/layout/footer';
 import Collections from '@/components/layout/search/collections';
 import FilterList from '@/components/layout/search/filter';
+import Facets from '@/components/layout/search/filter/facets';
 import { sorting } from '@/lib/constants';
 
 const childrenWrapperClasses = 'order-last min-h-screen w-full md:order-none';
@@ -24,9 +25,12 @@ export default function SearchLayout({
         <div className={childrenWrapperClasses}>
           <Suspense>{children}</Suspense>
         </div>
-        <div className="order-none flex-none md:order-last md:w-36 md:shrink-0 lg:w-40">
+        <div className="order-none flex-none space-y-6 md:order-last md:w-36 md:shrink-0 lg:w-40">
           <Suspense fallback={null}>
             <FilterList list={sorting} title="Sắp xếp" />
+          </Suspense>
+          <Suspense fallback={null}>
+            <Facets />
           </Suspense>
         </div>
       </div>

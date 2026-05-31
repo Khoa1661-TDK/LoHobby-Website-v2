@@ -3,6 +3,7 @@ import type {
   CollectionAfterChangeHook,
   CollectionAfterDeleteHook,
   CollectionBeforeChangeHook,
+  CollectionBeforeReadHook,
   CollectionConfig,
   FieldHook,
   Validate,
@@ -14,17 +15,19 @@ import {
   ON_SALE_CATEGORY_SUBTITLE,
   ON_SALE_CATEGORY_TITLE,
 } from '@/lib/default-categories';
-import { revalidateCatalogCache } from '@/lib/payload-products';
-import { isMediaResync } from '@/lib/payload-hooks';
 import {
-  galleryMediaIdsEqual,
-  loadMediaDocWithRetry,
-  mediaDocToStored,
-  resolveMediaId,
-  sameImageUrl,
-  type StoredImage,
-} from '@/lib/product-image-snapshot';
+  isMediaResync,
+  isPayloadAdminRequest,
+  isSnapshotBackfill,
+  SNAPSHOT_BACKFILL_CONTEXT,
+} from '@/lib/payload-hooks';
+import { revalidateCatalogCache } from '@/lib/payload-products';
+import { sanitizeProductDocForAdmin } from '@/lib/admin-product-doc';
+import { buildProductSnapshotPatch, stripIncomingSnapshotFields } from '@/lib/product-snapshot-patch';
+import { scheduleDebouncedProductSnapshotBackfill } from '@/lib/product-snapshot-scheduler';
+import { resolveMediaId, sameImageUrl, type StoredImage } from '@/lib/product-image-snapshot';
 import { slugifyVietnamese, resolveCollectionSlug } from '@/lib/slugify';
+import { groups } from '@/src/payload/groups';
 
 const coerceVndInteger: FieldHook = ({ value }) => {
   if (value === null || value === undefined || value === '') return undefined;
@@ -34,7 +37,16 @@ const coerceVndInteger: FieldHook = ({ value }) => {
 };
 
 const autoSlugFromTitle: CollectionBeforeChangeHook = async ({ data, operation, originalDoc, req }) => {
-  if (!data || isMediaResync(req)) return data;
+  if (!data || isMediaResync(req) || isSnapshotBackfill(req)) return data;
+
+  const originalTitle = typeof originalDoc?.title === 'string' ? originalDoc.title : '';
+  const originalSlug = typeof originalDoc?.slug === 'string' ? originalDoc.slug : '';
+  const titleChanged = typeof data.title === 'string' && data.title !== originalTitle;
+  const slugTouched = typeof data.slug === 'string' && data.slug !== originalSlug;
+
+  if (operation === 'update' && !titleChanged && !slugTouched) {
+    return data;
+  }
 
   const slug = await resolveCollectionSlug(req.payload, 'products', {
     title: typeof data.title === 'string' ? data.title : undefined,
@@ -42,7 +54,7 @@ const autoSlugFromTitle: CollectionBeforeChangeHook = async ({ data, operation, 
     excludeId: operation === 'update' ? originalDoc?.id : undefined,
   });
 
-  if (slug) {
+  if (slug && slug !== (typeof data.slug === 'string' ? data.slug : originalSlug)) {
     data.slug = slug;
   }
 
@@ -69,7 +81,9 @@ function relationshipId(value: unknown): string | number | null {
  * and in the On Sale homepage section automatically.
  */
 const syncOnSaleCategory: CollectionBeforeChangeHook = async ({ data, originalDoc, req }) => {
-  if (!data || isMediaResync(req)) return data;
+  if (!data || isMediaResync(req) || isSnapshotBackfill(req)) return data;
+
+  if (data.onSale === undefined && data.category === undefined) return data;
 
   // Fall back to the saved doc for fields omitted from a partial update so we
   // never wipe categories or flip the sale flag when another hook saves the
@@ -112,149 +126,128 @@ const syncOnSaleCategory: CollectionBeforeChangeHook = async ({ data, originalDo
   if (onSaleId === null) return data;
 
   const withoutOnSale = existingIds.filter((id) => String(id) !== String(onSaleId));
-  data.category = onSale ? [...withoutOnSale, onSaleId] : withoutOnSale;
+  const nextCategory = onSale ? [...withoutOnSale, onSaleId] : withoutOnSale;
+  const currentKey = existingIds.map(String).sort().join(',');
+  const nextKey = nextCategory.map(String).sort().join(',');
+
+  if (currentKey !== nextKey) {
+    data.category = nextCategory;
+  }
 
   return data;
 };
 
-function variantImageSignature(variants: unknown): string {
-  if (!Array.isArray(variants)) return '';
-  return variants
-    .map((variant) => {
-      if (!variant || typeof variant !== 'object') return '';
-      const row = variant as Record<string, unknown>;
-      const sku = typeof row.sku === 'string' ? row.sku.trim() : '';
-      const imageId = resolveMediaId(row.image);
-      return `${sku}:${imageId ?? ''}`;
-    })
-    .join('|');
-}
+/** Keep category values as numeric IDs so the admin form does not fight populated objects. */
+const normalizeCategoryIds: CollectionBeforeChangeHook = ({ data, req }) => {
+  if (!data || isMediaResync(req) || isSnapshotBackfill(req)) return data;
+  if (!Array.isArray(data.category)) return data;
 
-/** Copy upload picks into storedImage / storedGallery so products keep URLs after media is deleted. */
-const snapshotProductImages: CollectionBeforeChangeHook = async ({ data, originalDoc, req }) => {
-  if (!data) return data;
+  data.category = data.category
+    .map(relationshipId)
+    .filter((id): id is string | number => id !== null);
 
-  const title =
-    typeof data.title === 'string'
-      ? data.title
-      : typeof originalDoc?.title === 'string'
-        ? originalDoc.title
-        : 'Product';
-  const fromMediaResync = isMediaResync(req);
+  return data;
+};
+
+/** Remove duplicate main image from gallery when the main image changes. */
+const dedupeGalleryOnMainImageChange: CollectionBeforeChangeHook = async ({
+  data,
+  originalDoc,
+  req,
+}) => {
+  if (!data || isMediaResync(req) || isSnapshotBackfill(req)) return data;
 
   const prevImageId = resolveMediaId(originalDoc?.image);
-  const nextImageId =
-    data.image !== undefined ? resolveMediaId(data.image) : prevImageId;
-  const imageChanged =
-    String(nextImageId ?? '') !== String(prevImageId ?? '');
+  const nextImageId = data.image !== undefined ? resolveMediaId(data.image) : prevImageId;
+  const imageChanged = String(nextImageId ?? '') !== String(prevImageId ?? '');
 
-  if (imageChanged && prevImageId !== null) {
-    const prevStoredUrl =
-      typeof originalDoc?.storedImage === 'object' &&
-      originalDoc.storedImage !== null &&
-      typeof originalDoc.storedImage.url === 'string'
-        ? originalDoc.storedImage.url
-        : null;
+  if (!imageChanged || prevImageId === null) return data;
 
-    const galleryRows = Array.isArray(data.gallery)
-      ? data.gallery
-      : Array.isArray(originalDoc?.gallery)
-        ? originalDoc.gallery
-        : [];
+  const prevStoredUrl =
+    typeof originalDoc?.storedImage === 'object' &&
+    originalDoc.storedImage !== null &&
+    typeof originalDoc.storedImage.url === 'string'
+      ? originalDoc.storedImage.url
+      : null;
 
-    data.gallery = galleryRows.filter((item: unknown) => {
-      if (!item || typeof item !== 'object') return false;
-      const mediaId = resolveMediaId((item as { media?: unknown }).media);
-      return mediaId === null || String(mediaId) !== String(prevImageId);
-    });
-
-    const storedGalleryRows: StoredImage[] = Array.isArray(data.storedGallery)
-      ? (data.storedGallery as StoredImage[])
-      : Array.isArray(originalDoc?.storedGallery)
-        ? (originalDoc.storedGallery as StoredImage[])
-        : [];
-
-    data.storedGallery = storedGalleryRows.filter((item: StoredImage) => {
-      if (!item?.url?.trim()) return false;
-      if (prevStoredUrl && sameImageUrl(item.url, prevStoredUrl)) return false;
-      return true;
-    });
-  }
-
-  if (nextImageId === null && imageChanged) {
-    data.storedImage = null;
-  } else if (nextImageId !== null && imageChanged) {
-    const media = await loadMediaDocWithRetry(req.payload, data.image ?? nextImageId);
-    const stored = mediaDocToStored(media, title);
-    if (stored) {
-      data.storedImage = stored;
-    }
-  } else if (nextImageId !== null && fromMediaResync) {
-    const media = await loadMediaDocWithRetry(req.payload, data.image ?? nextImageId);
-    const stored = mediaDocToStored(media, title);
-    if (stored) {
-      data.storedImage = stored;
-    }
-  }
-
-  const galleryChanged =
-    Array.isArray(data.gallery) &&
-    (fromMediaResync || !galleryMediaIdsEqual(data.gallery, originalDoc?.gallery));
-
-  if (galleryChanged && Array.isArray(data.gallery)) {
-    const prevStored = Array.isArray(originalDoc?.storedGallery)
-      ? (originalDoc.storedGallery as StoredImage[])
+  const galleryRows = Array.isArray(data.gallery)
+    ? data.gallery
+    : Array.isArray(originalDoc?.gallery)
+      ? originalDoc.gallery
       : [];
-    const storedGallery: StoredImage[] = [];
 
-    for (let index = 0; index < data.gallery.length; index += 1) {
-      const item = data.gallery[index];
-      if (!item || typeof item !== 'object') continue;
+  data.gallery = galleryRows.filter((item: unknown) => {
+    if (!item || typeof item !== 'object') return false;
+    const mediaId = resolveMediaId((item as { media?: unknown }).media);
+    return mediaId === null || String(mediaId) !== String(prevImageId);
+  });
 
-      const media = await loadMediaDocWithRetry(req.payload, (item as { media?: unknown }).media);
-      const stored = mediaDocToStored(media, title);
-      if (stored) {
-        storedGallery.push(stored);
-        continue;
-      }
-
-      // Upload may still be committing — keep the previous snapshot for this slot.
-      const previous = prevStored[index];
-      if (previous?.url?.trim()) {
-        storedGallery.push(previous);
-      }
-    }
-
-    if (storedGallery.length > 0) {
-      data.storedGallery = storedGallery;
-    }
-  }
-
-  const variantsChanged =
-    Array.isArray(data.variants) &&
-    variantImageSignature(data.variants) !== variantImageSignature(originalDoc?.variants);
-
-  if (variantsChanged || (fromMediaResync && Array.isArray(data.variants))) {
-    for (const variant of data.variants ?? []) {
-      if (!variant || typeof variant !== 'object') continue;
-      const variantRow = variant as Record<string, unknown>;
-      const imageRef = variantRow.image;
-      if (imageRef === undefined || imageRef === null) continue;
-
-      const altFallback =
-        typeof variantRow.name === 'string' && variantRow.name.trim().length > 0
-          ? variantRow.name
-          : title;
-
-      const media = await loadMediaDocWithRetry(req.payload, imageRef);
-      const stored = mediaDocToStored(media, altFallback);
-      if (stored) {
-        variantRow.storedImage = stored;
-      }
-    }
+  if (prevStoredUrl && Array.isArray(data.storedGallery)) {
+    data.storedGallery = (data.storedGallery as StoredImage[]).filter(
+      (item) => !item?.url?.trim() || !sameImageUrl(item.url, prevStoredUrl),
+    );
   }
 
   return data;
+};
+
+/** Normalize admin API responses so relationship fields stay as IDs (prevents save loops). */
+const sanitizeForAdminRead: CollectionBeforeReadHook = ({ doc, req }) => {
+  if (!doc || !isPayloadAdminRequest(req)) return doc;
+  return sanitizeProductDocForAdmin(doc as Record<string, unknown>);
+};
+
+const stripSnapshotsFromIncomingSave: CollectionBeforeChangeHook = ({ data, req }) => {
+  if (!data || isMediaResync(req) || isSnapshotBackfill(req)) return data;
+  stripIncomingSnapshotFields(data as Record<string, unknown>);
+  return data;
+};
+
+/** Write snapshots in the background; return a normalized doc so the admin form stays stable. */
+const backfillProductSnapshots: CollectionAfterChangeHook = ({ doc, req }) => {
+  if (!doc || isMediaResync(req) || isSnapshotBackfill(req)) {
+    return doc && isPayloadAdminRequest(req)
+      ? sanitizeProductDocForAdmin(doc as Record<string, unknown>)
+      : doc;
+  }
+
+  const productId = doc.id;
+
+  scheduleDebouncedProductSnapshotBackfill(productId, async () => {
+    try {
+      const fresh = await req.payload.findByID({
+        collection: 'products',
+        id: productId,
+        depth: 0,
+        overrideAccess: true,
+      });
+      if (!fresh || typeof fresh !== 'object') return;
+
+      const patch = await buildProductSnapshotPatch(
+        req.payload,
+        fresh as Parameters<typeof buildProductSnapshotPatch>[1],
+        { useRetry: false },
+      );
+      if (!patch) return;
+
+      await req.payload.update({
+        collection: 'products',
+        id: productId,
+        data: patch,
+        context: SNAPSHOT_BACKFILL_CONTEXT,
+        depth: 0,
+        overrideAccess: true,
+      });
+    } catch (error) {
+      console.error('[products.backfillProductSnapshots] failed:', error);
+    }
+  });
+
+  const docForBackfill = doc as Record<string, unknown>;
+
+  return isPayloadAdminRequest(req)
+    ? sanitizeProductDocForAdmin(docForBackfill)
+    : doc;
 };
 
 function hasStoredImageUrl(stored: unknown): boolean {
@@ -285,7 +278,7 @@ const validateProductImage: Validate = (value, args) => {
 
 /** Flush storefront catalog caches after the admin response returns. */
 const invalidateCatalogOnChange: CollectionAfterChangeHook = ({ doc, req }) => {
-  if (isMediaResync(req)) return doc;
+  if (isMediaResync(req) || isSnapshotBackfill(req)) return doc;
   after(() => {
     revalidateCatalogCache();
   });
@@ -316,19 +309,38 @@ const storedImageFields = [
     name: 'height',
     type: 'number' as const,
   },
+  {
+    name: 'kind',
+    type: 'select' as const,
+    options: [
+      { label: 'Image', value: 'image' },
+      { label: 'Video', value: 'video' },
+    ],
+    admin: {
+      readOnly: true,
+    },
+  },
 ];
 
 export const Products: CollectionConfig = {
   slug: 'products',
   admin: {
+    group: groups.products.name,
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'price', 'onSale', 'salePercent', 'available', 'updatedAt'],
     description: 'Create products here, then assign categories so they appear on the storefront.',
   },
   access: payloadPublicReadAdminWrite,
   hooks: {
-    beforeChange: [autoSlugFromTitle, syncOnSaleCategory, snapshotProductImages],
-    afterChange: [invalidateCatalogOnChange],
+    beforeChange: [
+      autoSlugFromTitle,
+      syncOnSaleCategory,
+      normalizeCategoryIds,
+      dedupeGalleryOnMainImageChange,
+      stripSnapshotsFromIncomingSave,
+    ],
+    beforeRead: [sanitizeForAdminRead],
+    afterChange: [backfillProductSnapshots, invalidateCatalogOnChange],
     afterDelete: [invalidateCatalogOnDelete],
   },
   fields: [
@@ -425,6 +437,20 @@ export const Products: CollectionConfig = {
       },
     },
     {
+      name: 'stock',
+      type: 'number',
+      min: 0,
+      label: 'Stock quantity',
+      admin: {
+        description:
+          'Inventory for products without variants. Leave empty for unlimited stock. Variant products use per-variant stock instead.',
+        step: 1,
+      },
+      hooks: {
+        beforeValidate: [coerceVndInteger],
+      },
+    },
+    {
       name: 'image',
       type: 'upload',
       relationTo: 'media',
@@ -447,10 +473,10 @@ export const Products: CollectionConfig = {
     {
       name: 'gallery',
       type: 'array',
-      label: 'Extra images',
+      label: 'Gallery (images & videos)',
       admin: {
         description:
-          'Add a row, upload the image, wait for the upload to finish, then save the product once with the main Save button (top-right). Do not save the media drawer separately before saving the product.',
+          'Add a row, pick or upload an image/video, wait until the thumbnail appears, then pause a few seconds before clicking Save. The gallery snapshot updates in the background so the editor stays responsive.',
       },
       fields: [
         {
@@ -463,107 +489,29 @@ export const Products: CollectionConfig = {
     {
       name: 'storedGallery',
       type: 'array',
-      label: 'Extra images (snapshotted)',
+      label: 'Gallery (snapshotted)',
       admin: {
         hidden: true,
         readOnly: true,
-        description: 'Snapshotted gallery URLs — auto-filled when the product is saved.',
+        description: 'Snapshotted gallery URLs and media type — auto-filled when the product is saved.',
       },
       fields: storedImageFields,
     },
     {
       name: 'variants',
-      type: 'array',
+      type: 'join',
+      collection: 'product-variants',
+      on: 'product',
+      // Default join maxDepth is 1 (variant rows only). Need 2 so each variant's `image` upload hydrates.
+      maxDepth: 2,
       label: 'Product variants',
-      labels: { singular: 'Variant', plural: 'Variants' },
       admin: {
         description:
-          'Optional. Multiple variants per product (e.g. color / switch). Leave "Price override" empty to use the main price.',
-        initCollapsed: true,
+          'Save the product first, then use "Create new" to add variants (name, SKU, stock, image). Each variant is linked to this product automatically — no need to pick the product again.',
+        allowCreate: true,
+        defaultColumns: ['name', 'sku', 'stock', 'priceOverride'],
       },
-      fields: [
-        {
-          type: 'row',
-          fields: [
-            {
-              name: 'name',
-              type: 'text',
-              required: true,
-              admin: {
-                width: '60%',
-                placeholder: 'e.g. Black / Linear switch',
-                description: 'Label on the variant selector button.',
-              },
-            },
-            {
-              name: 'sku',
-              type: 'text',
-              required: true,
-              unique: true,
-              index: true,
-              admin: {
-                width: '40%',
-                placeholder: 'e.g. KB-PRO-BLK-LIN',
-                description: 'Unique SKU for this variant.',
-              },
-            },
-          ],
-        },
-        {
-          type: 'row',
-          fields: [
-            {
-              name: 'priceOverride',
-              type: 'number',
-              min: 0,
-              admin: {
-                width: '50%',
-                step: 1,
-                placeholder: 'Leave empty for main price',
-                description: 'VND integer. Empty = use the product price.',
-              },
-              hooks: {
-                beforeValidate: [coerceVndInteger],
-              },
-            },
-            {
-              name: 'stock',
-              type: 'number',
-              min: 0,
-              defaultValue: 0,
-              required: true,
-              admin: {
-                width: '50%',
-                step: 1,
-                description: 'Stock for this variant only.',
-              },
-              hooks: {
-                beforeValidate: [coerceVndInteger],
-              },
-            },
-          ],
-        },
-        {
-          name: 'image',
-          type: 'upload',
-          relationTo: 'media',
-          admin: {
-            description:
-              'Optional. When this variant is selected on the storefront, it replaces the main image.',
-          },
-        },
-        {
-          name: 'storedImage',
-          type: 'group',
-          admin: {
-            hidden: true,
-            readOnly: true,
-            description:
-              'Snapshotted variant image URL (auto-filled on save). Keeps images working if the Media file is deleted.',
-          },
-          fields: storedImageFields,
-        },
-      ],
+      defaultLimit: 0,
     },
   ],
 };

@@ -7,11 +7,14 @@ import ProfileShell from '@/app/(storefront)/profile/profile-shell';
 import type {
   ProfileAddress,
   ProfileOrder,
-  ProfileOrderStatus,
   ProfileTabId,
   ProfileUser,
+  ProfileWishlistProduct,
 } from '@/app/(storefront)/profile/types';
+import { loadProfileOrders } from '@/lib/profile-orders';
+import { getPayloadProductsByIds } from '@/lib/payload-products';
 import { prisma } from '@/lib/prisma';
+import { getWishlistProductIds } from '@/lib/wishlist';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +24,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const VALID_TABS = new Set<ProfileTabId>(['account', 'orders', 'addresses']);
+const VALID_TABS = new Set<ProfileTabId>(['account', 'orders', 'addresses', 'wishlist']);
 
 type SearchParams = Promise<{ tab?: string }>;
 
@@ -35,21 +38,21 @@ export default async function ProfilePage(props: {
 
   const userId = session.user.id;
 
-  const [userRow, orderRows, addressRows] = await Promise.all([
+  const [userRow, addressRows] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, email: true, image: true, createdAt: true },
-    }),
-    prisma.order.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { items: true } } },
     }),
     prisma.userAddress.findMany({
       where: { userId },
       orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
     }),
   ]);
+
+  const orders = await loadProfileOrders({
+    userId,
+    email: userRow?.email ?? session.user.email ?? '',
+  });
 
   if (!userRow) {
     redirect('/login?callbackUrl=/profile');
@@ -63,19 +66,6 @@ export default async function ProfilePage(props: {
     createdAt: userRow.createdAt.toISOString(),
   };
 
-  const orders: ProfileOrder[] = orderRows.map((row) => ({
-    id: row.id,
-    orderCode: row.orderCode,
-    status: row.status as ProfileOrderStatus,
-    amount: row.amount,
-    itemCount: row._count.items,
-    deliveryMethod: row.deliveryMethod,
-    paymentMethod: row.paymentMethod,
-    shippingAddress: row.shippingAddress,
-    createdAt: row.createdAt.toISOString(),
-    paidAt: row.paidAt ? row.paidAt.toISOString() : null,
-  }));
-
   const addresses: ProfileAddress[] = addressRows.map((row) => ({
     id: row.id,
     title: row.title,
@@ -88,6 +78,18 @@ export default async function ProfilePage(props: {
     country: row.country,
     isDefault: row.isDefault,
     createdAt: row.createdAt.toISOString(),
+  }));
+
+  const wishlistIds = await getWishlistProductIds(userId);
+  const wishlistProducts = wishlistIds.length > 0 ? await getPayloadProductsByIds(wishlistIds) : [];
+  const wishlist: ProfileWishlistProduct[] = wishlistProducts.map((product) => ({
+    id: product.id,
+    handle: product.handle,
+    title: product.title,
+    imageUrl: product.featuredImage.url,
+    imageAlt: product.featuredImage.altText || product.title,
+    price: product.priceRange.minVariantPrice.amount,
+    currencyCode: product.priceRange.minVariantPrice.currencyCode,
   }));
 
   const { tab } = await props.searchParams;
@@ -115,6 +117,7 @@ export default async function ProfilePage(props: {
         user={user}
         orders={orders}
         addresses={addresses}
+        wishlist={wishlist}
         initialTab={initialTab}
       />
     </section>

@@ -5,8 +5,11 @@ import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';
 import Footer from '@/components/layout/footer';
 import GridTileImage from '@/components/grid/tile';
+import ProductReviews from '@/components/product/reviews';
+import RecentlyViewed from '@/components/product/recently-viewed';
 import VariantSelector from '@/components/product/variant-selector';
 import { getSiteName } from '@/lib/brand';
+import { canonicalCategorySlug } from '@/lib/default-categories';
 import { HIDDEN_PRODUCT_TAG } from '@/lib/constants';
 import {
   computeSalePrice,
@@ -16,9 +19,11 @@ import {
   resolveCategories,
   resolveVariants,
 } from '@/lib/payload-products';
+import { getReviewSummary } from '@/lib/reviews';
 import {
   buildProductJsonLd,
   jsonLdToScriptString,
+  categoryCanonicalPath,
   productCanonicalPath,
   resolveSeoImage,
 } from '@/lib/seo';
@@ -106,6 +111,7 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
   const variants = resolveVariants(doc);
   const { price: basePrice, compareAt: baseCompareAtPrice } = computeSalePrice(doc.price, doc);
   const canonical = absoluteUrl(productCanonicalPath(product.handle));
+  const reviewSummary = await getReviewSummary(product.id);
 
   const productJsonLd = buildProductJsonLd({
     title: product.title,
@@ -115,6 +121,7 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
     available: product.availableForSale,
     images: product.images.map((image) => image.url),
     sku: product.id,
+    rating: reviewSummary,
   });
 
   const breadcrumbItems = [
@@ -133,11 +140,12 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
   ];
 
   if (categories[0]) {
+    const categoryPath = categoryCanonicalPath(canonicalCategorySlug(categories[0].slug));
     breadcrumbItems.push({
       '@type': 'ListItem',
       position: 3,
       name: categories[0].title,
-      item: `${baseUrl}/search/${categories[0].slug}`,
+      item: `${baseUrl}${categoryPath}`,
     });
   }
 
@@ -184,7 +192,10 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
               <>
                 <li aria-hidden>/</li>
                 <li>
-                  <Link href={`/search/${categories[0].slug}`} className="hover:underline">
+                  <Link
+                    href={categoryCanonicalPath(canonicalCategorySlug(categories[0].slug))}
+                    className="hover:underline"
+                  >
                     {categories[0].title}
                   </Link>
                 </li>
@@ -202,7 +213,7 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
             {categories.map((category) => (
               <li key={String(category.id)}>
                 <Link
-                  href={`/search/${category.slug}`}
+                  href={categoryCanonicalPath(canonicalCategorySlug(category.slug))}
                   className="inline-flex rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700 transition hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
                 >
                   {category.title}
@@ -217,6 +228,16 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
           basePrice={basePrice}
           baseCompareAtPrice={baseCompareAtPrice}
           variants={variants}
+        />
+        <ProductReviews productId={product.id} productHandle={product.handle} />
+        <RecentlyViewed
+          current={{
+            handle: product.handle,
+            title: product.title,
+            image: product.featuredImage.url,
+            price: product.priceRange.minVariantPrice.amount,
+            currencyCode: product.priceRange.minVariantPrice.currencyCode,
+          }}
         />
         <RelatedProducts slug={product.handle} categoryIds={categories.map((c) => c.id)} />
       </div>

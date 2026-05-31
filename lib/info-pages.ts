@@ -53,19 +53,19 @@ export const infoPages: Record<string, InfoPage> = {
     title: 'Chính sách cookie',
     description: 'Cách website sử dụng cookie và công nghệ tương tự.',
     body:
-      'Chúng tôi dùng cookie cần thiết để giỏ hàng và phiên đăng nhập hoạt động. Cookie phân tích có thể được thêm sau để hiểu lưu lượng truy cập. Bạn có thể quản lý cookie trong cài đặt trình duyệt.',
+      'Chúng tôi sử dụng cookie cần thiết để giỏ hàng, phiên đăng nhập và bảo mật hoạt động đúng cách — những cookie này không thể tắt. Khi bạn đồng ý, chúng tôi cũng dùng cookie phân tích để hiểu cách khách truy cập sử dụng website nhằm cải thiện trải nghiệm; các cookie này chỉ được kích hoạt sau khi bạn bấm "Chấp nhận tất cả" trên thanh thông báo cookie. Bạn có thể thay đổi lựa chọn bất cứ lúc nào bằng cách xóa cookie trong trình duyệt, hoặc quản lý cookie trực tiếp trong cài đặt trình duyệt. Chúng tôi không dùng cookie để bán dữ liệu cho bên thứ ba.',
   },
   privacy: {
     title: 'Chính sách bảo mật',
     description: 'Cách chúng tôi thu thập, sử dụng và bảo vệ dữ liệu cá nhân.',
     body:
-      'Chúng tôi thu thập thông tin bạn cung cấp khi thanh toán như tên, email, số điện thoại và địa chỉ giao hàng để xử lý đơn. Chúng tôi không bán dữ liệu của bạn. Liên hệ nếu bạn muốn cập nhật hoặc xóa thông tin.',
+      'Chúng tôi thu thập thông tin bạn cung cấp khi đặt hàng hoặc tạo tài khoản: họ tên, email, số điện thoại và địa chỉ giao hàng. Dữ liệu này chỉ được dùng để xử lý đơn hàng, liên hệ về đơn, gửi xác nhận và hỗ trợ sau bán. Thông tin thanh toán được xử lý an toàn qua đối tác cổng thanh toán (ví dụ payOS) — chúng tôi không lưu trữ số thẻ của bạn. Chúng tôi giữ dữ liệu đơn hàng trong thời gian cần thiết cho mục đích kế toán và bảo hành, và không bán dữ liệu của bạn cho bên thứ ba. Bạn có quyền yêu cầu xem, cập nhật hoặc xóa thông tin cá nhân của mình — hãy liên hệ qua trang Liên hệ và chúng tôi sẽ xử lý trong thời gian hợp lý.',
   },
   terms: {
     title: 'Điều khoản dịch vụ',
     description: 'Điều khoản sử dụng website và đặt hàng.',
     body:
-      'Khi sử dụng website, bạn đồng ý với giá, thời gian sản xuất theo đơn và điều khoản thanh toán. Màu sắc sản phẩm có thể chênh lệch nhẹ so với ảnh. Nội dung trang sẽ được cập nhật.',
+      'Khi sử dụng website và đặt hàng, bạn đồng ý với các điều khoản sau. Giá sản phẩm được hiển thị bằng VND và có thể thay đổi mà không báo trước; giá áp dụng là giá tại thời điểm bạn đặt hàng. Vì phần lớn sản phẩm được in 3D theo đơn, thời gian sản xuất có thể thay đổi và sẽ được thông báo khi cần. Màu sắc và chi tiết bề mặt thực tế có thể chênh lệch nhẹ so với ảnh do đặc tính của công nghệ in 3D. Bạn cam kết cung cấp thông tin giao hàng chính xác; chúng tôi không chịu trách nhiệm cho việc giao trễ do thông tin sai. Mọi tranh chấp sẽ được giải quyết trên tinh thần thiện chí, ưu tiên thương lượng trực tiếp. Nội dung điều khoản có thể được cập nhật và phiên bản mới nhất luôn hiển thị trên trang này.',
   },
 };
 

@@ -54,17 +54,21 @@ const config = {
         ? await authConfig.callbacks.jwt(params)
         : params.token;
 
-      // Re-hydrate email from the database whenever it's missing OR a fresh
-      // session is triggered (NextAuth's `update()` call). This keeps
-      // admin-email checks consistent if the user rotates their email.
+      // Re-hydrate profile fields from the database when missing or after
+      // `session.update()` (e.g. profile save) so the navbar account menu stays
+      // in sync with Prisma.
       const shouldRefresh = !token.email || params.trigger === 'update';
       if (shouldRefresh && typeof token.sub === 'string') {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { email: true },
+          select: { email: true, name: true, image: true },
         });
         if (dbUser?.email) {
           token.email = dbUser.email.trim().toLowerCase();
+        }
+        if (dbUser) {
+          token.name = dbUser.name;
+          token.picture = dbUser.image;
         }
       }
 

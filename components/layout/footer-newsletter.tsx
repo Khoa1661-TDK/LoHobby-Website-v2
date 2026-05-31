@@ -1,10 +1,12 @@
 'use client';
 
-import { FormEvent, useState, type ReactElement } from 'react';
+import { FormEvent, useState, useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
+import { subscribeNewsletterAction } from '@/components/layout/newsletter-action';
 
 export default function FooterNewsletter(): ReactElement {
   const [email, setEmail] = useState('');
+  const [isPending, startTransition] = useTransition();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -12,8 +14,15 @@ export default function FooterNewsletter(): ReactElement {
       toast.error('Vui lòng nhập địa chỉ email.');
       return;
     }
-    toast.success('Đăng ký thành công! Chúng tôi sẽ liên hệ sớm.');
-    setEmail('');
+    startTransition(async () => {
+      const result = await subscribeNewsletterAction(email);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success('Đăng ký thành công! Cảm ơn bạn đã quan tâm.');
+      setEmail('');
+    });
   }
 
   return (
@@ -39,9 +48,10 @@ export default function FooterNewsletter(): ReactElement {
           />
           <button
             type="submit"
-            className="shrink-0 rounded-lg bg-filament-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-filament-600"
+            disabled={isPending}
+            className="shrink-0 rounded-lg bg-filament-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-filament-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Đăng ký
+            {isPending ? 'Đang gửi…' : 'Đăng ký'}
           </button>
         </div>
       </form>

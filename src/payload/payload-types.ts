@@ -71,20 +71,38 @@ export interface Config {
     media: Media;
     categories: Category;
     products: Product;
+    'product-variants': ProductVariant;
     'payment-methods': PaymentMethod;
+    carts: Cart;
+    orders: Order;
+    'content-pages': ContentPage;
+    'store-customers': StoreCustomer;
+    exports: Export;
     'payload-kv': PayloadKv;
+    'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    products: {
+      variants: 'product-variants';
+    };
+  };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    'product-variants': ProductVariantsSelect<false> | ProductVariantsSelect<true>;
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
+    carts: CartsSelect<false> | CartsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
+    'store-customers': StoreCustomersSelect<false> | StoreCustomersSelect<true>;
+    exports: ExportsSelect<false> | ExportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -95,9 +113,15 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'site-header': SiteHeader;
+    'store-settings': StoreSetting;
+    'shipping-settings': ShippingSetting;
+    'dropship-settings': DropshipSetting;
   };
   globalsSelect: {
     'site-header': SiteHeaderSelect<false> | SiteHeaderSelect<true>;
+    'store-settings': StoreSettingsSelect<false> | StoreSettingsSelect<true>;
+    'shipping-settings': ShippingSettingsSelect<false> | ShippingSettingsSelect<true>;
+    'dropship-settings': DropshipSettingsSelect<false> | DropshipSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -105,7 +129,13 @@ export interface Config {
   };
   user: User;
   jobs: {
-    tasks: unknown;
+    tasks: {
+      createCollectionExport: TaskCreateCollectionExport;
+      inline: {
+        input: unknown;
+        output: unknown;
+      };
+    };
     workflows: unknown;
   };
 }
@@ -263,6 +293,10 @@ export interface Product {
    */
   available?: boolean | null;
   /**
+   * Inventory for products without variants. Leave empty for unlimited stock. Variant products use per-variant stock instead.
+   */
+  stock?: number | null;
+  /**
    * Main product photo shown first on the storefront. Replacing it removes the previous main image from the extra gallery automatically.
    */
   image?: (number | null) | Media;
@@ -274,10 +308,11 @@ export interface Product {
     alt?: string | null;
     width?: number | null;
     height?: number | null;
+    kind?: ('image' | 'video') | null;
     id?: string | null;
   };
   /**
-   * Add a row, upload the image, wait for the upload to finish, then save the product once with the main Save button (top-right). Do not save the media drawer separately before saving the product.
+   * Add a row, pick or upload an image/video, wait until the thumbnail appears, then pause a few seconds before clicking Save. The gallery snapshot updates in the background so the editor stays responsive.
    */
   gallery?:
     | {
@@ -286,7 +321,7 @@ export interface Product {
       }[]
     | null;
   /**
-   * Snapshotted gallery URLs — auto-filled when the product is saved.
+   * Snapshotted gallery URLs and media type — auto-filled when the product is saved.
    */
   storedGallery?:
     | {
@@ -294,47 +329,18 @@ export interface Product {
         alt?: string | null;
         width?: number | null;
         height?: number | null;
+        kind?: ('image' | 'video') | null;
         id?: string | null;
       }[]
     | null;
   /**
-   * Optional. Multiple variants per product (e.g. color / switch). Leave "Price override" empty to use the main price.
+   * Save the product first, then use "Create new" to add variants (name, SKU, stock, image). Each variant is linked to this product automatically — no need to pick the product again.
    */
-  variants?:
-    | {
-        /**
-         * Label on the variant selector button.
-         */
-        name: string;
-        /**
-         * Unique SKU for this variant.
-         */
-        sku: string;
-        /**
-         * VND integer. Empty = use the product price.
-         */
-        priceOverride?: number | null;
-        /**
-         * Stock for this variant only.
-         */
-        stock: number;
-        /**
-         * Optional. When this variant is selected on the storefront, it replaces the main image.
-         */
-        image?: (number | null) | Media;
-        /**
-         * Snapshotted variant image URL (auto-filled on save). Keeps images working if the Media file is deleted.
-         */
-        storedImage?: {
-          url?: string | null;
-          alt?: string | null;
-          width?: number | null;
-          height?: number | null;
-          id?: string | null;
-        };
-        id?: string | null;
-      }[]
-    | null;
+  variants?: {
+    docs?: (number | ProductVariant)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -343,6 +349,41 @@ export interface Product {
      */
     image?: (number | null) | Media;
   };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Managed from each product’s Variants field. Each variant saves on its own so image uploads do not freeze the product editor.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-variants".
+ */
+export interface ProductVariant {
+  id: number;
+  /**
+   * Set automatically when you add a variant from a product page.
+   */
+  product: number | Product;
+  /**
+   * Label on the variant selector button.
+   */
+  name: string;
+  /**
+   * Unique SKU (global).
+   */
+  sku: string;
+  /**
+   * VND integer. Empty = use the product price.
+   */
+  priceOverride?: number | null;
+  /**
+   * Stock for this variant only.
+   */
+  stock: number;
+  /**
+   * Optional. Shown on the storefront when this variant is selected.
+   */
+  image?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -439,6 +480,217 @@ export interface PaymentMethod {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "carts".
+ */
+export interface Cart {
+  id: number;
+  sessionId?: string | null;
+  customer?: (number | null) | StoreCustomer;
+  cartItems?:
+    | {
+        product: number | Product;
+        /**
+         * Variant SKU or product id when no variants.
+         */
+        variantId: string;
+        quantity: number;
+        id?: string | null;
+      }[]
+    | null;
+  completed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Linked to Prisma User via prismaUserId — not used for CMS admin login.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "store-customers".
+ */
+export interface StoreCustomer {
+  id: number;
+  email: string;
+  name?: string | null;
+  /**
+   * NextAuth / Prisma User.id
+   */
+  prismaUserId?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Canonical orders (ShopNex admin + analytics). VND integers.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  /**
+   * Numeric order code as string.
+   */
+  orderId: string;
+  /**
+   * Total charged (VND).
+   */
+  totalAmount: number;
+  subtotalAmount?: number | null;
+  shippingAmount?: number | null;
+  discountAmount?: number | null;
+  /**
+   * VAT/sales tax (VND).
+   */
+  taxAmount?: number | null;
+  /**
+   * Amount applied from a gift card (VND).
+   */
+  giftCardAmount?: number | null;
+  couponCode?: string | null;
+  /**
+   * Gift card code redeemed on this order.
+   */
+  giftCardCode?: string | null;
+  currency: string;
+  customer?: (number | null) | StoreCustomer;
+  cart?: (number | null) | Cart;
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  orderStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'canceled';
+  deliveryMethod?: ('SHIPMENT' | 'PICKUP') | null;
+  paymentMethodKey?: string | null;
+  paymentKind?: string | null;
+  customerName?: string | null;
+  buyerEmail?: string | null;
+  phoneNumber?: string | null;
+  paymentUrl?: string | null;
+  paidAt?: string | null;
+  inventoryAdjusted?: boolean | null;
+  lineItems?:
+    | {
+        productId: string;
+        productTitle?: string | null;
+        productHandle?: string | null;
+        variantSku?: string | null;
+        variantName?: string | null;
+        quantity: number;
+        unitPrice: number;
+        id?: string | null;
+      }[]
+    | null;
+  shippingAddress?: string | null;
+  /**
+   * e.g. GHN, GHTK, Viettel Post
+   */
+  shippingCarrier?: string | null;
+  trackingNumber?: string | null;
+  /**
+   * Public link for the customer to track shipment.
+   */
+  trackingUrl?: string | null;
+  /**
+   * prismaUserId, legacy ids, gateway refs.
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Marketing/landing pages rendered at /pages/[slug].
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-pages".
+ */
+export interface ContentPage {
+  id: number;
+  title: string;
+  slug: string;
+  published?: boolean | null;
+  layout?:
+    | (
+        | {
+            headline: string;
+            subheadline?: string | null;
+            ctaLabel?: string | null;
+            ctaHref?: string | null;
+            image?: (number | null) | Media;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'hero';
+          }
+        | {
+            content: string;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'richText';
+          }
+        | {
+            title: string;
+            body?: string | null;
+            buttonLabel: string;
+            buttonHref: string;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cta';
+          }
+      )[]
+    | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exports".
+ */
+export interface Export {
+  id: number;
+  name?: string | null;
+  format: 'csv' | 'json';
+  limit?: number | null;
+  sort?: string | null;
+  drafts?: ('yes' | 'no') | null;
+  selectionToUse?: ('currentSelection' | 'currentFilters' | 'all') | null;
+  fields?: string[] | null;
+  collectionSlug: string;
+  where?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -453,6 +705,98 @@ export interface PayloadKv {
     | number
     | boolean
     | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs".
+ */
+export interface PayloadJob {
+  id: number;
+  /**
+   * Input data provided to the job
+   */
+  input?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  taskStatus?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  completedAt?: string | null;
+  totalTried?: number | null;
+  /**
+   * If hasError is true this job will not be retried
+   */
+  hasError?: boolean | null;
+  /**
+   * If hasError is true, this is the error that caused it
+   */
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Task execution log
+   */
+  log?:
+    | {
+        executedAt: string;
+        completedAt: string;
+        taskSlug: 'inline' | 'createCollectionExport';
+        taskID: string;
+        input?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        output?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        state: 'failed' | 'succeeded';
+        error?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  taskSlug?: ('inline' | 'createCollectionExport') | null;
+  queue?: string | null;
+  waitUntil?: string | null;
+  processing?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -478,8 +822,32 @@ export interface PayloadLockedDocument {
         value: number | Product;
       } | null)
     | ({
+        relationTo: 'product-variants';
+        value: number | ProductVariant;
+      } | null)
+    | ({
         relationTo: 'payment-methods';
         value: number | PaymentMethod;
+      } | null)
+    | ({
+        relationTo: 'carts';
+        value: number | Cart;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'content-pages';
+        value: number | ContentPage;
+      } | null)
+    | ({
+        relationTo: 'store-customers';
+        value: number | StoreCustomer;
+      } | null)
+    | ({
+        relationTo: 'exports';
+        value: number | Export;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -603,6 +971,7 @@ export interface ProductsSelect<T extends boolean = true> {
   salePercent?: T;
   description?: T;
   available?: T;
+  stock?: T;
   image?: T;
   storedImage?:
     | T
@@ -611,6 +980,7 @@ export interface ProductsSelect<T extends boolean = true> {
         alt?: T;
         width?: T;
         height?: T;
+        kind?: T;
         id?: T;
       };
   gallery?:
@@ -626,27 +996,10 @@ export interface ProductsSelect<T extends boolean = true> {
         alt?: T;
         width?: T;
         height?: T;
+        kind?: T;
         id?: T;
       };
-  variants?:
-    | T
-    | {
-        name?: T;
-        sku?: T;
-        priceOverride?: T;
-        stock?: T;
-        image?: T;
-        storedImage?:
-          | T
-          | {
-              url?: T;
-              alt?: T;
-              width?: T;
-              height?: T;
-              id?: T;
-            };
-        id?: T;
-      };
+  variants?: T;
   meta?:
     | T
     | {
@@ -654,6 +1007,20 @@ export interface ProductsSelect<T extends boolean = true> {
         description?: T;
         image?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-variants_select".
+ */
+export interface ProductVariantsSelect<T extends boolean = true> {
+  product?: T;
+  name?: T;
+  sku?: T;
+  priceOverride?: T;
+  stock?: T;
+  image?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -706,11 +1073,198 @@ export interface PaymentMethodsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "carts_select".
+ */
+export interface CartsSelect<T extends boolean = true> {
+  sessionId?: T;
+  customer?: T;
+  cartItems?:
+    | T
+    | {
+        product?: T;
+        variantId?: T;
+        quantity?: T;
+        id?: T;
+      };
+  completed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  orderId?: T;
+  totalAmount?: T;
+  subtotalAmount?: T;
+  shippingAmount?: T;
+  discountAmount?: T;
+  taxAmount?: T;
+  giftCardAmount?: T;
+  couponCode?: T;
+  giftCardCode?: T;
+  currency?: T;
+  customer?: T;
+  cart?: T;
+  paymentStatus?: T;
+  orderStatus?: T;
+  deliveryMethod?: T;
+  paymentMethodKey?: T;
+  paymentKind?: T;
+  customerName?: T;
+  buyerEmail?: T;
+  phoneNumber?: T;
+  paymentUrl?: T;
+  paidAt?: T;
+  inventoryAdjusted?: T;
+  lineItems?:
+    | T
+    | {
+        productId?: T;
+        productTitle?: T;
+        productHandle?: T;
+        variantSku?: T;
+        variantName?: T;
+        quantity?: T;
+        unitPrice?: T;
+        id?: T;
+      };
+  shippingAddress?: T;
+  shippingCarrier?: T;
+  trackingNumber?: T;
+  trackingUrl?: T;
+  metadata?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-pages_select".
+ */
+export interface ContentPagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  published?: T;
+  layout?:
+    | T
+    | {
+        hero?:
+          | T
+          | {
+              headline?: T;
+              subheadline?: T;
+              ctaLabel?: T;
+              ctaHref?: T;
+              image?: T;
+              id?: T;
+              blockName?: T;
+            };
+        richText?:
+          | T
+          | {
+              content?: T;
+              id?: T;
+              blockName?: T;
+            };
+        cta?:
+          | T
+          | {
+              title?: T;
+              body?: T;
+              buttonLabel?: T;
+              buttonHref?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "store-customers_select".
+ */
+export interface StoreCustomersSelect<T extends boolean = true> {
+  email?: T;
+  name?: T;
+  prismaUserId?: T;
+  phone?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exports_select".
+ */
+export interface ExportsSelect<T extends boolean = true> {
+  name?: T;
+  format?: T;
+  limit?: T;
+  sort?: T;
+  drafts?: T;
+  selectionToUse?: T;
+  fields?: T;
+  collectionSlug?: T;
+  where?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
   key?: T;
   data?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs_select".
+ */
+export interface PayloadJobsSelect<T extends boolean = true> {
+  input?: T;
+  taskStatus?: T;
+  completedAt?: T;
+  totalTried?: T;
+  hasError?: T;
+  error?: T;
+  log?:
+    | T
+    | {
+        executedAt?: T;
+        completedAt?: T;
+        taskSlug?: T;
+        taskID?: T;
+        input?: T;
+        output?: T;
+        state?: T;
+        error?: T;
+        id?: T;
+      };
+  taskSlug?: T;
+  queue?: T;
+  waitUntil?: T;
+  processing?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -772,11 +1326,15 @@ export interface SiteHeader {
     textColor?: string | null;
   };
   /**
-   * Select any built-in tabs you want to remove from the navbar. Leave empty to keep all of them.
+   * When enabled, Home / Shop / Categories appear automatically. Disable this to use only the tabs you add below — deleting a tab then removes it from the navbar.
+   */
+  includeDefaultTabs?: boolean | null;
+  /**
+   * Only applies when "Include default tabs" is on. Select built-in tabs to remove from the navbar.
    */
   hiddenDefaults?: ('home' | 'shop' | 'categories')[] | null;
   /**
-   * Tabs you add here appear alongside the default tabs. Use "Hide default tabs" above to remove any of the built-in ones.
+   * Custom navigation tabs. When "Include default tabs" is off, this list is your complete menu — remove a row and save to delete it from the storefront.
    */
   tabs?:
     | {
@@ -820,6 +1378,144 @@ export interface SiteHeader {
   createdAt?: string | null;
 }
 /**
+ * Store identity, branding, contact details, and policy links for the storefront and SEO.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "store-settings".
+ */
+export interface StoreSetting {
+  id: number;
+  /**
+   * Overrides NEXT_PUBLIC_SITE_NAME when set.
+   */
+  storeName?: string | null;
+  /**
+   * Optional line shown under the logo on marketing pages.
+   */
+  storeSubtitle?: string | null;
+  footerTagline?: string | null;
+  /**
+   * Small uppercase line under the tagline (e.g. "Made in Vietnam").
+   */
+  brandOrigin?: string | null;
+  logo?: (number | null) | Media;
+  /**
+   * Optional. If empty, the main logo is used (may auto-invert).
+   */
+  logoDark?: (number | null) | Media;
+  favicon?: (number | null) | Media;
+  /**
+   * Hex color for buttons, links, and accents.
+   */
+  primaryColor?: string | null;
+  accentColor?: string | null;
+  /**
+   * Default meta description for the storefront.
+   */
+  storeDescription?: string | null;
+  /**
+   * Used in PWA manifest, welcome toast, and compact UI.
+   */
+  storeDescriptionShort?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  contactAddress?: string | null;
+  /**
+   * ISO 4217 code shown in checkout copy (amounts stay VND integers).
+   */
+  currencyCode?: string | null;
+  /**
+   * Optional message shown on the checkout page (e.g. processing times).
+   */
+  checkoutNote?: string | null;
+  returnsPolicyUrl?: string | null;
+  privacyPolicyUrl?: string | null;
+  /**
+   * Optional small print in the footer (e.g. developer credit).
+   */
+  footerCredit?: string | null;
+  /**
+   * Shown in the footer. Leave empty to use env defaults.
+   */
+  socialLinks?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * When enabled, VAT/sales tax is added at checkout based on the rate below.
+   */
+  taxEnabled?: boolean | null;
+  /**
+   * Applied to subtotal minus coupon discount (before shipping). Example: 10 = 10% VAT.
+   */
+  taxRatePercent?: number | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Flat shipping rates, free-shipping threshold, and pickup location for checkout.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shipping-settings".
+ */
+export interface ShippingSetting {
+  id: number;
+  shipmentEnabled?: boolean | null;
+  /**
+   * Added to the order total when delivery method is shipment.
+   */
+  flatRateVnd?: number | null;
+  /**
+   * 0 = no free-shipping rule. Subtotal is before discount.
+   */
+  freeShippingThresholdVnd?: number | null;
+  pickupEnabled?: boolean | null;
+  pickupAddress?: string | null;
+  /**
+   * Shown on checkout when customer selects pickup.
+   */
+  pickupInstructions?: string | null;
+  /**
+   * Optional regional rates. Match keywords against the city/province from the customer address (e.g. "Hồ Chí Minh, HCM, TP.HCM"). Falls back to flat rate when no zone matches.
+   */
+  zones?:
+    | {
+        name: string;
+        /**
+         * Comma-separated city/province keywords to match (case-insensitive).
+         */
+        regionKeywords: string;
+        flatRateVnd?: number | null;
+        freeShippingThresholdVnd?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * CJ / dropship stub — set ENABLE_DROPSHIPPING=true to activate runtime.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dropship-settings".
+ */
+export interface DropshipSetting {
+  id: number;
+  enabled?: boolean | null;
+  provider?: ('cj' | 'manual') | null;
+  /**
+   * Stored in CMS DB — prefer env vault in production.
+   */
+  apiKey?: string | null;
+  autoSubmitOnPaid?: boolean | null;
+  note?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-header_select".
  */
@@ -833,6 +1529,7 @@ export interface SiteHeaderSelect<T extends boolean = true> {
         backgroundColor?: T;
         textColor?: T;
       };
+  includeDefaultTabs?: T;
   hiddenDefaults?: T;
   tabs?:
     | T
@@ -857,6 +1554,81 @@ export interface SiteHeaderSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "store-settings_select".
+ */
+export interface StoreSettingsSelect<T extends boolean = true> {
+  storeName?: T;
+  storeSubtitle?: T;
+  footerTagline?: T;
+  brandOrigin?: T;
+  logo?: T;
+  logoDark?: T;
+  favicon?: T;
+  primaryColor?: T;
+  accentColor?: T;
+  storeDescription?: T;
+  storeDescriptionShort?: T;
+  contactEmail?: T;
+  contactPhone?: T;
+  contactAddress?: T;
+  currencyCode?: T;
+  checkoutNote?: T;
+  returnsPolicyUrl?: T;
+  privacyPolicyUrl?: T;
+  footerCredit?: T;
+  socialLinks?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  taxEnabled?: T;
+  taxRatePercent?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shipping-settings_select".
+ */
+export interface ShippingSettingsSelect<T extends boolean = true> {
+  shipmentEnabled?: T;
+  flatRateVnd?: T;
+  freeShippingThresholdVnd?: T;
+  pickupEnabled?: T;
+  pickupAddress?: T;
+  pickupInstructions?: T;
+  zones?:
+    | T
+    | {
+        name?: T;
+        regionKeywords?: T;
+        flatRateVnd?: T;
+        freeShippingThresholdVnd?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dropship-settings_select".
+ */
+export interface DropshipSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  provider?: T;
+  apiKey?: T;
+  autoSubmitOnPaid?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -864,6 +1636,37 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskCreateCollectionExport".
+ */
+export interface TaskCreateCollectionExport {
+  input: {
+    name?: string | null;
+    format: 'csv' | 'json';
+    limit?: number | null;
+    sort?: string | null;
+    drafts?: ('yes' | 'no') | null;
+    selectionToUse?: ('currentSelection' | 'currentFilters' | 'all') | null;
+    fields?: string[] | null;
+    collectionSlug: string;
+    where?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    user?: string | null;
+    userCollection?: string | null;
+    exportsCollection?: string | null;
+  };
+  output: {
+    success?: boolean | null;
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

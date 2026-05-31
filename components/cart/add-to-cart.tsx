@@ -9,10 +9,22 @@ import { addItemAction } from '@/components/cart/actions';
 import LoadingDots from '@/components/loading-dots';
 import type { Product } from '@/lib/shopify/types';
 
-export default function AddToCart({ product }: { product: Product }): ReactElement {
+type Props = {
+  product: Product;
+  /** Required when the PDP has variant buttons; pass the selected SKU. */
+  variantSku?: string | null;
+  /** When false, button stays disabled (e.g. selected variant is OOS). */
+  canAdd?: boolean;
+};
+
+export default function AddToCart({
+  product,
+  variantSku = null,
+  canAdd = true,
+}: Props): ReactElement {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const available = product.availableForSale;
+  const available = product.availableForSale && canAdd;
   const label = !available
     ? 'Hết hàng'
     : isPending
@@ -25,7 +37,7 @@ export default function AddToCart({ product }: { product: Product }): ReactEleme
       disabled={!available || isPending}
       onClick={() =>
         startTransition(async () => {
-          const result = await addItemAction(product.id);
+          const result = await addItemAction(product.id, variantSku);
           if (result?.error) {
             toast.error(result.error);
             return;

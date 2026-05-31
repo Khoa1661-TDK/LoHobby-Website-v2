@@ -2,6 +2,8 @@
 import type { MetadataRoute } from 'next';
 import config from '@payload-config';
 import { getPayload } from 'payload';
+import { HIDDEN_PRODUCT_TAG } from '@/lib/constants';
+import { getAllInfoSlugs } from '@/lib/info-pages';
 import { categoryCanonicalPath, productCanonicalPath } from '@/lib/seo';
 import { absoluteUrl } from '@/lib/utils';
 
@@ -17,12 +19,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: SitemapEntry[] = [
     { url: absoluteUrl('/'), lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: absoluteUrl('/search'), lastModified: now, changeFrequency: 'daily', priority: 0.8 },
+    { url: absoluteUrl('/about'), lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: absoluteUrl('/contact'), lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: absoluteUrl('/faq'), lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
   ];
+
+  const infoEntries: SitemapEntry[] = getAllInfoSlugs().map((slug) => ({
+    url: absoluteUrl(`/info/${slug}`),
+    lastModified: now,
+    changeFrequency: 'monthly',
+    priority: 0.5,
+  }));
 
   const [productResult, categoryResult] = await Promise.all([
     payload.find({
       collection: 'products',
-      where: { available: { equals: true } },
+      where: {
+        available: { equals: true },
+        tags: { not_in: [HIDDEN_PRODUCT_TAG] },
+      },
       depth: 0,
       limit: 1000,
       pagination: false,
@@ -53,5 +68,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-  return [...staticEntries, ...categoryEntries, ...productEntries];
+  return [...staticEntries, ...infoEntries, ...categoryEntries, ...productEntries];
 }

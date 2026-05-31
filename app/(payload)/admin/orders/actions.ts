@@ -1,24 +1,36 @@
-// app/admin/orders/actions.ts
+// app/(payload)/admin/orders/actions.ts — Payload order status updates (ShopNex SoT)
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { OrderStatus } from '@/generated/prisma/enums';
 import { requireAdmin } from '@/lib/admin';
-import { prisma } from '@/lib/prisma';
+import {
+  mapStorefrontStatusToPayloadFields,
+  type StorefrontOrderStatus,
+} from '@/lib/payload-order-storefront';
+import { updatePayloadOrderStatus } from '@/lib/payload-orders';
 
 export type UpdateOrderStatusResult =
-  | { ok: true; status: OrderStatus }
+  | { ok: true; status: StorefrontOrderStatus }
   | { ok: false; message: string };
 
-const ORDER_STATUS_VALUES = new Set<OrderStatus>(Object.values(OrderStatus));
+const STOREFRONT_STATUS_VALUES = new Set<StorefrontOrderStatus>([
+  'PENDING',
+  'PENDING_COD',
+  'PENDING_ONLINE',
+  'PENDING_TRANSFER',
+  'PAID',
+  'SHIPPED',
+  'CANCELLED',
+]);
 
-function isOrderStatus(value: unknown): value is OrderStatus {
-  return typeof value === 'string' && ORDER_STATUS_VALUES.has(value as OrderStatus);
+function isStorefrontOrderStatus(value: unknown): value is StorefrontOrderStatus {
+  return typeof value === 'string' && STOREFRONT_STATUS_VALUES.has(value as StorefrontOrderStatus);
 }
 
+/** Update a Payload order by doc id using combined storefront status labels. */
 export async function updateOrderStatus(
-  orderId: string,
-  nextStatus: OrderStatus,
+  orderDocId: string | number,
+  nextStatus: StorefrontOrderStatus,
 ): Promise<UpdateOrderStatusResult> {
   try {
     await requireAdmin();
@@ -26,22 +38,28 @@ export async function updateOrderStatus(
     return { ok: false, message: 'Bạn không có quyền cập nhật đơn hàng.' };
   }
 
-  if (typeof orderId !== 'string' || orderId.length === 0) {
+  if (
+    (typeof orderDocId !== 'string' && typeof orderDocId !== 'number') ||
+    String(orderDocId).length === 0
+  ) {
     return { ok: false, message: 'Thiếu mã đơn hàng.' };
   }
-  if (!isOrderStatus(nextStatus)) {
+  if (!isStorefrontOrderStatus(nextStatus)) {
     return { ok: false, message: 'Trạng thái đơn hàng không hợp lệ.' };
   }
 
-  await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status: nextStatus,
-      paidAt: nextStatus === OrderStatus.PAID ? new Date() : undefined,
-    },
+  const fields = mapStorefrontStatusToPayloadFields(nextStatus);
+  const result = await updatePayloadOrderStatus({
+    docId: orderDocId,
+    ...fields,
   });
 
-  revalidatePath('/admin/orders');
+  if (!result.ok) {
+    return { ok: false, message: result.message };
+  }
+
+  revalidatePath('/admin/collections/orders');
+  revalidatePath(`/admin/collections/orders/${orderDocId}`);
   revalidatePath('/admin');
 
   return { ok: true, status: nextStatus };

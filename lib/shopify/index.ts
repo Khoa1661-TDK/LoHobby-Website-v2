@@ -1,4 +1,5 @@
 // lib/shopify/index.ts — Storefront catalog facade over Payload CMS
+import { canonicalCategorySlug } from '@/lib/default-categories';
 import {
   getPayloadCollections,
   getPayloadProducts,
@@ -36,7 +37,8 @@ export async function getStoreCategories() {
 
 export async function getCollection(handle: string): Promise<Collection | undefined> {
   const collections = await getCollections();
-  return collections.find((c) => c.handle === handle);
+  const canonical = canonicalCategorySlug(handle.trim());
+  return collections.find((c) => c.handle === canonical);
 }
 
 export async function getCollectionProducts({
@@ -51,5 +53,8 @@ export async function getCollectionProducts({
   if (!collection || collection === 'all') {
     return getProducts({ reverse, sortKey });
   }
-  return getPayloadProductsByCategorySlug(collection, { reverse, sortKey });
+  return getPayloadProductsByCategorySlug(canonicalCategorySlug(collection), {
+    reverse,
+    sortKey,
+  });
 }

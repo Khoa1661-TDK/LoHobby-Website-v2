@@ -1,30 +1,57 @@
-// app/api/checkout/route.ts
+// app/api/checkout/route.ts — creates ShopNex-compatible Payload `orders` (VND + VN gateways)
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { recordCouponRedemption, validateCoupon } from '@/lib/coupons';
+import { submitDropshipOrder } from '@/lib/dropshipping';
+import { getDropshipSettings } from '@/lib/dropshipping/settings';
+import { recordGiftCardRedemption, validateGiftCard } from '@/lib/gift-cards';
+import { resolveCheckoutLines } from '@/lib/inventory';
+import { commitOrderInventory } from '@/lib/order-inventory';
+import { enforceRateLimit } from '@/lib/api-guard';
+import { RATE_LIMIT_PRESETS } from '@/lib/rate-limit';
 import { getGatewayConfigForMethod } from '@/lib/payment-gateway-credentials';
 import { getPaymentMethodByKey, type PaymentMethodKind } from '@/lib/payment-methods';
 import { credentialsForProvider, getPaymentProvider } from '@/lib/payment-providers';
-import { generateOrderCode, isUniqueConstraintError } from '@/lib/payos';
-import { prisma } from '@/src/lib/db-adapter';
+import { generateOrderCode } from '@/lib/payos';
+import { getPayloadProductsByIds, isPurchasableProduct } from '@/lib/payload-products';
+import {
+  createPayloadOrder,
+  updatePayloadOrderPaymentUrl,
+} from '@/lib/payload-orders';
+import { computeShippingQuote, extractShippingRegion, getShippingSettings } from '@/lib/shipping-settings';
+import { syncStoreCustomerForUser } from '@/lib/store-customer-sync';
+import { getStoreSettings } from '@/lib/store-settings';
+import { computeTaxAmount, resolveTaxSettings } from '@/lib/tax';
+import { isGiftCardsEnabled } from '@/lib/feature-flags';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PICKUP_ADDRESS = 'Trụ sở chính, TP.HCM, Việt Nam';
 const VALID_DELIVERY = ['SHIPMENT', 'PICKUP'] as const;
 const MAX_LINE_QUANTITY = 999;
 const MAX_DISTINCT_LINES = 100;
 
 type DeliveryMethod = (typeof VALID_DELIVERY)[number];
 
-type CheckoutLine = { productId: string; quantity: number };
-type CustomerInfo = { name: string; phone: string; address?: string | null };
+type CheckoutLine = {
+  productId: string;
+  quantity: number;
+  variantSku?: string | null;
+};
+type CustomerInfo = {
+  name: string;
+  phone: string;
+  email?: string | null;
+  address?: string | null;
+};
 
 type CheckoutBody = {
   items: CheckoutLine[];
   customerInfo: CustomerInfo;
   deliveryMethod: DeliveryMethod;
   paymentMethodKey: string;
+  couponCode?: string | null;
+  giftCardCode?: string | null;
 };
 
 type CheckoutSuccess = {
@@ -44,10 +71,7 @@ function parseBody(value: unknown): CheckoutBody | null {
   if (!Array.isArray(record.items) || record.items.length === 0) return null;
   if (record.items.length > MAX_DISTINCT_LINES) return null;
 
-  // Dedupe productIds: if the client submits the same productId twice we
-  // sum the quantities into a single OrderItem row instead of creating
-  // duplicates (which would otherwise inflate the DB and confuse fulfilment).
-  const byProductId = new Map<string, number>();
+  const byKey = new Map<string, CheckoutLine>();
   for (const raw of record.items) {
     if (typeof raw !== 'object' || raw === null) return null;
     const line = raw as Record<string, unknown>;
@@ -58,16 +82,19 @@ function parseBody(value: unknown): CheckoutBody | null {
     const productId = line.productId.trim();
     if (!productId) return null;
 
+    let variantSku: string | null = null;
+    if (typeof line.variantSku === 'string' && line.variantSku.trim().length > 0) {
+      variantSku = line.variantSku.trim();
+    }
+
+    const key = variantSku ? `${productId}:${variantSku}` : productId;
     const quantity = Math.floor(line.quantity);
-    const next = (byProductId.get(productId) ?? 0) + quantity;
+    const next = (byKey.get(key)?.quantity ?? 0) + quantity;
     if (next > MAX_LINE_QUANTITY) return null;
-    byProductId.set(productId, next);
+    byKey.set(key, { productId, variantSku, quantity: next });
   }
 
-  const items: CheckoutLine[] = Array.from(byProductId, ([productId, quantity]) => ({
-    productId,
-    quantity,
-  }));
+  const items = Array.from(byKey.values());
 
   const delivery = record.deliveryMethod;
   if (typeof delivery !== 'string' || !VALID_DELIVERY.includes(delivery as DeliveryMethod)) {
@@ -89,23 +116,53 @@ function parseBody(value: unknown): CheckoutBody | null {
     address = info.address.trim();
   }
 
+  let email: string | null = null;
+  if (typeof info.email === 'string' && info.email.trim().length > 0) {
+    email = info.email.trim().toLowerCase();
+  }
+
+  let couponCode: string | null = null;
+  if (typeof record.couponCode === 'string' && record.couponCode.trim().length > 0) {
+    couponCode = record.couponCode.trim();
+  }
+
+  let giftCardCode: string | null = null;
+  if (typeof record.giftCardCode === 'string' && record.giftCardCode.trim().length > 0) {
+    giftCardCode = record.giftCardCode.trim();
+  }
+
   return {
     items,
     deliveryMethod: delivery as DeliveryMethod,
     paymentMethodKey: paymentKey.trim(),
+    couponCode,
+    giftCardCode,
     customerInfo: {
       name: info.name.trim(),
       phone: info.phone.trim(),
+      email,
       address,
     },
   };
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isDuplicateOrderError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.message.includes('unique') || error.message.includes('duplicate'))
+  );
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse<CheckoutResponse | { error: string }>> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Bạn cần đăng nhập để thanh toán.' }, { status: 401 });
+  const rateLimited = enforceRateLimit(req, 'checkout', RATE_LIMIT_PRESETS.checkout);
+  if (rateLimited) {
+    return rateLimited as NextResponse<CheckoutResponse | { error: string }>;
   }
+
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
 
   const raw: unknown = await req.json().catch(() => null);
   const body = parseBody(raw);
@@ -113,11 +170,37 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
     return NextResponse.json({ error: 'Dữ liệu thanh toán không hợp lệ' }, { status: 400 });
   }
 
-  // Resolve shipping address based on delivery method.
+  const buyerEmail = body.customerInfo.email ?? session?.user?.email ?? null;
+  if (!userId && (!buyerEmail || !EMAIL_RE.test(buyerEmail))) {
+    return NextResponse.json(
+      { error: 'Vui lòng nhập email hợp lệ để nhận xác nhận đơn hàng.' },
+      { status: 400 },
+    );
+  }
+
+  const [shippingSettings, storeSettings] = await Promise.all([
+    getShippingSettings(),
+    getStoreSettings(),
+  ]);
+  const taxSettings = resolveTaxSettings(storeSettings);
+
   const shippingAddress =
     body.deliveryMethod === 'PICKUP'
-      ? PICKUP_ADDRESS
+      ? shippingSettings.pickupAddress
       : (body.customerInfo.address ?? '').trim();
+  const shippingRegion =
+    body.deliveryMethod === 'SHIPMENT' ? extractShippingRegion(shippingAddress) : null;
+
+  const shippingQuote = computeShippingQuote(
+    shippingSettings,
+    body.deliveryMethod,
+    0,
+    shippingRegion,
+  );
+  if ('error' in shippingQuote) {
+    return NextResponse.json({ error: shippingQuote.error }, { status: 400 });
+  }
+
   if (body.deliveryMethod === 'SHIPMENT' && shippingAddress.length === 0) {
     return NextResponse.json(
       { error: 'Địa chỉ giao hàng là bắt buộc khi giao tận nhà' },
@@ -125,47 +208,99 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
     );
   }
 
-  const ids = body.items.map((item) => item.productId);
-  const { getPayloadProductsByIds } = await import('@/lib/payload-products');
-  // requirePurchasable: also rejects products with `available: false`, not just
-  // the hidden-tag check. This is what enforces "out of stock" on the server
-  // even if a stale cart cookie or tampered request slips one through.
-  const products = await getPayloadProductsByIds(ids, { requirePurchasable: true });
-  if (products.length !== ids.length) {
+  const productIds = body.items.map((item) => item.productId);
+  const products = await getPayloadProductsByIds(productIds, { requirePurchasable: true });
+  if (products.length !== new Set(productIds).size) {
     return NextResponse.json(
       { error: 'Một sản phẩm trong giỏ hàng không còn bán. Hãy cập nhật giỏ hàng và thử lại.' },
       { status: 409 },
     );
   }
-
-  const priceMap = new Map(
-    products.map((product) => [product.id, Number(product.priceRange.minVariantPrice.amount)]),
-  );
-  const titleMap = new Map(products.map((product) => [product.id, product.title]));
-  const handleMap = new Map(products.map((product) => [product.id, product.handle]));
-
-  let amount = 0;
-  const itemRows = body.items.map((line) => {
-    const unit = priceMap.get(line.productId);
-    if (typeof unit !== 'number' || !Number.isFinite(unit) || unit < 0) {
-      throw new Error(`Missing price for product ${line.productId}`);
+  for (const product of products) {
+    if (!isPurchasableProduct(product)) {
+      return NextResponse.json(
+        { error: 'Một sản phẩm trong giỏ hàng không còn bán. Hãy cập nhật giỏ hàng và thử lại.' },
+        { status: 409 },
+      );
     }
-    amount += unit * line.quantity;
-    return {
+  }
+
+  const priced = await resolveCheckoutLines(
+    body.items.map((line) => ({
       productId: line.productId,
-      productTitle: titleMap.get(line.productId) ?? 'Sản phẩm',
-      productHandle: handleMap.get(line.productId) ?? '',
+      variantSku: line.variantSku ?? null,
       quantity: line.quantity,
-      unitPrice: unit,
+    })),
+  );
+  if (!priced.ok) {
+    return NextResponse.json({ error: priced.message }, { status: 409 });
+  }
+
+  let subtotal = 0;
+  const itemRows = priced.rows.map((row) => {
+    subtotal += row.unitPrice * row.quantity;
+    return {
+      productId: row.productId,
+      productTitle: row.productTitle,
+      productHandle: row.productHandle,
+      variantSku: row.variantSku,
+      variantName: row.variantName,
+      quantity: row.quantity,
+      unitPrice: row.unitPrice,
     };
   });
 
-  if (amount <= 0 || !Number.isInteger(amount) || !Number.isSafeInteger(amount)) {
+  const shippingRecalc = computeShippingQuote(
+    shippingSettings,
+    body.deliveryMethod,
+    subtotal,
+    shippingRegion,
+  );
+  if ('error' in shippingRecalc) {
+    return NextResponse.json({ error: shippingRecalc.error }, { status: 400 });
+  }
+  const shippingAmount = shippingRecalc.shippingAmount;
+
+  let discountAmount = 0;
+  let couponCode: string | null = null;
+  let couponId: string | null = null;
+
+  if (body.couponCode) {
+    const couponResult = await validateCoupon(body.couponCode, subtotal);
+    if (!couponResult.ok) {
+      return NextResponse.json({ error: couponResult.message }, { status: 400 });
+    }
+    discountAmount = couponResult.discountAmount;
+    couponCode = couponResult.normalizedCode;
+    couponId = couponResult.coupon.id;
+  }
+
+  const taxableBase = Math.max(0, subtotal - discountAmount);
+  const taxAmount = computeTaxAmount(taxSettings, taxableBase);
+  const totalBeforeGiftCard = taxableBase + taxAmount + shippingAmount;
+
+  let giftCardAmount = 0;
+  let giftCardCode: string | null = null;
+  let giftCardId: string | null = null;
+
+  if (body.giftCardCode) {
+    if (!isGiftCardsEnabled()) {
+      return NextResponse.json({ error: 'Thẻ quà tặng hiện không khả dụng.' }, { status: 400 });
+    }
+    const giftResult = await validateGiftCard(body.giftCardCode, totalBeforeGiftCard);
+    if (!giftResult.ok) {
+      return NextResponse.json({ error: giftResult.message }, { status: 400 });
+    }
+    giftCardAmount = giftResult.appliedAmount;
+    giftCardCode = giftResult.normalizedCode;
+    giftCardId = giftResult.giftCard.id;
+  }
+
+  const amount = totalBeforeGiftCard - giftCardAmount;
+  if (amount < 0 || !Number.isInteger(amount) || !Number.isSafeInteger(amount)) {
     return NextResponse.json({ error: 'Tổng tiền không hợp lệ' }, { status: 400 });
   }
 
-  // Resolve the selected method from the CMS. This is the server-side source of
-  // truth: a key that is unknown or disabled is rejected here.
   const method = await getPaymentMethodByKey(body.paymentMethodKey);
   if (!method || !method.enabled) {
     return NextResponse.json(
@@ -175,66 +310,96 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
   }
 
   const kind = method.kind;
-  const initialStatus =
-    kind === 'gateway'
-      ? 'PENDING_ONLINE'
-      : kind === 'manual_transfer'
-        ? 'PENDING_TRANSFER'
-        : 'PENDING_COD';
-  // Legacy enum retained for backward compatibility; manual_transfer has no enum value.
-  const legacyPaymentMethod = kind === 'gateway' ? 'PAY_ONLINE' : kind === 'cod' ? 'COD' : null;
+  let customerId: string | number | null = null;
+  if (userId) {
+    customerId = await syncStoreCustomerForUser(userId).catch(() => null);
+  }
+
+  const titleMap = new Map(priced.rows.map((row) => [row.productId, row.productTitle]));
 
   for (let attempt = 0; attempt < 5; attempt++) {
     const orderCode = generateOrderCode();
 
-    let createdOrderId: string | null = null;
+    let createdDocId: string | number | null = null;
+    const isFullyPaidByGiftCard = amount === 0 && giftCardAmount > 0;
     try {
-      const order = await prisma.order.create({
-        data: {
-          orderCode,
-          userId: session.user.id,
-          amount,
-          status: initialStatus,
-          deliveryMethod: body.deliveryMethod,
-          paymentMethod: legacyPaymentMethod,
-          paymentMethodKey: method.key,
-          paymentKind: kind,
-          customerName: body.customerInfo.name,
-          phoneNumber: body.customerInfo.phone,
-          shippingAddress,
-          buyerName: body.customerInfo.name,
-          buyerEmail: session.user.email ?? null,
-          buyerPhone: body.customerInfo.phone,
-          items: { create: itemRows },
-        },
+      const created = await createPayloadOrder({
+        orderCode,
+        totalAmount: amount,
+        subtotalAmount: subtotal,
+        shippingAmount,
+        discountAmount,
+        taxAmount,
+        giftCardCode,
+        giftCardAmount,
+        couponCode,
+        paymentStatus: isFullyPaidByGiftCard ? 'paid' : 'pending',
+        orderStatus: isFullyPaidByGiftCard ? 'processing' : 'pending',
+        deliveryMethod: body.deliveryMethod,
+        paymentMethodKey: method.key,
+        paymentKind: kind,
+        customerName: body.customerInfo.name,
+        buyerEmail,
+        phoneNumber: body.customerInfo.phone,
+        shippingAddress,
+        customerId,
+        paidAt: isFullyPaidByGiftCard ? new Date() : null,
+        metadata: { prismaUserId: userId },
+        lineItems: itemRows,
       });
-      createdOrderId = order.id;
+      createdDocId = created.id;
+
+      if (couponId) {
+        await recordCouponRedemption(couponId);
+      }
+      if (giftCardId && giftCardAmount > 0) {
+        await recordGiftCardRedemption(giftCardId, giftCardAmount);
+      }
+
+      if (kind !== 'gateway' || amount === 0) {
+        await commitOrderInventory(createdDocId);
+        const dropship = await getDropshipSettings();
+        if (dropship.enabled && dropship.autoSubmitOnPaid) {
+          await submitDropshipOrder({
+            orderCode,
+            items: itemRows.map((line) => ({
+              productId: line.productId,
+              variantSku: line.variantSku ?? null,
+              quantity: line.quantity,
+            })),
+            shippingAddress,
+          }).catch((err: unknown) => console.warn('[checkout] dropship stub failed', err));
+        }
+      }
     } catch (error) {
-      if (isUniqueConstraintError(error)) {
+      if (isDuplicateOrderError(error)) {
         continue;
       }
       throw error;
     }
 
-    // ----- COD / manual transfer: settle offline, no gateway call -----
-    if (kind !== 'gateway') {
+    if (kind !== 'gateway' || amount === 0) {
       return NextResponse.json(
         { success: true, method: kind, orderCode, amount },
         { status: 200 },
       );
     }
 
-    // ----- Gateway: resolve provider + decrypted credentials (CMS or env fallback) -----
     const provider = method.provider ? getPaymentProvider(method.provider) : null;
     const gatewayConfig = provider ? await getGatewayConfigForMethod(method.key) : null;
     if (
       !provider ||
       !gatewayConfig ||
-      gatewayConfig.credentials.provider !== method.provider
+      gatewayConfig.credentials.provider !== method.provider ||
+      createdDocId === null
     ) {
-      await prisma.order.update({
-        where: { id: createdOrderId },
-        data: { status: 'CANCELLED' },
+      const config = await import('@payload-config');
+      const { getPayload } = await import('payload');
+      const payload = await getPayload({ config: config.default });
+      await payload.update({
+        collection: 'orders',
+        id: createdDocId,
+        data: { orderStatus: 'canceled', paymentStatus: 'failed' },
       });
       return NextResponse.json(
         { error: 'Cổng thanh toán chưa được cấu hình.' },
@@ -264,10 +429,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
         credentialsForProvider(method.provider, gatewayConfig.credentials),
       );
 
-      await prisma.order.update({
-        where: { id: createdOrderId },
-        data: { paymentUrl: payment.checkoutUrl },
-      });
+      await updatePayloadOrderPaymentUrl(createdDocId, payment.checkoutUrl);
 
       return NextResponse.json(
         {
@@ -281,9 +443,13 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
         { status: 200 },
       );
     } catch (gatewayError) {
-      await prisma.order.update({
-        where: { id: createdOrderId },
-        data: { status: 'CANCELLED' },
+      const config = await import('@payload-config');
+      const { getPayload } = await import('payload');
+      const payload = await getPayload({ config: config.default });
+      await payload.update({
+        collection: 'orders',
+        id: createdDocId,
+        data: { orderStatus: 'canceled', paymentStatus: 'failed' },
       });
 
       const message =

@@ -8,10 +8,27 @@ import Price from '@/components/price';
 import { clearCartAction } from '@/components/cart/actions';
 import type { Cart } from '@/lib/cart';
 import type { CheckoutPaymentMethod, PaymentMethodKind } from '@/lib/payment-methods';
-
-const PICKUP_ADDRESS = 'Trụ sở Lô Hobby, TP. Hồ Chí Minh, Việt Nam';
+import {
+  computeShippingQuote,
+  extractShippingRegion,
+  type ShippingQuoteSettings,
+} from '@/lib/shipping-quote';
+import { computeTaxAmount, type TaxSettings } from '@/lib/tax';
 
 type DeliveryMethod = 'SHIPMENT' | 'PICKUP';
+
+export type CheckoutShippingPreview = Pick<
+  ShippingQuoteSettings,
+  | 'flatRateVnd'
+  | 'freeShippingThresholdVnd'
+  | 'pickupAddress'
+  | 'pickupInstructions'
+  | 'shipmentEnabled'
+  | 'pickupEnabled'
+  | 'zones'
+>;
+
+export type CheckoutTaxPreview = TaxSettings;
 
 export type SavedAddress = {
   id: string;
@@ -40,8 +57,13 @@ type CheckoutResponse =
 type Props = {
   cart: Cart;
   paymentMethods: CheckoutPaymentMethod[];
+  shipping: CheckoutShippingPreview;
+  tax: CheckoutTaxPreview;
+  checkoutNote?: string | null;
   savedAddresses?: SavedAddress[];
   defaultName?: string;
+  /** Guests must provide an email so we can send the order confirmation. */
+  requireEmail?: boolean;
 };
 
 function formatAddressLine(address: SavedAddress): string {
@@ -50,11 +72,31 @@ function formatAddressLine(address: SavedAddress): string {
     .join(', ');
 }
 
+function estimateShippingVnd(
+  shipping: CheckoutShippingPreview,
+  deliveryMethod: DeliveryMethod,
+  subtotalVnd: number,
+  shippingRegion: string | null,
+): number {
+  const quote = computeShippingQuote(
+    shipping,
+    deliveryMethod,
+    subtotalVnd,
+    shippingRegion,
+  );
+  if ('error' in quote) return 0;
+  return quote.shippingAmount;
+}
+
 export default function CheckoutForm({
   cart,
   paymentMethods,
+  shipping,
+  tax,
+  checkoutNote = null,
   savedAddresses = [],
   defaultName = '',
+  requireEmail = false,
 }: Props): ReactElement {
   const router = useRouter();
 
@@ -64,19 +106,32 @@ export default function CheckoutForm({
     initialAddress ? initialAddress.id : '',
   );
   const [name, setName] = useState<string>(initialAddress?.fullName ?? defaultName);
+  const [email, setEmail] = useState<string>('');
   const [phone, setPhone] = useState<string>(initialAddress?.phone ?? '');
   const [address, setAddress] = useState<string>(
     initialAddress ? formatAddressLine(initialAddress) : '',
   );
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('SHIPMENT');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(
+    shipping.shipmentEnabled ? 'SHIPMENT' : 'PICKUP',
+  );
   const [paymentMethodKey, setPaymentMethodKey] = useState<string>(
     paymentMethods[0]?.key ?? '',
   );
+  const [couponCode, setCouponCode] = useState('');
+  const [giftCardCode, setGiftCardCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const selectedMethod = paymentMethods.find((method) => method.key === paymentMethodKey) ?? null;
   const selectedKind = selectedMethod?.kind ?? null;
+
+  useEffect(() => {
+    if (!shipping.shipmentEnabled && shipping.pickupEnabled) {
+      setDeliveryMethod('PICKUP');
+    } else if (shipping.shipmentEnabled && !shipping.pickupEnabled) {
+      setDeliveryMethod('SHIPMENT');
+    }
+  }, [shipping.shipmentEnabled, shipping.pickupEnabled]);
 
   useEffect(() => {
     if (!selectedAddressId) return;
@@ -93,10 +148,33 @@ export default function CheckoutForm({
     () =>
       cart.lines.map((line) => ({
         productId: line.merchandiseId,
+        variantSku: line.variantSku,
         quantity: line.quantity,
       })),
     [cart.lines],
   );
+
+  const subtotalVnd = useMemo(
+    () => Number.parseInt(cart.cost.subtotalAmount.amount, 10) || 0,
+    [cart.cost.subtotalAmount.amount],
+  );
+
+  const shippingRegion = useMemo(
+    () => (deliveryMethod === 'SHIPMENT' ? extractShippingRegion(address) : null),
+    [address, deliveryMethod],
+  );
+
+  const shippingVnd = useMemo(
+    () => estimateShippingVnd(shipping, deliveryMethod, subtotalVnd, shippingRegion),
+    [shipping, deliveryMethod, subtotalVnd, shippingRegion],
+  );
+
+  const estimatedTaxVnd = useMemo(
+    () => computeTaxAmount(tax, subtotalVnd),
+    [tax, subtotalVnd],
+  );
+
+  const estimatedTotalVnd = subtotalVnd + shippingVnd + estimatedTaxVnd;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -108,11 +186,16 @@ export default function CheckoutForm({
     }
 
     const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
     const trimmedPhone = phone.trim();
     const trimmedAddress = address.trim();
 
     if (trimmedName.length === 0) {
       setError('Vui lòng nhập họ tên.');
+      return;
+    }
+    if (requireEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError('Vui lòng nhập email hợp lệ để nhận xác nhận đơn hàng.');
       return;
     }
     if (trimmedPhone.length === 0) {
@@ -139,10 +222,13 @@ export default function CheckoutForm({
           customerInfo: {
             name: trimmedName,
             phone: trimmedPhone,
+            email: trimmedEmail || null,
             address: deliveryMethod === 'SHIPMENT' ? trimmedAddress : null,
           },
           deliveryMethod,
           paymentMethodKey,
+          couponCode: couponCode.trim() || null,
+          giftCardCode: giftCardCode.trim() || null,
         }),
       });
 
@@ -176,6 +262,12 @@ export default function CheckoutForm({
       className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_360px]"
     >
       <div className="space-y-6">
+        {checkoutNote ? (
+          <p className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
+            {checkoutNote}
+          </p>
+        ) : null}
+
         {/* Contact info */}
         <Section title="Thông tin liên hệ" subtitle="Để chúng tôi liên hệ về đơn hàng này.">
           {savedAddresses.length > 0 && (
@@ -235,29 +327,57 @@ export default function CheckoutForm({
               />
             </Field>
           </div>
+          {requireEmail ? (
+            <div className="mt-4">
+              <Field label="Email" htmlFor="checkout-email">
+                <input
+                  id="checkout-email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ban@email.com"
+                  className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
+                />
+                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  Chúng tôi sẽ gửi xác nhận đơn hàng tới email này.
+                </p>
+              </Field>
+            </div>
+          ) : null}
         </Section>
 
         {/* Delivery method */}
         <Section title="Hình thức giao hàng" subtitle="Chọn nơi bạn muốn nhận hàng.">
           <div className="grid gap-3 sm:grid-cols-2">
-            <OptionCard
-              name="delivery"
-              value="SHIPMENT"
-              checked={deliveryMethod === 'SHIPMENT'}
-              onChange={() => setDeliveryMethod('SHIPMENT')}
-              title="Giao tận nhà"
-              description="Giao hàng tiêu chuẩn toàn quốc."
-              icon={<TruckIcon />}
-            />
-            <OptionCard
-              name="delivery"
-              value="PICKUP"
-              checked={deliveryMethod === 'PICKUP'}
-              onChange={() => setDeliveryMethod('PICKUP')}
-              title="Nhận tại cửa hàng"
-              description="Đến lấy tại trụ sở TP. Hồ Chí Minh."
-              icon={<StoreIcon />}
-            />
+            {shipping.shipmentEnabled ? (
+              <OptionCard
+                name="delivery"
+                value="SHIPMENT"
+                checked={deliveryMethod === 'SHIPMENT'}
+                onChange={() => setDeliveryMethod('SHIPMENT')}
+                title="Giao tận nhà"
+                description={
+                  shipping.freeShippingThresholdVnd > 0
+                    ? `Phí cố định ${shipping.flatRateVnd.toLocaleString('vi-VN')}₫ — miễn phí từ ${shipping.freeShippingThresholdVnd.toLocaleString('vi-VN')}₫`
+                    : `Phí vận chuyển ${shipping.flatRateVnd.toLocaleString('vi-VN')}₫`
+                }
+                icon={<TruckIcon />}
+              />
+            ) : null}
+            {shipping.pickupEnabled ? (
+              <OptionCard
+                name="delivery"
+                value="PICKUP"
+                checked={deliveryMethod === 'PICKUP'}
+                onChange={() => setDeliveryMethod('PICKUP')}
+                title="Nhận tại cửa hàng"
+                description="Đến lấy tại cửa hàng."
+                icon={<StoreIcon />}
+              />
+            ) : null}
           </div>
 
           <div className="mt-4">
@@ -267,10 +387,16 @@ export default function CheckoutForm({
                 className="rounded-lg border border-spool-200 bg-spool-50 p-4 text-sm text-spool-800 dark:border-spool-800 dark:bg-spool-900/40 dark:text-spool-100"
               >
                 <p className="font-semibold">Địa điểm nhận hàng</p>
-                <p className="mt-1">{PICKUP_ADDRESS}</p>
-                <p className="mt-2 text-xs text-spool-700 dark:text-spool-200">
-                  Chúng tôi sẽ nhắn tin qua số điện thoại trên khi đơn sẵn sàng để bạn đến lấy.
-                </p>
+                <p className="mt-1">{shipping.pickupAddress}</p>
+                {shipping.pickupInstructions ? (
+                  <p className="mt-2 text-xs text-spool-700 dark:text-spool-200">
+                    {shipping.pickupInstructions}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-xs text-spool-700 dark:text-spool-200">
+                    Chúng tôi sẽ nhắn tin qua số điện thoại trên khi đơn sẵn sàng để bạn đến lấy.
+                  </p>
+                )}
               </div>
             ) : (
               <Field label="Địa chỉ giao hàng" htmlFor="checkout-address">
@@ -287,6 +413,32 @@ export default function CheckoutForm({
               </Field>
             )}
           </div>
+        </Section>
+
+        <Section title="Mã giảm giá" subtitle="Nhập mã nếu bạn có (áp dụng khi đặt hàng).">
+          <Field label="Mã coupon" htmlFor="checkout-coupon">
+            <input
+              id="checkout-coupon"
+              type="text"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              placeholder="VD: WELCOME10"
+              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm uppercase shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
+            />
+          </Field>
+        </Section>
+
+        <Section title="Thẻ quà tặng" subtitle="Nhập mã thẻ quà tặng nếu bạn có (áp dụng khi đặt hàng).">
+          <Field label="Mã thẻ quà tặng" htmlFor="checkout-gift-card">
+            <input
+              id="checkout-gift-card"
+              type="text"
+              value={giftCardCode}
+              onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
+              placeholder="VD: GC-ABCD-EFGH"
+              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm uppercase shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
+            />
+          </Field>
         </Section>
 
         {/* Payment method */}
@@ -374,18 +526,46 @@ export default function CheckoutForm({
           <div className="flex justify-between">
             <dt className="text-neutral-500 dark:text-neutral-400">Phí vận chuyển</dt>
             <dd className="text-neutral-500 dark:text-neutral-400">
-              {isPickup ? 'Miễn phí (nhận tại cửa hàng)' : 'Tính sau'}
+              {isPickup ? (
+                'Miễn phí (nhận tại cửa hàng)'
+              ) : shippingVnd === 0 ? (
+                'Miễn phí'
+              ) : (
+                <Price amount={String(shippingVnd)} currencyCode="VND" />
+              )}
             </dd>
           </div>
+          {tax.taxEnabled ? (
+            <div className="flex justify-between">
+              <dt className="text-neutral-500 dark:text-neutral-400">
+                Thuế ({tax.taxRatePercent}%)
+              </dt>
+              <dd>
+                <Price amount={String(estimatedTaxVnd)} currencyCode="VND" />
+              </dd>
+            </div>
+          ) : null}
+          {couponCode.trim().length > 0 ? (
+            <div className="flex justify-between text-sm text-emerald-700 dark:text-emerald-400">
+              <dt>Mã giảm giá</dt>
+              <dd className="font-mono uppercase">{couponCode.trim()}</dd>
+            </div>
+          ) : null}
+          {giftCardCode.trim().length > 0 ? (
+            <div className="flex justify-between text-sm text-violet-700 dark:text-violet-400">
+              <dt>Thẻ quà tặng</dt>
+              <dd className="font-mono uppercase">{giftCardCode.trim()}</dd>
+            </div>
+          ) : null}
           <div className="flex justify-between border-t border-neutral-200 pt-2 text-base font-semibold dark:border-neutral-800">
-            <dt>Tổng cộng</dt>
+            <dt>Tổng cộng (ước tính)</dt>
             <dd>
-              <Price
-                amount={cart.cost.totalAmount.amount}
-                currencyCode={cart.cost.totalAmount.currencyCode}
-              />
+              <Price amount={String(estimatedTotalVnd)} currencyCode="VND" />
             </dd>
           </div>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Giảm giá coupon và thẻ quà tặng được xác nhận khi đặt hàng. Tổng cuối có thể thay đổi.
+          </p>
         </dl>
 
         <button

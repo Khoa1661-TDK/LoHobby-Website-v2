@@ -23,9 +23,21 @@ enum DeliveryMethod {
   PICKUP
 }
 
+enum CouponDiscountType {
+  PERCENT
+  FIXED
+}
+
 enum PaymentMethod {
   COD
   PAY_ONLINE
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  CANCELLED
 }
 
 model User {
@@ -35,13 +47,43 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  /** Optional link to Payload `store-customers` doc (Phase 3 bridge, not auth). */
+  payloadCustomerId String? @unique
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
-  addresses UserAddress[]
-  orders    Order[]
+  accounts       Account[]
+  sessions       Session[]
+  addresses      UserAddress[]
+  orders         Order[]
+  reviews        Review[]
+  wishlist       WishlistItem[]
+  persistedCart  PersistedCart?
+}
+
+model PersistedCart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  /** JSON array: { productId, variantSku?, quantity } */
+  items     Json     @default("[]")
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailCampaign {
+  id              String         @id @default(cuid())
+  name            String
+  subject         String
+  body            String
+  status          CampaignStatus @default(DRAFT)
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  recipientCount  Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([status])
 }
 
 model UserAddress {
@@ -103,11 +145,34 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model Coupon {
+  id             String             @id @default(cuid())
+  code           String             @unique
+  discountType   CouponDiscountType
+  /** Whole-number percent (1–100) or fixed VND off, depending on discountType. */
+  discountValue  Int
+  minOrderAmount Int                @default(0)
+  maxUses        Int?
+  usedCount      Int                @default(0)
+  expiresAt      DateTime?
+  enabled        Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
 model Order {
   id              String          @id @default(cuid())
   orderCode       Int             @unique
   userId          String?
+  /** Total charged (subtotal − discount + shipping), VND integer. */
   amount          Int
+  /** Sum of line items before discount/shipping; null only on legacy rows. */
+  subtotalAmount  Int?
+  shippingAmount  Int             @default(0)
+  discountAmount  Int             @default(0)
+  couponCode      String?
+  /** True after variant stock was decremented for this order. */
+  inventoryAdjusted Boolean       @default(false)
   status          OrderStatus     @default(PENDING)
   buyerName       String?
   buyerEmail      String?
@@ -138,6 +203,8 @@ model OrderItem {
   productId     String
   productTitle  String @default("")
   productHandle String @default("")
+  variantSku    String?
+  variantName   String?
   quantity      Int
   unitPrice     Int
 
@@ -145,4 +212,73 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  userId        String
+  productId     String
+  productHandle String   @default("")
+  rating        Int
+  title         String?
+  body          String
+  approved      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One review per user per product; updating re-submits for moderation.
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([approved])
+}
+
+model WishlistItem {
+  id            String   @id @default(cuid())
+  userId        String
+  productId     String
+  productHandle String   @default("")
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  orderCode String?
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/** Digital gift cards — balance tracked in VND integers; redeemed at checkout. */
+model GiftCard {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  /** Original issued value (VND). */
+  initialBalance Int
+  /** Remaining balance (VND). */
+  balance        Int
+  /** Total amount redeemed across orders (VND). */
+  usedAmount     Int       @default(0)
+  expiresAt      DateTime?
+  enabled        Boolean   @default(true)
+  note           String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([enabled])
 }

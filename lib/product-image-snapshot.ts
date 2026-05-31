@@ -1,10 +1,13 @@
 // lib/product-image-snapshot.ts — denormalized product images (decoupled from media library)
 
+export type MediaKind = 'image' | 'video';
+
 export type StoredImage = {
   url: string;
   alt?: string | null;
   width?: number | null;
   height?: number | null;
+  kind?: MediaKind | null;
 };
 
 type MediaLike = {
@@ -13,8 +16,34 @@ type MediaLike = {
   width?: number | null;
   height?: number | null;
   filename?: string | null;
+  mimeType?: string | null;
   updatedAt?: string | null;
 };
+
+const VIDEO_EXT = /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i;
+
+export function mediaKindFromMime(mimeType: string | null | undefined): MediaKind | null {
+  if (!mimeType?.trim()) return null;
+  if (mimeType.startsWith('video/')) return 'video';
+  if (mimeType.startsWith('image/')) return 'image';
+  return null;
+}
+
+export function mediaKindFromUrl(url: string): MediaKind {
+  const path = normalizeProductImageUrl(url).split('?')[0] ?? url;
+  return VIDEO_EXT.test(path) ? 'video' : 'image';
+}
+
+export function resolveMediaKind(
+  media: Pick<MediaLike, 'mimeType' | 'url'> | null | undefined,
+  storedKind?: MediaKind | null,
+): MediaKind {
+  if (storedKind === 'video' || storedKind === 'image') return storedKind;
+  const fromMime = mediaKindFromMime(media?.mimeType);
+  if (fromMime) return fromMime;
+  if (media?.url?.trim()) return mediaKindFromUrl(media.url);
+  return 'image';
+}
 
 export function normalizeProductImageUrl(url: string): string {
   const trimmed = url.trim();
@@ -41,6 +70,11 @@ export function toNextImageSrc(url: string): string {
     return normalized.split('?')[0] ?? normalized;
   }
   return normalized;
+}
+
+/** Public media URL for `<video src>` (keeps cache-buster query on `/media/*`). */
+export function toVideoSrc(url: string): string {
+  return normalizeProductImageUrl(url);
 }
 
 /** Compare image URLs ignoring cache-buster query params. */
@@ -76,11 +110,14 @@ export function mediaDocToStored(
 ): StoredImage | null {
   if (!media?.url?.trim()) return null;
 
+  const url = appendVersion(normalizeProductImageUrl(media.url), mediaVersion(media));
+
   return {
-    url: appendVersion(normalizeProductImageUrl(media.url), mediaVersion(media)),
+    url,
     alt: media.alt?.trim() || fallbackAlt,
-    width: media.width ?? 1200,
-    height: media.height ?? 1200,
+    width: media.width ?? (resolveMediaKind(media) === 'video' ? 1920 : 1200),
+    height: media.height ?? (resolveMediaKind(media) === 'video' ? 1080 : 1200),
+    kind: resolveMediaKind(media),
   };
 }
 
@@ -135,7 +172,19 @@ export async function loadMediaDoc(
   }
 }
 
-/** Retry media reads — new uploads may not have a URL committed on the first product save. */
+/**
+ * Single-attempt media read for admin autosaves (upload fields PATCH the parent doc).
+ * Avoids multi-second retry loops that freeze the CMS while a file is still processing.
+ */
+export async function loadMediaDocForSnapshot(
+  payload: Parameters<typeof loadMediaDoc>[0],
+  value: unknown,
+): Promise<MediaLike | null> {
+  const doc = await loadMediaDoc(payload, value);
+  return doc?.url?.trim() ? doc : null;
+}
+
+/** Retry media reads — use on explicit product save / media resync when URL may lag. */
 export async function loadMediaDocWithRetry(
   payload: Parameters<typeof loadMediaDoc>[0],
   value: unknown,

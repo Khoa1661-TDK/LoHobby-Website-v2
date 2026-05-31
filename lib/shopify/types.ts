@@ -12,11 +12,15 @@ export type Money = {
   compareAtAmount?: string | null;
 };
 
+export type MediaKind = 'image' | 'video';
+
 export type Image = {
   url: string;
   altText: string;
   width: number;
   height: number;
+  /** Defaults to `image` when omitted (legacy snapshots). */
+  kind?: MediaKind;
 };
 
 export type SEO = { title: string; description: string };
@@ -97,6 +101,8 @@ export type Collection = {
   content?: unknown | null;
   /** FAQ entries rendered on-page and emitted as FAQPage JSON-LD. */
   faq?: CollectionFaqItem[];
+  /** Social-share image (Open Graph / Twitter) from the category SEO meta. */
+  seoImage?: Image | null;
 };
 
 export type Menu = { title: string; path: string };

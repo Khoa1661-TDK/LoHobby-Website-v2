@@ -13,6 +13,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "node scripts/run-prisma-studio.cjs",
     "db:seed": "tsx prisma/seed.ts",
+    "commerce:seed-coupons": "tsx scripts/seed-commerce-coupons.ts",
     "verify:prisma": "tsx scripts/verify-prisma.ts",
     "payload": "payload",
     "payload:schema": "tsx scripts/ensure-payload-schema.ts",
@@ -25,9 +26,17 @@
     "payload:cleanup-categories": "tsx scripts/cleanup-payload-categories.ts",
     "payload:backfill-images": "tsx scripts/backfill-product-images.ts",
     "payload:attach-f22-images": "tsx scripts/attach-product-images.ts",
+    "payload:cleanup-order-snapshots": "tsx scripts/cleanup-order-snapshots-schema.ts",
     "payload:db-push": "tsx scripts/payload-db-push.ts",
+    "payload:migrate-variants": "tsx scripts/migrate-inline-product-variants.ts",
+    "payload:ensure-variants-schema": "tsx scripts/ensure-product-variants-schema.ts",
+    "payload:seed-site-header": "tsx scripts/seed-site-header.ts",
     "payload:types": "payload generate:types",
-    "payload:importmap": "payload generate:importmap"
+    "payload:importmap": "payload generate:importmap",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check-types": "tsc --noEmit",
+    "ci": "pnpm test && pnpm check-types"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -42,10 +51,17 @@
     "@payos/node": "^2.0.5",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@shopnex/analytics-plugin": "0.0.4",
+    "@shopnex/import-export-plugin": "3.31.9",
+    "@shopnex/quick-actions-plugin": "0.0.4",
+    "@shopnex/sidebar-plugin": "0.0.2",
+    "@shopnex/utils": "1.0.6",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "decimal.js": "10.5.0",
     "dotenv": "^17.4.2",
     "graphql": "^16.14.0",
+    "lucide-react": "0.484.0",
     "next": "^15.0.3",
     "next-auth": "5.0.0-beta.31",
     "payload": "^3.84.1",
@@ -53,6 +69,7 @@
     "postgres": "^3.4.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "recharts": "2.15.1",
     "sharp": "^0.34.5",
     "sonner": "^2.0.7",
     "stripe": "^22.2.0"
@@ -70,6 +87,7 @@
     "prisma": "^7.8.0",
     "tailwindcss": "^3.4.15",
     "tsx": "^4.22.3",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4"
   }
 }

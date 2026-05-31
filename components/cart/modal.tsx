@@ -14,6 +14,7 @@ import {
   useTransition,
   type ReactElement,
 } from 'react';
+import CartCrossSell from '@/components/cart/cross-sell';
 import Price from '@/components/price';
 import { toNextImageSrc } from '@/lib/product-image-snapshot';
 import {
@@ -48,6 +49,9 @@ export default function CartModal({ cart }: Props): ReactElement {
 
   return (
     <>
+      <span aria-live="polite" className="sr-only">
+        {`Giỏ hàng có ${cart.totalQuantity} sản phẩm`}
+      </span>
       <button aria-label="Mở giỏ hàng" onClick={openCart}>
         <OpenCart quantity={cart.totalQuantity} />
       </button>
@@ -106,7 +110,10 @@ export default function CartModal({ cart }: Props): ReactElement {
                                 disabled={isPending}
                                 onClick={() =>
                                   startTransition(async () => {
-                                    await removeItemAction(item.merchandiseId);
+                                    await removeItemAction(
+                                      item.merchandiseId,
+                                      item.variantSku,
+                                    );
                                     refresh();
                                   })
                                 }
@@ -132,6 +139,11 @@ export default function CartModal({ cart }: Props): ReactElement {
                               >
                                 <div className="flex flex-1 flex-col text-base">
                                   <span className="leading-tight">{item.product.title}</span>
+                                  {item.variantName ? (
+                                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                                      {item.variantName}
+                                    </span>
+                                  ) : null}
                                 </div>
                               </Link>
                             </div>
@@ -150,6 +162,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                                       await updateItemAction(
                                         item.merchandiseId,
                                         item.quantity - 1,
+                                        item.variantSku,
                                       );
                                       refresh();
                                     })
@@ -166,6 +179,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                                       await updateItemAction(
                                         item.merchandiseId,
                                         item.quantity + 1,
+                                        item.variantSku,
                                       );
                                       refresh();
                                     })
@@ -177,6 +191,10 @@ export default function CartModal({ cart }: Props): ReactElement {
                         </li>
                       ))}
                   </ul>
+
+                  <CartCrossSell
+                    excludeHandles={cart.lines.map((line) => line.handle)}
+                  />
 
                   <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 dark:border-neutral-700">

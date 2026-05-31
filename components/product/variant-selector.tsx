@@ -2,13 +2,12 @@
 'use client';
 
 import clsx from 'clsx';
-import Image from 'next/image';
 import { useMemo, useState, type ReactElement } from 'react';
 import AddToCart from '@/components/cart/add-to-cart';
-import GridTileImage from '@/components/grid/tile';
+import { GalleryMediaThumb, GalleryMediaViewer } from '@/components/product/gallery-media';
 import Price from '@/components/price';
 import Prose from '@/components/prose';
-import { toNextImageSrc } from '@/lib/product-image-snapshot';
+import WishlistButton from '@/components/wishlist/wishlist-button';
 import type { StorefrontVariant } from '@/lib/payload-products';
 import type { Image as ImageType, Product } from '@/lib/shopify/types';
 
@@ -38,18 +37,26 @@ export default function VariantSelector({
 }: Props): ReactElement {
   const [selectedSku, setSelectedSku] = useState<string | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [hoverGalleryIndex, setHoverGalleryIndex] = useState<number | null>(null);
+  /** When false and a variant has an image, the hero shows the variant photo. */
+  const [heroFromGallery, setHeroFromGallery] = useState(false);
 
   const selectedVariant = useMemo(
     () => variants.find((v) => v.sku === selectedSku) ?? null,
     [variants, selectedSku],
   );
 
-  const fallbackImage: ImageType | null =
-    product.images[Math.min(galleryIndex, Math.max(product.images.length - 1, 0))] ??
+  const previewGalleryIndex = hoverGalleryIndex ?? galleryIndex;
+
+  const galleryImage: ImageType | null =
+    product.images[Math.min(previewGalleryIndex, Math.max(product.images.length - 1, 0))] ??
     product.images[0] ??
     null;
 
-  const displayedImage: ImageType | null = selectedVariant?.image ?? fallbackImage;
+  const displayedImage: ImageType | null =
+    hoverGalleryIndex !== null || heroFromGallery || !selectedVariant?.image
+      ? galleryImage
+      : selectedVariant.image;
   const displayedPrice: number = selectedVariant?.price ?? basePrice;
   const displayedCompareAt: number | null = selectedVariant
     ? selectedVariant.compareAtPrice
@@ -65,7 +72,7 @@ export default function VariantSelector({
     price: displayedPrice,
   };
 
-  const showThumbs = !selectedVariant && product.images.length > 1;
+  const showThumbs = product.images.length > 1;
 
   return (
     <article
@@ -80,36 +87,46 @@ export default function VariantSelector({
       <div className="h-full w-full basis-full lg:basis-4/6">
         <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden">
           {displayedImage ? (
-            <Image
+            <GalleryMediaViewer
               key={displayedImage.url}
-              className="img-fit"
-              fill
-              sizes="(min-width: 1024px) 66vw, 100vw"
-              alt={displayedImage.altText || product.title}
-              src={toNextImageSrc(displayedImage.url)}
+              item={{
+                ...displayedImage,
+                altText: displayedImage.altText || product.title,
+              }}
               priority
             />
           ) : null}
         </div>
 
         {showThumbs ? (
-          <ul className="my-12 flex flex-wrap items-center justify-center gap-2 overflow-auto py-1 lg:mb-0">
+          <ul
+            className="my-12 flex flex-wrap items-center justify-center gap-2 overflow-auto py-1 lg:mb-0"
+            onMouseLeave={() => setHoverGalleryIndex(null)}
+          >
             {product.images.map((image, index) => {
-              const active = index === galleryIndex;
+              const active = index === previewGalleryIndex;
               return (
                 <li key={image.url + index} className="h-20 w-20">
                   <button
                     type="button"
-                    aria-label="Chọn ảnh sản phẩm"
-                    aria-pressed={active}
+                    aria-label={
+                      image.kind === 'video' ? 'Xem video sản phẩm' : 'Xem ảnh sản phẩm'
+                    }
+                    aria-pressed={index === galleryIndex}
                     className="h-full w-full"
-                    onClick={() => setGalleryIndex(index)}
+                    onMouseEnter={() => setHoverGalleryIndex(index)}
+                    onFocus={() => setHoverGalleryIndex(index)}
+                    onBlur={() => setHoverGalleryIndex(null)}
+                    onClick={() => {
+                      setGalleryIndex(index);
+                      setHeroFromGallery(true);
+                    }}
                   >
-                    <GridTileImage
-                      alt={image.altText || product.title}
-                      src={image.url}
-                      width={80}
-                      height={80}
+                    <GalleryMediaThumb
+                      item={{
+                        ...image,
+                        altText: image.altText || product.title,
+                      }}
                       active={active}
                     />
                   </button>
@@ -147,6 +164,10 @@ export default function VariantSelector({
               SKU: <span className="font-mono">{selectedVariant.sku}</span>
             </p>
           ) : null}
+          <StockStatus
+            inStock={selectedVariant ? selectedVariant.inStock : product.availableForSale}
+            stock={selectedVariant ? selectedVariant.stock : null}
+          />
         </div>
 
         {variants.length > 0 ? (
@@ -165,9 +186,13 @@ export default function VariantSelector({
                       aria-pressed={isActive}
                       aria-label={`Chọn phiên bản ${variant.name}`}
                       disabled={disabled}
-                      onClick={() =>
-                        setSelectedSku((prev) => (prev === variant.sku ? null : variant.sku))
-                      }
+                      onClick={() => {
+                        setSelectedSku((prev) => {
+                          const next = prev === variant.sku ? null : variant.sku;
+                          if (next !== null) setHeroFromGallery(false);
+                          return next;
+                        });
+                      }}
                       className={clsx(
                         'rounded-full border px-4 py-1.5 text-sm transition',
                         'focus:outline-none focus-visible:ring-2 focus-visible:ring-filament-500 focus-visible:ring-offset-2',
@@ -194,7 +219,20 @@ export default function VariantSelector({
           />
         ) : null}
 
-        <AddToCart product={product} />
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <AddToCart
+              product={product}
+              variantSku={variants.length > 0 ? selectedSku : null}
+              canAdd={
+                variants.length === 0
+                  ? product.availableForSale
+                  : Boolean(selectedVariant?.inStock)
+              }
+            />
+          </div>
+          <WishlistButton productId={product.id} productHandle={product.handle} variant="inline" />
+        </div>
 
         {/*
           Cart-ready selection state. Kept as raw VND integers so a future
@@ -210,5 +248,38 @@ export default function VariantSelector({
         />
       </div>
     </article>
+  );
+}
+
+const LOW_STOCK_THRESHOLD = 5;
+
+function StockStatus({
+  inStock,
+  stock,
+}: {
+  inStock: boolean;
+  stock: number | null;
+}): ReactElement {
+  if (!inStock) {
+    return (
+      <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-rose-600 dark:text-rose-400">
+        <span className="h-2 w-2 rounded-full bg-rose-500" aria-hidden /> Hết hàng
+      </p>
+    );
+  }
+
+  const low = typeof stock === 'number' && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
+  return (
+    <p
+      className={`mt-2 inline-flex items-center gap-1.5 text-sm font-medium ${
+        low ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+      }`}
+    >
+      <span
+        className={`h-2 w-2 rounded-full ${low ? 'bg-amber-500' : 'bg-emerald-500'}`}
+        aria-hidden
+      />
+      {low ? `Sắp hết hàng (còn ${stock})` : 'Còn hàng'}
+    </p>
   );
 }

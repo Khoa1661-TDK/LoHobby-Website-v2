@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 import Price from '@/components/price';
+import WishlistButton from '@/components/wishlist/wishlist-button';
 import {
   BADGE_LABELS,
   BADGE_STYLES,
@@ -34,6 +35,7 @@ export default function ProductCard({ product, priority }: Props): ReactElement 
       aria-label={product.title}
     >
       <div className="relative aspect-square overflow-hidden bg-neutral-50 dark:bg-neutral-950">
+        <WishlistButton productId={product.id} productHandle={product.handle} />
         <Image
           src={toNextImageSrc(product.featuredImage.url)}
           alt={product.featuredImage.altText || product.title}

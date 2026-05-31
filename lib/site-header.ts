@@ -1,11 +1,10 @@
 // lib/site-header.ts — admin-managed header navigation (resolves the `site-header` Payload global)
 import config from '@payload-config';
-import { revalidateTag, unstable_cache } from 'next/cache';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload } from 'payload';
 import { getPayloadCollections } from '@/lib/payload-products';
 
 const SITE_HEADER_TAG = 'site-header';
-const SITE_HEADER_REVALIDATE = 60;
 
 /** Single tab as rendered by the navbar. */
 export type ResolvedHeaderTab =
@@ -48,6 +47,8 @@ type RawAnnouncement = {
 
 type RawHeaderGlobal = {
   announcement?: RawAnnouncement | null;
+  /** When false, only admin-configured tabs are shown (no built-in Home / Shop / Categories). */
+  includeDefaultTabs?: boolean | null;
   hiddenDefaults?: DefaultTabKey[] | null;
   tabs?: RawTab[] | null;
 };
@@ -108,6 +109,35 @@ async function fetchAllCategories(): Promise<Array<{ slug: string; title: string
  * Built-in default tabs (Home · Shop · Categories auto dropdown).
  * Any key listed in `hidden` is removed, letting admins delete defaults they don't want.
  */
+function defaultKeyForConfiguredTab(tab: RawTab): DefaultTabKey | null {
+  switch (tab.kind) {
+    case 'home':
+      return 'home';
+    case 'all-products':
+      return 'shop';
+    case 'dropdown':
+      return tab.showAllCategories ? 'categories' : null;
+    default:
+      return null;
+  }
+}
+
+function collectHiddenDefaults(
+  raw: RawHeaderGlobal | null,
+  configuredTabs: RawTab[],
+): Set<DefaultTabKey> {
+  const hidden = new Set<DefaultTabKey>(
+    Array.isArray(raw?.hiddenDefaults) ? raw!.hiddenDefaults : [],
+  );
+
+  for (const tab of configuredTabs) {
+    const key = defaultKeyForConfiguredTab(tab);
+    if (key) hidden.add(key);
+  }
+
+  return hidden;
+}
+
 async function buildDefaultTabs(hidden: Set<DefaultTabKey>): Promise<ResolvedHeaderTab[]> {
   const defaults: ResolvedHeaderTab[] = [];
 
@@ -132,31 +162,7 @@ async function buildDefaultTabs(hidden: Set<DefaultTabKey>): Promise<ResolvedHea
   return defaults;
 }
 
-async function fetchSiteHeaderData(): Promise<SiteHeaderData> {
-  const payload = await getPayload({ config });
-  let raw: RawHeaderGlobal | null = null;
-
-  try {
-    const result = await payload.findGlobal({ slug: 'site-header', depth: 2 });
-    raw = (result as RawHeaderGlobal) ?? null;
-  } catch (error) {
-    // Most likely the global hasn't been saved yet (or schema not pushed).
-    console.warn('[site-header] findGlobal failed; falling back to defaults.', error);
-  }
-
-  const announcement = resolveAnnouncement(raw?.announcement);
-  const tabs = Array.isArray(raw?.tabs) ? raw!.tabs.filter((t): t is RawTab => Boolean(t)) : [];
-
-  // Defaults are shown unless explicitly hidden; admin-configured tabs are appended alongside them.
-  const hidden = new Set<DefaultTabKey>(
-    Array.isArray(raw?.hiddenDefaults) ? raw!.hiddenDefaults : [],
-  );
-  const defaults = await buildDefaultTabs(hidden);
-
-  if (tabs.length === 0) {
-    return { tabs: defaults, announcement };
-  }
-
+async function resolveConfiguredTabs(tabs: RawTab[]): Promise<ResolvedHeaderTab[]> {
   const allCategoriesPromise = fetchAllCategories();
   const resolved: ResolvedHeaderTab[] = [];
 
@@ -208,16 +214,46 @@ async function fetchSiteHeaderData(): Promise<SiteHeaderData> {
         break;
       }
       default:
-        // Unknown kind — skip silently.
         break;
     }
+  }
+
+  return resolved;
+}
+
+async function fetchSiteHeaderData(): Promise<SiteHeaderData> {
+  const payload = await getPayload({ config });
+  let raw: RawHeaderGlobal | null = null;
+
+  try {
+    const result = await payload.findGlobal({ slug: 'site-header', depth: 2 });
+    raw = (result as RawHeaderGlobal) ?? null;
+  } catch (error) {
+    // Most likely the global hasn't been saved yet (or schema not pushed).
+    console.warn('[site-header] findGlobal failed; falling back to defaults.', error);
+  }
+
+  const announcement = resolveAnnouncement(raw?.announcement);
+  const configuredTabs = Array.isArray(raw?.tabs) ? raw!.tabs.filter((t): t is RawTab => Boolean(t)) : [];
+  const includeDefaultTabs = raw?.includeDefaultTabs !== false;
+  const hidden = collectHiddenDefaults(raw, configuredTabs);
+  const resolved = await resolveConfiguredTabs(configuredTabs);
+
+  if (!includeDefaultTabs) {
+    return { tabs: resolved, announcement };
+  }
+
+  const defaults = await buildDefaultTabs(hidden);
+
+  if (configuredTabs.length === 0) {
+    return { tabs: defaults, announcement };
   }
 
   return { tabs: [...defaults, ...resolved], announcement };
 }
 
-const getSiteHeaderData = unstable_cache(fetchSiteHeaderData, ['site-header'], {
-  revalidate: SITE_HEADER_REVALIDATE,
+const getSiteHeaderData = unstable_cache(fetchSiteHeaderData, ['site-header-v2'], {
+  revalidate: false,
   tags: [SITE_HEADER_TAG, 'catalog', 'collections'],
 });
 
@@ -234,4 +270,7 @@ export async function getSiteAnnouncement(): Promise<SiteAnnouncement | null> {
 /** Flush the header cache after the global is saved or categories change. */
 export function revalidateSiteHeaderCache(): void {
   revalidateTag(SITE_HEADER_TAG);
+  revalidateTag('catalog');
+  revalidateTag('collections');
+  revalidatePath('/', 'layout');
 }
