@@ -7,8 +7,11 @@ process.env.PAYLOAD_DB_PUSH = 'true';
 async function main(): Promise<void> {
   const { default: config } = await import('@payload-config');
   const { getPayload } = await import('payload');
-  await getPayload({ config });
+  const payload = await getPayload({ config });
   console.log('[payload] schema push complete.');
+  // Postgres pool keeps the event loop alive after push; do not await destroy (it can hang too).
+  void payload.destroy().catch(() => undefined);
+  process.exit(0);
 }
 
 main().catch((error: unknown) => {
