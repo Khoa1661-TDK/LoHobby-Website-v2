@@ -77,6 +77,83 @@ export async function AnalyticsDashboard(_props: DashboardProps): Promise<ReactE
       </ul>
 
       <AnalyticsSalesChart data={salesData} />
+
+      <section
+        style={{
+          marginTop: '2.5rem',
+          padding: '1.25rem',
+          borderRadius: '0.75rem',
+          border: '1px solid var(--theme-elevation-150)',
+          background: 'var(--theme-elevation-50)',
+        }}
+      >
+        <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Commerce</h2>
+        <p style={{ margin: '0.5rem 0 0', fontSize: '0.875rem', color: 'var(--theme-elevation-600)' }}>
+          Tạo mã giảm giá và thẻ quà tặng cho checkout.
+        </p>
+        <ul
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            listStyle: 'none',
+            margin: '1rem 0 0',
+            padding: 0,
+          }}
+        >
+          <li>
+            <a
+              href="/admin/coupons"
+              style={{
+                display: 'inline-block',
+                padding: '0.5rem 0.875rem',
+                borderRadius: '0.5rem',
+                border: '1px solid var(--theme-elevation-150)',
+                background: 'var(--theme-elevation-0)',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                textDecoration: 'none',
+              }}
+            >
+              Mã giảm giá
+            </a>
+          </li>
+          <li>
+            <a
+              href="/admin/gift-cards"
+              style={{
+                display: 'inline-block',
+                padding: '0.5rem 0.875rem',
+                borderRadius: '0.5rem',
+                border: '1px solid var(--theme-elevation-150)',
+                background: 'var(--theme-elevation-0)',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                textDecoration: 'none',
+              }}
+            >
+              Thẻ quà tặng
+            </a>
+          </li>
+          <li>
+            <a
+              href="/admin/collections/orders"
+              style={{
+                display: 'inline-block',
+                padding: '0.5rem 0.875rem',
+                borderRadius: '0.5rem',
+                border: '1px solid var(--theme-elevation-150)',
+                background: 'var(--theme-elevation-0)',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                textDecoration: 'none',
+              }}
+            >
+              Quản lý đơn hàng
+            </a>
+          </li>
+        </ul>
+      </section>
     </Gutter>
   );
 }

@@ -11,6 +11,7 @@ type OrderStatus =
   | 'PENDING_TRANSFER'
   | 'PAID'
   | 'SHIPPED'
+  | 'DELIVERED'
   | 'CANCELLED';
 
 type Props = {

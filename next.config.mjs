@@ -24,6 +24,8 @@ const nextConfig = {
     return [
       { source: '/admin/cms', destination: '/admin', permanent: false },
       { source: '/admin/cms/:path*', destination: '/admin/:path*', permanent: false },
+      { source: '/admin/order', destination: '/admin/collections/orders', permanent: false },
+      { source: '/admin/orders', destination: '/admin/collections/orders', permanent: false },
     ];
   },
 };

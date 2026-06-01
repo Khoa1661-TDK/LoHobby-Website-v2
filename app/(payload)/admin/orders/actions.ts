@@ -20,6 +20,7 @@ const STOREFRONT_STATUS_VALUES = new Set<StorefrontOrderStatus>([
   'PENDING_TRANSFER',
   'PAID',
   'SHIPPED',
+  'DELIVERED',
   'CANCELLED',
 ]);
 

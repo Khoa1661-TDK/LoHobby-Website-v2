@@ -48,7 +48,7 @@ export function middleware(req: NextRequest): NextResponse {
     if (limited) return limited;
   }
 
-  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/webhook')) {
+  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/webhook') && pathname !== '/api/admin/orders/sync-shipments') {
     const limited = rateLimitResponse(req, 'api', RATE_LIMIT_PRESETS.api);
     if (limited) return limited;
   }

@@ -31,6 +31,7 @@
     "payload:migrate-variants": "tsx scripts/migrate-inline-product-variants.ts",
     "payload:ensure-variants-schema": "tsx scripts/ensure-product-variants-schema.ts",
     "payload:seed-site-header": "tsx scripts/seed-site-header.ts",
+    "payload:seed-store-settings": "tsx scripts/seed-store-settings.ts",
     "payload:types": "payload generate:types",
     "payload:importmap": "payload generate:importmap",
     "test": "vitest run",

@@ -7,6 +7,7 @@ import {
   clearCart,
   getRawCartItems,
   removeLine,
+  syncCartCookie,
   updateLine,
 } from '@/lib/cart';
 import { mergeGuestCartIntoPersisted } from '@/lib/persisted-cart';
@@ -47,7 +48,8 @@ export async function mergeCartOnLoginAction(): Promise<ActionResult> {
   if (!userId) return {};
   try {
     const guestItems = await getRawCartItems(null);
-    await mergeGuestCartIntoPersisted(userId, guestItems);
+    const merged = await mergeGuestCartIntoPersisted(userId, guestItems);
+    await syncCartCookie(merged, userId);
     await syncStoreCustomerForUser(userId);
     return {};
   } catch {

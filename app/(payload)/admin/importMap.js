@@ -28,6 +28,8 @@ import { MetaImageComponent as MetaImageComponent_a8a977ebc872c5d5ea7ee689724c08
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { ExportListMenuItem as ExportListMenuItem_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { ImportListMenuItem as ImportListMenuItem_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
+import { OrderFulfillmentPanel as OrderFulfillmentPanel_2fd51c9bcd845da5b2138d2139d51a79 } from '@/src/payload/components/OrderFulfillmentPanel'
+import { OrderFulfillmentListCell as OrderFulfillmentListCell_79069c0ee68bf4b676e07f84ff39e4bc } from '@/src/payload/components/OrderFulfillmentListCell'
 import { SortBy as SortBy_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { FieldsToExport as FieldsToExport_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { CollectionField as CollectionField_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
@@ -36,6 +38,7 @@ import { Preview as Preview_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/im
 import { HeaderDropdownItemRowLabel as HeaderDropdownItemRowLabel_e020642e91f91dd59cec6f75d1f6c02c } from '@/src/payload/components/HeaderDropdownItemRowLabel'
 import { HeaderTabRowLabel as HeaderTabRowLabel_9e5a08b5dcee3047768f1fdddf070d7d } from '@/src/payload/components/HeaderTabRowLabel'
 import { Nav as Nav_843028945cda50810eba35c5314c6296 } from '@shopnex/sidebar-plugin/rsc'
+import { CommerceNavLinks as CommerceNavLinks_6486a0b17966de854124f561f6c1ab42 } from '@/src/payload/components/CommerceNavLinks'
 import { QuickActions as QuickActions_c473cfc8237cb5375a757ad784076201 } from '@shopnex/quick-actions-plugin/client'
 import { ImportExportProvider as ImportExportProvider_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { CommandBar as CommandBar_c473cfc8237cb5375a757ad784076201 } from '@shopnex/quick-actions-plugin/client'
@@ -74,6 +77,8 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@shopnex/import-export-plugin/rsc#ExportListMenuItem": ExportListMenuItem_2cddc2e1d3f965d7263141af56b26a90,
   "@shopnex/import-export-plugin/rsc#ImportListMenuItem": ImportListMenuItem_2cddc2e1d3f965d7263141af56b26a90,
+  "@/src/payload/components/OrderFulfillmentPanel#OrderFulfillmentPanel": OrderFulfillmentPanel_2fd51c9bcd845da5b2138d2139d51a79,
+  "@/src/payload/components/OrderFulfillmentListCell#OrderFulfillmentListCell": OrderFulfillmentListCell_79069c0ee68bf4b676e07f84ff39e4bc,
   "@shopnex/import-export-plugin/rsc#SortBy": SortBy_2cddc2e1d3f965d7263141af56b26a90,
   "@shopnex/import-export-plugin/rsc#FieldsToExport": FieldsToExport_2cddc2e1d3f965d7263141af56b26a90,
   "@shopnex/import-export-plugin/rsc#CollectionField": CollectionField_2cddc2e1d3f965d7263141af56b26a90,
@@ -82,6 +87,7 @@ export const importMap = {
   "@/src/payload/components/HeaderDropdownItemRowLabel#HeaderDropdownItemRowLabel": HeaderDropdownItemRowLabel_e020642e91f91dd59cec6f75d1f6c02c,
   "@/src/payload/components/HeaderTabRowLabel#HeaderTabRowLabel": HeaderTabRowLabel_9e5a08b5dcee3047768f1fdddf070d7d,
   "@shopnex/sidebar-plugin/rsc#Nav": Nav_843028945cda50810eba35c5314c6296,
+  "@/src/payload/components/CommerceNavLinks#CommerceNavLinks": CommerceNavLinks_6486a0b17966de854124f561f6c1ab42,
   "@shopnex/quick-actions-plugin/client#QuickActions": QuickActions_c473cfc8237cb5375a757ad784076201,
   "@shopnex/import-export-plugin/rsc#ImportExportProvider": ImportExportProvider_2cddc2e1d3f965d7263141af56b26a90,
   "@shopnex/quick-actions-plugin/client#CommandBar": CommandBar_c473cfc8237cb5375a757ad784076201,

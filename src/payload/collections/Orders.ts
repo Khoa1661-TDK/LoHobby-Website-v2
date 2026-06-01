@@ -1,7 +1,7 @@
 // src/payload/collections/Orders.ts — ShopNex-compatible Payload orders (source of truth)
 import type { CollectionConfig } from 'payload';
 import { payloadAdminAccess } from '@/lib/payload-access';
-import { syncOrderInventoryOnStatusChange } from '@/lib/payload-order-hooks';
+import { syncOrderInventoryOnStatusChange, normalizeOrderPaymentOnChange } from '@/lib/payload-order-hooks';
 import { groups } from '@/src/payload/groups';
 
 export const Orders: CollectionConfig = {
@@ -9,8 +9,16 @@ export const Orders: CollectionConfig = {
   admin: {
     group: groups.orders.name,
     useAsTitle: 'orderId',
-    defaultColumns: ['orderId', 'totalAmount', 'paymentStatus', 'orderStatus', 'createdAt'],
-    description: 'Canonical orders (ShopNex admin + analytics). VND integers.',
+    defaultColumns: [
+      'orderId',
+      'totalAmount',
+      'paymentStatus',
+      'orderStatus',
+      'fulfillmentPanel',
+      'createdAt',
+    ],
+    description:
+      'Click an order to open it — use the green panel at the top to confirm & ship. Pending orders: use the "Đánh dấu TT" column.',
   },
   access: {
     read: payloadAdminAccess,
@@ -19,9 +27,21 @@ export const Orders: CollectionConfig = {
     delete: payloadAdminAccess,
   },
   hooks: {
+    beforeChange: [normalizeOrderPaymentOnChange],
     afterChange: [syncOrderInventoryOnStatusChange],
   },
   fields: [
+    {
+      name: 'fulfillmentPanel',
+      label: 'Xử lý & vận chuyển',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/src/payload/components/OrderFulfillmentPanel#OrderFulfillmentPanel',
+          Cell: '@/src/payload/components/OrderFulfillmentListCell#OrderFulfillmentListCell',
+        },
+      },
+    },
     {
       type: 'row',
       fields: [
@@ -175,6 +195,24 @@ export const Orders: CollectionConfig = {
       admin: { position: 'sidebar' },
     },
     {
+      name: 'confirmedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        description: 'When admin confirmed the order for fulfillment.',
+      },
+    },
+    {
+      name: 'shippedAt',
+      type: 'date',
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'deliveredAt',
+      type: 'date',
+      admin: { position: 'sidebar' },
+    },
+    {
       name: 'inventoryAdjusted',
       type: 'checkbox',
       defaultValue: false,
@@ -199,13 +237,28 @@ export const Orders: CollectionConfig = {
       type: 'textarea',
     },
     {
+      name: 'shippingCarrierKey',
+      type: 'select',
+      label: 'Carrier',
+      options: [
+        { label: 'Giao Hàng Nhanh (GHN)', value: 'ghn' },
+        { label: 'Giao Hàng Tiết Kiệm (GHTK)', value: 'ghtk' },
+        { label: 'Viettel Post', value: 'viettel_post' },
+        { label: 'J&T Express', value: 'jt_express' },
+        { label: 'SPX Express', value: 'spx' },
+        { label: 'VNPost', value: 'vnpost' },
+        { label: 'Other', value: 'other' },
+      ],
+      admin: { description: 'Shipping provider handling this order.' },
+    },
+    {
       type: 'row',
       fields: [
         {
           name: 'shippingCarrier',
           type: 'text',
-          label: 'Carrier',
-          admin: { description: 'e.g. GHN, GHTK, Viettel Post' },
+          label: 'Carrier label',
+          admin: { description: 'Display name (auto-filled from carrier key).' },
         },
         {
           name: 'trackingNumber',
@@ -219,6 +272,44 @@ export const Orders: CollectionConfig = {
       type: 'text',
       label: 'Tracking URL',
       admin: { description: 'Public link for the customer to track shipment.' },
+    },
+    {
+      name: 'shipmentStatus',
+      type: 'select',
+      label: 'Shipment status',
+      options: [
+        { label: 'Awaiting pickup', value: 'awaiting_pickup' },
+        { label: 'Picked up', value: 'picked_up' },
+        { label: 'In transit', value: 'in_transit' },
+        { label: 'Out for delivery', value: 'out_for_delivery' },
+        { label: 'Delivered', value: 'delivered' },
+        { label: 'Failed', value: 'failed' },
+      ],
+      admin: { description: 'Live carrier tracking status (auto-synced).' },
+    },
+    {
+      name: 'shipmentEvents',
+      type: 'array',
+      label: 'Shipment events',
+      admin: { description: 'Tracking timeline from the carrier.' },
+      fields: [
+        {
+          name: 'status',
+          type: 'select',
+          required: true,
+          options: [
+            { label: 'Awaiting pickup', value: 'awaiting_pickup' },
+            { label: 'Picked up', value: 'picked_up' },
+            { label: 'In transit', value: 'in_transit' },
+            { label: 'Out for delivery', value: 'out_for_delivery' },
+            { label: 'Delivered', value: 'delivered' },
+            { label: 'Failed', value: 'failed' },
+          ],
+        },
+        { name: 'message', type: 'text', required: true },
+        { name: 'location', type: 'text' },
+        { name: 'occurredAt', type: 'date', required: true },
+      ],
     },
     {
       name: 'metadata',

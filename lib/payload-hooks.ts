@@ -9,6 +9,9 @@ export const SNAPSHOT_BACKFILL_CONTEXT = { fromSnapshotBackfill: true } as const
 /** Passed when only inventoryAdjusted is written on Payload orders — skips inventory hook. */
 export const ORDER_INVENTORY_CONTEXT = { fromOrderInventorySync: true } as const;
 
+/** API mark-paid handles inventory itself — skip blocking afterChange sync. */
+export const SKIP_ORDER_INVENTORY_HOOK_CONTEXT = { skipOrderInventoryHook: true } as const;
+
 export function isMediaResync(req: { context?: Record<string, unknown> }): boolean {
   return req.context?.fromMediaResync === true;
 }
@@ -19,6 +22,10 @@ export function isSnapshotBackfill(req: { context?: Record<string, unknown> }): 
 
 export function isOrderInventorySync(req: { context?: Record<string, unknown> }): boolean {
   return req.context?.fromOrderInventorySync === true;
+}
+
+export function isSkipOrderInventoryHook(req: { context?: Record<string, unknown> }): boolean {
+  return req.context?.skipOrderInventoryHook === true;
 }
 
 /** True when the request is from a logged-in admin session (storefront reads have no user). */

@@ -4,8 +4,10 @@ import { notFound, redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { auth } from '@/auth';
 import Price from '@/components/price';
+import ShipmentTracker from '@/components/orders/shipment-tracker';
+import { getPublicShipmentInfo } from '@/lib/order-fulfillment';
 import { getPayloadOrderByCode } from '@/lib/payload-orders';
-import type { Order } from '@/src/payload/payload-types';
+import { SHIPMENT_STATUS_LABELS, type ShipmentStatus } from '@/lib/shipment/types';
 import ReorderButton from './reorder-button';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +28,7 @@ const STATUS_LABEL: Record<string, string> = {
   paid: 'Đã thanh toán',
 };
 
-const TIMELINE = ['pending', 'paid', 'shipped'] as const;
+const TIMELINE = ['pending', 'paid', 'shipped', 'delivered'] as const;
 
 function formatDateTime(value: string | Date): string {
   const d = typeof value === 'string' ? new Date(value) : value;
@@ -38,9 +40,8 @@ function statusLabel(doc: {
   orderStatus?: string | null;
 }): string {
   if (doc.orderStatus === 'canceled') return STATUS_LABEL.canceled ?? 'Đã hủy';
-  if (doc.orderStatus === 'shipped' || doc.orderStatus === 'delivered') {
-    return STATUS_LABEL.shipped ?? 'Đang giao';
-  }
+  if (doc.orderStatus === 'delivered') return STATUS_LABEL.delivered ?? 'Đã giao';
+  if (doc.orderStatus === 'shipped') return STATUS_LABEL.shipped ?? 'Đang giao';
   if (doc.paymentStatus === 'paid') return STATUS_LABEL.paid ?? 'Đã thanh toán';
   return STATUS_LABEL.pending ?? 'Chờ xử lý';
 }
@@ -50,7 +51,8 @@ function timelineIndex(doc: {
   orderStatus?: string | null;
 }): number {
   if (doc.orderStatus === 'canceled') return -1;
-  if (doc.orderStatus === 'shipped' || doc.orderStatus === 'delivered') return 2;
+  if (doc.orderStatus === 'delivered') return 3;
+  if (doc.orderStatus === 'shipped') return 2;
   if (doc.paymentStatus === 'paid') return 1;
   return 0;
 }
@@ -81,17 +83,25 @@ export default async function OrderDetailPage(props: { params: Params }): Promis
   const createdAt =
     typeof order.createdAt === 'string' ? order.createdAt : new Date().toISOString();
 
-  const orderExtras = order as Order & {
-    trackingNumber?: string | null;
-    shippingCarrier?: string | null;
-    trackingUrl?: string | null;
-  };
-  const trackingNumber =
-    typeof orderExtras.trackingNumber === 'string' ? orderExtras.trackingNumber.trim() : '';
-  const shippingCarrier =
-    typeof orderExtras.shippingCarrier === 'string' ? orderExtras.shippingCarrier.trim() : '';
-  const trackingUrl =
-    typeof orderExtras.trackingUrl === 'string' ? orderExtras.trackingUrl.trim() : '';
+  const shipment = getPublicShipmentInfo(order);
+  const hasTracking = Boolean(shipment.trackingNumber);
+
+  const initialTracking = hasTracking
+    ? {
+        orderCode: parsed,
+        orderStatus: shipment.orderStatus,
+        carrierLabel: shipment.carrierLabel,
+        trackingNumber: shipment.trackingNumber,
+        trackingUrl: shipment.trackingUrl,
+        shipmentStatus: shipment.shipmentStatus,
+        shipmentStatusLabel: shipment.shipmentStatus
+          ? SHIPMENT_STATUS_LABELS[shipment.shipmentStatus as ShipmentStatus]
+          : null,
+        shipmentEvents: shipment.shipmentEvents,
+        shippedAt: shipment.shippedAt,
+        deliveredAt: shipment.deliveredAt,
+      }
+    : null;
 
   return (
     <section className="mx-auto w-full max-w-3xl px-4 py-10">
@@ -112,7 +122,9 @@ export default async function OrderDetailPage(props: { params: Params }): Promis
           className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${
             isCancelled
               ? 'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200'
-              : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200'
+              : order.orderStatus === 'delivered'
+                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200'
+                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200'
           }`}
         >
           {statusLabel(order)}
@@ -133,7 +145,9 @@ export default async function OrderDetailPage(props: { params: Params }): Promis
                     ? 'Đặt hàng'
                     : step === 'paid'
                       ? 'Thanh toán'
-                      : 'Giao hàng'}
+                      : step === 'shipped'
+                        ? 'Giao hàng'
+                        : 'Hoàn tất'}
                 </span>
               </li>
             );
@@ -181,25 +195,14 @@ export default async function OrderDetailPage(props: { params: Params }): Promis
         </div>
       </div>
 
-      {trackingNumber.length > 0 ? (
-        <div className="mt-6 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800">
-          <h2 className="font-semibold">Theo dõi vận chuyển</h2>
-          {shippingCarrier.length > 0 ? (
-            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-              Đơn vị: {shippingCarrier}
-            </p>
-          ) : null}
-          <p className="mt-1 font-mono text-sm">{trackingNumber}</p>
-          {trackingUrl.length > 0 ? (
-            <a
-              href={trackingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-block text-sm font-medium text-filament-600 underline dark:text-filament-400"
-            >
-              Mở liên kết theo dõi
-            </a>
-          ) : null}
+      {hasTracking ? (
+        <ShipmentTracker orderCode={parsed} initial={initialTracking} />
+      ) : order.deliveryMethod === 'SHIPMENT' && order.paymentStatus === 'paid' ? (
+        <div className="mt-6 rounded-2xl border border-dashed border-neutral-300 p-4 dark:border-neutral-700">
+          <p className="text-sm text-neutral-500">
+            Đơn hàng đang được chuẩn bị. Thông tin vận chuyển sẽ hiển thị khi shop giao cho đơn
+            vị vận chuyển.
+          </p>
         </div>
       ) : null}
 

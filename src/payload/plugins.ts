@@ -45,13 +45,61 @@ const vndAnalyticsDashboardPlugin = (): Plugin => (config: Config) => {
   return config;
 };
 
+/** Custom admin routes for Prisma-backed coupons and gift cards. */
+const commerceNavPlugin = (): Plugin => (config: Config) => {
+  const existing = config.admin?.components?.afterNavLinks;
+  const existingLinks = Array.isArray(existing) ? existing : existing ? [existing] : [];
+
+  config.admin = {
+    ...config.admin,
+    components: {
+      ...config.admin?.components,
+      afterNavLinks: [
+        ...existingLinks,
+        {
+          path: '@/src/payload/components/CommerceNavLinks#CommerceNavLinks',
+        },
+      ],
+    },
+  };
+  return config;
+};
+
 export const shopnexPlugins: Plugin[] = [
   importExportPlugin({
     collections: ['products', 'orders'],
     disableJobsQueue: true,
     importCollections: [{ collectionSlug: 'products' }, { collectionSlug: 'orders' }],
   }),
-  quickActionsPlugin({ position: 'before-nav-links' }),
+  quickActionsPlugin({
+    position: 'before-nav-links',
+    additionalActions: [
+      {
+        id: 'admin-orders-fulfillment',
+        name: 'Quản lý đơn hàng',
+        keywords: 'orders đơn hàng fulfillment vận chuyển',
+        link: '/admin/collections/orders',
+        priority: 71,
+        group: 'commerce',
+      },
+      {
+        id: 'admin-coupons',
+        name: 'Mã giảm giá',
+        keywords: 'coupon coupons mã giảm giá commerce',
+        link: '/admin/coupons',
+        priority: 70,
+        group: 'commerce',
+      },
+      {
+        id: 'admin-gift-cards',
+        name: 'Thẻ quà tặng',
+        keywords: 'gift card thẻ quà commerce',
+        link: '/admin/gift-cards',
+        priority: 69,
+        group: 'commerce',
+      },
+    ],
+  }),
   seoPlugin({
     collections: ['products', 'categories', 'content-pages'],
     uploadsCollection: 'media',
@@ -62,4 +110,5 @@ export const shopnexPlugins: Plugin[] = [
   analyticsPlugin({}),
   vndAnalyticsDashboardPlugin(),
   sidebarPlugin(),
+  commerceNavPlugin(),
 ];

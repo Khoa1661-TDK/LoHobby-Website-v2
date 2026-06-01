@@ -10,7 +10,6 @@ import { assertCartLineStock } from '@/lib/inventory';
 import { isPersistedCartEnabled } from '@/lib/feature-flags';
 import {
   loadPersistedCartItems,
-  mergeCartLines,
   savePersistedCartItems,
 } from '@/lib/persisted-cart';
 import type { Image } from '@/lib/shopify/types';
@@ -125,14 +124,14 @@ async function read(userId?: string | null): Promise<Stored> {
   }
 
   const persisted = await loadPersistedCartItems(userId);
-  if (persisted.length === 0 && cookieStored.items.length === 0) {
-    return cookieStored;
+  // Persisted rows are the source of truth for logged-in users. Cookie is only used
+  // before the first DB save (e.g. immediately after login, before merge-on-login runs).
+  // Do not call write() here — Server Components may only read cookies, not set them.
+  if (persisted.length > 0) {
+    return { id: cookieStored.id, items: persisted };
   }
 
-  const mergedItems = mergeCartLines(persisted, cookieStored.items);
-  const stored: Stored = { id: cookieStored.id, items: mergedItems };
-  await write(stored, userId);
-  return stored;
+  return cookieStored;
 }
 
 async function write(c: Stored, userId?: string | null): Promise<void> {
@@ -342,4 +341,13 @@ export async function clearCart(userId?: string | null): Promise<void> {
 
 export async function getRawCartItems(userId?: string | null): Promise<StoredCartItem[]> {
   return (await read(userId)).items;
+}
+
+/** Mirror cart lines to the httpOnly cookie (Server Actions / Route Handlers only). */
+export async function syncCartCookie(
+  items: StoredCartItem[],
+  userId?: string | null,
+): Promise<void> {
+  const cookieStored = await readCookieStored();
+  await write({ id: cookieStored.id, items }, userId);
 }

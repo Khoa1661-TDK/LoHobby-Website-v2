@@ -24,6 +24,7 @@ const STATUS_ORDER: ProfileOrderStatus[] = [
   'PENDING_COD',
   'PAID',
   'SHIPPED',
+  'DELIVERED',
   'PENDING',
   'CANCELLED',
 ];
@@ -56,10 +57,18 @@ const STATUS_META: Record<ProfileOrderStatus, StatusMeta> = {
   SHIPPED: {
     id: 'SHIPPED',
     label: 'Đang giao hàng',
-    description: 'Đơn hàng đang được vận chuyển toàn quốc.',
+    description: 'Đơn hàng đang được vận chuyển — theo dõi mã vận đơn bên dưới.',
     dot: 'bg-filament-500',
     badge: 'bg-filament-100 text-filament-800 dark:bg-filament-500/15 dark:text-filament-200',
     card: 'border-filament-200/80 dark:border-filament-500/30',
+  },
+  DELIVERED: {
+    id: 'DELIVERED',
+    label: 'Đã giao hàng',
+    description: 'Đơn hàng đã giao thành công.',
+    dot: 'bg-emerald-500',
+    badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200',
+    card: 'border-emerald-200/80 dark:border-emerald-500/30',
   },
   PENDING: {
     id: 'PENDING',
@@ -167,6 +176,13 @@ export default function OrdersPanel({ orders }: Props): ReactElement {
                           Thanh toán {formatDateTime(order.paidAt)}
                         </p>
                       )}
+                      {order.trackingNumber ? (
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                          {order.carrierLabel ? `${order.carrierLabel} · ` : ''}
+                          <span className="font-mono">{order.trackingNumber}</span>
+                          {order.shipmentStatusLabel ? ` — ${order.shipmentStatusLabel}` : ''}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="text-right">
                       <Price

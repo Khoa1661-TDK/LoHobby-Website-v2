@@ -1,5 +1,6 @@
 // lib/order-inventory.ts — stock adjustments tied to Payload `orders`
 import config from '@payload-config';
+import type { Payload } from 'payload';
 import { getPayload } from 'payload';
 import { ORDER_INVENTORY_CONTEXT } from '@/lib/payload-hooks';
 import { revalidateCatalogCache } from '@/lib/payload-products';
@@ -24,8 +25,11 @@ function linesFromPayloadDoc(doc: {
   return lines;
 }
 
-export async function commitOrderInventory(payloadOrderDocId: string | number): Promise<void> {
-  const payload = await getPayload({ config });
+export async function commitOrderInventory(
+  payloadOrderDocId: string | number,
+  payloadInstance?: Payload,
+): Promise<void> {
+  const payload = payloadInstance ?? (await getPayload({ config }));
   const doc = await payload.findByID({
     collection: 'orders',
     id: payloadOrderDocId,
@@ -35,7 +39,7 @@ export async function commitOrderInventory(payloadOrderDocId: string | number): 
   if (!doc || doc.inventoryAdjusted === true) return;
 
   const lines = linesFromPayloadDoc(doc);
-  await decrementOrderInventory(lines);
+  await decrementOrderInventory(lines, payload);
   await payload.update({
     collection: 'orders',
     id: payloadOrderDocId,
@@ -47,6 +51,7 @@ export async function commitOrderInventory(payloadOrderDocId: string | number): 
 
 /** Commit or release stock when admin changes Payload order payment/fulfillment status. */
 export async function syncOrderInventoryForStatusChange(input: {
+  payload?: Payload;
   docId: string | number;
   previousPaymentStatus?: string | null;
   previousOrderStatus?: string | null;
@@ -62,7 +67,7 @@ export async function syncOrderInventoryForStatusChange(input: {
     input.nextPaymentStatus === 'failed' || input.nextPaymentStatus === 'refunded';
 
   if (isPaid && !wasPaid && input.inventoryAdjusted !== true) {
-    await commitOrderInventory(input.docId);
+    await commitOrderInventory(input.docId, input.payload);
     return;
   }
 
@@ -72,12 +77,15 @@ export async function syncOrderInventoryForStatusChange(input: {
     (isCanceled || (paymentFailed && !wasPaid));
 
   if (shouldRelease) {
-    await releaseOrderInventory(input.docId);
+    await releaseOrderInventory(input.docId, input.payload);
   }
 }
 
-export async function releaseOrderInventory(payloadOrderDocId: string | number): Promise<void> {
-  const payload = await getPayload({ config });
+export async function releaseOrderInventory(
+  payloadOrderDocId: string | number,
+  payloadInstance?: Payload,
+): Promise<void> {
+  const payload = payloadInstance ?? (await getPayload({ config }));
   const doc = await payload.findByID({
     collection: 'orders',
     id: payloadOrderDocId,
@@ -87,7 +95,7 @@ export async function releaseOrderInventory(payloadOrderDocId: string | number):
   if (!doc || doc.inventoryAdjusted !== true) return;
 
   const lines = linesFromPayloadDoc(doc);
-  await restockOrderInventory(lines);
+  await restockOrderInventory(lines, payload);
   await payload.update({
     collection: 'orders',
     id: payloadOrderDocId,

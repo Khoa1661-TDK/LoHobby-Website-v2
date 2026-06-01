@@ -521,7 +521,7 @@ export interface StoreCustomer {
   createdAt: string;
 }
 /**
- * Canonical orders (ShopNex admin + analytics). VND integers.
+ * Click an order to open it — use the green panel at the top to confirm & ship. Pending orders: use the "Đánh dấu TT" column.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "orders".
@@ -565,6 +565,12 @@ export interface Order {
   phoneNumber?: string | null;
   paymentUrl?: string | null;
   paidAt?: string | null;
+  /**
+   * When admin confirmed the order for fulfillment.
+   */
+  confirmedAt?: string | null;
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
   inventoryAdjusted?: boolean | null;
   lineItems?:
     | {
@@ -580,7 +586,11 @@ export interface Order {
     | null;
   shippingAddress?: string | null;
   /**
-   * e.g. GHN, GHTK, Viettel Post
+   * Shipping provider handling this order.
+   */
+  shippingCarrierKey?: ('ghn' | 'ghtk' | 'viettel_post' | 'jt_express' | 'spx' | 'vnpost' | 'other') | null;
+  /**
+   * Display name (auto-filled from carrier key).
    */
   shippingCarrier?: string | null;
   trackingNumber?: string | null;
@@ -588,6 +598,24 @@ export interface Order {
    * Public link for the customer to track shipment.
    */
   trackingUrl?: string | null;
+  /**
+   * Live carrier tracking status (auto-synced).
+   */
+  shipmentStatus?:
+    | ('awaiting_pickup' | 'picked_up' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'failed')
+    | null;
+  /**
+   * Tracking timeline from the carrier.
+   */
+  shipmentEvents?:
+    | {
+        status: 'awaiting_pickup' | 'picked_up' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'failed';
+        message: string;
+        location?: string | null;
+        occurredAt: string;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * prismaUserId, legacy ids, gateway refs.
    */
@@ -1117,6 +1145,9 @@ export interface OrdersSelect<T extends boolean = true> {
   phoneNumber?: T;
   paymentUrl?: T;
   paidAt?: T;
+  confirmedAt?: T;
+  shippedAt?: T;
+  deliveredAt?: T;
   inventoryAdjusted?: T;
   lineItems?:
     | T
@@ -1131,9 +1162,20 @@ export interface OrdersSelect<T extends boolean = true> {
         id?: T;
       };
   shippingAddress?: T;
+  shippingCarrierKey?: T;
   shippingCarrier?: T;
   trackingNumber?: T;
   trackingUrl?: T;
+  shipmentStatus?: T;
+  shipmentEvents?:
+    | T
+    | {
+        status?: T;
+        message?: T;
+        location?: T;
+        occurredAt?: T;
+        id?: T;
+      };
   metadata?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1378,7 +1420,7 @@ export interface SiteHeader {
   createdAt?: string | null;
 }
 /**
- * Store identity, branding, contact details, and policy links for the storefront and SEO.
+ * White-label storefront appearance: logo, colors, fonts, hero, footer, and social links.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "store-settings".
@@ -1386,56 +1428,74 @@ export interface SiteHeader {
 export interface StoreSetting {
   id: number;
   /**
-   * Overrides NEXT_PUBLIC_SITE_NAME when set.
+   * Used in navbar, SEO, and hero when no custom hero title is set.
    */
   storeName?: string | null;
   /**
    * Optional line shown under the logo on marketing pages.
    */
   storeSubtitle?: string | null;
-  footerTagline?: string | null;
-  /**
-   * Small uppercase line under the tagline (e.g. "Made in Vietnam").
-   */
-  brandOrigin?: string | null;
   logo?: (number | null) | Media;
   /**
-   * Optional. If empty, the main logo is used (may auto-invert).
+   * Optional. Falls back to main logo with invert filter.
    */
   logoDark?: (number | null) | Media;
   favicon?: (number | null) | Media;
-  /**
-   * Hex color for buttons, links, and accents.
-   */
-  primaryColor?: string | null;
-  accentColor?: string | null;
-  /**
-   * Default meta description for the storefront.
-   */
   storeDescription?: string | null;
   /**
-   * Used in PWA manifest, welcome toast, and compact UI.
+   * PWA manifest, welcome toast, and compact UI.
    */
   storeDescriptionShort?: string | null;
-  contactEmail?: string | null;
-  contactPhone?: string | null;
-  contactAddress?: string | null;
   /**
-   * ISO 4217 code shown in checkout copy (amounts stay VND integers).
+   * Buttons, links, and primary accents (hex).
    */
-  currencyCode?: string | null;
+  primaryColor?: string | null;
   /**
-   * Optional message shown on the checkout page (e.g. processing times).
+   * Secondary accents, badges, and highlights (hex).
    */
-  checkoutNote?: string | null;
-  returnsPolicyUrl?: string | null;
-  privacyPolicyUrl?: string | null;
+  secondaryColor?: string | null;
   /**
-   * Optional small print in the footer (e.g. developer credit).
+   * Legacy field — use Secondary color instead.
+   */
+  accentColor?: string | null;
+  /**
+   * Controls body and heading fonts across the storefront.
+   */
+  fontPreset?: ('jakarta' | 'inter' | 'roboto' | 'system') | null;
+  heroEnabled?: boolean | null;
+  /**
+   * Small label above the hero title (e.g. "New collection · Free shipping").
+   */
+  heroEyebrow?: string | null;
+  /**
+   * Leave empty to use the store name.
+   */
+  heroTitle?: string | null;
+  heroSubtitle?: string | null;
+  heroCtaLabel?: string | null;
+  heroCtaUrl?: string | null;
+  /**
+   * Optional wide banner image behind the hero text.
+   */
+  heroImage?: (number | null) | Media;
+  heroShowCarousel?: boolean | null;
+  heroCarouselTitle?: string | null;
+  footerTagline?: string | null;
+  /**
+   * Small uppercase line in the footer (e.g. "Made in Vietnam").
+   */
+  brandOrigin?: string | null;
+  /**
+   * Short blurb in the footer about column. Falls back to short store description.
+   */
+  footerDescription?: string | null;
+  /**
+   * Optional small print at the bottom (e.g. agency credit).
    */
   footerCredit?: string | null;
+  footerShowNewsletter?: boolean | null;
   /**
-   * Shown in the footer. Leave empty to use env defaults.
+   * Shown as icon links in the footer. Leave empty to use env defaults.
    */
   socialLinks?:
     | {
@@ -1444,13 +1504,14 @@ export interface StoreSetting {
         id?: string | null;
       }[]
     | null;
-  /**
-   * When enabled, VAT/sales tax is added at checkout based on the rate below.
-   */
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  contactAddress?: string | null;
+  currencyCode?: string | null;
+  checkoutNote?: string | null;
+  returnsPolicyUrl?: string | null;
+  privacyPolicyUrl?: string | null;
   taxEnabled?: boolean | null;
-  /**
-   * Applied to subtotal minus coupon discount (before shipping). Example: 10 = 10% VAT.
-   */
   taxRatePercent?: number | null;
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -1559,23 +1620,29 @@ export interface SiteHeaderSelect<T extends boolean = true> {
 export interface StoreSettingsSelect<T extends boolean = true> {
   storeName?: T;
   storeSubtitle?: T;
-  footerTagline?: T;
-  brandOrigin?: T;
   logo?: T;
   logoDark?: T;
   favicon?: T;
-  primaryColor?: T;
-  accentColor?: T;
   storeDescription?: T;
   storeDescriptionShort?: T;
-  contactEmail?: T;
-  contactPhone?: T;
-  contactAddress?: T;
-  currencyCode?: T;
-  checkoutNote?: T;
-  returnsPolicyUrl?: T;
-  privacyPolicyUrl?: T;
+  primaryColor?: T;
+  secondaryColor?: T;
+  accentColor?: T;
+  fontPreset?: T;
+  heroEnabled?: T;
+  heroEyebrow?: T;
+  heroTitle?: T;
+  heroSubtitle?: T;
+  heroCtaLabel?: T;
+  heroCtaUrl?: T;
+  heroImage?: T;
+  heroShowCarousel?: T;
+  heroCarouselTitle?: T;
+  footerTagline?: T;
+  brandOrigin?: T;
+  footerDescription?: T;
   footerCredit?: T;
+  footerShowNewsletter?: T;
   socialLinks?:
     | T
     | {
@@ -1583,6 +1650,13 @@ export interface StoreSettingsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  contactEmail?: T;
+  contactPhone?: T;
+  contactAddress?: T;
+  currencyCode?: T;
+  checkoutNote?: T;
+  returnsPolicyUrl?: T;
+  privacyPolicyUrl?: T;
   taxEnabled?: T;
   taxRatePercent?: T;
   updatedAt?: T;

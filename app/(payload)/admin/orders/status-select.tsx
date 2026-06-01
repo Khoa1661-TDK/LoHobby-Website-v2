@@ -17,6 +17,7 @@ const STATUS_OPTIONS: readonly StorefrontOrderStatus[] = [
   'PENDING_TRANSFER',
   'PAID',
   'SHIPPED',
+  'DELIVERED',
   'CANCELLED',
 ];
 
@@ -27,6 +28,7 @@ const STATUS_BADGE_CLASS: Record<StorefrontOrderStatus, string> = {
   PENDING_TRANSFER: 'bg-purple-100 text-purple-800 ring-purple-200',
   PAID: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
   SHIPPED: 'bg-indigo-100 text-indigo-800 ring-indigo-200',
+  DELIVERED: 'bg-teal-100 text-teal-800 ring-teal-200',
   CANCELLED: 'bg-rose-100 text-rose-800 ring-rose-200',
 };
 

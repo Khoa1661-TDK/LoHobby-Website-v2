@@ -1,5 +1,6 @@
 // lib/inventory.ts — variant and product-level stock validation and decrement via Payload CMS
 import config from '@payload-config';
+import type { Payload } from 'payload';
 import { getPayload } from 'payload';
 import {
   computeSalePrice,
@@ -169,8 +170,11 @@ export async function assertCartLineStock(
 /**
  * Decrement Payload variant or product stock for paid / committed orders.
  */
-export async function decrementOrderInventory(items: InventoryAdjustmentLine[]): Promise<void> {
-  const payload = await getPayload({ config });
+export async function decrementOrderInventory(
+  items: InventoryAdjustmentLine[],
+  payloadInstance?: Payload,
+): Promise<void> {
+  const payload = payloadInstance ?? (await getPayload({ config }));
 
   const skus = items
     .map((i) => (typeof i.variantSku === 'string' ? i.variantSku.trim() : ''))
@@ -248,8 +252,11 @@ export async function decrementOrderInventory(items: InventoryAdjustmentLine[]):
 /**
  * Restock variant or product quantities when an order is cancelled after inventory was adjusted.
  */
-export async function restockOrderInventory(items: InventoryAdjustmentLine[]): Promise<void> {
-  const payload = await getPayload({ config });
+export async function restockOrderInventory(
+  items: InventoryAdjustmentLine[],
+  payloadInstance?: Payload,
+): Promise<void> {
+  const payload = payloadInstance ?? (await getPayload({ config }));
 
   const skus = items
     .map((i) => (typeof i.variantSku === 'string' ? i.variantSku.trim() : ''))

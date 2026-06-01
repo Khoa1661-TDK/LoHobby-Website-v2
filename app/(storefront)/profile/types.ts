@@ -13,6 +13,7 @@ export type ProfileOrderStatus =
   | 'PENDING_ONLINE'
   | 'PAID'
   | 'SHIPPED'
+  | 'DELIVERED'
   | 'CANCELLED';
 
 export type ProfileOrder = {
@@ -26,6 +27,9 @@ export type ProfileOrder = {
   shippingAddress: string | null;
   createdAt: string;
   paidAt: string | null;
+  trackingNumber: string | null;
+  carrierLabel: string | null;
+  shipmentStatusLabel: string | null;
 };
 
 export type ProfileAddress = {

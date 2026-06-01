@@ -7,6 +7,7 @@ export type StorefrontOrderStatus =
   | 'PENDING_TRANSFER'
   | 'PAID'
   | 'SHIPPED'
+  | 'DELIVERED'
   | 'CANCELLED';
 
 export function mapPayloadOrderToStorefrontStatus(doc: {
@@ -15,14 +16,14 @@ export function mapPayloadOrderToStorefrontStatus(doc: {
   paymentKind?: string | null;
 }): StorefrontOrderStatus {
   if (doc.orderStatus === 'canceled') return 'CANCELLED';
-  if (doc.orderStatus === 'shipped' || doc.orderStatus === 'delivered') return 'SHIPPED';
+  if (doc.orderStatus === 'delivered') return 'DELIVERED';
+  if (doc.orderStatus === 'shipped') return 'SHIPPED';
   if (doc.paymentStatus === 'paid') return 'PAID';
   if (doc.paymentKind === 'cod') return 'PENDING_COD';
   if (doc.paymentKind === 'manual_transfer') return 'PENDING_TRANSFER';
   if (doc.paymentKind === 'gateway') return 'PENDING_ONLINE';
   return 'PENDING';
 }
-
 export function ownsPayloadOrder(
   doc: { metadata?: unknown; buyerEmail?: string | null },
   input: { userId: string; email?: string | null },
@@ -49,6 +50,8 @@ export function mapStorefrontStatusToPayloadFields(status: StorefrontOrderStatus
       return { paymentStatus: 'paid', orderStatus: 'processing' };
     case 'SHIPPED':
       return { paymentStatus: 'paid', orderStatus: 'shipped' };
+    case 'DELIVERED':
+      return { paymentStatus: 'paid', orderStatus: 'delivered' };
     case 'CANCELLED':
       return { paymentStatus: 'failed', orderStatus: 'canceled' };
     default:

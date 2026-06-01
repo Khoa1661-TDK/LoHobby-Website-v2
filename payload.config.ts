@@ -73,7 +73,11 @@ export default buildConfig({
   ],
   globals: [SiteHeader, StoreSettings, ShippingSettings, DropshipSettings],
   db: postgresAdapter({
-    pool: { connectionString: databaseUrl },
+    pool: {
+      connectionString: databaseUrl,
+      // Prevent CMS list views from leaving read transactions open and blocking mark-paid.
+      idle_in_transaction_session_timeout: 30_000,
+    },
     schemaName: 'payload',
     push: process.env.PAYLOAD_DB_PUSH === 'true',
   }),
