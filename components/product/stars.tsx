@@ -23,7 +23,7 @@ export default function Stars({ rating, className, size = 'sm' }: Props): ReactE
           className={`${dimension} ${
             index <= Math.round(rating)
               ? 'text-amber-400'
-              : 'text-neutral-300 dark:text-neutral-600'
+              : 'text-warm-300 dark:text-warm-700'
           }`}
           fill="currentColor"
         >

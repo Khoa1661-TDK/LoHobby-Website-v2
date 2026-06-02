@@ -36,13 +36,15 @@ function FooterLinkList({
 }): ReactElement {
   return (
     <div>
-      <h3 className="text-xs font-bold uppercase tracking-widest text-white">{title}</h3>
-      <ul className="mt-4 space-y-2.5">
+      <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-warm-400">
+        {title}
+      </h3>
+      <ul className="mt-5 space-y-3">
         {links.map((link) => (
           <li key={link.href}>
             <Link
               href={link.href}
-              className="text-sm text-neutral-400 transition hover:text-white"
+              className="text-sm text-warm-400 transition-colors duration-200 hover:text-warm-100"
             >
               {link.title}
             </Link>
@@ -90,42 +92,52 @@ export default async function Footer(): Promise<ReactElement> {
     branding.socialLinks.length > 0 ? branding.socialLinks : DEFAULT_SOCIAL_LINKS;
 
   return (
-    <footer className="mt-auto bg-neutral-950 text-neutral-300">
-      <div className="mx-auto max-w-screen-2xl px-4 py-12 md:py-14">
+    <footer className="mt-auto bg-warm-950">
+      {/* Subtle top border gradient */}
+      <div className="h-px bg-gradient-to-r from-transparent via-warm-700/50 to-transparent" />
+
+      <div className="mx-auto max-w-screen-2xl px-4 py-14 md:py-16 lg:px-6">
+        {/* Brand + contact */}
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-          <div className="lg:max-w-sm">
-            <p className="font-serif text-lg font-bold text-white">{branding.storeName}</p>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-400">
+          <div className="lg:max-w-xs">
+            <p className="font-display text-xl font-bold text-warm-50">
+              {branding.storeName}
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-warm-400">
               {branding.footer.description} {branding.footer.tagline}.
             </p>
             {branding.footer.origin ? (
-              <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.3em] text-neutral-500">
+              <span className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.3em] text-warm-600">
                 {branding.footer.origin}
-              </p>
+              </span>
             ) : null}
 
             <ul className="mt-6 space-y-4">
               <li className="flex gap-3 text-sm">
-                <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-white" aria-hidden="true" />
-                <span className="text-neutral-400">{branding.contact.address}</span>
+                <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-warm-500" aria-hidden="true" />
+                <span className="text-warm-400">{branding.contact.address}</span>
               </li>
               <li className="flex gap-3 text-sm">
-                <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-white" aria-hidden="true" />
+                <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-warm-500" aria-hidden="true" />
                 <a
                   href={`tel:${branding.contact.phone.replace(/\s/g, '')}`}
-                  className="text-neutral-400 hover:text-white"
+                  className="text-warm-400 transition-colors duration-200 hover:text-warm-100"
                 >
                   Hotline: {branding.contact.phone}
                 </a>
               </li>
               <li className="flex gap-3 text-sm">
-                <EnvelopeIcon className="mt-0.5 h-5 w-5 shrink-0 text-white" aria-hidden="true" />
-                <a href={`mailto:${branding.contact.email}`} className="text-neutral-400 hover:text-white">
+                <EnvelopeIcon className="mt-0.5 h-5 w-5 shrink-0 text-warm-500" aria-hidden="true" />
+                <a
+                  href={`mailto:${branding.contact.email}`}
+                  className="text-warm-400 transition-colors duration-200 hover:text-warm-100"
+                >
                   {branding.contact.email}
                 </a>
               </li>
             </ul>
 
+            {/* Social links */}
             <div className="mt-6 flex gap-2">
               {socialLinks.map((social) => (
                 <a
@@ -134,7 +146,7 @@ export default async function Footer(): Promise<ReactElement> {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-700 text-neutral-300 transition hover:border-white hover:text-white"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-warm-800 text-warm-400 transition-all duration-200 hover:border-warm-600 hover:text-warm-100 hover:bg-warm-800/50"
                 >
                   <SocialIcon label={social.label} />
                 </a>
@@ -147,8 +159,10 @@ export default async function Footer(): Promise<ReactElement> {
 
           {branding.footer.showNewsletter ? (
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-white">Newsletter</h3>
-              <div className="mt-4">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-warm-400">
+                Newsletter
+              </h3>
+              <div className="mt-5">
                 <FooterNewsletter />
               </div>
             </div>
@@ -156,12 +170,15 @@ export default async function Footer(): Promise<ReactElement> {
         </div>
       </div>
 
-      <div className="border-t border-neutral-800">
-        <div className="mx-auto flex max-w-screen-2xl flex-col gap-2 px-4 py-5 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+      {/* Bottom bar */}
+      <div className="border-t border-warm-900">
+        <div className="mx-auto flex max-w-screen-2xl flex-col gap-2 px-4 py-6 text-xs text-warm-600 sm:flex-row sm:items-center sm:justify-between lg:px-6">
           <p>
             &copy; {currentYear} {branding.storeName}. Bảo lưu mọi quyền.
           </p>
-          {branding.footer.credit ? <p>{branding.footer.credit}</p> : null}
+          {branding.footer.credit ? (
+            <p className="text-warm-700">{branding.footer.credit}</p>
+          ) : null}
         </div>
       </div>
     </footer>

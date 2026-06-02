@@ -22,10 +22,10 @@ export default function Label({
         'lg:px-20 lg:pb-[35%]': position === 'center',
       })}
     >
-      <div className="flex items-center rounded-full border bg-white/70 p-1 text-xs font-semibold text-black backdrop-blur-md dark:border-neutral-800 dark:bg-black/70 dark:text-white">
+      <div className="flex items-center rounded-xl border border-warm-200/60 bg-white/80 p-1 text-xs font-semibold text-warm-900 backdrop-blur-md dark:border-warm-800/60 dark:bg-warm-900/80 dark:text-warm-100">
         <h3 className="mr-4 line-clamp-2 grow pl-2 leading-none tracking-tight">{title}</h3>
         <Price
-          className="flex-none rounded-full bg-filament-500 p-2 text-white shadow-sm"
+          className="flex-none rounded-lg bg-warm-900 p-2 text-warm-50 shadow-soft-sm dark:bg-warm-100 dark:text-warm-900"
           amount={amount}
           currencyCode={currencyCode}
           currencyCodeClassName="hidden @[275px]/label:inline"

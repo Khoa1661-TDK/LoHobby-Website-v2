@@ -15,25 +15,39 @@ export async function Navbar(): Promise<ReactElement> {
   const [tabs, branding] = await Promise.all([getSiteHeaderTabs(), getStoreBranding()]);
 
   return (
-    <nav className="relative border-b border-neutral-100 dark:border-neutral-900">
-      <div className="flex items-center justify-between p-4 lg:px-6">
-      <div className="block flex-none md:hidden">
-        <Suspense fallback={null}>
-          <MobileMenu tabs={tabs} />
-        </Suspense>
-      </div>
-      <div className="flex w-full items-center">
-        <div className="flex w-full md:w-1/3">
-          <Link
-            href="/"
-            prefetch
-            className="mr-2 flex w-full items-center justify-center gap-2.5 md:w-auto lg:mr-6"
-            aria-label={`${branding.storeName} — trang chủ`}
-          >
-            <BrandLogo branding={branding} variant="navbar" />
-          </Link>
-          {tabs.length ? (
-            <ul className="hidden items-center gap-6 text-sm md:flex">
+    <nav className="sticky top-0 z-40 border-b border-warm-200/80 bg-warm-50/85 backdrop-blur-xl backdrop-saturate-150 dark:border-warm-800/50 dark:bg-warm-950/85">
+      {/* Grain texture overlay */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.012]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      <div className="relative flex items-center justify-between px-4 py-3 lg:px-6 lg:py-3.5">
+        {/* Mobile menu trigger */}
+        <div className="block flex-none md:hidden">
+          <Suspense fallback={null}>
+            <MobileMenu tabs={tabs} />
+          </Suspense>
+        </div>
+
+        {/* Left: Logo + nav tabs */}
+        <div className="flex w-full items-center gap-8">
+          <div className="flex items-center md:w-auto">
+            <Link
+              href="/"
+              prefetch
+              className="mr-2 flex shrink-0 items-center gap-2.5 lg:mr-6"
+              aria-label={`${branding.storeName} — trang chủ`}
+            >
+              <BrandLogo branding={branding} variant="navbar" />
+            </Link>
+          </div>
+
+          {tabs.length > 0 && (
+            <ul className="hidden items-center gap-1 text-sm md:flex">
               {tabs.map((tab, tabIndex) => (
                 <li key={`${tab.kind}:${tab.label}:${tabIndex}`}>
                   {tab.kind === 'link' ? (
@@ -42,7 +56,7 @@ export async function Navbar(): Promise<ReactElement> {
                       prefetch={!tab.external}
                       target={tab.external ? '_blank' : undefined}
                       rel={tab.external ? 'noreferrer noopener' : undefined}
-                      className="text-neutral-500 underline-offset-4 hover:text-black hover:underline dark:text-neutral-400 dark:hover:text-white"
+                      className="inline-flex rounded-lg px-3 py-2 text-sm font-medium text-warm-600 transition-colors duration-200 hover:bg-warm-100/80 hover:text-warm-900 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-100"
                     >
                       {tab.label}
                     </Link>
@@ -52,21 +66,28 @@ export async function Navbar(): Promise<ReactElement> {
                 </li>
               ))}
             </ul>
-          ) : null}
+          )}
         </div>
-        <div className="hidden justify-center md:flex md:w-1/3">
-          <Suspense fallback={<SearchSkeleton />}>
-            <Search />
-          </Suspense>
-        </div>
-        <div className="flex items-center justify-end gap-3 md:w-1/3">
-          <ThemeToggle />
-          <AuthNav />
-          <Cart />
+
+        {/* Right: search + actions */}
+        <div className="flex items-center gap-2">
+          {/* Desktop search */}
+          <div className="hidden md:block md:w-52 lg:w-64 xl:w-72">
+            <Suspense fallback={<SearchSkeleton />}>
+              <Search />
+            </Suspense>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle />
+            <AuthNav />
+            <Cart />
+          </div>
         </div>
       </div>
-      </div>
-      <div className="border-t border-neutral-100 px-4 pb-3 pt-3 md:hidden dark:border-neutral-900">
+
+      {/* Mobile search bar */}
+      <div className="border-t border-warm-200/60 px-4 pb-3 pt-3 md:hidden dark:border-warm-800/40">
         <Suspense fallback={<SearchSkeleton />}>
           <Search />
         </Suspense>

@@ -78,14 +78,6 @@ export function generateOrderCode(): number {
   return randomInt(ORDER_CODE_MIN, ORDER_CODE_MAX);
 }
 
-/**
- * @deprecated Use {@link generateOrderCode}. Retained for compatibility with any
- * legacy import paths; behaviour is now identical to `generateOrderCode`.
- */
-export async function allocateOrderCode(): Promise<number> {
-  return generateOrderCode();
-}
-
 export function isUniqueConstraintError(error: unknown): boolean {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&

@@ -1,57 +1,30 @@
 @tailwind base;
-
 @tailwind components;
-
 @tailwind utilities;
 
-
-
 @layer components {
-
+  /* Image utilities */
   .img-fit {
-
     @apply h-full w-full max-h-full max-w-full object-contain object-center;
-
   }
 
   .img-banner {
-
     @apply h-full w-full object-cover object-center;
-
   }
 
+  /* Navigation dropdown panel — refined with warm shadow */
   @keyframes dropdown-item {
-
-    from {
-      opacity: 0;
-      transform: translateX(-10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
   .animate-dropdown-item {
-
     animation: dropdown-item 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
-
   }
 
   @keyframes dropdown-panel-in {
-
-    from {
-      opacity: 0;
-      transform: translateY(-12px) scale(0.96);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-
+    from { opacity: 0; transform: translateY(-12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   .nav-dropdown-panel {
@@ -79,8 +52,68 @@
     animation: dropdown-item 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
-  @media (prefers-reduced-motion: reduce) {
+  /* Staggered card reveals */
+  .stagger-item {
+    opacity: 0;
+    animation: reveal-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 
+  /* Warm editorial link underline */
+  .editorial-link {
+    position: relative;
+    text-decoration: none;
+  }
+  .editorial-link::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: currentColor;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .editorial-link:hover::after {
+    width: 100%;
+  }
+
+  /* Subtle grain overlay — can be applied to containers */
+  .grain-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.015;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+    z-index: 0;
+  }
+
+  /* Text balance for editorial headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Warm gradient overlays */
+  .overlay-warm {
+    background: linear-gradient(
+      to top,
+      rgba(41, 36, 32, 0.92) 0%,
+      rgba(41, 36, 32, 0.4) 40%,
+      rgba(41, 36, 32, 0) 70%
+    );
+  }
+
+  .overlay-warm-subtle {
+    background: linear-gradient(
+      to top,
+      rgba(41, 36, 32, 0.55) 0%,
+      rgba(41, 36, 32, 0.1) 50%,
+      transparent 100%
+    );
+  }
+
+  @media (prefers-reduced-motion: reduce) {
     .nav-dropdown-panel {
       transition: none;
     }
@@ -91,95 +124,107 @@
     }
 
     .animate-dropdown-item,
-    .nav-dropdown-panel[data-open='true'] .nav-dropdown-item {
+    .nav-dropdown-panel[data-open='true'] .nav-dropdown-item,
+    .stagger-item {
       animation: none;
+      opacity: 1;
     }
-
   }
-
 }
 
 @layer base {
-
   :root {
-
     color-scheme: light;
-
+    --scrollbar-thumb: #d4cfc7;
+    --scrollbar-track: #f5f2ee;
   }
 
-
+  .dark {
+    --scrollbar-thumb: #524b44;
+    --scrollbar-track: #1a1613;
+  }
 
   *,
-
   ::after,
-
   ::before,
-
   ::backdrop {
-
-    border-color: theme('colors.neutral.200');
-
+    border-color: theme('colors.warm.200');
   }
-
-
 
   @media (prefers-color-scheme: dark) {
-
     :root {
-
       color-scheme: dark;
-
     }
-
-
 
     *,
-
     ::after,
-
     ::before,
-
     ::backdrop {
-
-      border-color: theme('colors.neutral.800');
-
+      border-color: theme('colors.warm.800');
     }
-
   }
-
-
 
   html,
-
   body {
-
-    @apply bg-paper text-ink dark:bg-neutral-950 dark:text-white;
-
+    @apply bg-warm-50 text-warm-900 dark:bg-warm-950 dark:text-warm-100;
     -webkit-font-smoothing: antialiased;
-
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
+  /* Refined custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.warm.400');
+  }
 
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
 
   @supports (font: -apple-system-body) and (-webkit-appearance: none) {
-
     img[loading='lazy'] {
-
       clip-path: inset(0.6px);
-
     }
+  }
 
+  /* Selection */
+  ::selection {
+    background: theme('colors.terracotta.100');
+    color: theme('colors.terracotta.900');
+  }
+  .dark ::selection {
+    background: theme('colors.terracotta.900');
+    color: theme('colors.terracotta.100');
   }
 
   a,
-
   input,
-
   button {
-
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 focus-visible:ring-offset-paper dark:focus-visible:ring-neutral-500 dark:focus-visible:ring-offset-neutral-950;
-
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta-400 focus-visible:ring-offset-2 focus-visible:ring-offset-warm-50 dark:focus-visible:ring-terracotta-500 dark:focus-visible:ring-offset-warm-950;
   }
 
-}
+  /* Editorial typography defaults */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
 
+  /* Smooth transitions for interactive elements */
+  .interactive {
+    @apply transition-all duration-300 ease-smooth;
+  }
+}

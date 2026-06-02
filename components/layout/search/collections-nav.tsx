@@ -30,22 +30,21 @@ export default function CollectionsNav({ items }: { items: CategoryNavItem[] }):
 
   return (
     <nav aria-label="Danh mục sản phẩm">
-      <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400">
         Danh mục
       </h3>
 
-      {/* Mobile: compact dropdown */}
       <div className="relative md:hidden" ref={ref}>
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex w-full items-center justify-between rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="flex w-full items-center justify-between rounded-xl border border-warm-200/80 bg-white px-4 py-2.5 text-sm dark:border-warm-800/60 dark:bg-warm-900"
         >
-          <span className="truncate">{activeItem?.title ?? 'Danh mục'}</span>
-          <ChevronDownIcon className={clsx('h-4 w-4 shrink-0 transition', open && 'rotate-180')} />
+          <span className="truncate text-warm-700 dark:text-warm-300">{activeItem?.title ?? 'Danh mục'}</span>
+          <ChevronDownIcon className={clsx('h-4 w-4 shrink-0 text-warm-400 transition', open && 'rotate-180')} />
         </button>
         {open ? (
-          <ul className="absolute z-40 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
+          <ul className="absolute z-40 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-warm-200/80 bg-white py-1 shadow-soft-lg dark:border-warm-800/60 dark:bg-warm-900">
             {items.map((item) => {
               const active = pathname === item.path;
               return (
@@ -55,8 +54,8 @@ export default function CollectionsNav({ items }: { items: CategoryNavItem[] }):
                     prefetch
                     onClick={() => setOpen(false)}
                     className={clsx(
-                      'block px-4 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800',
-                      active && 'font-medium text-black underline underline-offset-4 dark:text-white',
+                      'block px-4 py-2 text-sm transition-colors hover:bg-warm-50 dark:hover:bg-warm-800/50',
+                      active && 'font-medium text-terracotta-600 dark:text-terracotta-400',
                     )}
                   >
                     {item.title}
@@ -68,20 +67,19 @@ export default function CollectionsNav({ items }: { items: CategoryNavItem[] }):
         ) : null}
       </div>
 
-      {/* Desktop: scrollable list for many categories */}
       <ul className="hidden max-h-[min(70vh,32rem)] overflow-y-auto pr-1 md:block [scrollbar-width:thin]">
         {items.map((item) => {
           const active = pathname === item.path;
           return (
-            <li key={item.path} className="mt-1.5 first:mt-0">
+            <li key={item.path} className="mt-1 first:mt-0">
               <Link
                 href={item.path}
                 prefetch
                 className={clsx(
-                  'block text-sm leading-snug underline-offset-4 hover:underline',
+                  'block rounded-lg px-2.5 py-1.5 text-sm leading-snug transition-colors duration-150',
                   active
-                    ? 'font-medium text-black underline dark:text-white'
-                    : 'text-neutral-700 dark:text-neutral-300',
+                    ? 'bg-terracotta-50 font-medium text-terracotta-700 dark:bg-terracotta-950/40 dark:text-terracotta-300'
+                    : 'text-warm-600 hover:bg-warm-50 hover:text-warm-900 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200',
                 )}
               >
                 {item.title}

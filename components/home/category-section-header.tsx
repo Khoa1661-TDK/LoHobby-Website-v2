@@ -13,19 +13,19 @@ export default function CategorySectionHeader({
   productCount,
 }: Props): ReactElement {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-neutral-200 pb-3 dark:border-neutral-800">
+    <div className="flex items-end justify-between gap-4 border-b border-warm-200/60 pb-4 dark:border-warm-800/30">
       <div className="min-w-0">
         <h2
           id={`${category.slug}-heading`}
-          className="text-base font-bold tracking-tight sm:text-lg"
+          className="text-xl font-bold tracking-tight text-warm-900 sm:text-2xl dark:text-warm-100"
         >
-          <span className="truncate">{category.title}</span>
-          <span className="shrink-0 text-xs font-normal text-neutral-500 dark:text-neutral-400">
-            ({productCount})
+          {category.title}
+          <span className="ml-2 text-sm font-normal text-warm-400 dark:text-warm-500">
+            {productCount}
           </span>
         </h2>
         {category.subtitle ? (
-          <p className="mt-0.5 line-clamp-1 text-xs text-neutral-500 dark:text-neutral-400 sm:text-sm">
+          <p className="mt-1 line-clamp-1 text-sm text-warm-500 dark:text-warm-400">
             {category.subtitle}
           </p>
         ) : null}
@@ -33,9 +33,9 @@ export default function CategorySectionHeader({
       <Link
         href={`/search/${category.slug}`}
         prefetch
-        className="shrink-0 text-xs font-medium text-red-600 hover:underline sm:text-sm dark:text-red-400"
+        className="shrink-0 text-sm font-medium text-terracotta-600 transition-colors duration-200 hover:text-terracotta-700 dark:text-terracotta-400 dark:hover:text-terracotta-300"
       >
-        Xem tất cả
+        Xem tất cả →
       </Link>
     </div>
   );

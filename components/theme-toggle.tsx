@@ -38,12 +38,12 @@ export default function ThemeToggle(): ReactElement {
       type="button"
       onClick={toggle}
       aria-label={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
-      className="flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200 text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+      className="flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-500 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-800 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200"
     >
       {mounted && theme === 'dark' ? (
-        <SunIcon className="h-5 w-5" />
+        <SunIcon className="h-4 w-4" />
       ) : (
-        <MoonIcon className="h-5 w-5" />
+        <MoonIcon className="h-4 w-4" />
       )}
     </button>
   );

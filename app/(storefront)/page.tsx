@@ -6,6 +6,8 @@ import NewArrivalsHero from '@/components/home/new-arrivals-hero';
 import PersonalizedRecommendations from '@/components/home/personalized-recommendations';
 import Footer from '@/components/layout/footer';
 import RecentlyViewed from '@/components/product/recently-viewed';
+import RenderBlocks from '@/components/blocks/RenderBlocks';
+import { getHomePage } from '@/lib/page-builder';
 import { getStoreBranding } from '@/lib/store-branding';
 import { groupProductsByCategory } from '@/lib/categories';
 import { jsonLdToScriptString } from '@/lib/seo';
@@ -30,6 +32,17 @@ export async function generateMetadata(): Promise<Metadata> {
 export const revalidate = 60;
 
 export default async function HomePage(): Promise<ReactElement> {
+  // If a page with slug "home" exists, render it via the page builder.
+  const homePage = await getHomePage();
+  if (homePage) {
+    return (
+      <article>
+        <RenderBlocks blocks={homePage.layout} />
+      </article>
+    );
+  }
+
+  // Otherwise, keep existing homepage behaviour.
   const [categories, latestProducts, branding] = await Promise.all([
     getStoreCategories(),
     getProducts({ sortKey: 'CREATED_AT', reverse: false }),

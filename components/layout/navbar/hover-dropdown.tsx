@@ -12,7 +12,6 @@ export type HoverDropdownItem = { label: string; href: string };
 type Props = {
   label: string;
   items: HoverDropdownItem[];
-  /** Delay before closing on mouseleave so users can move from button to panel. */
   closeDelayMs?: number;
 };
 
@@ -97,16 +96,16 @@ export default function HoverDropdown({
           });
         }}
         className={clsx(
-          'flex items-center gap-1 text-sm underline-offset-4 transition-colors duration-200 hover:underline focus:outline-none focus-visible:underline',
+          'inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200',
           open || isActive
-            ? 'text-black dark:text-white'
-            : 'text-neutral-500 hover:text-black dark:text-neutral-400 dark:hover:text-white',
+            ? 'bg-warm-100/80 text-warm-900 dark:bg-warm-800/50 dark:text-warm-100'
+            : 'text-warm-600 hover:bg-warm-100/80 hover:text-warm-900 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-100',
         )}
       >
         {label}
         <ChevronDownIcon
           className={clsx(
-            'h-3.5 w-3.5 transition-transform duration-300 ease-out',
+            'h-3.5 w-3.5 transition-transform duration-300 ease-smooth',
             open && 'rotate-180',
           )}
         />
@@ -120,7 +119,7 @@ export default function HoverDropdown({
         <div
           role="menu"
           aria-label={label}
-          className="overflow-hidden rounded-xl border border-neutral-200 bg-white py-1.5 shadow-xl ring-1 ring-black/5 dark:border-neutral-800 dark:bg-neutral-950 dark:ring-white/10"
+          className="overflow-hidden rounded-xl border border-warm-200/80 bg-white py-1.5 shadow-soft-xl dark:border-warm-800/60 dark:bg-warm-900"
         >
           <ul
             key={openEpoch}
@@ -142,10 +141,11 @@ export default function HoverDropdown({
                     tabIndex={open ? 0 : -1}
                     onClick={() => setOpen(false)}
                     className={clsx(
-                      'block border-l-2 border-transparent px-4 py-2.5 text-sm transition-all duration-200 ease-out',
-                      'text-neutral-600 hover:translate-x-1 hover:border-red-500 hover:bg-neutral-50 hover:text-black dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-white',
+                      'block border-l-2 px-4 py-2.5 text-sm transition-all duration-200 ease-smooth',
+                      'text-warm-600 hover:translate-x-1 hover:border-terracotta-400 hover:bg-warm-50 hover:text-warm-900 dark:text-warm-300 dark:hover:bg-warm-800/50 dark:hover:text-warm-100',
                       itemActive &&
-                        'border-red-500 bg-neutral-50 font-medium text-black dark:bg-neutral-900 dark:text-white',
+                        'border-l-2 border-terracotta-500 bg-terracotta-50 font-medium text-terracotta-700 dark:bg-terracotta-950/40 dark:text-terracotta-300',
+                      !itemActive && 'border-transparent',
                     )}
                   >
                     {item.label}

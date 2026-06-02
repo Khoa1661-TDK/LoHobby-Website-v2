@@ -27,7 +27,6 @@ export default function Facets(): ReactElement {
   }
 
   function pushParams(params: URLSearchParams): void {
-    // Page resets to 1 whenever filters change.
     params.delete('page');
     const query = params.toString();
     router.push(query ? `${pathname}?${query}` : pathname);
@@ -59,11 +58,11 @@ export default function Facets(): ReactElement {
 
   return (
     <div className="hidden md:block">
-      <h3 className="text-xs text-neutral-500 dark:text-neutral-400">Lọc</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400">Lọc</h3>
 
-      <form onSubmit={onApplyPrice} className="mt-2 space-y-2">
-        <label className="block text-xs text-neutral-500 dark:text-neutral-400">Khoảng giá (đ)</label>
-        <div className="flex items-center gap-1">
+      <form onSubmit={onApplyPrice} className="mt-3 space-y-2.5">
+        <label className="block text-xs text-warm-500 dark:text-warm-400">Khoảng giá (đ)</label>
+        <div className="flex items-center gap-1.5">
           <input
             type="number"
             min={0}
@@ -71,9 +70,9 @@ export default function Facets(): ReactElement {
             value={priceMin}
             onChange={(e) => setPriceMin(e.target.value)}
             placeholder="Từ"
-            className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+            className="w-full rounded-lg border border-warm-200/80 bg-white px-2.5 py-1.5 text-xs text-warm-700 placeholder:text-warm-400 transition-colors focus:border-terracotta-400 focus:outline-none dark:border-warm-800/60 dark:bg-warm-900 dark:text-warm-300 dark:placeholder:text-warm-600"
           />
-          <span className="text-neutral-400">–</span>
+          <span className="text-warm-400 text-xs">–</span>
           <input
             type="number"
             min={0}
@@ -81,19 +80,24 @@ export default function Facets(): ReactElement {
             value={priceMax}
             onChange={(e) => setPriceMax(e.target.value)}
             placeholder="Đến"
-            className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+            className="w-full rounded-lg border border-warm-200/80 bg-white px-2.5 py-1.5 text-xs text-warm-700 placeholder:text-warm-400 transition-colors focus:border-terracotta-400 focus:outline-none dark:border-warm-800/60 dark:bg-warm-900 dark:text-warm-300 dark:placeholder:text-warm-600"
           />
         </div>
         <button
           type="submit"
-          className="w-full rounded-md bg-neutral-900 px-2 py-1 text-xs font-medium text-white dark:bg-white dark:text-black"
+          className="w-full rounded-lg bg-warm-900 px-2.5 py-1.5 text-xs font-semibold text-warm-50 transition-colors hover:bg-warm-800 dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
         >
           Áp dụng
         </button>
       </form>
 
-      <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-black dark:text-white">
-        <input type="checkbox" checked={inStock} onChange={toggleInStock} className="h-4 w-4" />
+      <label className="mt-4 flex cursor-pointer items-center gap-2.5 text-sm text-warm-700 dark:text-warm-300">
+        <input
+          type="checkbox"
+          checked={inStock}
+          onChange={toggleInStock}
+          className="h-4 w-4 rounded border-warm-300 text-terracotta-500 focus:ring-terracotta-400 dark:border-warm-700 dark:bg-warm-900"
+        />
         Chỉ còn hàng
       </label>
 
@@ -101,7 +105,7 @@ export default function Facets(): ReactElement {
         <button
           type="button"
           onClick={clearAll}
-          className="mt-3 text-xs text-neutral-500 underline hover:text-neutral-800 dark:hover:text-neutral-200"
+          className="mt-3 text-xs text-terracotta-600 transition-colors hover:text-terracotta-700 dark:text-terracotta-400 dark:hover:text-terracotta-300"
         >
           Xóa bộ lọc
         </button>

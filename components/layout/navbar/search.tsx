@@ -38,7 +38,7 @@ export default function Search(): ReactElement {
           setOpen(true);
         })
         .catch(() => undefined);
-    }, 250);
+    }, 200);
     return () => {
       controller.abort();
       clearTimeout(timeout);
@@ -63,7 +63,7 @@ export default function Search(): ReactElement {
   }
 
   return (
-    <div ref={containerRef} className="w-max-[550px] relative w-full lg:w-80 xl:w-full">
+    <div ref={containerRef} className="relative w-full">
       <form onSubmit={onSubmit} className="relative">
         <input
           type="search"
@@ -73,16 +73,20 @@ export default function Search(): ReactElement {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
-          className="text-md w-full rounded-lg border bg-white px-4 py-2 text-black placeholder:text-neutral-500 dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-neutral-400 md:text-sm"
+          className="w-full rounded-xl border border-warm-200/80 bg-warm-100/50 py-2 pl-4 pr-10 text-sm text-warm-900 placeholder:text-warm-400 transition-all duration-300 focus:border-warm-300 focus:bg-warm-50 focus:shadow-soft-sm focus:outline-none dark:border-warm-800/60 dark:bg-warm-900/50 dark:text-warm-100 dark:placeholder:text-warm-500 dark:focus:border-warm-700 dark:focus:bg-warm-900/80"
         />
-        <div className="absolute right-0 top-0 mr-3 flex h-full items-center">
-          <MagnifyingGlassIcon className="h-4" />
-        </div>
+        <button
+          type="submit"
+          aria-label="Tìm kiếm"
+          className="absolute right-0 top-0 mr-3 flex h-full items-center text-warm-400 transition-colors hover:text-warm-600 dark:text-warm-500 dark:hover:text-warm-300"
+        >
+          <MagnifyingGlassIcon className="h-4 w-4" />
+        </button>
       </form>
 
       {open && suggestions.length > 0 ? (
-        <ul className="absolute z-50 mt-2 w-full overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-950">
-          {suggestions.map((item) => (
+        <ul className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-warm-200/80 bg-white shadow-soft-lg backdrop-blur-xl dark:border-warm-800/60 dark:bg-warm-900">
+          {suggestions.map((item, idx) => (
             <li key={item.handle}>
               <button
                 type="button"
@@ -90,25 +94,26 @@ export default function Search(): ReactElement {
                   setOpen(false);
                   router.push(`/product/${item.handle}`);
                 }}
-                className="flex w-full items-center gap-3 px-3 py-2 text-left transition hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-warm-50 dark:hover:bg-warm-800/50"
+                style={{ animationDelay: `${idx * 40}ms` }}
               >
-                <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded bg-neutral-100 dark:bg-neutral-800">
+                <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-warm-100 dark:bg-warm-800">
                   <Image
                     src={toNextImageSrc(item.image)}
                     alt={item.title}
                     fill
-                    sizes="40px"
-                    className="img-fit"
+                    sizes="44px"
+                    className="img-fit p-0.5"
                   />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm text-neutral-800 dark:text-neutral-100">
+                  <span className="block truncate text-sm font-medium text-warm-800 dark:text-warm-200">
                     {item.title}
                   </span>
                   <Price
                     amount={item.price}
                     currencyCode={item.currencyCode}
-                    className="text-xs font-semibold text-red-600 dark:text-red-400"
+                    className="text-xs font-semibold text-terracotta-600 dark:text-terracotta-400"
                   />
                 </span>
               </button>
@@ -122,13 +127,13 @@ export default function Search(): ReactElement {
 
 export function SearchSkeleton(): ReactElement {
   return (
-    <form className="w-max-[550px] relative w-full lg:w-80 xl:w-full">
+    <form className="relative w-full">
       <input
         placeholder="Tìm móc khóa, mô hình, figure…"
-        className="w-full rounded-lg border bg-white px-4 py-2 text-sm text-black placeholder:text-neutral-500 dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-neutral-400"
+        className="w-full rounded-xl border border-warm-200/80 bg-warm-100/50 py-2 pl-4 pr-10 text-sm text-warm-900 placeholder:text-warm-400 dark:border-warm-800/60 dark:bg-warm-900/50 dark:text-warm-100 dark:placeholder:text-warm-500"
       />
-      <div className="absolute right-0 top-0 mr-3 flex h-full items-center">
-        <MagnifyingGlassIcon className="h-4" />
+      <div className="absolute right-0 top-0 mr-3 flex h-full items-center text-warm-400">
+        <MagnifyingGlassIcon className="h-4 w-4" />
       </div>
     </form>
   );

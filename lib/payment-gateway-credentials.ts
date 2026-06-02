@@ -121,11 +121,3 @@ export async function getGatewayConfigForMethod(
 
   return null;
 }
-
-/** @deprecated Use {@link getGatewayConfigForMethod}. */
-export async function getGatewayCredentialsForMethod(
-  paymentMethodKey: string,
-): Promise<GatewayCredentials | null> {
-  const config = await getGatewayConfigForMethod(paymentMethodKey);
-  return config?.credentials ?? null;
-}

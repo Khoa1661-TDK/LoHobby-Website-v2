@@ -175,46 +175,46 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
         dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(breadcrumbJsonLd) }}
       />
       <div className="mx-auto max-w-(--breakpoint-2xl) px-4">
-        <nav aria-label="Đường dẫn" className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
+        <nav aria-label="Đường dẫn" className="py-4 text-sm text-warm-500 dark:text-warm-400">
           <ol className="flex flex-wrap items-center gap-2">
             <li>
-              <Link href="/" className="hover:underline">
+              <Link href="/" className="transition-colors hover:text-warm-800 dark:hover:text-warm-200">
                 Trang chủ
               </Link>
             </li>
-            <li aria-hidden>/</li>
+            <li aria-hidden className="text-warm-300 dark:text-warm-700">/</li>
             <li>
-              <Link href="/search" className="hover:underline">
+              <Link href="/search" className="transition-colors hover:text-warm-800 dark:hover:text-warm-200">
                 Cửa hàng
               </Link>
             </li>
             {categories[0] ? (
               <>
-                <li aria-hidden>/</li>
+                <li aria-hidden className="text-warm-300 dark:text-warm-700">/</li>
                 <li>
                   <Link
                     href={categoryCanonicalPath(canonicalCategorySlug(categories[0].slug))}
-                    className="hover:underline"
+                    className="transition-colors hover:text-warm-800 dark:hover:text-warm-200"
                   >
                     {categories[0].title}
                   </Link>
                 </li>
               </>
             ) : null}
-            <li aria-hidden>/</li>
-            <li aria-current="page" className="text-black dark:text-white">
+            <li aria-hidden className="text-warm-300 dark:text-warm-700">/</li>
+            <li aria-current="page" className="font-medium text-warm-900 dark:text-warm-100">
               {product.title}
             </li>
           </ol>
         </nav>
 
         {categories.length > 0 ? (
-          <ul className="mb-4 flex flex-wrap gap-2">
+          <ul className="mb-6 flex flex-wrap gap-2">
             {categories.map((category) => (
               <li key={String(category.id)}>
                 <Link
                   href={categoryCanonicalPath(canonicalCategorySlug(category.slug))}
-                  className="inline-flex rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700 transition hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
+                  className="inline-flex rounded-lg bg-warm-100 px-3 py-1.5 text-sm font-medium text-warm-700 transition-all duration-200 hover:bg-warm-200 dark:bg-warm-800 dark:text-warm-300 dark:hover:bg-warm-700"
                 >
                   {category.title}
                 </Link>
@@ -258,7 +258,7 @@ async function RelatedProducts({
 
   return (
     <aside className="py-8" aria-label="Sản phẩm liên quan">
-      <h2 className="mb-4 text-2xl font-bold">Sản phẩm liên quan</h2>
+      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">Sản phẩm liên quan</h2>
       <ul className="flex w-full gap-4 overflow-x-auto pt-1">
         {related.map((product) => (
           <li

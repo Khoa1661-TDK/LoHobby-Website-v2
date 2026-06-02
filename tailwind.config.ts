@@ -15,6 +15,7 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-sans-active, var(--font-jakarta))', 'system-ui', 'sans-serif'],
         serif: ['var(--font-serif-active, var(--font-fraunces))', 'Georgia', 'serif'],
+        display: ['var(--font-serif-active, var(--font-fraunces))', 'Georgia', 'serif'],
       },
       keyframes: {
         fade: { from: { opacity: '0' }, to: { opacity: '1' } },
@@ -39,6 +40,35 @@ const config: Config = {
           from: { opacity: '0', transform: 'translateX(-10px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
         },
+        // New warm editorial animations
+        'reveal-up': {
+          from: { opacity: '0', transform: 'translateY(24px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'reveal-right': {
+          from: { opacity: '0', transform: 'translateX(-16px)' },
+          to: { opacity: '1', transform: 'translateX(0)' },
+        },
+        'scale-in': {
+          from: { opacity: '0', transform: 'scale(0.94)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        'float-gentle': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
+        'draw-line': {
+          from: { width: '0%' },
+          to: { width: '100%' },
+        },
+        'text-gradient-shift': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
       },
       animation: {
         fade: 'fade 100ms forwards',
@@ -49,10 +79,54 @@ const config: Config = {
         carousel: 'marquee var(--marquee-duration, 60s) linear infinite',
         'dropdown-in': 'dropdown-in 200ms ease-out both',
         'dropdown-item': 'dropdown-item 300ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        // New warm editorial animations
+        'reveal-up': 'reveal-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'reveal-right': 'reveal-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'scale-in': 'scale-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
+        shimmer: 'shimmer 2s linear infinite',
+        'float-gentle': 'float-gentle 3s ease-in-out infinite',
+        'draw-line': 'draw-line 0.7s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       colors: {
         ink: '#000000',
         paper: '#f5f5f5',
+        // Warm off-white palette
+        cream: {
+          50: '#fefdfb',
+          100: '#fdfbf7',
+          200: '#faf5ed',
+          300: '#f5ecde',
+          400: '#ede0cc',
+          500: '#e2d1b8',
+        },
+        // Warm taupe/greige — bridges ink and paper with warmth
+        warm: {
+          50: '#f9f7f4',
+          100: '#f0ece6',
+          200: '#e2ddd6',
+          300: '#c9c2b8',
+          400: '#a9a095',
+          500: '#8a8075',
+          600: '#6b6259',
+          700: '#524b44',
+          800: '#3d3732',
+          900: '#292420',
+          950: '#1a1613',
+        },
+        // Terracotta accent
+        terracotta: {
+          50: '#fdf5f2',
+          100: '#fce8e0',
+          200: '#f9d2c0',
+          300: '#f4b297',
+          400: '#ed8b67',
+          500: '#e46a41',
+          600: '#d14e28',
+          700: '#af3d20',
+          800: '#93331e',
+          900: '#7a2e1d',
+          950: '#42150b',
+        },
         // Monochrome primary scale — overridden at runtime via --brand-primary CSS vars
         filament: {
           50: '#fafafa',
@@ -79,6 +153,38 @@ const config: Config = {
           800: '#262626',
           900: '#171717',
         },
+      },
+      // Custom border radius scales
+      borderRadius: {
+        xs: '0.25rem',
+        sm: '0.375rem',
+        md: '0.5rem',
+        lg: '0.75rem',
+        xl: '1rem',
+        '2xl': '1.25rem',
+        '3xl': '1.75rem',
+        full: '9999px',
+      },
+      // Enhanced shadow system
+      boxShadow: {
+        'soft-sm': '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)',
+        'soft-md': '0 4px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04)',
+        'soft-lg': '0 12px 32px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)',
+        'soft-xl': '0 24px 48px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
+        'inner-soft': 'inset 0 2px 4px rgba(0,0,0,0.03)',
+        'glow': '0 0 24px rgba(228, 106, 65, 0.15)',
+      },
+      // Extended spacing for editorial layouts
+      spacing: {
+        '18': '4.5rem',
+        '22': '5.5rem',
+        '30': '7.5rem',
+      },
+      // Transition timing functions
+      transitionTimingFunction: {
+        'spring': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'smooth': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'snappy': 'cubic-bezier(0.2, 0, 0, 1)',
       },
     },
   },

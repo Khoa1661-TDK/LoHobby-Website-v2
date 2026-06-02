@@ -9,7 +9,6 @@ import { useWishlist } from '@/components/wishlist/wishlist-provider';
 type Props = {
   productId: string;
   productHandle: string;
-  /** Compact circular variant used as an overlay on product cards. */
   variant?: 'overlay' | 'inline';
   className?: string;
 };
@@ -26,7 +25,6 @@ export default function WishlistButton({
   const saved = has(productId);
 
   const onClick = (event: React.MouseEvent) => {
-    // Product cards wrap the tile in a Link; don't navigate when toggling.
     event.preventDefault();
     event.stopPropagation();
 
@@ -44,8 +42,8 @@ export default function WishlistButton({
 
   const base =
     variant === 'overlay'
-      ? 'absolute right-1.5 top-1.5 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm transition hover:bg-white dark:bg-neutral-900/90 dark:hover:bg-neutral-900'
-      : 'inline-flex h-11 items-center gap-2 rounded-full border border-neutral-300 px-5 text-sm font-medium transition hover:border-neutral-500 dark:border-neutral-700';
+      ? 'absolute right-2.5 top-2.5 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-soft-sm backdrop-blur-sm transition-all duration-200 hover:bg-white hover:scale-110 dark:bg-warm-900/90 dark:hover:bg-warm-900'
+      : 'inline-flex h-11 items-center gap-2 rounded-xl border border-warm-200/80 px-5 text-sm font-medium transition-all duration-200 hover:border-warm-300 hover:bg-warm-50 dark:border-warm-800/60 dark:hover:bg-warm-900';
 
   return (
     <button
@@ -60,7 +58,7 @@ export default function WishlistButton({
       <svg
         viewBox="0 0 24 24"
         aria-hidden
-        className={`h-5 w-5 ${saved ? 'text-rose-500' : 'text-neutral-500 dark:text-neutral-400'}`}
+        className={`h-5 w-5 transition-colors duration-200 ${saved ? 'text-rose-500 scale-110' : 'text-warm-400 hover:text-rose-400 dark:text-warm-500'}`}
         fill={saved ? 'currentColor' : 'none'}
         stroke="currentColor"
         strokeWidth={1.8}
@@ -71,7 +69,7 @@ export default function WishlistButton({
           d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.687 0-3.163.91-3.937 2.262C11.601 4.66 10.124 3.75 8.437 3.75 5.85 3.75 3.75 5.765 3.75 8.25c0 7.22 8.25 11.25 8.25 11.25s8.25-4.03 8.25-11.25z"
         />
       </svg>
-      {variant === 'inline' ? <span>{saved ? 'Đã lưu' : 'Lưu sản phẩm'}</span> : null}
+      {variant === 'inline' ? <span className="text-warm-700 dark:text-warm-300">{saved ? 'Đã lưu' : 'Lưu sản phẩm'}</span> : null}
     </button>
   );
 }

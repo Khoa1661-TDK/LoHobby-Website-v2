@@ -146,7 +146,7 @@ export default async function StorefrontLayout({
         <link rel="dns-prefetch" href="https://openapi.zalopay.vn" />
         <link rel="dns-prefetch" href="https://api-merchant.payos.vn" />
       </head>
-      <body className="bg-paper font-sans text-ink selection:bg-neutral-200 selection:text-black dark:bg-neutral-950 dark:text-white dark:selection:bg-neutral-700 dark:selection:text-white">
+      <body className="bg-warm-50 font-sans text-warm-900 antialiased dark:bg-warm-950 dark:text-warm-100">
         <Providers branding={branding}>
           <a
             href="#main-content"

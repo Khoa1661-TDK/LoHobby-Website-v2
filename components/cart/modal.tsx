@@ -66,20 +66,28 @@ export default function CartModal({ cart }: Props): ReactElement {
             leaveFrom="opacity-100 backdrop-blur-[.5px]"
             leaveTo="opacity-0 backdrop-blur-none"
           >
-            <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+            <div className="fixed inset-0 bg-warm-950/30" aria-hidden="true" />
           </Transition.Child>
           <Transition.Child
             as={Fragment}
-            enter="transition-all ease-in-out duration-300"
+            enter="transition-all ease-smooth duration-400"
             enterFrom="translate-x-full"
             enterTo="translate-x-0"
-            leave="transition-all ease-in-out duration-200"
+            leave="transition-all ease-smooth duration-250"
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <Dialog.Panel className="fixed bottom-0 right-0 top-0 flex h-full w-full flex-col border-l border-neutral-200 bg-white/80 p-6 text-black backdrop-blur-xl md:w-[390px] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
+            <Dialog.Panel className="fixed bottom-0 right-0 top-0 flex h-full w-full flex-col border-l border-warm-200/60 bg-warm-50/90 p-6 text-warm-900 backdrop-blur-2xl dark:border-warm-800/40 dark:bg-warm-950/90 dark:text-warm-100 md:w-[420px]">
+              {/* Header */}
               <div className="flex items-center justify-between">
-                <p className="text-lg font-semibold">Giỏ hàng</p>
+                <div>
+                  <p className="text-lg font-bold">Giỏ hàng</p>
+                  {cart.lines.length > 0 && (
+                    <p className="text-xs text-warm-500 dark:text-warm-400">
+                      {cart.totalQuantity} sản phẩm
+                    </p>
+                  )}
+                </div>
                 <button aria-label="Đóng giỏ hàng" onClick={closeCart}>
                   <CloseCart />
                 </button>
@@ -87,21 +95,30 @@ export default function CartModal({ cart }: Props): ReactElement {
 
               {cart.lines.length === 0 ? (
                 <div className="mt-20 flex w-full flex-col items-center justify-center overflow-hidden">
-                  <ShoppingCartIcon className="h-16 text-filament-400" />
-                  <p className="mt-6 text-center text-2xl font-bold">Giỏ hàng trống.</p>
-                  <p className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-warm-100/80 dark:bg-warm-800/50">
+                    <ShoppingCartIcon className="h-8 w-8 text-warm-400" />
+                  </div>
+                  <p className="mt-5 text-xl font-bold">Giỏ hàng trống.</p>
+                  <p className="mt-1.5 text-center text-sm text-warm-500 dark:text-warm-400">
                     Khám phá bộ sưu tập mô hình hobby của chúng tôi.
                   </p>
+                  <Link
+                    href="/search"
+                    onClick={closeCart}
+                    className="mt-6 inline-flex rounded-xl bg-warm-900 px-5 py-2.5 text-sm font-medium text-warm-50 transition-all duration-200 hover:bg-warm-800 dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
+                  >
+                    Khám phá ngay
+                  </Link>
                 </div>
               ) : (
                 <div className="flex h-full flex-col justify-between overflow-hidden p-1">
                   <ul className="flex-grow overflow-auto py-4">
                     {cart.lines
                       .sort((a, b) => a.product.title.localeCompare(b.product.title))
-                      .map((item) => (
+                      .map((item, idx) => (
                         <li
                           key={item.id}
-                          className="flex w-full flex-col border-b border-neutral-300 dark:border-neutral-700"
+                          className="flex w-full flex-col border-b border-warm-200/50 last:border-b-0 dark:border-warm-800/30"
                         >
                           <div className="relative flex w-full flex-row justify-between px-1 py-4">
                             <div className="absolute z-40 -ml-1 -mt-2">
@@ -117,15 +134,15 @@ export default function CartModal({ cart }: Props): ReactElement {
                                     refresh();
                                   })
                                 }
-                                className="ease flex h-[17px] w-[17px] items-center justify-center rounded-full bg-neutral-500 transition-all duration-200 disabled:opacity-50"
+                                className="ease flex h-[18px] w-[18px] items-center justify-center rounded-full bg-warm-300 transition-all duration-200 hover:bg-terracotta-500 hover:scale-110 disabled:opacity-50 dark:bg-warm-700 dark:hover:bg-terracotta-600"
                               >
-                                <CloseIcon className="mx-[1px] h-4 w-4 text-white dark:text-black" />
+                                <CloseIcon className="h-3.5 w-3.5 text-white" />
                               </button>
                             </div>
                             <div className="flex flex-row">
-                              <div className="relative h-16 w-16 overflow-hidden rounded-md border border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-950">
+                              <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-warm-200/60 bg-warm-100/50 dark:border-warm-800/40 dark:bg-warm-900/50">
                                 <Image
-                                  className="img-fit"
+                                  className="img-fit p-1"
                                   width={64}
                                   height={64}
                                   alt={item.product.featuredImage.altText || item.product.title}
@@ -135,25 +152,27 @@ export default function CartModal({ cart }: Props): ReactElement {
                               <Link
                                 href={`/product/${item.handle}`}
                                 onClick={closeCart}
-                                className="z-30 ml-2 flex flex-row space-x-4"
+                                className="z-30 ml-3 flex flex-row"
                               >
-                                <div className="flex flex-1 flex-col text-base">
-                                  <span className="leading-tight">{item.product.title}</span>
+                                <div className="flex flex-1 flex-col text-sm">
+                                  <span className="line-clamp-2 font-medium leading-snug">
+                                    {item.product.title}
+                                  </span>
                                   {item.variantName ? (
-                                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                                    <span className="mt-0.5 text-xs text-warm-500 dark:text-warm-400">
                                       {item.variantName}
                                     </span>
                                   ) : null}
                                 </div>
                               </Link>
                             </div>
-                            <div className="flex h-16 flex-col justify-between">
+                            <div className="flex h-16 flex-col items-end justify-between">
                               <Price
-                                className="flex justify-end space-y-2 text-right text-sm"
+                                className="text-sm font-semibold"
                                 amount={item.lineTotal.amount}
                                 currencyCode={item.lineTotal.currencyCode}
                               />
-                              <div className="ml-auto flex h-9 flex-row items-center rounded-full border border-neutral-200 dark:border-neutral-700">
+                              <div className="flex items-center rounded-lg border border-warm-200/60 dark:border-warm-800/40">
                                 <QtyButton
                                   type="minus"
                                   disabled={isPending}
@@ -168,9 +187,9 @@ export default function CartModal({ cart }: Props): ReactElement {
                                     })
                                   }
                                 />
-                                <p className="w-6 text-center">
-                                  <span className="w-full text-sm">{item.quantity}</span>
-                                </p>
+                                <span className="flex w-8 items-center justify-center text-sm tabular-nums">
+                                  {item.quantity}
+                                </span>
                                 <QtyButton
                                   type="plus"
                                   disabled={isPending}
@@ -196,23 +215,23 @@ export default function CartModal({ cart }: Props): ReactElement {
                     excludeHandles={cart.lines.map((line) => line.handle)}
                   />
 
-                  <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 dark:border-neutral-700">
-                      <p>Thuế</p>
+                  <div className="py-4 text-sm text-warm-500 dark:text-warm-400">
+                    <div className="mb-2 flex items-center justify-between border-b border-warm-200/30 pb-2 dark:border-warm-800/20">
+                      <span>Thuế</span>
                       <Price
-                        className="text-right text-base text-black dark:text-white"
+                        className="text-sm font-medium text-warm-900 dark:text-warm-100"
                         amount="0"
                         currencyCode={cart.cost.totalAmount.currencyCode}
                       />
                     </div>
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Phí vận chuyển</p>
-                      <p className="text-right">Tính khi thanh toán</p>
+                    <div className="mb-2 flex items-center justify-between border-b border-warm-200/30 pb-2 dark:border-warm-800/20">
+                      <span>Phí vận chuyển</span>
+                      <span>Tính khi thanh toán</span>
                     </div>
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Tổng cộng</p>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="font-semibold text-warm-900 dark:text-warm-100">Tổng cộng</span>
                       <Price
-                        className="text-right text-base text-black dark:text-white"
+                        className="text-base font-bold text-warm-900 dark:text-warm-100"
                         amount={cart.cost.totalAmount.amount}
                         currencyCode={cart.cost.totalAmount.currencyCode}
                       />
@@ -222,7 +241,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                   <Link
                     href="/checkout"
                     onClick={closeCart}
-                    className="block w-full rounded-full bg-filament-500 p-3 text-center text-sm font-medium text-white shadow-sm hover:bg-filament-600"
+                    className="block w-full rounded-xl bg-warm-900 py-3 text-center text-sm font-semibold text-warm-50 shadow-soft-md transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
                   >
                     Thanh toán
                   </Link>
@@ -244,12 +263,12 @@ function OpenCart({
   quantity?: number;
 }): ReactElement {
   return (
-    <div className="relative flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:text-white">
+    <div className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-600 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200">
       <ShoppingCartIcon
-        className={`h-4 transition-all ease-in-out hover:scale-110 ${className ?? ''}`}
+        className={`h-4 w-4 transition-all ease-spring hover:scale-110 ${className ?? ''}`}
       />
       {quantity ? (
-        <div className="absolute right-0 top-0 -mr-2 -mt-2 h-4 w-4 rounded-sm bg-filament-500 text-[11px] font-medium text-white">
+        <div className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-terracotta-500 px-1 text-[10px] font-bold text-white shadow-sm dark:bg-terracotta-400 dark:text-warm-950">
           {quantity}
         </div>
       ) : null}
@@ -259,14 +278,14 @@ function OpenCart({
 
 function CloseCart({ className }: { className?: string }): ReactElement {
   return (
-    <div className="relative flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:text-white">
+    <div className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-500 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-800 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth={1.5}
         stroke="currentColor"
-        className={`h-6 transition-all ease-in-out hover:scale-110 ${className ?? ''}`}
+        className={`h-5 w-5 transition-all ease-spring hover:scale-110 ${className ?? ''}`}
       >
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
       </svg>
@@ -280,7 +299,7 @@ function CloseIcon({ className }: { className?: string }): ReactElement {
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      strokeWidth={1.5}
+      strokeWidth={2}
       stroke="currentColor"
       className={className}
     >
@@ -304,7 +323,7 @@ function QtyButton({
       aria-label={type === 'plus' ? 'Tăng số lượng' : 'Giảm số lượng'}
       disabled={disabled}
       onClick={onClick}
-      className="ease flex h-full min-w-[36px] max-w-[36px] flex-none items-center justify-center rounded-full p-2 transition-all duration-200 hover:border-neutral-800 hover:opacity-80 disabled:opacity-50 dark:hover:border-neutral-600"
+      className="flex h-8 w-8 items-center justify-center rounded-lg text-warm-500 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-800 disabled:opacity-40 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200"
     >
       {type === 'plus' ? <PlusIcon /> : <MinusIcon />}
     </button>
@@ -319,7 +338,7 @@ function PlusIcon(): ReactElement {
       viewBox="0 0 24 24"
       strokeWidth={2}
       stroke="currentColor"
-      className="h-4 w-4 dark:text-neutral-500"
+      className="h-3.5 w-3.5"
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
     </svg>
@@ -334,10 +353,9 @@ function MinusIcon(): ReactElement {
       viewBox="0 0 24 24"
       strokeWidth={2}
       stroke="currentColor"
-      className="h-4 w-4 dark:text-neutral-500"
+      className="h-3.5 w-3.5"
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
     </svg>
   );
 }
-

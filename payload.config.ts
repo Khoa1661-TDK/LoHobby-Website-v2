@@ -9,6 +9,7 @@ import sharp from 'sharp';
 import { Carts } from './src/payload/collections/Carts';
 import { Categories } from './src/payload/collections/Categories';
 import { ContentPages } from './src/payload/collections/ContentPages';
+import { Pages } from './src/payload/collections/Pages';
 import { Media } from './src/payload/collections/Media';
 import { Orders } from './src/payload/collections/Orders';
 import { PaymentMethods } from './src/payload/collections/PaymentMethods';
@@ -70,6 +71,7 @@ export default buildConfig({
     Orders,
     ContentPages,
     StoreCustomers,
+    Pages,
   ],
   globals: [SiteHeader, StoreSettings, ShippingSettings, DropshipSettings],
   db: postgresAdapter({

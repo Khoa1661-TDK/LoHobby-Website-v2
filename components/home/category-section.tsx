@@ -23,23 +23,26 @@ export default function CategorySection({ category, products }: Props): ReactEle
   return (
     <section
       id={category.slug}
-      className="mx-auto max-w-screen-2xl scroll-mt-24 px-4 py-5 sm:py-6"
+      className="mx-auto max-w-screen-2xl scroll-mt-28 px-4 py-8 sm:py-10 lg:px-6"
       aria-labelledby={`${category.slug}-heading`}
     >
       <CategorySectionHeader category={category} productCount={products.length} />
 
-      <div className="mt-3">
+      <div className="mt-5">
         <ProductGrid products={visible} />
       </div>
 
       {products.length > visible.length ? (
-        <div className="mt-4 text-center">
+        <div className="mt-6 text-center">
           <Link
             href={`/search/${category.slug}`}
             prefetch
-            className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-5 py-2 text-sm font-medium text-neutral-800 transition hover:border-red-500 hover:text-red-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:border-red-400 dark:hover:text-red-400"
+            className="inline-flex items-center gap-2 rounded-xl border border-warm-200/80 bg-white px-5 py-2.5 text-sm font-medium text-warm-700 shadow-soft-sm transition-all duration-200 hover:border-terracotta-300 hover:bg-terracotta-50 hover:text-terracotta-700 hover:shadow-soft-md dark:border-warm-800/60 dark:bg-warm-900 dark:text-warm-300 dark:hover:border-terracotta-700 dark:hover:bg-terracotta-950/50 dark:hover:text-terracotta-300"
           >
             Xem thêm {products.length - visible.length} sản phẩm
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
           </Link>
         </div>
       ) : null}

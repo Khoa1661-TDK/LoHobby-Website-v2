@@ -67,9 +67,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     return response;
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Đăng nhập CMS thất bại';
+    // Log the real error server-side for debugging, but never surface raw
+    // Payload AuthenticationError text to the user — the message "The email
+    // or password provided is incorrect" misleads the admin into thinking
+    // their storefront credentials are wrong when the real failure is an
+    // internal SSO issue (stale password hash, secret rotation, etc.).
+    console.error('[api/admin-connect] SSO failed:', error);
     return NextResponse.redirect(
-      new URL(`/login?callbackUrl=/admin&error=${encodeURIComponent(message)}`, req.url),
+      new URL('/admin-connect?error=stale-session', req.url),
     );
   }
 }

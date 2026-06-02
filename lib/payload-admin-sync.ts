@@ -40,7 +40,18 @@ function normalizeSameSite(value: unknown): 'lax' | 'strict' | 'none' {
   return 'lax';
 }
 
-/** Server-only password so Payload login can run without a second user-facing sign-in. */
+/**
+ * Server-only password so Payload login can run without a second user-facing
+ * sign-in.
+ *
+ * ⚠️  SECRET-ROTATION HAZARD: this password is deterministic on
+ * (PAYLOAD_SECRET ?? AUTH_SECRET, email). If either secret is rotated, every
+ * existing Payload `users` row will have a stale password hash. The
+ * `forcePasswordReset` recovery in `createPayloadAdminSessionCookie()` self-
+ * heals this on the NEXT admin visit, but ONLY if it actually runs (i.e. the
+ * first login fails). Never rotate the secret without also re-seeding admin
+ * passwords, or be prepared for a one-time login failure per admin.
+ */
 export function derivePayloadPassword(email: string): string {
   return createHmac('sha256', getSsoSecret())
     .update(email.trim().toLowerCase())
@@ -107,14 +118,27 @@ export async function ensurePayloadAdminUser(
   const needsPasswordSync = options.forcePasswordReset === true;
 
   if (needsPasswordSync || needsNameSync) {
+    const updateData: Record<string, unknown> = {};
+
+    if (needsNameSync) {
+      updateData.name = nextName;
+    }
+
+    if (needsPasswordSync) {
+      updateData.password = password;
+      // Clear any login lockout that may have been triggered by earlier
+      // failed SSO attempts (e.g. after a secret rotation). Payload auth
+      // tracks `loginAttempts` and `lockUntil`; resetting them prevents the
+      // recovery retry from being silently blocked.
+      updateData.loginAttempts = 0;
+      updateData.lockUntil = null;
+    }
+
     await payload.update({
       collection: 'users',
       id: existingDoc.id,
       overrideAccess: true,
-      data: {
-        ...(needsNameSync ? { name: nextName } : {}),
-        ...(needsPasswordSync ? { password } : {}),
-      },
+      data: updateData,
     });
   }
 }
@@ -122,6 +146,11 @@ export async function ensurePayloadAdminUser(
 /**
  * Creates a Payload login session and returns cookie data for a Route Handler
  * to attach via `response.cookies.set(...)`.
+ *
+ * On first login failure (thrown exception OR null token), force-resets the
+ * Payload user's password to the deterministic derived value, clears any login
+ * lockout counters, and retries ONCE. This self-heals after secret rotations
+ * or account lockouts without requiring manual DB intervention.
  */
 export async function createPayloadAdminSessionCookie(
   admin: Pick<AdminSessionUser, 'email' | 'name'>,
@@ -134,28 +163,43 @@ export async function createPayloadAdminSessionCookie(
   const email = admin.email.trim().toLowerCase();
   const password = derivePayloadPassword(email);
 
-  const result = await payload.login({
-    collection: 'users',
-    data: { email, password },
-  });
+  // ---------- first login attempt ----------
+  let token: string | undefined | null;
 
-  let token = result.token;
-
-  if (!token) {
-    // Recovery path: an older deployment may have stored a different password
-    // hash for this email (or it was rotated). Force-reset to the deterministic
-    // derived password and retry once.
-    await ensurePayloadAdminUser(admin, { forcePasswordReset: true });
-
-    const retry = await payload.login({
+  try {
+    const result = await payload.login({
       collection: 'users',
       data: { email, password },
     });
-    token = retry.token;
+    token = result.token;
+  } catch {
+    // Payload throws AuthenticationError on credential mismatch. The stored
+    // password hash may be stale (secret rotation, manual reset, etc.).
+    token = null;
+  }
+
+  // ---------- recovery path ----------
+  if (!token) {
+    // Force-reset the Payload user's password to the deterministic derived
+    // value and clear any login lockout, then retry once.
+    await ensurePayloadAdminUser(admin, { forcePasswordReset: true });
+
+    try {
+      const retry = await payload.login({
+        collection: 'users',
+        data: { email, password },
+      });
+      token = retry.token;
+    } catch {
+      token = null;
+    }
   }
 
   if (!token) {
-    throw new Error('Failed to establish CMS session');
+    // Deliberately do NOT surface Payload's raw AuthenticationError text
+    // ("The email or password provided is incorrect") — the user's storefront
+    // credentials are valid; the failure is internal SSO.
+    throw new Error(`Failed to establish CMS session for ${email}`);
   }
 
   const authConfig = payload.collections.users?.config.auth;

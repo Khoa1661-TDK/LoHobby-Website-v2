@@ -28,17 +28,17 @@ export default function GridTileImage({
   return (
     <div
       className={clsx(
-        'group relative flex h-full w-full items-center justify-center overflow-hidden rounded-lg border bg-white hover:border-filament-400 dark:bg-black',
+        'group relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl border bg-white transition-all duration-200 hover:border-terracotta-300 dark:bg-warm-900',
         {
-          'border-2 border-filament-500': active,
-          'border-neutral-200 dark:border-neutral-800': !active,
+          'border-2 border-terracotta-500': active,
+          'border-warm-200/80 dark:border-warm-800/60': !active,
         },
       )}
     >
       {props.src ? (
         <Image
           className={clsx('img-fit', {
-            'transition duration-300 ease-in-out group-hover:scale-105': isInteractive,
+            'transition duration-500 ease-smooth group-hover:scale-105': isInteractive,
           })}
           {...props}
           alt={props.alt}

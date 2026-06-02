@@ -6,7 +6,6 @@ import { useEffect, useState, type ReactElement } from 'react';
 export const CONSENT_COOKIE = 'cookie-consent';
 export const CONSENT_EVENT = 'cookie-consent-change';
 
-/** Read the current analytics-cookie consent decision on the client. */
 export function hasAnalyticsConsent(): boolean {
   if (typeof document === 'undefined') return false;
   return document.cookie.includes(`${CONSENT_COOKIE}=accepted`);
@@ -37,13 +36,13 @@ export default function CookieConsent(): ReactElement | null {
     <div
       role="dialog"
       aria-label="Thông báo cookie"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white p-4 shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-warm-200/80 bg-white/95 p-4 shadow-soft-xl backdrop-blur-xl dark:border-warm-800/40 dark:bg-warm-950/95"
     >
       <div className="mx-auto flex max-w-screen-2xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-neutral-600 dark:text-neutral-300">
+        <p className="text-sm text-warm-600 dark:text-warm-400">
           Chúng tôi dùng cookie cần thiết để vận hành cửa hàng và cookie phân tích để cải thiện trải
           nghiệm. Xem{' '}
-          <Link href="/info/cookies" className="underline">
+          <Link href="/info/cookies" className="font-medium underline underline-offset-2 transition-colors hover:text-warm-900 dark:hover:text-warm-200">
             chính sách cookie
           </Link>
           .
@@ -52,14 +51,14 @@ export default function CookieConsent(): ReactElement | null {
           <button
             type="button"
             onClick={() => decide('rejected')}
-            className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            className="rounded-xl border border-warm-200/80 px-4 py-2 text-sm font-medium text-warm-700 transition-all duration-200 hover:bg-warm-50 dark:border-warm-800/60 dark:text-warm-300 dark:hover:bg-warm-900"
           >
             Chỉ cookie cần thiết
           </button>
           <button
             type="button"
             onClick={() => decide('accepted')}
-            className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+            className="rounded-xl bg-warm-900 px-4 py-2 text-sm font-semibold text-warm-50 shadow-soft-sm transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-md active:scale-[0.98] dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
           >
             Chấp nhận tất cả
           </button>

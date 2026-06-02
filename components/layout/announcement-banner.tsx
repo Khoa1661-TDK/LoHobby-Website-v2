@@ -14,7 +14,7 @@ export default async function AnnouncementBanner(): Promise<ReactElement | null>
   const hasCustomColors = Boolean(announcement.backgroundColor || announcement.textColor);
 
   const textClassName = announcement.href
-    ? 'underline-offset-2 hover:underline'
+    ? 'underline-offset-4 hover:underline transition-all duration-200'
     : undefined;
 
   const content = announcement.href ? (
@@ -36,8 +36,8 @@ export default async function AnnouncementBanner(): Promise<ReactElement | null>
       role="status"
       className={
         hasCustomColors
-          ? 'border-b border-neutral-200/80 px-4 py-2 text-center text-xs tracking-wide'
-          : 'border-b border-neutral-100 bg-white px-4 py-2 text-center text-xs tracking-wide text-neutral-900 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100'
+          ? 'border-b border-warm-200/50 px-4 py-2.5 text-center text-xs font-medium tracking-wider'
+          : 'border-b border-warm-200/50 bg-warm-100/80 px-4 py-2.5 text-center text-xs font-medium tracking-wider text-warm-700 dark:border-warm-800/30 dark:bg-warm-900/80 dark:text-warm-300'
       }
       style={Object.keys(style).length > 0 ? style : undefined}
     >

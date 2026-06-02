@@ -11,9 +11,7 @@ import type { Product } from '@/lib/shopify/types';
 
 type Props = {
   product: Product;
-  /** Required when the PDP has variant buttons; pass the selected SKU. */
   variantSku?: string | null;
-  /** When false, button stays disabled (e.g. selected variant is OOS). */
   canAdd?: boolean;
 };
 
@@ -46,10 +44,10 @@ export default function AddToCart({
           router.refresh();
         })
       }
-      className="relative flex w-full items-center justify-center rounded-full bg-filament-500 p-4 font-medium tracking-wide text-white shadow-sm hover:bg-filament-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-filament-500"
+      className="relative flex w-full items-center justify-center rounded-xl bg-warm-900 py-3.5 font-semibold tracking-wide text-warm-50 shadow-soft-md transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-warm-900 dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
     >
       <div className="absolute left-0 ml-4">
-        {isPending ? <LoadingDots className="bg-white" /> : <PlusIcon className="h-5" />}
+        {isPending ? <LoadingDots className="bg-warm-50 dark:bg-warm-900" /> : <PlusIcon className="h-5" />}
       </div>
       {label}
     </button>

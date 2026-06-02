@@ -24,6 +24,12 @@ const generateSeoURL: GenerateURL = ({ doc, collectionConfig }) => {
   if (collectionConfig?.slug === 'categories') {
     return `${appBaseUrl}/search/${slug}`;
   }
+  if (collectionConfig?.slug === 'pages') {
+    return `${appBaseUrl}/p/${slug}`;
+  }
+  if (collectionConfig?.slug === 'content-pages') {
+    return `${appBaseUrl}/pages/${slug}`;
+  }
   return `${appBaseUrl}/product/${slug}`;
 };
 
@@ -101,7 +107,7 @@ export const shopnexPlugins: Plugin[] = [
     ],
   }),
   seoPlugin({
-    collections: ['products', 'categories', 'content-pages'],
+    collections: ['products', 'categories', 'content-pages', 'pages'],
     uploadsCollection: 'media',
     generateTitle: generateSeoTitle,
     generateURL: generateSeoURL,

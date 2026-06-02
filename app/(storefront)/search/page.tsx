@@ -80,15 +80,15 @@ export default async function SearchPage(props: {
           { name: trimmedQuery ? 'Tìm kiếm' : 'Cửa hàng' },
         ]}
       />
-      <h1 className="mb-4 font-serif text-xl font-bold tracking-tight sm:text-2xl">
+      <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100 sm:text-3xl">
         {trimmedQuery ? `Kết quả tìm kiếm: "${trimmedQuery}"` : 'Tất cả sản phẩm'}
       </h1>
       {filtered.length > 0 ? (
-        <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="mb-5 text-sm text-warm-500 dark:text-warm-400">
           {trimmedQuery ? (
             <>
               Hiển thị {filtered.length} kết quả cho{' '}
-              <span className="font-bold text-black dark:text-white">
+              <span className="font-semibold text-warm-900 dark:text-warm-100">
                 &quot;{trimmedQuery}&quot;
               </span>
             </>

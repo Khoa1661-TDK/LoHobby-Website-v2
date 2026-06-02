@@ -29,11 +29,11 @@ export default async function LoginPage(props: {
       return (
         <>
           <section className="mx-auto max-w-screen-sm px-4 py-12 md:py-16">
-            <div className="mx-auto w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
-              <h1 className="mb-2 text-2xl font-bold tracking-tight">Cần quyền quản trị</h1>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            <div className="mx-auto w-full max-w-md rounded-2xl border border-warm-200/80 bg-white p-6 shadow-soft-md dark:border-warm-800/40 dark:bg-warm-900">
+              <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">Cần quyền quản trị</h1>
+              <p className="text-sm text-warm-500 dark:text-warm-400">
                 Bạn đang đăng nhập bằng{' '}
-                <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                <span className="font-medium text-warm-900 dark:text-warm-100">
                   {session.user.email}
                 </span>
                 , nhưng tài khoản này không nằm trong danh sách quản trị viên.
@@ -54,7 +54,7 @@ export default async function LoginPage(props: {
         {error ? (
           <p
             role="alert"
-            className="mx-auto mb-4 max-w-md rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+            className="mx-auto mb-4 max-w-md rounded-xl border border-terracotta-200 bg-terracotta-50 px-3 py-2.5 text-sm text-terracotta-700 dark:border-terracotta-900 dark:bg-terracotta-950 dark:text-terracotta-300"
           >
             {decodeURIComponent(error.replace(/\+/g, ' '))}
           </p>
@@ -63,7 +63,7 @@ export default async function LoginPage(props: {
         <p className="mx-auto mt-4 max-w-md text-center text-sm">
           <Link
             href="/forgot-password"
-            className="text-neutral-500 underline hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+            className="text-warm-500 transition-colors hover:text-warm-800 dark:text-warm-400 dark:hover:text-warm-200"
           >
             Quên mật khẩu?
           </Link>

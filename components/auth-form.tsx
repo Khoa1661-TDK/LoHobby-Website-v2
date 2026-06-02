@@ -61,15 +61,15 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
-      <div className="mb-6 flex rounded-full bg-neutral-100 p-1 text-sm font-medium dark:bg-neutral-900">
+    <div className="mx-auto w-full max-w-md rounded-2xl border border-warm-200/80 bg-white p-6 shadow-soft-md dark:border-warm-800/40 dark:bg-warm-900">
+      <div className="mb-6 flex rounded-xl bg-warm-100 p-1 text-sm font-medium dark:bg-warm-800">
         <button
           type="button"
           onClick={() => setMode('login')}
-          className={`flex-1 rounded-full px-4 py-2 transition ${
+          className={`flex-1 rounded-lg px-4 py-2 transition-all duration-200 ${
             !isRegister
-              ? 'bg-white text-neutral-900 shadow dark:bg-neutral-800 dark:text-neutral-50'
-              : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400'
+              ? 'bg-white text-warm-900 shadow-soft-sm dark:bg-warm-700 dark:text-warm-100'
+              : 'text-warm-500 hover:text-warm-700 dark:text-warm-400'
           }`}
         >
           Đăng nhập
@@ -77,20 +77,20 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
         <button
           type="button"
           onClick={() => setMode('register')}
-          className={`flex-1 rounded-full px-4 py-2 transition ${
+          className={`flex-1 rounded-lg px-4 py-2 transition-all duration-200 ${
             isRegister
-              ? 'bg-white text-neutral-900 shadow dark:bg-neutral-800 dark:text-neutral-50'
-              : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400'
+              ? 'bg-white text-warm-900 shadow-soft-sm dark:bg-warm-700 dark:text-warm-100'
+              : 'text-warm-500 hover:text-warm-700 dark:text-warm-400'
           }`}
         >
           Đăng ký
         </button>
       </div>
 
-      <h1 className="mb-1 text-2xl font-bold tracking-tight">
+      <h1 className="mb-1 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">
         {isRegister ? 'Tạo tài khoản' : 'Chào mừng trở lại'}
       </h1>
-      <p className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
+      <p className="mb-6 text-sm text-warm-500 dark:text-warm-400">
         {isRegister
           ? 'Đăng ký để theo dõi đơn hàng và lưu mô hình yêu thích.'
           : 'Đăng nhập để tiếp tục.'}
@@ -101,7 +101,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
           <div>
             <label
               htmlFor="name"
-              className="mb-1 block text-xs font-semibold uppercase tracking-wider text-neutral-600 dark:text-neutral-300"
+              className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400"
             >
               Họ tên
             </label>
@@ -112,7 +112,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
+              className="w-full rounded-xl border border-warm-200/80 bg-white px-3 py-2.5 text-sm text-warm-900 shadow-soft-sm transition-colors placeholder:text-warm-400 focus:border-terracotta-400 focus:outline-none focus:ring-2 focus:ring-terracotta-400/20 dark:border-warm-800/60 dark:bg-warm-950 dark:text-warm-100 dark:placeholder:text-warm-600"
             />
           </div>
         )}
@@ -120,7 +120,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
         <div>
           <label
             htmlFor="email"
-            className="mb-1 block text-xs font-semibold uppercase tracking-wider text-neutral-600 dark:text-neutral-300"
+            className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400"
           >
             Email
           </label>
@@ -131,14 +131,14 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
+            className="w-full rounded-xl border border-warm-200/80 bg-white px-3 py-2.5 text-sm text-warm-900 shadow-soft-sm transition-colors placeholder:text-warm-400 focus:border-terracotta-400 focus:outline-none focus:ring-2 focus:ring-terracotta-400/20 dark:border-warm-800/60 dark:bg-warm-950 dark:text-warm-100 dark:placeholder:text-warm-600"
           />
         </div>
 
         <div>
           <label
             htmlFor="password"
-            className="mb-1 block text-xs font-semibold uppercase tracking-wider text-neutral-600 dark:text-neutral-300"
+            className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400"
           >
             Mật khẩu
           </label>
@@ -150,14 +150,14 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
+            className="w-full rounded-xl border border-warm-200/80 bg-white px-3 py-2.5 text-sm text-warm-900 shadow-soft-sm transition-colors placeholder:text-warm-400 focus:border-terracotta-400 focus:outline-none focus:ring-2 focus:ring-terracotta-400/20 dark:border-warm-800/60 dark:bg-warm-950 dark:text-warm-100 dark:placeholder:text-warm-600"
           />
         </div>
 
         {error && (
           <p
             role="alert"
-            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+            className="rounded-xl border border-terracotta-200 bg-terracotta-50 px-3 py-2.5 text-sm text-terracotta-700 dark:border-terracotta-900 dark:bg-terracotta-950 dark:text-terracotta-300"
           >
             {error}
           </p>
@@ -166,22 +166,22 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+          className="w-full rounded-xl bg-warm-900 px-4 py-3 text-sm font-semibold text-warm-50 shadow-soft-md transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
         >
           {loading ? 'Vui lòng đợi…' : isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}
         </button>
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wider text-neutral-400">
-        <span className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+      <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wider text-warm-400">
+        <span className="h-px flex-1 bg-warm-200 dark:bg-warm-800" />
         hoặc tiếp tục với
-        <span className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+        <span className="h-px flex-1 bg-warm-200 dark:bg-warm-800" />
       </div>
 
       <button
         type="button"
         onClick={handleGoogleSignIn}
-        className="flex w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-warm-200/80 bg-white px-4 py-2.5 text-sm font-medium text-warm-700 shadow-soft-sm transition-all duration-200 hover:bg-warm-50 dark:border-warm-800/60 dark:bg-warm-900 dark:text-warm-300 dark:hover:bg-warm-800/50"
       >
         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
           <path

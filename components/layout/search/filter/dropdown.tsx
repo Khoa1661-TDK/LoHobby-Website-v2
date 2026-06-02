@@ -48,12 +48,12 @@ export default function FilterItemDropdown({ list }: { list: ListItem[] }): Reac
         aria-expanded={openSelect}
         aria-haspopup="listbox"
         onClick={toggle}
-        className="flex w-full items-center justify-between rounded-sm border border-black/30 px-4 py-2 text-sm transition-colors duration-200 hover:border-black/50 dark:border-white/30 dark:hover:border-white/50"
+        className="flex w-full items-center justify-between rounded-xl border border-warm-200/80 bg-white px-4 py-2.5 text-sm text-warm-700 transition-all duration-200 hover:border-warm-300/80 hover:shadow-soft-sm dark:border-warm-800/60 dark:bg-warm-900 dark:text-warm-300 dark:hover:border-warm-700/60"
       >
-        <div>{active}</div>
+        <span>{active}</span>
         <ChevronDownIcon
           className={clsx(
-            'h-4 transition-transform duration-200 ease-out motion-reduce:transition-none',
+            'h-4 text-warm-400 transition-transform duration-200 ease-smooth',
             openSelect && 'rotate-180',
           )}
         />
@@ -62,7 +62,7 @@ export default function FilterItemDropdown({ list }: { list: ListItem[] }): Reac
         aria-hidden={!openSelect}
         className={clsx(
           'absolute z-40 w-full origin-top',
-          'transition-[opacity,transform,visibility] duration-200 ease-out will-change-[opacity,transform]',
+          'transition-[opacity,transform,visibility] duration-200 ease-smooth',
           openSelect
             ? 'visible translate-y-0 scale-100 opacity-100'
             : 'invisible pointer-events-none -translate-y-1 scale-[0.98] opacity-0',
@@ -71,7 +71,7 @@ export default function FilterItemDropdown({ list }: { list: ListItem[] }): Reac
       >
         <div
           role="listbox"
-          className="rounded-b-md bg-white p-2 shadow-md dark:bg-black"
+          className="rounded-xl bg-white p-2 shadow-soft-lg border border-warm-200/80 dark:border-warm-800/60 dark:bg-warm-900"
         >
           <div key={openEpoch}>
             {list.map((item, itemIndex) => (

@@ -69,7 +69,7 @@ export function GalleryMediaThumb({
       <div
         className={clsx(
           'relative flex h-full w-full items-center justify-center overflow-hidden rounded-lg border bg-neutral-900',
-          active ? 'border-2 border-filament-500' : 'border-neutral-200 dark:border-neutral-800',
+          active ? 'border-2 border-terracotta-500' : 'border-warm-200/80 dark:border-warm-800/60',
         )}
       >
         <video

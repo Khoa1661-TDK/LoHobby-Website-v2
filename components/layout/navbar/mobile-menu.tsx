@@ -36,42 +36,46 @@ export default function MobileMenu({
       <button
         onClick={openMobileMenu}
         aria-label="Mở menu di động"
-        className="flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:text-white md:hidden"
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-700 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-300 dark:hover:bg-warm-800/50 dark:hover:text-warm-100"
       >
-        <Bars3Icon className="h-4" />
+        <Bars3Icon className="h-5 w-5" />
       </button>
       <Transition show={isOpen} as={Fragment}>
         <Dialog onClose={closeMobileMenu} className="relative z-50">
           <TransitionChild
             as={Fragment}
             enter="transition-all ease-in-out duration-300"
-            enterFrom="opacity-0 backdrop-blur-none"
-            enterTo="opacity-100 backdrop-blur-[.5px]"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
             leave="transition-all ease-in-out duration-200"
-            leaveFrom="opacity-100 backdrop-blur-[.5px]"
-            leaveTo="opacity-0 backdrop-blur-none"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+            <div className="fixed inset-0 bg-warm-950/40 backdrop-blur-sm" aria-hidden="true" />
           </TransitionChild>
           <TransitionChild
             as={Fragment}
-            enter="transition-all ease-in-out duration-300"
-            enterFrom="translate-x-[-100%]"
+            enter="transition-all ease-smooth duration-400"
+            enterFrom="-translate-x-full"
             enterTo="translate-x-0"
-            leave="transition-all ease-in-out duration-200"
+            leave="transition-all ease-smooth duration-250"
             leaveFrom="translate-x-0"
-            leaveTo="translate-x-[-100%]"
+            leaveTo="-translate-x-full"
           >
-            <DialogPanel className="fixed bottom-0 left-0 right-0 top-0 flex h-full w-full flex-col bg-white pb-6 dark:bg-black">
-              <div className="p-4">
+            <DialogPanel className="fixed bottom-0 left-0 top-0 flex h-full w-full max-w-sm flex-col bg-warm-50 shadow-soft-xl dark:bg-warm-950">
+              <div className="flex items-center justify-between border-b border-warm-200/60 p-4 dark:border-warm-800/40">
+                <p className="text-sm font-semibold uppercase tracking-widest text-warm-400">Menu</p>
                 <button
-                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:text-white"
                   onClick={closeMobileMenu}
                   aria-label="Đóng menu di động"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-600 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-100"
                 >
-                  <XMarkIcon className="h-6" />
+                  <XMarkIcon className="h-5 w-5" />
                 </button>
-                <div className="mb-4 w-full">
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="mb-5 w-full">
                   <Suspense fallback={<SearchSkeleton />}>
                     <Search />
                   </Suspense>
@@ -81,7 +85,6 @@ export default function MobileMenu({
                     if (tab.kind === 'link') {
                       return (
                         <li
-                          className="py-2 text-xl text-black transition-colors hover:text-neutral-500 dark:text-white"
                           key={`${tab.kind}:${tab.label}:${tabIndex}`}
                         >
                           <Link
@@ -90,6 +93,7 @@ export default function MobileMenu({
                             target={tab.external ? '_blank' : undefined}
                             rel={tab.external ? 'noreferrer noopener' : undefined}
                             onClick={closeMobileMenu}
+                            className="flex items-center py-3.5 text-lg font-medium text-warm-800 transition-colors hover:text-warm-950 dark:text-warm-200 dark:hover:text-white"
                           >
                             {tab.label}
                           </Link>
@@ -103,7 +107,7 @@ export default function MobileMenu({
                     return (
                       <li
                         key={sectionKey}
-                        className="border-t border-neutral-200 first:border-t-0 dark:border-neutral-800"
+                        className="border-t border-warm-200/40 first:border-t-0 dark:border-warm-800/30"
                       >
                         <button
                           type="button"
@@ -111,42 +115,38 @@ export default function MobileMenu({
                           onClick={() =>
                             setOpenSection((prev) => (prev === sectionKey ? null : sectionKey))
                           }
-                          className="flex w-full items-center justify-between py-3 text-xl text-black transition-colors hover:text-neutral-500 dark:text-white"
+                          className="flex w-full items-center justify-between py-3.5 text-lg font-medium text-warm-800 transition-colors hover:text-warm-950 dark:text-warm-200 dark:hover:text-white"
                         >
                           {tab.label}
                           <ChevronDownIcon
                             className={clsx(
-                              'h-5 w-5 transition-transform duration-300 ease-out motion-reduce:transition-none',
+                              'h-5 w-5 text-warm-400 transition-transform duration-300 ease-smooth',
                               expanded && 'rotate-180',
                             )}
                           />
                         </button>
                         <div
                           className={clsx(
-                            'grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none',
+                            'grid transition-[grid-template-rows,opacity] duration-300 ease-smooth motion-reduce:transition-none',
                             expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
                           )}
                         >
                           <div className="overflow-hidden">
-                            <ul className="mb-3 ml-2 max-h-72 space-y-1 overflow-y-auto [scrollbar-width:thin]">
+                            <ul className="mb-3 ml-3 space-y-1">
                               {tab.items.map((item, itemIndex) => (
-                                <li
-                                  key={item.href}
-                                  className={clsx(
-                                    expanded && 'motion-reduce:animate-none animate-dropdown-item',
-                                  )}
-                                  style={
-                                    expanded
-                                      ? { animationDelay: `${Math.min(itemIndex * 35, 420)}ms` }
-                                      : undefined
-                                  }
-                                >
+                                <li key={item.href}>
                                   <Link
                                     href={item.href}
                                     prefetch
                                     onClick={closeMobileMenu}
-                                    className="block border-l-2 border-transparent py-1.5 pl-2 text-base text-black transition-[background-color,border-color,padding-left,color] duration-200 hover:border-red-500 hover:pl-3 hover:text-neutral-600 dark:text-white dark:hover:text-neutral-300"
+                                    className="flex items-center gap-3 py-2.5 text-base text-warm-600 transition-all duration-200 hover:text-terracotta-600 dark:text-warm-400 dark:hover:text-terracotta-400"
+                                    style={
+                                      expanded
+                                        ? { animationDelay: `${Math.min(itemIndex * 40, 400)}ms` }
+                                        : undefined
+                                    }
                                   >
+                                    <span className="h-1 w-1 rounded-full bg-warm-300 dark:bg-warm-700" />
                                     {item.label}
                                   </Link>
                                 </li>
@@ -157,8 +157,13 @@ export default function MobileMenu({
                       </li>
                     );
                   })}
-                  <li className="mt-2 border-t border-neutral-200 py-2 pt-4 text-xl text-black transition-colors hover:text-neutral-500 dark:border-neutral-800 dark:text-white">
-                    <Link href="/login" prefetch onClick={closeMobileMenu}>
+                  <li className="mt-3 border-t border-warm-200/40 pt-5 dark:border-warm-800/30">
+                    <Link
+                      href="/login"
+                      prefetch
+                      onClick={closeMobileMenu}
+                      className="inline-flex items-center gap-2 rounded-xl border border-warm-200/80 px-5 py-2.5 text-sm font-medium text-warm-700 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-300 dark:hover:bg-warm-800/50 dark:hover:text-warm-100"
+                    >
                       Đăng nhập
                     </Link>
                   </li>

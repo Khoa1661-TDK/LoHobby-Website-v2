@@ -1,0 +1,35 @@
+// src/payload/blocks/Newsletter.ts
+import type { Block } from 'payload';
+import { appearanceFields } from './_appearance';
+
+export const Newsletter: Block = {
+  slug: 'newsletter',
+  labels: { singular: 'Newsletter', plural: 'Newsletters' },
+  interfaceName: 'NewsletterBlock',
+  fields: [
+    {
+      name: 'headline',
+      type: 'text',
+      required: true,
+    },
+    {
+      name: 'subheadline',
+      type: 'textarea',
+    },
+    {
+      name: 'placeholder',
+      type: 'text',
+      defaultValue: 'Enter your email',
+    },
+    {
+      name: 'buttonLabel',
+      type: 'text',
+      defaultValue: 'Subscribe',
+    },
+    {
+      name: 'disclaimer',
+      type: 'text',
+    },
+    ...appearanceFields,
+  ],
+};
