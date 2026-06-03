@@ -13,12 +13,14 @@ type Props = {
   product: Product;
   variantSku?: string | null;
   canAdd?: boolean;
+  quantity?: number;
 };
 
 export default function AddToCart({
   product,
   variantSku = null,
   canAdd = true,
+  quantity = 1,
 }: Props): ReactElement {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -35,12 +37,16 @@ export default function AddToCart({
       disabled={!available || isPending}
       onClick={() =>
         startTransition(async () => {
-          const result = await addItemAction(product.id, variantSku);
+          const result = await addItemAction(product.id, variantSku, quantity);
           if (result?.error) {
             toast.error(result.error);
             return;
           }
-          toast.success(`Đã thêm ${product.title} vào giỏ hàng`);
+          toast.success(
+            quantity > 1
+              ? `Đã thêm ${quantity} ${product.title} vào giỏ hàng`
+              : `Đã thêm ${product.title} vào giỏ hàng`,
+          );
           router.refresh();
         })
       }

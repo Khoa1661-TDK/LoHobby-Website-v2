@@ -1,7 +1,18 @@
 // src/payload/components/AnalyticsDashboard.tsx — admin dashboard with VND analytics
-import { Gutter, RenderTitle, SetStepNav } from '@payloadcms/ui';
+import { Gutter, SetStepNav } from '@payloadcms/ui';
+import {
+  BadgePercent,
+  Boxes,
+  Gift,
+  Megaphone,
+  Receipt,
+  ShoppingBag,
+  Star,
+  Wallet,
+  Wallet2,
+} from 'lucide-react';
 import type { PayloadRequest } from 'payload';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { formatVnd } from '@/lib/analytics/currency';
 import {
   buildDailySalesChart,
@@ -10,21 +21,77 @@ import {
   formatPercentChange,
   getMonthRange,
 } from '@/lib/analytics/dashboard';
+import { getTrafficBySource } from '@/lib/analytics/traffic';
+import { getProductPerformance } from '@/lib/analytics/products';
 import { AnalyticsSalesChart } from '@/src/payload/components/analytics/AnalyticsSalesChart';
 import { MetricCard } from '@/src/payload/components/analytics/MetricCard';
+import { RankingTable } from '@/src/payload/components/analytics/RankingTable';
 
 type DashboardProps = {
   payload: PayloadRequest['payload'];
 };
+
+type ActionTile = {
+  href: string;
+  label: string;
+  description: string;
+  icon: ReactNode;
+};
+
+const actionTiles: ActionTile[] = [
+  {
+    href: '/admin/collections/orders',
+    label: 'Đơn hàng',
+    description: 'Xử lý, vận chuyển và cập nhật trạng thái đơn.',
+    icon: <ShoppingBag size={18} aria-hidden />,
+  },
+  {
+    href: '/admin/coupons',
+    label: 'Mã giảm giá',
+    description: 'Tạo mã giảm theo phần trăm hoặc số tiền.',
+    icon: <BadgePercent size={18} aria-hidden />,
+  },
+  {
+    href: '/admin/gift-cards',
+    label: 'Thẻ quà tặng',
+    description: 'Phát hành và quản lý tín dụng cửa hàng.',
+    icon: <Gift size={18} aria-hidden />,
+  },
+  {
+    href: '/admin/campaigns',
+    label: 'Chiến dịch',
+    description: 'Lên lịch và gửi chiến dịch marketing.',
+    icon: <Megaphone size={18} aria-hidden />,
+  },
+  {
+    href: '/admin/reviews',
+    label: 'Đánh giá',
+    description: 'Duyệt và kiểm duyệt đánh giá sản phẩm.',
+    icon: <Star size={18} aria-hidden />,
+  },
+  {
+    href: '/admin/catalog-tools',
+    label: 'Công cụ danh mục',
+    description: 'Nhập / xuất và đồng bộ sản phẩm hàng loạt.',
+    icon: <Boxes size={18} aria-hidden />,
+  },
+];
+
+const monthLabelFormatter = new Intl.DateTimeFormat('vi-VN', {
+  month: 'long',
+  year: 'numeric',
+});
 
 export async function AnalyticsDashboard(_props: DashboardProps): Promise<ReactElement> {
   const now = new Date();
   const { start: currentStart, end: currentEnd } = getMonthRange(0, now);
   const { start: lastStart, end: lastEnd } = getMonthRange(-1, now);
 
-  const [currentOrders, lastOrders] = await Promise.all([
+  const [currentOrders, lastOrders, trafficBySource, productPerformance] = await Promise.all([
     fetchOrdersInRange(currentStart, currentEnd),
     fetchOrdersInRange(lastStart, lastEnd),
+    getTrafficBySource(currentStart, currentEnd),
+    getProductPerformance(currentStart, currentEnd),
   ]);
 
   const currentMetrics = computeMonthlyMetrics(currentOrders);
@@ -33,127 +100,186 @@ export async function AnalyticsDashboard(_props: DashboardProps): Promise<ReactE
 
   return (
     <Gutter>
-      <SetStepNav nav={[{ label: 'Analytics', url: '/admin' }]} />
-      <RenderTitle className="dashboard__label" title="Analytics" />
+      <SetStepNav nav={[{ label: 'Tổng quan', url: '/admin' }]} />
 
-      <ul
-        style={{
-          display: 'grid',
-          gap: '1rem',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          listStyle: 'none',
-          margin: '2rem 0 0',
-          padding: 0,
-        }}
-      >
-        <li>
-          <MetricCard
-            title="Doanh thu (VND)"
-            value={formatVnd(currentMetrics.revenueVnd)}
-            change={formatPercentChange(currentMetrics.revenueVnd, lastMetrics.revenueVnd)}
-          />
-        </li>
-        <li>
-          <MetricCard
-            title="Giá trị đơn TB"
-            value={formatVnd(currentMetrics.avgOrderVnd)}
-            change={formatPercentChange(currentMetrics.avgOrderVnd, lastMetrics.avgOrderVnd)}
-          />
-        </li>
-        <li>
-          <MetricCard
-            title="Tổng đơn"
-            value={currentMetrics.totalOrders.toLocaleString('vi-VN')}
-            change={formatPercentChange(currentMetrics.totalOrders, lastMetrics.totalOrders)}
-          />
-        </li>
-        <li>
-          <MetricCard
-            title="Đơn đã thanh toán"
-            value={currentMetrics.paidOrders.toLocaleString('vi-VN')}
-            change={formatPercentChange(currentMetrics.paidOrders, lastMetrics.paidOrders)}
-          />
-        </li>
-      </ul>
+      <div className="dash">
+        <header className="dash__header">
+          <div>
+            <p className="dash__eyebrow">Tổng quan cửa hàng</p>
+            <h1 className="dash__title">Bảng điều khiển</h1>
+          </div>
+          <span className="dash__period">{monthLabelFormatter.format(now)}</span>
+        </header>
 
-      <AnalyticsSalesChart data={salesData} />
-
-      <section
-        style={{
-          marginTop: '2.5rem',
-          padding: '1.25rem',
-          borderRadius: '0.75rem',
-          border: '1px solid var(--theme-elevation-150)',
-          background: 'var(--theme-elevation-50)',
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Commerce</h2>
-        <p style={{ margin: '0.5rem 0 0', fontSize: '0.875rem', color: 'var(--theme-elevation-600)' }}>
-          Tạo mã giảm giá và thẻ quà tặng cho checkout.
-        </p>
-        <ul
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-            listStyle: 'none',
-            margin: '1rem 0 0',
-            padding: 0,
-          }}
-        >
+        <ul className="dash__metrics">
           <li>
-            <a
-              href="/admin/coupons"
-              style={{
-                display: 'inline-block',
-                padding: '0.5rem 0.875rem',
-                borderRadius: '0.5rem',
-                border: '1px solid var(--theme-elevation-150)',
-                background: 'var(--theme-elevation-0)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                textDecoration: 'none',
-              }}
-            >
-              Mã giảm giá
-            </a>
+            <MetricCard
+              tone="revenue"
+              icon={<Wallet size={18} aria-hidden />}
+              title="Doanh thu (VND)"
+              value={formatVnd(currentMetrics.revenueVnd)}
+              change={formatPercentChange(currentMetrics.revenueVnd, lastMetrics.revenueVnd)}
+            />
           </li>
           <li>
-            <a
-              href="/admin/gift-cards"
-              style={{
-                display: 'inline-block',
-                padding: '0.5rem 0.875rem',
-                borderRadius: '0.5rem',
-                border: '1px solid var(--theme-elevation-150)',
-                background: 'var(--theme-elevation-0)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                textDecoration: 'none',
-              }}
-            >
-              Thẻ quà tặng
-            </a>
+            <MetricCard
+              tone="value"
+              icon={<Receipt size={18} aria-hidden />}
+              title="Giá trị đơn TB"
+              value={formatVnd(currentMetrics.avgOrderVnd)}
+              change={formatPercentChange(currentMetrics.avgOrderVnd, lastMetrics.avgOrderVnd)}
+            />
           </li>
           <li>
-            <a
-              href="/admin/collections/orders"
-              style={{
-                display: 'inline-block',
-                padding: '0.5rem 0.875rem',
-                borderRadius: '0.5rem',
-                border: '1px solid var(--theme-elevation-150)',
-                background: 'var(--theme-elevation-0)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                textDecoration: 'none',
-              }}
-            >
-              Quản lý đơn hàng
-            </a>
+            <MetricCard
+              tone="orders"
+              icon={<ShoppingBag size={18} aria-hidden />}
+              title="Tổng đơn"
+              value={currentMetrics.totalOrders.toLocaleString('vi-VN')}
+              change={formatPercentChange(currentMetrics.totalOrders, lastMetrics.totalOrders)}
+            />
+          </li>
+          <li>
+            <MetricCard
+              tone="paid"
+              icon={<Wallet2 size={18} aria-hidden />}
+              title="Đơn đã thanh toán"
+              value={currentMetrics.paidOrders.toLocaleString('vi-VN')}
+              change={formatPercentChange(currentMetrics.paidOrders, lastMetrics.paidOrders)}
+            />
           </li>
         </ul>
-      </section>
+
+        <AnalyticsSalesChart data={salesData} />
+
+        {/* ── Traffic sources ── */}
+        <section className="dash-table-group">
+          <header className="dash__shortcuts-head">
+            <h2 className="dash__shortcuts-title">Nguồn truy cập</h2>
+            <p className="dash__shortcuts-subtitle">
+              Lượt truy cập và chuyển đổi theo kênh trong tháng này.
+            </p>
+          </header>
+          <RankingTable
+            title="Lượt truy cập theo nguồn"
+            columns={[
+              { key: 'source', label: 'Nguồn' },
+              { key: 'sessions', label: 'Phiên', align: 'right' },
+              { key: 'sharePct', label: 'Tỉ lệ', align: 'right' },
+              { key: 'conversionPct', label: 'Tỉ lệ chuyển đổi', align: 'right' },
+            ]}
+            rows={trafficBySource.map((t) => ({
+              source: t.source,
+              sessions: t.sessions.toLocaleString('vi-VN'),
+              sharePct: `${t.sharePct}%`,
+              conversionPct: `${t.conversionPct}%`,
+            }))}
+          />
+        </section>
+
+        {/* ── Top sellers / bottom sellers ── */}
+        <div className="dash__split">
+          <RankingTable
+            title="Bán chạy"
+            columns={[
+              { key: 'product', label: 'Sản phẩm' },
+              { key: 'units', label: 'Đã bán', align: 'right' },
+              { key: 'revenue', label: 'Doanh thu', align: 'right' },
+            ]}
+            rows={productPerformance.topSellers.map((p) => ({
+              product: p.productTitle || p.productHandle,
+              units: p.units.toLocaleString('vi-VN'),
+              revenue: formatVnd(p.revenueVnd),
+            }))}
+          />
+          <RankingTable
+            title="Bán chậm"
+            columns={[
+              { key: 'product', label: 'Sản phẩm' },
+              { key: 'units', label: 'Đã bán', align: 'right' },
+              { key: 'revenue', label: 'Doanh thu', align: 'right' },
+            ]}
+            rows={productPerformance.bottomSellers.map((p) => ({
+              product: p.productTitle || p.productHandle,
+              units: p.units.toLocaleString('vi-VN'),
+              revenue: formatVnd(p.revenueVnd),
+            }))}
+          />
+        </div>
+
+        {/* ── Xem nhiều mua ít (high attention, low conversion) ── */}
+        <section className="dash-table-group">
+          <header className="dash__shortcuts-head">
+            <h2 className="dash__shortcuts-title">Xem nhiều mua ít</h2>
+            <p className="dash__shortcuts-subtitle">
+              Sản phẩm có nhiều lượt xem nhưng tỉ lệ mua thấp — cần cải thiện
+              chuyển đổi.
+            </p>
+          </header>
+          <RankingTable
+            title="Sản phẩm cần chú ý"
+            columns={[
+              { key: 'product', label: 'Sản phẩm' },
+              { key: 'views', label: 'Lượt xem', align: 'right' },
+              { key: 'conversionPct', label: 'Tỉ lệ mua', align: 'right' },
+            ]}
+            rows={productPerformance.viewToBuy
+              .filter((v) => v.highAttentionLowConversion)
+              .map((v) => ({
+                product: v.productTitle || v.productHandle,
+                views: v.views.toLocaleString('vi-VN'),
+                conversionPct: `${v.conversionPct}%`,
+              }))}
+            emptyLabel="Không có sản phẩm nào cần chú ý."
+          />
+        </section>
+
+        {/* ── Lượt xem & thời gian xem TB ── */}
+        <section className="dash-table-group">
+          <header className="dash__shortcuts-head">
+            <h2 className="dash__shortcuts-title">Lượt xem &amp; thời gian xem TB</h2>
+            <p className="dash__shortcuts-subtitle">
+              Sản phẩm được xem nhiều nhất và thời gian xem trung bình.
+            </p>
+          </header>
+          <RankingTable
+            title="Lượt xem & thời gian xem TB"
+            columns={[
+              { key: 'product', label: 'Sản phẩm' },
+              { key: 'views', label: 'Lượt xem', align: 'right' },
+              { key: 'avgDwellMs', label: 'TG xem TB', align: 'right' },
+            ]}
+            rows={productPerformance.viewToBuy.map((v) => ({
+              product: v.productTitle || v.productHandle,
+              views: v.views.toLocaleString('vi-VN'),
+              avgDwellMs: `${Math.round(v.avgDwellMs / 1000)}s`,
+            }))}
+            emptyLabel="Chưa có lượt xem nào."
+          />
+        </section>
+
+        <section className="dash__shortcuts">
+          <header className="dash__shortcuts-head">
+            <h2 className="dash__shortcuts-title">Lối tắt quản lý</h2>
+            <p className="dash__shortcuts-subtitle">Truy cập nhanh các công cụ vận hành cửa hàng.</p>
+          </header>
+          <ul className="dash__tiles">
+            {actionTiles.map((tile) => (
+              <li key={tile.href}>
+                <a className="dash-tile" href={tile.href}>
+                  <span className="dash-tile__icon" aria-hidden>
+                    {tile.icon}
+                  </span>
+                  <span className="dash-tile__body">
+                    <span className="dash-tile__label">{tile.label}</span>
+                    <span className="dash-tile__description">{tile.description}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </Gutter>
   );
 }

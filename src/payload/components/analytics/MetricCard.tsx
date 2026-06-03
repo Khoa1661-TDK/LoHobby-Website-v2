@@ -1,44 +1,51 @@
 // src/payload/components/analytics/MetricCard.tsx
+import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import type { ReactElement, ReactNode } from 'react';
+
+export type MetricTone = 'revenue' | 'value' | 'orders' | 'paid';
 
 type Props = {
   title: string;
   value: ReactNode;
   change: string;
+  icon: ReactNode;
+  tone: MetricTone;
 };
 
-export function MetricCard({ title, value, change }: Props): ReactElement {
-  const isPositive = change.startsWith('+') || change === '0%';
+type TrendDirection = 'up' | 'down' | 'flat';
+
+function getTrend(change: string): TrendDirection {
+  if (change.startsWith('+') && change !== '+0%') return 'up';
+  if (change.startsWith('-')) return 'down';
+  return 'flat';
+}
+
+const trendIcon: Record<TrendDirection, ReactNode> = {
+  up: <ArrowUpRight size={14} aria-hidden />,
+  down: <ArrowDownRight size={14} aria-hidden />,
+  flat: <Minus size={14} aria-hidden />,
+};
+
+export function MetricCard({ title, value, change, icon, tone }: Props): ReactElement {
+  const trend = getTrend(change);
 
   return (
-    <div
-      style={{
-        background: 'var(--theme-elevation-50)',
-        border: '1px solid var(--theme-border-color)',
-        borderRadius: 'var(--style-radius-m)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.75rem',
-        justifyContent: 'space-between',
-        minHeight: '7rem',
-        padding: '1rem',
-        width: '100%',
-      }}
-    >
-      <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>{title}</div>
-      <div style={{ fontSize: '1.75rem', fontWeight: 700, lineHeight: 1.2 }}>{value}</div>
-      <div style={{ fontSize: '0.875rem' }}>
-        <span
-          style={{
-            color: isPositive ? 'var(--color-success-500)' : 'var(--theme-error-500)',
-            fontWeight: 700,
-            marginRight: '0.25rem',
-          }}
-        >
+    <article className={`dash-metric dash-metric--${tone}`}>
+      <span className="dash-metric__rail" aria-hidden />
+      <header className="dash-metric__head">
+        <span className="dash-metric__icon" aria-hidden>
+          {icon}
+        </span>
+        <span className="dash-metric__title">{title}</span>
+      </header>
+      <div className="dash-metric__value">{value}</div>
+      <footer className="dash-metric__foot">
+        <span className={`dash-metric__trend dash-metric__trend--${trend}`}>
+          {trendIcon[trend]}
           {change}
         </span>
-        so với tháng trước
-      </div>
-    </div>
+        <span className="dash-metric__hint">so với tháng trước</span>
+      </footer>
+    </article>
   );
 }

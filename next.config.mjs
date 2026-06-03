@@ -1,5 +1,8 @@
 // next.config.mjs
 import { withPayload } from '@payloadcms/next/withPayload';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -33,4 +36,4 @@ const nextConfig = {
 // `devBundleServerPackages: false` skips the heavy webpack pass over Payload's
 // server-only deps in dev — major CPU savings for `pnpm dev`. The flag is
 // safely ignored in production builds (where bundling is always required).
-export default withPayload(nextConfig, { devBundleServerPackages: false });
+export default withPayload(withNextIntl(nextConfig), { devBundleServerPackages: false });

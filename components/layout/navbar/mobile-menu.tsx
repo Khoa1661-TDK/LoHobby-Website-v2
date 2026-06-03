@@ -7,13 +7,14 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Fragment, Suspense, useEffect, useState, type ReactElement } from 'react';
+import LanguageSwitcher from '@/components/layout/navbar/language-switcher';
 import Search, { SearchSkeleton } from '@/components/layout/navbar/search';
-import type { ResolvedHeaderTab } from '@/lib/site-header';
+import type { NavColumn } from '@/lib/navigation';
 
 export default function MobileMenu({
-  tabs,
+  columns,
 }: {
-  tabs: ResolvedHeaderTab[];
+  columns: NavColumn[];
 }): ReactElement {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -81,27 +82,8 @@ export default function MobileMenu({
                   </Suspense>
                 </div>
                 <ul className="flex w-full flex-col">
-                  {tabs.map((tab, tabIndex) => {
-                    if (tab.kind === 'link') {
-                      return (
-                        <li
-                          key={`${tab.kind}:${tab.label}:${tabIndex}`}
-                        >
-                          <Link
-                            href={tab.href}
-                            prefetch={!tab.external}
-                            target={tab.external ? '_blank' : undefined}
-                            rel={tab.external ? 'noreferrer noopener' : undefined}
-                            onClick={closeMobileMenu}
-                            className="flex items-center py-3.5 text-lg font-medium text-warm-800 transition-colors hover:text-warm-950 dark:text-warm-200 dark:hover:text-white"
-                          >
-                            {tab.label}
-                          </Link>
-                        </li>
-                      );
-                    }
-
-                    const sectionKey = `${tab.kind}:${tab.label}:${tabIndex}`;
+                  {columns.map((column, columnIndex) => {
+                    const sectionKey = `${column.heading}:${columnIndex}`;
                     const expanded = openSection === sectionKey;
 
                     return (
@@ -117,7 +99,7 @@ export default function MobileMenu({
                           }
                           className="flex w-full items-center justify-between py-3.5 text-lg font-medium text-warm-800 transition-colors hover:text-warm-950 dark:text-warm-200 dark:hover:text-white"
                         >
-                          {tab.label}
+                          {column.heading}
                           <ChevronDownIcon
                             className={clsx(
                               'h-5 w-5 text-warm-400 transition-transform duration-300 ease-smooth',
@@ -133,21 +115,23 @@ export default function MobileMenu({
                         >
                           <div className="overflow-hidden">
                             <ul className="mb-3 ml-3 space-y-1">
-                              {tab.items.map((item, itemIndex) => (
-                                <li key={item.href}>
+                              {column.links.map((link, linkIndex) => (
+                                <li key={`${link.label}:${link.href}`}>
                                   <Link
-                                    href={item.href}
-                                    prefetch
+                                    href={link.href}
+                                    prefetch={!link.external}
+                                    target={link.external ? '_blank' : undefined}
+                                    rel={link.external ? 'noreferrer noopener' : undefined}
                                     onClick={closeMobileMenu}
                                     className="flex items-center gap-3 py-2.5 text-base text-warm-600 transition-all duration-200 hover:text-terracotta-600 dark:text-warm-400 dark:hover:text-terracotta-400"
                                     style={
                                       expanded
-                                        ? { animationDelay: `${Math.min(itemIndex * 40, 400)}ms` }
+                                        ? { animationDelay: `${Math.min(linkIndex * 40, 400)}ms` }
                                         : undefined
                                     }
                                   >
                                     <span className="h-1 w-1 rounded-full bg-warm-300 dark:bg-warm-700" />
-                                    {item.label}
+                                    {link.label}
                                   </Link>
                                 </li>
                               ))}
@@ -166,6 +150,9 @@ export default function MobileMenu({
                     >
                       Đăng nhập
                     </Link>
+                  </li>
+                  <li className="mt-5 border-t border-warm-200/40 pt-5 dark:border-warm-800/30">
+                    <LanguageSwitcher variant="full" />
                   </li>
                 </ul>
               </div>

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
-import { submitReviewAction } from '@/app/(storefront)/product/[handle]/review-actions';
+import { submitReviewAction } from '@/app/[locale]/(storefront)/product/[handle]/review-actions';
 import type { OwnReview } from '@/lib/reviews';
 
 type Props = {

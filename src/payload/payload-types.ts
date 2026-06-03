@@ -76,8 +76,11 @@ export interface Config {
     carts: Cart;
     orders: Order;
     'content-pages': ContentPage;
+    'blog-categories': BlogCategory;
+    posts: Post;
     'store-customers': StoreCustomer;
     pages: Page;
+    redirects: Redirect;
     exports: Export;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
@@ -100,8 +103,11 @@ export interface Config {
     carts: CartsSelect<false> | CartsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
+    'blog-categories': BlogCategoriesSelect<false> | BlogCategoriesSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
     'store-customers': StoreCustomersSelect<false> | StoreCustomersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
@@ -115,12 +121,14 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'site-header': SiteHeader;
+    navigation: Navigation;
     'store-settings': StoreSetting;
     'shipping-settings': ShippingSetting;
     'dropship-settings': DropshipSetting;
   };
   globalsSelect: {
     'site-header': SiteHeaderSelect<false> | SiteHeaderSelect<true>;
+    navigation: NavigationSelect<false> | NavigationSelect<true>;
     'store-settings': StoreSettingsSelect<false> | StoreSettingsSelect<true>;
     'shipping-settings': ShippingSettingsSelect<false> | ShippingSettingsSelect<true>;
     'dropship-settings': DropshipSettingsSelect<false> | DropshipSettingsSelect<true>;
@@ -685,6 +693,88 @@ export interface ContentPage {
   createdAt: string;
 }
 /**
+ * Topics used to organise blog posts.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-categories".
+ */
+export interface BlogCategory {
+  id: number;
+  name: string;
+  /**
+   * URL-safe identifier. Edit manually — saving normalizes it to a slug.
+   */
+  slug: string;
+  description?: string | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Blog posts rendered on the storefront.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  title: string;
+  /**
+   * Auto-generated from the title when empty. You can edit manually — saving normalizes it to a URL-safe slug.
+   */
+  slug?: string | null;
+  /**
+   * Short summary shown in post listings and meta tags.
+   */
+  excerpt?: string | null;
+  coverImage?: (number | null) | Media;
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  author?: (number | null) | User;
+  category?: (number | null) | BlogCategory;
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Posts are only public once published AND this time has elapsed.
+   */
+  publishedAt?: string | null;
+  status: 'draft' | 'published';
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Custom pages built with the drag-and-drop page builder.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1181,6 +1271,33 @@ export interface DividerBlock {
   blockType: 'divider';
 }
 /**
+ * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirects".
+ */
+export interface Redirect {
+  id: number;
+  /**
+   * The inbound path to match, e.g. /old-product. Normalized to a leading slash with no trailing slash on save.
+   */
+  from: string;
+  /**
+   * Destination path (/new-product) or absolute URL (https://…).
+   */
+  to: string;
+  /**
+   * 301 is cached by browsers/search engines; 302 is not.
+   */
+  type: '301' | '302';
+  /**
+   * Disabled rules are kept for reference but never applied.
+   */
+  enabled?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
@@ -1368,12 +1485,24 @@ export interface PayloadLockedDocument {
         value: number | ContentPage;
       } | null)
     | ({
+        relationTo: 'blog-categories';
+        value: number | BlogCategory;
+      } | null)
+    | ({
+        relationTo: 'posts';
+        value: number | Post;
+      } | null)
+    | ({
         relationTo: 'store-customers';
         value: number | StoreCustomer;
       } | null)
     | ({
         relationTo: 'pages';
         value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'redirects';
+        value: number | Redirect;
       } | null)
     | ({
         relationTo: 'exports';
@@ -1734,6 +1863,54 @@ export interface ContentPagesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-categories_select".
+ */
+export interface BlogCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  excerpt?: T;
+  coverImage?: T;
+  body?: T;
+  author?: T;
+  category?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  publishedAt?: T;
+  status?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "store-customers_select".
  */
 export interface StoreCustomersSelect<T extends boolean = true> {
@@ -2018,6 +2195,18 @@ export interface DividerBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirects_select".
+ */
+export interface RedirectsSelect<T extends boolean = true> {
+  from?: T;
+  to?: T;
+  type?: T;
+  enabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports_select".
  */
 export interface ExportsSelect<T extends boolean = true> {
@@ -2183,6 +2372,63 @@ export interface SiteHeader {
                */
               label?: string | null;
               category: number | Category;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Configure the footer and mobile-menu link columns. Each column has a heading and a list of links. These are independent of the main site header — leave empty to fall back to the built-in defaults.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation".
+ */
+export interface Navigation {
+  id: number;
+  /**
+   * Link columns rendered in the storefront footer (e.g. Support, Policies).
+   */
+  footerMenu?:
+    | {
+        /**
+         * Column heading shown above the links.
+         */
+        heading: string;
+        links?:
+          | {
+              label: string;
+              /**
+               * Use "/" for internal pages or "http(s)://" for external links.
+               */
+              url: string;
+              openInNewTab?: boolean | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Link columns rendered in the slide-out mobile navigation drawer.
+   */
+  mobileMenu?:
+    | {
+        /**
+         * Column heading shown above the links.
+         */
+        heading: string;
+        links?:
+          | {
+              label: string;
+              /**
+               * Use "/" for internal pages or "http(s)://" for external links.
+               */
+              url: string;
+              openInNewTab?: boolean | null;
               id?: string | null;
             }[]
           | null;
@@ -2378,6 +2624,43 @@ export interface SiteHeaderSelect<T extends boolean = true> {
           | {
               label?: T;
               category?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation_select".
+ */
+export interface NavigationSelect<T extends boolean = true> {
+  footerMenu?:
+    | T
+    | {
+        heading?: T;
+        links?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              openInNewTab?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  mobileMenu?:
+    | T
+    | {
+        heading?: T;
+        links?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              openInNewTab?: T;
               id?: T;
             };
         id?: T;

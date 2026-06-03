@@ -8,45 +8,25 @@ import Link from 'next/link';
 import type { ReactElement } from 'react';
 import FooterNewsletter from '@/components/layout/footer-newsletter';
 import { DEFAULT_SOCIAL_LINKS } from '@/lib/brand';
+import { getFooterMenu, type NavColumn } from '@/lib/navigation';
 import { getStoreBranding } from '@/lib/store-branding';
 
-const supportLinks = [
-  { title: 'Về chúng tôi', href: '/about' },
-  { title: 'Liên hệ', href: '/contact' },
-  { title: 'Câu hỏi thường gặp', href: '/faq' },
-  { title: 'Trung tâm hỗ trợ', href: '/info/support' },
-  { title: 'Cách đặt hàng', href: '/info/how-to-order' },
-  { title: 'Hướng dẫn thanh toán', href: '/info/payment' },
-  { title: 'Đổi trả', href: '/info/returns' },
-  { title: 'Theo dõi đơn hàng', href: '/info/track-order' },
-];
-
-const policyLinks = [
-  { title: 'Chính sách cookie', href: '/info/cookies' },
-  { title: 'Chính sách bảo mật', href: '/info/privacy' },
-  { title: 'Điều khoản dịch vụ', href: '/info/terms' },
-];
-
-function FooterLinkList({
-  title,
-  links,
-}: {
-  title: string;
-  links: { title: string; href: string }[];
-}): ReactElement {
+function FooterLinkList({ column }: { column: NavColumn }): ReactElement {
   return (
     <div>
       <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-warm-400">
-        {title}
+        {column.heading}
       </h3>
       <ul className="mt-5 space-y-3">
-        {links.map((link) => (
-          <li key={link.href}>
+        {column.links.map((link) => (
+          <li key={`${link.label}:${link.href}`}>
             <Link
               href={link.href}
+              target={link.external ? '_blank' : undefined}
+              rel={link.external ? 'noopener noreferrer' : undefined}
               className="text-sm text-warm-400 transition-colors duration-200 hover:text-warm-100"
             >
-              {link.title}
+              {link.label}
             </Link>
           </li>
         ))}
@@ -87,7 +67,7 @@ function SocialIcon({ label }: { label: string }): ReactElement {
 
 export default async function Footer(): Promise<ReactElement> {
   const currentYear = new Date().getFullYear();
-  const branding = await getStoreBranding();
+  const [branding, footerMenu] = await Promise.all([getStoreBranding(), getFooterMenu()]);
   const socialLinks =
     branding.socialLinks.length > 0 ? branding.socialLinks : DEFAULT_SOCIAL_LINKS;
 
@@ -154,8 +134,9 @@ export default async function Footer(): Promise<ReactElement> {
             </div>
           </div>
 
-          <FooterLinkList title="Hỗ trợ" links={supportLinks} />
-          <FooterLinkList title="Chính sách" links={policyLinks} />
+          {footerMenu.map((column) => (
+            <FooterLinkList key={column.heading} column={column} />
+          ))}
 
           {branding.footer.showNewsletter ? (
             <div>

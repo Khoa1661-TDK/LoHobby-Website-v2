@@ -282,3 +282,46 @@ model GiftCard {
 
   @@index([enabled])
 }
+
+/**
+ * First-party visit attribution. One row per visit (browser session). First-touch:
+ * the source/medium/campaign/referrer captured on the landing request are never
+ * overwritten. `customerId` is set server-side from the auth session, never trusted
+ * from the client. Identity is pseudonymous via the random `anonId`.
+ */
+model VisitSession {
+  id          String   @id @default(cuid())
+  anonId      String
+  sessionId   String   @unique
+  customerId  String?
+  /** Classified channel: utm_source, a known referrer name, or "direct". */
+  source      String
+  /** utm_medium or an inferred medium (organic, social, referral, direct). */
+  medium      String
+  campaign    String?
+  referrer    String?
+  landingPath String?
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@index([source])
+  @@index([firstSeenAt])
+}
+
+/**
+ * A single product-detail view with dwell time (ms the tab was visible).
+ * High write volume — kept lean and indexed for range aggregation. `dwellMs`
+ * is capped server-side to drop garbage from backgrounded tabs.
+ */
+model ProductViewEvent {
+  id            String   @id @default(cuid())
+  anonId        String
+  sessionId     String
+  productId     String
+  productHandle String   @default("")
+  dwellMs       Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}

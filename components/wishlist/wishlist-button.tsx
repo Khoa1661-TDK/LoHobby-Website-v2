@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
-import { toggleWishlistAction } from '@/app/(storefront)/wishlist-actions';
+import { toggleWishlistAction } from '@/app/[locale]/(storefront)/wishlist-actions';
 import { useWishlist } from '@/components/wishlist/wishlist-provider';
 
 type Props = {

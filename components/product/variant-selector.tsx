@@ -1,8 +1,9 @@
 // components/product/variant-selector.tsx
 'use client';
 
+import { MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { useMemo, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import AddToCart from '@/components/cart/add-to-cart';
 import { GalleryMediaThumb, GalleryMediaViewer } from '@/components/product/gallery-media';
 import Price from '@/components/price';
@@ -25,6 +26,7 @@ export default function VariantSelector({
   variants,
 }: Props): ReactElement {
   const [selectedSku, setSelectedSku] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [hoverGalleryIndex, setHoverGalleryIndex] = useState<number | null>(null);
   const [heroFromGallery, setHeroFromGallery] = useState(false);
@@ -33,6 +35,16 @@ export default function VariantSelector({
     () => variants.find((v) => v.sku === selectedSku) ?? null,
     [variants, selectedSku],
   );
+
+  const maxQuantity =
+    typeof selectedVariant?.stock === 'number' && selectedVariant.stock > 0
+      ? selectedVariant.stock
+      : 99;
+
+  // Reset to 1 when switching variants so a leftover count can't exceed new stock.
+  useEffect(() => {
+    setQuantity(1);
+  }, [selectedSku]);
 
   const previewGalleryIndex = hoverGalleryIndex ?? galleryIndex;
 
@@ -208,11 +220,41 @@ export default function VariantSelector({
           />
         ) : null}
 
+        <div className="mb-4 flex items-center gap-3">
+          <span className="text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400">
+            Số lượng
+          </span>
+          <div className="flex items-center rounded-xl border border-warm-200/80 dark:border-warm-800/60">
+            <button
+              type="button"
+              aria-label="Giảm số lượng"
+              disabled={quantity <= 1}
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="flex h-10 w-10 items-center justify-center text-warm-700 transition-colors hover:text-terracotta-600 disabled:cursor-not-allowed disabled:opacity-30 dark:text-warm-300 dark:hover:text-terracotta-400"
+            >
+              <MinusIcon className="h-4 w-4" />
+            </button>
+            <span className="flex w-10 items-center justify-center text-sm font-medium tabular-nums text-warm-900 dark:text-warm-100">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              aria-label="Tăng số lượng"
+              disabled={quantity >= maxQuantity}
+              onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+              className="flex h-10 w-10 items-center justify-center text-warm-700 transition-colors hover:text-terracotta-600 disabled:cursor-not-allowed disabled:opacity-30 dark:text-warm-300 dark:hover:text-terracotta-400"
+            >
+              <PlusIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <AddToCart
               product={product}
               variantSku={variants.length > 0 ? selectedSku : null}
+              quantity={quantity}
               canAdd={
                 variants.length === 0
                   ? product.availableForSale

@@ -1,12 +1,17 @@
-// app/(storefront)/layout.tsx
+// app/[locale]/(storefront)/layout.tsx
 import { Fraunces, Inter, Plus_Jakarta_Sans, Roboto } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
+import { notFound } from 'next/navigation';
 import type { ReactElement, ReactNode } from 'react';
 import { Suspense } from 'react';
+import { hasLocale, NextIntlClientProvider } from 'next-intl';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
+import { routing } from '@/i18n/routing';
 import AnnouncementBanner from '@/components/layout/announcement-banner';
 import { Navbar } from '@/components/layout/navbar';
 import Analytics from '@/components/analytics';
+import SessionTracker from '@/components/analytics/session-tracker';
 import BrandTheme from '@/components/brand-theme';
 import CookieConsent from '@/components/cookie-consent';
 import Providers from '@/components/providers';
@@ -14,7 +19,15 @@ import PwaInstallPrompt from '@/components/pwa-install-prompt';
 import WelcomeToast from '@/components/welcome-toast';
 import { getStoreBranding } from '@/lib/store-branding';
 import { baseUrl } from '@/lib/utils';
-import '../globals.css';
+import '../../globals.css';
+
+type LocaleParams = { locale: string };
+
+const OG_LOCALES: Record<string, string> = { vi: 'vi_VN', en: 'en_US' };
+
+export function generateStaticParams(): LocaleParams[] {
+  return routing.locales.map((locale) => ({ locale }));
+}
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin', 'vietnamese'],
@@ -45,7 +58,12 @@ const twitterHandle = process.env.NEXT_PUBLIC_TWITTER_HANDLE
   ? `@${process.env.NEXT_PUBLIC_TWITTER_HANDLE.replace(/^@/, '')}`
   : undefined;
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<LocaleParams>;
+}): Promise<Metadata> {
+  const { locale } = await params;
   const branding = await getStoreBranding();
   const siteName = branding.storeName;
 
@@ -72,7 +90,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     openGraph: {
       type: 'website',
-      locale: 'vi_VN',
+      locale: OG_LOCALES[locale] ?? OG_LOCALES[routing.defaultLocale],
       url: baseUrl,
       siteName,
       title: siteName,
@@ -121,14 +139,27 @@ export async function generateViewport(): Promise<Viewport> {
 
 export default async function StorefrontLayout({
   children,
+  params,
 }: {
   children: ReactNode;
+  params: Promise<LocaleParams>;
 }): Promise<ReactElement> {
-  const branding = await getStoreBranding();
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+  // Enable static rendering for this locale segment.
+  setRequestLocale(locale);
+
+  const [branding, messages, t] = await Promise.all([
+    getStoreBranding(),
+    getMessages(),
+    getTranslations('common'),
+  ]);
 
   return (
     <html
-      lang="vi"
+      lang={locale}
       className={`${jakarta.variable} ${fraunces.variable} ${inter.variable} ${roboto.variable}`}
       suppressHydrationWarning
     >
@@ -147,26 +178,29 @@ export default async function StorefrontLayout({
         <link rel="dns-prefetch" href="https://api-merchant.payos.vn" />
       </head>
       <body className="bg-warm-50 font-sans text-warm-900 antialiased dark:bg-warm-950 dark:text-warm-100">
-        <Providers branding={branding}>
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-black focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white dark:focus:bg-white dark:focus:text-black"
-          >
-            Bỏ qua tới nội dung
-          </a>
-          <Navbar />
-          <AnnouncementBanner />
-          <main id="main-content">
-            {children}
-            <Toaster closeButton richColors />
-            <WelcomeToast />
-          </main>
-          <CookieConsent />
-          <PwaInstallPrompt />
-          <Suspense fallback={null}>
-            <Analytics />
-          </Suspense>
-        </Providers>
+        <NextIntlClientProvider messages={messages}>
+          <Providers branding={branding}>
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-black focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white dark:focus:bg-white dark:focus:text-black"
+            >
+              {t('skipToContent')}
+            </a>
+            <Navbar />
+            <AnnouncementBanner />
+            <main id="main-content">
+              {children}
+              <Toaster closeButton richColors />
+              <WelcomeToast />
+            </main>
+            <CookieConsent />
+            <PwaInstallPrompt />
+            <Suspense fallback={null}>
+              <Analytics />
+            </Suspense>
+            <SessionTracker />
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

@@ -60,10 +60,11 @@ export async function mergeCartOnLoginAction(): Promise<ActionResult> {
 export async function addItemAction(
   productId: string,
   variantSku?: string | null,
+  quantity = 1,
 ): Promise<ActionResult> {
   if (!productId) return { error: ERROR_MESSAGES.INVALID_PRODUCT! };
   try {
-    await addToCart(productId, 1, variantSku, await cartUserId());
+    await addToCart(productId, quantity, variantSku, await cartUserId());
     return {};
   } catch (error) {
     return { error: toUserError(error, 'Không thể thêm vào giỏ hàng') };

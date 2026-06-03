@@ -71,4 +71,7 @@ export const RATE_LIMIT_PRESETS = {
   checkout: { limit: 10, windowMs: 60_000 },
   auth: { limit: 20, windowMs: 60_000 },
   api: { limit: 60, windowMs: 60_000 },
+  // Analytics beacons get their own looser bucket so they never starve the
+  // functional /api budget on shared IPs (offices, mobile carriers).
+  track: { limit: 120, windowMs: 60_000 },
 } as const satisfies Record<string, RateLimitConfig>;

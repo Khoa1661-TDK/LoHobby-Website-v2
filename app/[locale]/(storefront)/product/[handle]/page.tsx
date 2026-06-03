@@ -7,6 +7,7 @@ import Footer from '@/components/layout/footer';
 import GridTileImage from '@/components/grid/tile';
 import ProductReviews from '@/components/product/reviews';
 import RecentlyViewed from '@/components/product/recently-viewed';
+import ProductViewTracker from '@/components/analytics/product-view-tracker';
 import VariantSelector from '@/components/product/variant-selector';
 import { getSiteName } from '@/lib/brand';
 import { canonicalCategorySlug } from '@/lib/default-categories';
@@ -230,6 +231,7 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
           variants={variants}
         />
         <ProductReviews productId={product.id} productHandle={product.handle} />
+        <ProductViewTracker productId={String(product.id)} productHandle={product.handle} />
         <RecentlyViewed
           current={{
             handle: product.handle,

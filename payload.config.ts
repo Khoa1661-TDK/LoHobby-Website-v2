@@ -6,18 +6,22 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { en } from '@payloadcms/translations/languages/en';
 import { buildConfig } from 'payload';
 import sharp from 'sharp';
+import { BlogCategories } from './src/payload/collections/BlogCategories';
 import { Carts } from './src/payload/collections/Carts';
 import { Categories } from './src/payload/collections/Categories';
 import { ContentPages } from './src/payload/collections/ContentPages';
+import { Posts } from './src/payload/collections/Posts';
 import { Pages } from './src/payload/collections/Pages';
 import { Media } from './src/payload/collections/Media';
 import { Orders } from './src/payload/collections/Orders';
 import { PaymentMethods } from './src/payload/collections/PaymentMethods';
 import { ProductVariants } from './src/payload/collections/ProductVariants';
 import { Products } from './src/payload/collections/Products';
+import { Redirects } from './src/payload/collections/Redirects';
 import { StoreCustomers } from './src/payload/collections/StoreCustomers';
 import { Users } from './src/payload/collections/Users';
 import { DropshipSettings } from './src/payload/globals/DropshipSettings';
+import { Navigation } from './src/payload/globals/Navigation';
 import { ShippingSettings } from './src/payload/globals/ShippingSettings';
 import { SiteHeader } from './src/payload/globals/SiteHeader';
 import { StoreSettings } from './src/payload/globals/StoreSettings';
@@ -70,10 +74,13 @@ export default buildConfig({
     Carts,
     Orders,
     ContentPages,
+    BlogCategories,
+    Posts,
     StoreCustomers,
     Pages,
+    Redirects,
   ],
-  globals: [SiteHeader, StoreSettings, ShippingSettings, DropshipSettings],
+  globals: [SiteHeader, Navigation, StoreSettings, ShippingSettings, DropshipSettings],
   db: postgresAdapter({
     pool: {
       connectionString: databaseUrl,

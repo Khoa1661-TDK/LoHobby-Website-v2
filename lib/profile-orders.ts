@@ -1,5 +1,5 @@
 // lib/profile-orders.ts — profile UI reads Payload `orders` (ShopNex SoT)
-import type { ProfileOrder, ProfileOrderStatus } from '@/app/(storefront)/profile/types';
+import type { ProfileOrder, ProfileOrderStatus } from '@/app/[locale]/(storefront)/profile/types';
 import { carrierLabel } from '@/lib/shipment/carriers';
 import { SHIPMENT_STATUS_LABELS, type ShipmentStatus } from '@/lib/shipment/types';
 import { listPayloadOrdersForUser } from '@/lib/payload-orders';

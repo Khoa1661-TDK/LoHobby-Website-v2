@@ -5,14 +5,20 @@ import BrandLogo from '@/components/brand-logo';
 import HoverDropdown from '@/components/layout/navbar/hover-dropdown';
 import Cart from '@/components/cart';
 import { AuthNav } from '@/components/layout/navbar/auth-nav';
+import LanguageSwitcher from '@/components/layout/navbar/language-switcher';
 import MobileMenu from '@/components/layout/navbar/mobile-menu';
 import Search, { SearchSkeleton } from '@/components/layout/navbar/search';
 import ThemeToggle from '@/components/theme-toggle';
+import { getMobileMenu } from '@/lib/navigation';
 import { getStoreBranding } from '@/lib/store-branding';
 import { getSiteHeaderTabs } from '@/lib/site-header';
 
 export async function Navbar(): Promise<ReactElement> {
-  const [tabs, branding] = await Promise.all([getSiteHeaderTabs(), getStoreBranding()]);
+  const [tabs, branding, mobileMenu] = await Promise.all([
+    getSiteHeaderTabs(),
+    getStoreBranding(),
+    getMobileMenu(),
+  ]);
 
   return (
     <nav className="sticky top-0 z-40 border-b border-warm-200/80 bg-warm-50/85 backdrop-blur-xl backdrop-saturate-150 dark:border-warm-800/50 dark:bg-warm-950/85">
@@ -29,7 +35,7 @@ export async function Navbar(): Promise<ReactElement> {
         {/* Mobile menu trigger */}
         <div className="block flex-none md:hidden">
           <Suspense fallback={null}>
-            <MobileMenu tabs={tabs} />
+            <MobileMenu columns={mobileMenu} />
           </Suspense>
         </div>
 
@@ -79,6 +85,9 @@ export async function Navbar(): Promise<ReactElement> {
           </div>
 
           <div className="flex items-center gap-1.5">
+            <div className="hidden md:block">
+              <LanguageSwitcher />
+            </div>
             <ThemeToggle />
             <AuthNav />
             <Cart />

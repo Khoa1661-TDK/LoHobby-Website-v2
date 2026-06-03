@@ -1,0 +1,19 @@
+{
+  "common": {
+    "language": "Language",
+    "vietnamese": "Vietnamese",
+    "english": "English",
+    "skipToContent": "Skip to content"
+  },
+  "nav": {},
+  "footer": {},
+  "cart": {},
+  "product": {},
+  "checkout": {},
+  "auth": {},
+  "profile": {},
+  "search": {},
+  "home": {},
+  "blog": {},
+  "info": {}
+}

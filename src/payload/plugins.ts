@@ -14,7 +14,12 @@ const appBaseUrl =
   'http://localhost:3000';
 
 const generateSeoTitle: GenerateTitle = ({ doc }) => {
-  const title = typeof doc?.title === 'string' ? doc.title : '';
+  const title =
+    typeof doc?.title === 'string'
+      ? doc.title
+      : typeof doc?.name === 'string'
+        ? doc.name
+        : '';
   return title ? `${title} | ${storeName}` : storeName;
 };
 
@@ -29,6 +34,12 @@ const generateSeoURL: GenerateURL = ({ doc, collectionConfig }) => {
   }
   if (collectionConfig?.slug === 'content-pages') {
     return `${appBaseUrl}/pages/${slug}`;
+  }
+  if (collectionConfig?.slug === 'posts') {
+    return `${appBaseUrl}/blog/${slug}`;
+  }
+  if (collectionConfig?.slug === 'blog-categories') {
+    return `${appBaseUrl}/blog/category/${slug}`;
   }
   return `${appBaseUrl}/product/${slug}`;
 };
@@ -107,7 +118,7 @@ export const shopnexPlugins: Plugin[] = [
     ],
   }),
   seoPlugin({
-    collections: ['products', 'categories', 'content-pages', 'pages'],
+    collections: ['products', 'categories', 'content-pages', 'pages', 'posts', 'blog-categories'],
     uploadsCollection: 'media',
     generateTitle: generateSeoTitle,
     generateURL: generateSeoURL,
