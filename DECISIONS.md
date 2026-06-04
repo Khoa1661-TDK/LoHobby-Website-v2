@@ -85,3 +85,30 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** The store needs translated product/blog/page content (adopt Payload `localized` fields), localized SEO/hreflang, or a third locale.
 
 ---
+
+## 2026-06-04 — Admin chrome retheme via single base-color ramp + @import fonts
+**Chosen:** Restyle Payload's sidebar (`.nav*`) and header (`.app-header`/`.step-nav`) plus a global token retheme to a shadcn/ui "slate" look, all in `app/(payload)/custom.scss`. The whole light+dark elevation system is re-pointed by overriding ONE scale — `--color-base-0…1000` — on `html[data-theme='light'],html[data-theme='dark']`; Payload derives every `--theme-elevation-*`/border/input/button token from it (light straight, dark inverted). Chrome rules are kept UNLAYERED so they beat Payload's `@layer payload-default` without `!important`. Inter (body) + Plus Jakarta Sans (display) are loaded via a Google Fonts `@import` at the top of the SCSS.
+**Alternatives:** (a) Override each `--theme-elevation-*` token individually for both themes; (b) load fonts via `next/font` in `app/(payload)/layout.tsx` and expose CSS vars; (c) build a fully custom Nav/AppHeader via `admin.components` swaps (icon mini-rail, ⌘K palette, profile dropdown).
+**Why:** Re-pointing the single base ramp is dramatically less code, themes both modes at once, and survives Payload token renames across upgrades. Unlayered author styles win the cascade over Payload's layered chrome by rule, avoiding specificity wars. `@import` keeps the deliverable self-contained SCSS; the admin is behind auth so the blocking-fetch cost is irrelevant. Consistent with the prior two admin decisions (stay on Payload tokens, SCSS not Tailwind).
+**Trade-offs:** `@import` fonts add a render-blocking request on `/admin` (acceptable, gated) vs. the `next/font` optimization used on the storefront. CSS alone cannot deliver three brief items — per-link Lucide icons, a persistent icon-only "mini rail", and the ⌘K command palette / profile dropdown — those need React component swaps via `importMap` and were explicitly deferred. Payload's native collapse (`.nav-toggler` slides `.nav` fully off-canvas) is reused rather than converted to a mini-rail.
+**Revisit if:** The team wants the ⌘K palette / Lucide nav icons / mini-rail, at which point custom `Nav` + header action components are built and registered in `payload.config.ts`.
+
+---
+
+## 2026-06-04 — Live chat via embedded Zalo/Messenger SDKs
+**Chosen:** Embed the official Zalo OA chat SDK and Facebook Messenger Chat Plugin as stacked floating bubbles (Messenger lifted above Zalo via CSS in `app/globals.css`), configured in the `StoreSettings` admin global (new "Live chat" tab), loaded on every storefront page via a `'use client'` `LiveChatWidget` using `next/script` `strategy="lazyOnload"`. Config flows through `resolveChatConfig()`/`getChatConfig()` in `lib/store-settings.ts`; a platform is treated as off unless its toggle is on AND its ID is non-empty.
+**Alternatives:** (1) Lightweight link-out contact bubble (`zalo.me` / `m.me` / `tel:`) with no third-party scripts. (2) Consent-gated loading via the existing `hasAnalyticsConsent()` + `CONSENT_EVENT`. (3) Env-var config (`NEXT_PUBLIC_*`) instead of admin. (4) Show only Messenger when both IDs set, to avoid two bubbles.
+**Why:** User decisions — embedded SDKs for real in-page chat; admin config to fit the white-label storefront with no redeploy and cached/revalidated like the rest of the global; always-load because chat is treated as functional for a VN-focused shop; both bubbles stacked (standard VN-shop pattern, no JS coordination between SDKs).
+**Trade-offs:** Always-load brings Facebook/Zalo third-party cookies before cookie consent — weaker privacy posture than the consent-gated `Analytics`, a compliance risk in stricter (EU/GDPR) markets. Two heavy vendor SDKs add bottom-right bubbles whose stacking offsets are vendor-CSS-dependent and may need tuning. Messenger requires a manual one-time domain whitelist in the Facebook Page settings (Inbox → Chat Plugin → Whitelisted Domains) that cannot be automated — the bubble will not appear until done.
+**Revisit if:** Expanding to EU/GDPR markets (gate behind consent), the dual SDKs hurt Core Web Vitals (switch to link-out bubbles), or vendor CSS changes break the bubble stacking offsets.
+
+---
+
+## 2026-06-03 — Seller order notifications via Zalo OA
+**Chosen:** Notify the seller through a Zalo Official Account message on order creation, triggered by a Payload `Orders.afterChange` hook (operation === 'create'). OA credentials live in an admin-managed `notification-settings` global; access tokens auto-refresh and the rotated refresh token is persisted back.
+**Alternatives:** Zalo ZNS template messages (rejected: template approval + per-message cost, aimed at customers); calling the notifier directly from the checkout route (rejected: misses non-checkout order sources, couples checkout to notifications); a polling/queue worker (rejected: over-engineered for a single-seller ping).
+**Why:** OA messages are free and adequate for notifying one internal recipient; the afterChange hook captures every order source and mirrors the existing inventory-sync hook; admin-managed config fits the template's "configure it to liking" goal. Notification is fire-and-forget so Zalo downtime never blocks an order.
+**Trade-offs:** OA "consultation" message window can expire if the seller goes silent for a long time; the OA app secret/tokens are stored in plaintext in the admin global (admin-only access). Encrypting via the existing PAYMENT_SECRETS_KEY pattern is a noted follow-up.
+**Revisit if:** the seller needs customer-facing notifications, multi-recipient/team alerts, or per-status (paid/shipped) notifications; or if plaintext secret storage becomes unacceptable.
+
+---
