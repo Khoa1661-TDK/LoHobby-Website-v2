@@ -17,7 +17,9 @@ import CookieConsent from '@/components/cookie-consent';
 import Providers from '@/components/providers';
 import PwaInstallPrompt from '@/components/pwa-install-prompt';
 import WelcomeToast from '@/components/welcome-toast';
+import LiveChatWidget from '@/components/chat/live-chat-widget';
 import { getStoreBranding } from '@/lib/store-branding';
+import { getChatConfig } from '@/lib/store-settings';
 import { baseUrl } from '@/lib/utils';
 import '../../globals.css';
 
@@ -151,10 +153,11 @@ export default async function StorefrontLayout({
   // Enable static rendering for this locale segment.
   setRequestLocale(locale);
 
-  const [branding, messages, t] = await Promise.all([
+  const [branding, messages, t, chatConfig] = await Promise.all([
     getStoreBranding(),
     getMessages(),
     getTranslations('common'),
+    getChatConfig(),
   ]);
 
   return (
@@ -195,6 +198,7 @@ export default async function StorefrontLayout({
             </main>
             <CookieConsent />
             <PwaInstallPrompt />
+            <LiveChatWidget config={chatConfig} />
             <Suspense fallback={null}>
               <Analytics />
             </Suspense>
