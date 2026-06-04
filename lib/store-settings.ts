@@ -18,6 +18,8 @@ export type ResolvedStoreSettings = {
   privacyPolicyUrl: string | null;
   taxEnabled: boolean;
   taxRatePercent: number;
+  /** Live-chat widget config (Zalo OA + Facebook Messenger). */
+  chat: ChatConfig;
   /** Raw branding fields from Payload for resolveStoreBranding(). */
   brandingRaw: Record<string, unknown> | null;
 };
@@ -100,6 +102,7 @@ const DEFAULTS: ResolvedStoreSettings = {
   privacyPolicyUrl: null,
   taxEnabled: false,
   taxRatePercent: 10,
+  chat: { enabled: false, zalo: null, messenger: null },
   brandingRaw: null,
 };
 
@@ -158,6 +161,7 @@ function resolve(raw: RawStoreSettings | null): ResolvedStoreSettings {
     privacyPolicyUrl,
     taxEnabled,
     taxRatePercent,
+    chat: resolveChatConfig(raw),
     brandingRaw: raw ? { ...raw } : null,
   };
 }
@@ -186,6 +190,11 @@ export async function getStoreSettings(): Promise<ResolvedStoreSettings> {
 export async function getResolvedSiteName(): Promise<string> {
   const settings = await getStoreSettings();
   return settings.storeName;
+}
+
+export async function getChatConfig(): Promise<ChatConfig> {
+  const settings = await getStoreSettings();
+  return settings.chat;
 }
 
 export function revalidateStoreSettingsCache(): void {
