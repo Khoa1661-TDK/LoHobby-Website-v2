@@ -22,6 +22,45 @@ export type ResolvedStoreSettings = {
   brandingRaw: Record<string, unknown> | null;
 };
 
+export type ChatConfig = {
+  enabled: boolean;
+  zalo: { enabled: boolean; oaId: string; welcomeMessage: string } | null;
+  messenger: {
+    enabled: boolean;
+    pageId: string;
+    themeColor: string;
+    greeting: string;
+  } | null;
+};
+
+function cleanString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/** Pure: normalize the raw Live-chat fields into a ChatConfig. */
+export function resolveChatConfig(raw: RawStoreSettings | null): ChatConfig {
+  const enabled = raw?.chatEnabled === true;
+
+  const oaId = cleanString(raw?.zaloOaId);
+  const zalo =
+    raw?.zaloChatEnabled === true && oaId.length > 0
+      ? { enabled: true, oaId, welcomeMessage: cleanString(raw?.zaloWelcomeMessage) }
+      : null;
+
+  const pageId = cleanString(raw?.fbPageId);
+  const messenger =
+    raw?.messengerChatEnabled === true && pageId.length > 0
+      ? {
+          enabled: true,
+          pageId,
+          themeColor: cleanString(raw?.messengerThemeColor),
+          greeting: cleanString(raw?.messengerGreeting),
+        }
+      : null;
+
+  return { enabled, zalo, messenger };
+}
+
 type RawStoreSettings = {
   storeName?: string | null;
   contactEmail?: string | null;
@@ -45,6 +84,14 @@ type RawStoreSettings = {
   accentColor?: string | null;
   footerCredit?: string | null;
   socialLinks?: unknown;
+  chatEnabled?: boolean | null;
+  zaloChatEnabled?: boolean | null;
+  zaloOaId?: string | null;
+  zaloWelcomeMessage?: string | null;
+  messengerChatEnabled?: boolean | null;
+  fbPageId?: string | null;
+  messengerThemeColor?: string | null;
+  messengerGreeting?: string | null;
 };
 
 const DEFAULTS: ResolvedStoreSettings = {
