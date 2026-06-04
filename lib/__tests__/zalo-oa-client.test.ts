@@ -89,7 +89,7 @@ describe('getValidAccessToken', () => {
 
     expect(token).toBe('new-access');
     expect(payload.updateGlobal).toHaveBeenCalledOnce();
-    const arg = payload.updateGlobal.mock.calls[0][0] as {
+    const arg = payload.updateGlobal.mock.calls[0]![0] as {
       slug: string;
       data: Record<string, unknown>;
     };

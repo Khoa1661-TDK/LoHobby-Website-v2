@@ -1,7 +1,7 @@
 // src/payload/collections/Orders.ts — ShopNex-compatible Payload orders (source of truth)
 import type { CollectionConfig } from 'payload';
 import { payloadAdminAccess } from '@/lib/payload-access';
-import { syncOrderInventoryOnStatusChange, normalizeOrderPaymentOnChange } from '@/lib/payload-order-hooks';
+import { syncOrderInventoryOnStatusChange, normalizeOrderPaymentOnChange, notifySellerOnNewOrder } from '@/lib/payload-order-hooks';
 import { groups } from '@/src/payload/groups';
 
 export const Orders: CollectionConfig = {
@@ -28,7 +28,7 @@ export const Orders: CollectionConfig = {
   },
   hooks: {
     beforeChange: [normalizeOrderPaymentOnChange],
-    afterChange: [syncOrderInventoryOnStatusChange],
+    afterChange: [syncOrderInventoryOnStatusChange, notifySellerOnNewOrder],
   },
   fields: [
     {
