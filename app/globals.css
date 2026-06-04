@@ -228,3 +228,15 @@
     @apply transition-all duration-300 ease-smooth;
   }
 }
+
+/* Live chat: stack Messenger above the Zalo bubble so they don't overlap. */
+.fb_dialog {
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.fb_dialog.fb_dialog_advanced,
+.fb-customerchat > span > iframe {
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.zalo-chat-widget {
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
