@@ -341,6 +341,83 @@ export const StoreSettings: GlobalConfig = {
           ],
         },
         {
+          label: 'Live chat',
+          fields: [
+            {
+              name: 'chatEnabled',
+              type: 'checkbox',
+              label: 'Enable live chat widget',
+              defaultValue: false,
+              admin: {
+                description: 'Master switch for the floating Zalo / Messenger chat bubbles.',
+              },
+            },
+            {
+              name: 'zaloChatEnabled',
+              type: 'checkbox',
+              label: 'Show Zalo chat',
+              defaultValue: false,
+              admin: { condition: (_data, sibling) => Boolean(sibling?.chatEnabled) },
+            },
+            {
+              name: 'zaloOaId',
+              type: 'text',
+              label: 'Zalo Official Account ID',
+              admin: {
+                condition: (_data, sibling) =>
+                  Boolean(sibling?.chatEnabled && sibling?.zaloChatEnabled),
+                description: 'Found in Zalo OA Manager → Settings → OA info.',
+              },
+            },
+            {
+              name: 'zaloWelcomeMessage',
+              type: 'text',
+              label: 'Zalo welcome message',
+              admin: {
+                condition: (_data, sibling) =>
+                  Boolean(sibling?.chatEnabled && sibling?.zaloChatEnabled),
+              },
+            },
+            {
+              name: 'messengerChatEnabled',
+              type: 'checkbox',
+              label: 'Show Messenger chat',
+              defaultValue: false,
+              admin: { condition: (_data, sibling) => Boolean(sibling?.chatEnabled) },
+            },
+            {
+              name: 'fbPageId',
+              type: 'text',
+              label: 'Facebook Page ID',
+              admin: {
+                condition: (_data, sibling) =>
+                  Boolean(sibling?.chatEnabled && sibling?.messengerChatEnabled),
+                description:
+                  'Required. You must also whitelist this site domain in the Facebook Page: Inbox → Chat Plugin → Whitelisted Domains, or the bubble will not appear.',
+              },
+            },
+            {
+              name: 'messengerThemeColor',
+              type: 'text',
+              label: 'Messenger accent color (hex)',
+              admin: {
+                placeholder: '#2563eb',
+                condition: (_data, sibling) =>
+                  Boolean(sibling?.chatEnabled && sibling?.messengerChatEnabled),
+              },
+            },
+            {
+              name: 'messengerGreeting',
+              type: 'text',
+              label: 'Messenger greeting',
+              admin: {
+                condition: (_data, sibling) =>
+                  Boolean(sibling?.chatEnabled && sibling?.messengerChatEnabled),
+              },
+            },
+          ],
+        },
+        {
           label: 'Tax',
           fields: [
             {
