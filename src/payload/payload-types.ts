@@ -2530,6 +2530,23 @@ export interface StoreSetting {
   checkoutNote?: string | null;
   returnsPolicyUrl?: string | null;
   privacyPolicyUrl?: string | null;
+  /**
+   * Master switch for the floating Zalo / Messenger chat bubbles.
+   */
+  chatEnabled?: boolean | null;
+  zaloChatEnabled?: boolean | null;
+  /**
+   * Found in Zalo OA Manager → Settings → OA info.
+   */
+  zaloOaId?: string | null;
+  zaloWelcomeMessage?: string | null;
+  messengerChatEnabled?: boolean | null;
+  /**
+   * Required. You must also whitelist this site domain in the Facebook Page: Inbox → Chat Plugin → Whitelisted Domains, or the bubble will not appear.
+   */
+  fbPageId?: string | null;
+  messengerThemeColor?: string | null;
+  messengerGreeting?: string | null;
   taxEnabled?: boolean | null;
   taxRatePercent?: number | null;
   updatedAt?: string | null;
@@ -2713,6 +2730,14 @@ export interface StoreSettingsSelect<T extends boolean = true> {
   checkoutNote?: T;
   returnsPolicyUrl?: T;
   privacyPolicyUrl?: T;
+  chatEnabled?: T;
+  zaloChatEnabled?: T;
+  zaloOaId?: T;
+  zaloWelcomeMessage?: T;
+  messengerChatEnabled?: T;
+  fbPageId?: T;
+  messengerThemeColor?: T;
+  messengerGreeting?: T;
   taxEnabled?: T;
   taxRatePercent?: T;
   updatedAt?: T;
