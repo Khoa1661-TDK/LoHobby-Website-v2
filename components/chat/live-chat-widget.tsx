@@ -17,6 +17,7 @@ declare module 'react' {
 }
 
 const FB_SDK_SRC = 'https://connect.facebook.net/vi_VN/sdk/xfbml.customerchat.js';
+const FB_SDK_VERSION = 'v21.0';
 const ZALO_SDK_SRC = 'https://sp.zalo.me/plugins/sdk.js';
 
 export default function LiveChatWidget({ config }: { config: ChatConfig }): ReactElement | null {
@@ -28,7 +29,7 @@ export default function LiveChatWidget({ config }: { config: ChatConfig }): Reac
     if (!messenger) return;
     (window as unknown as { fbAsyncInit?: () => void }).fbAsyncInit = () => {
       const FB = (window as unknown as { FB?: { init: (o: Record<string, unknown>) => void } }).FB;
-      FB?.init({ xfbml: true, version: 'v21.0' });
+      FB?.init({ xfbml: true, version: FB_SDK_VERSION });
     };
   }, [messenger]);
 
@@ -65,8 +66,6 @@ export default function LiveChatWidget({ config }: { config: ChatConfig }): Reac
             data-oaid={config.zalo.oaId}
             data-welcome-message={config.zalo.welcomeMessage || undefined}
             data-autopopup="0"
-            data-width=""
-            data-height=""
           />
           <Script id="zalo-chat-sdk" src={ZALO_SDK_SRC} strategy="lazyOnload" />
         </>
