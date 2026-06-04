@@ -1,5 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { resolveChatConfig, type ChatConfig } from '@/lib/store-settings';
+
+vi.mock('@payload-config', () => ({ default: {} }));
+vi.mock('payload', () => ({ getPayload: vi.fn() }));
+vi.mock('next/cache', () => ({
+  unstable_cache: (fn: unknown) => fn,
+  revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
+}));
 
 describe('resolveChatConfig', () => {
   it('should disable the whole widget when chatEnabled is false', () => {
@@ -56,8 +64,8 @@ describe('resolveChatConfig', () => {
     });
     const expected: ChatConfig = {
       enabled: true,
-      zalo: { enabled: true, oaId: 'oa-1', welcomeMessage: 'Xin chào' },
-      messenger: { enabled: true, pageId: 'page-1', themeColor: '#2563eb', greeting: 'Hi there' },
+      zalo: { oaId: 'oa-1', welcomeMessage: 'Xin chào' },
+      messenger: { pageId: 'page-1', themeColor: '#2563eb', greeting: 'Hi there' },
     };
     expect(result).toEqual(expected);
   });

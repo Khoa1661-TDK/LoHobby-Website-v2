@@ -24,13 +24,8 @@ export type ResolvedStoreSettings = {
 
 export type ChatConfig = {
   enabled: boolean;
-  zalo: { enabled: boolean; oaId: string; welcomeMessage: string } | null;
-  messenger: {
-    enabled: boolean;
-    pageId: string;
-    themeColor: string;
-    greeting: string;
-  } | null;
+  zalo: { oaId: string; welcomeMessage: string } | null;
+  messenger: { pageId: string; themeColor: string; greeting: string } | null;
 };
 
 function cleanString(value: unknown): string {
@@ -44,14 +39,13 @@ export function resolveChatConfig(raw: RawStoreSettings | null): ChatConfig {
   const oaId = cleanString(raw?.zaloOaId);
   const zalo =
     raw?.zaloChatEnabled === true && oaId.length > 0
-      ? { enabled: true, oaId, welcomeMessage: cleanString(raw?.zaloWelcomeMessage) }
+      ? { oaId, welcomeMessage: cleanString(raw?.zaloWelcomeMessage) }
       : null;
 
   const pageId = cleanString(raw?.fbPageId);
   const messenger =
     raw?.messengerChatEnabled === true && pageId.length > 0
       ? {
-          enabled: true,
           pageId,
           themeColor: cleanString(raw?.messengerThemeColor),
           greeting: cleanString(raw?.messengerGreeting),
