@@ -125,6 +125,7 @@ export interface Config {
     'store-settings': StoreSetting;
     'shipping-settings': ShippingSetting;
     'dropship-settings': DropshipSetting;
+    'notification-settings': NotificationSetting;
   };
   globalsSelect: {
     'site-header': SiteHeaderSelect<false> | SiteHeaderSelect<true>;
@@ -132,6 +133,7 @@ export interface Config {
     'store-settings': StoreSettingsSelect<false> | StoreSettingsSelect<true>;
     'shipping-settings': ShippingSettingsSelect<false> | ShippingSettingsSelect<true>;
     'dropship-settings': DropshipSettingsSelect<false> | DropshipSettingsSelect<true>;
+    'notification-settings': NotificationSettingsSelect<false> | NotificationSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -2613,6 +2615,36 @@ export interface DropshipSetting {
   createdAt?: string | null;
 }
 /**
+ * Zalo Official Account notifications sent to the seller when a new order is placed.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notification-settings".
+ */
+export interface NotificationSetting {
+  id: number;
+  zaloEnabled?: boolean | null;
+  /**
+   * From the Zalo for Developers app dashboard.
+   */
+  zaloAppId?: string | null;
+  zaloAppSecret?: string | null;
+  /**
+   * The user_id that has chatted with the OA and will receive messages.
+   */
+  zaloRecipientUserId?: string | null;
+  /**
+   * Paste the initial refresh token obtained from OA OAuth. Auto-rotated thereafter.
+   */
+  zaloRefreshToken?: string | null;
+  /**
+   * Set automatically; do not edit.
+   */
+  zaloAccessToken?: string | null;
+  zaloTokenExpiresAt?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-header_select".
  */
@@ -2778,6 +2810,22 @@ export interface DropshipSettingsSelect<T extends boolean = true> {
   apiKey?: T;
   autoSubmitOnPaid?: T;
   note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notification-settings_select".
+ */
+export interface NotificationSettingsSelect<T extends boolean = true> {
+  zaloEnabled?: T;
+  zaloAppId?: T;
+  zaloAppSecret?: T;
+  zaloRecipientUserId?: T;
+  zaloRefreshToken?: T;
+  zaloAccessToken?: T;
+  zaloTokenExpiresAt?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
