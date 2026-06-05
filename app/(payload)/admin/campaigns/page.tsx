@@ -27,8 +27,8 @@ export default async function AdminCampaignsPage(): Promise<ReactElement> {
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-neutral-900">Email campaigns</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Phase 3 — gửi tới {subscriberCount.toLocaleString('vi-VN')} newsletter subscribers
-          (stub log; chưa kết nối ESP).
+          Gửi tới {subscriberCount.toLocaleString('vi-VN')} newsletter subscribers qua Resend
+          (đặt RESEND_API_KEY và EMAIL_FROM để kích hoạt).
         </p>
       </header>
 
