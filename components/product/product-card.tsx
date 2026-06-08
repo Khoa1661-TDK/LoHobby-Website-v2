@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ReactElement } from 'react';
 import Price from '@/components/price';
 import WishlistButton from '@/components/wishlist/wishlist-button';
+import ProductCardTracker from '@/components/product/product-card-tracker';
 import {
   BADGE_LABELS,
   BADGE_STYLES,
@@ -106,6 +107,8 @@ export default function ProductCard({ product, priority, index = 0 }: Props): Re
           ) : null}
         </div>
       </div>
+
+      <ProductCardTracker productId={product.id} productHandle={product.handle} />
     </Link>
   );
 }
