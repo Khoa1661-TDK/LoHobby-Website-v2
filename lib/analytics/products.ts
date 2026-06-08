@@ -2,6 +2,8 @@
 //
 // Orchestrates fetching orders and view events, then delegates to the pure
 // aggregation functions in product-metrics.ts.
+import config from '@payload-config';
+import { getPayload } from 'payload';
 import { prisma } from '@/lib/prisma';
 import {
   fetchOrdersInRange,
@@ -13,8 +15,11 @@ import {
   bottomSellers,
   aggregateAttention,
   computeViewToBuy,
+  joinDiscountedItems,
   type ProductSales,
   type ViewToBuyRow,
+  type DiscountedItemRow,
+  type OnSaleProduct,
 } from '@/lib/analytics/product-metrics';
 
 const PERFORMANCE_LIMIT = 8;
@@ -51,4 +56,31 @@ export async function getProductPerformance(
     bottomSellers: bottomSellers(sales, PERFORMANCE_LIMIT),
     viewToBuy: computeViewToBuy(sales, aggregateAttention(viewEvents)),
   };
+}
+
+export async function getDiscountedItemPerformance(
+  start: Date,
+  end: Date,
+): Promise<DiscountedItemRow[]> {
+  const payload = await getPayload({ config });
+  const [onSaleResult, orders] = await Promise.all([
+    payload.find({
+      collection: 'products',
+      where: { onSale: { equals: true } },
+      pagination: false,
+      limit: 1000,
+      select: { title: true, slug: true, salePercent: true },
+    }),
+    fetchOrdersInRange(start, end),
+  ]);
+
+  const onSale: OnSaleProduct[] = onSaleResult.docs.map((d) => ({
+    productId: String(d.id),
+    slug: (d as { slug?: string }).slug ?? '',
+    title: (d as { title?: string }).title ?? '',
+    salePercent: (d as { salePercent?: number }).salePercent ?? 0,
+  }));
+
+  const sales = aggregateSales(orders.filter(isRevenueOrder));
+  return joinDiscountedItems(onSale, sales);
 }
