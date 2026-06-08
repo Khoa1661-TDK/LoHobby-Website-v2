@@ -35,6 +35,7 @@
     "seed:theme": "tsx scripts/seed-theme-preset.ts",
     "payload:types": "payload generate:types",
     "payload:importmap": "payload generate:importmap",
+    "payload:migrate-content-pages": "tsx scripts/migrate-content-pages.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "check-types": "tsc --noEmit",
