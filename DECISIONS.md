@@ -121,3 +121,12 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** the seller needs customer-facing notifications, multi-recipient/team alerts, or per-status (paid/shipped) notifications; or if plaintext secret storage becomes unacceptable.
 
 ---
+
+## 2026-06-08 — CTR daily-rollup vs per-event storage
+**Chosen:** Store impressions and clicks in a daily rollup table (`ProductCtrDaily` with `@@unique([productId, day])`), with capture endpoints upsert-and-increment counters. NOT per-event rows.
+**Alternatives:** (1) Per-event rows following the existing `ProductViewEvent` / `AddToCartEvent` pattern. (2) Client-side aggregation with a single daily beacon per session.
+**Why:** Impressions are far higher volume than page views — every product card in every grid on every listing page generates one. Per-event rows would bloat the table and slow range aggregation. A daily rollup keeps writes and queries cheap (one upsert per product per day, regardless of impression count). The min-impressions threshold (default 20) in `computeCtr()` further suppresses noisy ratios from tiny sample sizes.
+**Trade-offs:** Loss of per-event granularity — cannot answer "how many cards were seen per session" or "what time of day do users browse." CTR is a summary metric; these questions would need a separate capture path.
+**Revisit if:** Analysts need per-session impression counts or time-of-day breakdowns (add a sampled per-event table alongside the rollup).
+
+---
