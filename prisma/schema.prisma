@@ -325,3 +325,23 @@ model ProductViewEvent {
   @@index([productId])
   @@index([createdAt])
 }
+
+/**
+ * A single add-to-cart action. Consent-gated, pseudonymous. `customerId` is set
+ * server-side from the auth session (never trusted from the client body) so the
+ * add-to-cart → purchase funnel can join against converted customers.
+ */
+model AddToCartEvent {
+  id            String   @id @default(cuid())
+  anonId        String
+  sessionId     String
+  customerId    String?
+  productId     String
+  productHandle String   @default("")
+  quantity      Int      @default(1)
+  createdAt     DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([productId])
+  @@index([createdAt])
+}
