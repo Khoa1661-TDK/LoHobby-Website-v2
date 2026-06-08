@@ -234,3 +234,36 @@ export function joinDiscountedItems(
     })
     .sort((a, b) => b.revenueVnd - a.revenueVnd);
 }
+
+// ---------------------------------------------------------------------------
+// Click-through rate
+// ---------------------------------------------------------------------------
+
+export type CtrRow = {
+  productId: string;
+  impressions: number;
+  clicks: number;
+  /** clicks / impressions, 0–100, one decimal. */
+  ctrPct: number;
+};
+
+/**
+ * Compute CTR per product from summed impression/click counts, sorted by
+ * impressions descending. Products below `minImpressions` (default 20) are
+ * dropped to suppress noisy ratios from tiny sample sizes.
+ */
+export function computeCtr(
+  rows: { productId: string; impressions: number; clicks: number }[],
+  opts?: { minImpressions?: number },
+): CtrRow[] {
+  const minImpressions = opts?.minImpressions ?? 20;
+  return rows
+    .filter((r) => r.impressions >= minImpressions)
+    .map((r) => ({
+      productId: r.productId,
+      impressions: r.impressions,
+      clicks: r.clicks,
+      ctrPct: r.impressions > 0 ? round1((r.clicks / r.impressions) * 100) : 0,
+    }))
+    .sort((a, b) => b.impressions - a.impressions);
+}
