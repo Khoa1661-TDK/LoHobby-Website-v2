@@ -22,7 +22,7 @@ import {
 } from '@/lib/analytics/dashboard';
 import { resolvePeriod, previousPeriod } from '@/lib/analytics/period';
 import { getTrafficBySource } from '@/lib/analytics/traffic';
-import { getProductPerformance, getDiscountedItemPerformance } from '@/lib/analytics/products';
+import { getProductPerformance, getDiscountedItemPerformance, getProductCtr } from '@/lib/analytics/products';
 import { getCartAbandonment } from '@/lib/analytics/carts-data';
 import { AnalyticsSalesChart } from '@/src/payload/components/analytics/AnalyticsSalesChart';
 import { MetricCard } from '@/src/payload/components/analytics/MetricCard';
@@ -90,7 +90,7 @@ export async function AnalyticsDashboard(props: DashboardProps): Promise<ReactEl
   const period = resolvePeriod(props.searchParams ?? {}, now);
   const prev = previousPeriod(period);
 
-  const [currentOrders, lastOrders, trafficBySource, productPerformance, discounted, cart] =
+  const [currentOrders, lastOrders, trafficBySource, productPerformance, discounted, cart, ctr] =
     await Promise.all([
       fetchOrdersInRange(period.start, period.end),
       fetchOrdersInRange(prev.start, prev.end),
@@ -98,11 +98,16 @@ export async function AnalyticsDashboard(props: DashboardProps): Promise<ReactEl
       getProductPerformance(period.start, period.end),
       getDiscountedItemPerformance(period.start, period.end),
       getCartAbandonment(period.start, period.end),
+      getProductCtr(period.start, period.end),
     ]);
 
   const currentMetrics = computeMonthlyMetrics(currentOrders);
   const lastMetrics = computeMonthlyMetrics(lastOrders);
   const salesData = buildDailySalesChart(currentOrders);
+  const titleMap = new Map(
+    productPerformance.viewToBuy.map((v) => [v.productId, v.productTitle || v.productHandle]),
+  );
+  const titleFor = (id: string): string => titleMap.get(id) || id;
 
   return (
     <Gutter>
@@ -307,6 +312,32 @@ export async function AnalyticsDashboard(props: DashboardProps): Promise<ReactEl
             <li><MetricCard tone="value" icon={<Receipt size={18} aria-hidden />} title="Tỉ lệ bỏ giỏ" value={`${cart.abandonment.abandonmentPct}%`} /></li>
             <li><MetricCard tone="revenue" icon={<Wallet size={18} aria-hidden />} title="Thêm giỏ → mua" value={`${cart.funnel.conversionPct}%`} /></li>
           </ul>
+        </section>
+
+        {/* ── Click-through rate ── */}
+        <section className="dash-table-group">
+          <header className="dash__shortcuts-head">
+            <h2 className="dash__shortcuts-title">Tỷ lệ nhấp (CTR)</h2>
+            <p className="dash__shortcuts-subtitle">
+              Lượt hiển thị trong danh sách so với lượt nhấp vào sản phẩm.
+            </p>
+          </header>
+          <RankingTable
+            title="Tỷ lệ nhấp theo sản phẩm"
+            columns={[
+              { key: 'product', label: 'Sản phẩm' },
+              { key: 'impressions', label: 'Hiển thị', align: 'right' },
+              { key: 'clicks', label: 'Nhấp', align: 'right' },
+              { key: 'ctr', label: 'CTR', align: 'right' },
+            ]}
+            rows={ctr.map((c) => ({
+              product: titleFor(c.productId),
+              impressions: c.impressions.toLocaleString('vi-VN'),
+              clicks: c.clicks.toLocaleString('vi-VN'),
+              ctr: `${c.ctrPct}%`,
+            }))}
+            emptyLabel="Chưa đủ dữ liệu hiển thị."
+          />
         </section>
 
         <section className="dash__shortcuts">
