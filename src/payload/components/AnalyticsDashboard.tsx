@@ -19,16 +19,18 @@ import {
   computeMonthlyMetrics,
   fetchOrdersInRange,
   formatPercentChange,
-  getMonthRange,
 } from '@/lib/analytics/dashboard';
+import { resolvePeriod, previousPeriod } from '@/lib/analytics/period';
 import { getTrafficBySource } from '@/lib/analytics/traffic';
-import { getProductPerformance } from '@/lib/analytics/products';
+import { getProductPerformance, getDiscountedItemPerformance } from '@/lib/analytics/products';
 import { AnalyticsSalesChart } from '@/src/payload/components/analytics/AnalyticsSalesChart';
 import { MetricCard } from '@/src/payload/components/analytics/MetricCard';
 import { RankingTable } from '@/src/payload/components/analytics/RankingTable';
+import { PeriodSelector } from '@/src/payload/components/analytics/PeriodSelector';
 
 type DashboardProps = {
   payload: PayloadRequest['payload'];
+  searchParams?: Record<string, string | string[] | undefined>;
 };
 
 type ActionTile = {
@@ -82,17 +84,19 @@ const monthLabelFormatter = new Intl.DateTimeFormat('vi-VN', {
   year: 'numeric',
 });
 
-export async function AnalyticsDashboard(_props: DashboardProps): Promise<ReactElement> {
+export async function AnalyticsDashboard(props: DashboardProps): Promise<ReactElement> {
   const now = new Date();
-  const { start: currentStart, end: currentEnd } = getMonthRange(0, now);
-  const { start: lastStart, end: lastEnd } = getMonthRange(-1, now);
+  const period = resolvePeriod(props.searchParams ?? {}, now);
+  const prev = previousPeriod(period);
 
-  const [currentOrders, lastOrders, trafficBySource, productPerformance] = await Promise.all([
-    fetchOrdersInRange(currentStart, currentEnd),
-    fetchOrdersInRange(lastStart, lastEnd),
-    getTrafficBySource(currentStart, currentEnd),
-    getProductPerformance(currentStart, currentEnd),
-  ]);
+  const [currentOrders, lastOrders, trafficBySource, productPerformance, discounted] =
+    await Promise.all([
+      fetchOrdersInRange(period.start, period.end),
+      fetchOrdersInRange(prev.start, prev.end),
+      getTrafficBySource(period.start, period.end),
+      getProductPerformance(period.start, period.end),
+      getDiscountedItemPerformance(period.start, period.end),
+    ]);
 
   const currentMetrics = computeMonthlyMetrics(currentOrders);
   const lastMetrics = computeMonthlyMetrics(lastOrders);
@@ -108,7 +112,10 @@ export async function AnalyticsDashboard(_props: DashboardProps): Promise<ReactE
             <p className="dash__eyebrow">Tổng quan cửa hàng</p>
             <h1 className="dash__title">Bảng điều khiển</h1>
           </div>
-          <span className="dash__period">{monthLabelFormatter.format(now)}</span>
+          <div className="dash__period-wrap">
+            <span className="dash__period">{period.label}</span>
+            <PeriodSelector />
+          </div>
         </header>
 
         <ul className="dash__metrics">
@@ -157,7 +164,7 @@ export async function AnalyticsDashboard(_props: DashboardProps): Promise<ReactE
           <header className="dash__shortcuts-head">
             <h2 className="dash__shortcuts-title">Nguồn truy cập</h2>
             <p className="dash__shortcuts-subtitle">
-              Lượt truy cập và chuyển đổi theo kênh trong tháng này.
+              Lượt truy cập và chuyển đổi theo kênh trong kỳ này.
             </p>
           </header>
           <RankingTable
@@ -255,6 +262,32 @@ export async function AnalyticsDashboard(_props: DashboardProps): Promise<ReactE
               avgDwellMs: `${Math.round(v.avgDwellMs / 1000)}s`,
             }))}
             emptyLabel="Chưa có lượt xem nào."
+          />
+        </section>
+
+        {/* ── Discounted-item report ── */}
+        <section className="dash-table-group">
+          <header className="dash__shortcuts-head">
+            <h2 className="dash__shortcuts-title">Sản phẩm khuyến mãi</h2>
+            <p className="dash__shortcuts-subtitle">
+              Hiệu quả của các sản phẩm đang giảm giá trong kỳ.
+            </p>
+          </header>
+          <RankingTable
+            title="Sản phẩm đang giảm giá"
+            columns={[
+              { key: 'product', label: 'Sản phẩm' },
+              { key: 'salePercent', label: 'Giảm', align: 'right' },
+              { key: 'units', label: 'Đã bán', align: 'right' },
+              { key: 'revenue', label: 'Doanh thu', align: 'right' },
+            ]}
+            rows={discounted.map((d) => ({
+              product: d.title || d.slug,
+              salePercent: `${d.salePercent}%`,
+              units: d.units.toLocaleString('vi-VN'),
+              revenue: formatVnd(d.revenueVnd),
+            }))}
+            emptyLabel="Chưa có sản phẩm nào đang giảm giá."
           />
         </section>
 
