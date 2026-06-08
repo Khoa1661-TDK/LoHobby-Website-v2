@@ -345,3 +345,19 @@ model AddToCartEvent {
   @@index([productId])
   @@index([createdAt])
 }
+
+/**
+ * Daily rollup of product-card impressions and clicks. NOT per-event:
+ * impressions are far higher volume than page views, so endpoints
+ * upsert-and-increment one row per (product, day). CTR = clicks / impressions.
+ */
+model ProductCtrDaily {
+  id          String   @id @default(cuid())
+  productId   String
+  day         DateTime @db.Date
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+
+  @@unique([productId, day])
+  @@index([day])
+}
