@@ -104,6 +104,15 @@ See `rules/common/decisions.md` for the logging format and rules.
 
 ---
 
+## 2026-06-08 — Analytics dashboard time-window selector plumbing
+**Chosen:** Use Payload 3 `searchParams` prop passed to the dashboard view component — `PeriodSelector` writes URL query params (`?period=7d`, `?from=...&to=...`) and `AnalyticsDashboard` reads them server-side via `resolvePeriod(props.searchParams)`.
+**Alternatives:** (1) Cookie fallback: selector writes a `dash_period` cookie, server reads it via `next/headers` `cookies()`. (2) Server-side session storage for the selected window.
+**Why:** Payload 3 custom dashboard views receive `searchParams` from the URL query string as standard props. Using query params keeps the window shareable, bookmarkable, and reduces server state. The pure `resolvePeriod` helper in `lib/analytics/period.ts` has a sensible fallback (current month) on missing/invalid params, so the dashboard remains functional without any selector interaction.
+**Trade-offs:** `?period=7d` in the URL means refreshing or sharing the admin URL carries the window. Peripheral but acceptable — clearing the param or omitting it falls back to the current month.
+**Revisit if:** Payload changes how it passes `searchParams` to the admin dashboard component, or if cookie-based persistence becomes necessary for server actions / form submissions that lose query context.
+
+---
+
 ## 2026-06-03 — Seller order notifications via Zalo OA
 **Chosen:** Notify the seller through a Zalo Official Account message on order creation, triggered by a Payload `Orders.afterChange` hook (operation === 'create'). OA credentials live in an admin-managed `notification-settings` global; access tokens auto-refresh and the rotated refresh token is persisted back.
 **Alternatives:** Zalo ZNS template messages (rejected: template approval + per-message cost, aimed at customers); calling the notifier directly from the checkout route (rejected: misses non-checkout order sources, couples checkout to notifications); a polling/queue worker (rejected: over-engineered for a single-seller ping).
