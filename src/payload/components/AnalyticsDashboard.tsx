@@ -23,6 +23,7 @@ import {
 import { resolvePeriod, previousPeriod } from '@/lib/analytics/period';
 import { getTrafficBySource } from '@/lib/analytics/traffic';
 import { getProductPerformance, getDiscountedItemPerformance } from '@/lib/analytics/products';
+import { getCartAbandonment } from '@/lib/analytics/carts-data';
 import { AnalyticsSalesChart } from '@/src/payload/components/analytics/AnalyticsSalesChart';
 import { MetricCard } from '@/src/payload/components/analytics/MetricCard';
 import { RankingTable } from '@/src/payload/components/analytics/RankingTable';
@@ -89,13 +90,14 @@ export async function AnalyticsDashboard(props: DashboardProps): Promise<ReactEl
   const period = resolvePeriod(props.searchParams ?? {}, now);
   const prev = previousPeriod(period);
 
-  const [currentOrders, lastOrders, trafficBySource, productPerformance, discounted] =
+  const [currentOrders, lastOrders, trafficBySource, productPerformance, discounted, cart] =
     await Promise.all([
       fetchOrdersInRange(period.start, period.end),
       fetchOrdersInRange(prev.start, prev.end),
       getTrafficBySource(period.start, period.end),
       getProductPerformance(period.start, period.end),
       getDiscountedItemPerformance(period.start, period.end),
+      getCartAbandonment(period.start, period.end),
     ]);
 
   const currentMetrics = computeMonthlyMetrics(currentOrders);
@@ -289,6 +291,22 @@ export async function AnalyticsDashboard(props: DashboardProps): Promise<ReactEl
             }))}
             emptyLabel="Chưa có sản phẩm nào đang giảm giá."
           />
+        </section>
+
+        {/* ── Cart abandonment ── */}
+        <section className="dash-table-group">
+          <header className="dash__shortcuts-head">
+            <h2 className="dash__shortcuts-title">Giỏ hàng bị bỏ quên</h2>
+            <p className="dash__shortcuts-subtitle">
+              Số giỏ có sản phẩm nhưng chưa thanh toán trong kỳ.
+            </p>
+          </header>
+          <ul className="dash__metrics">
+            <li><MetricCard tone="orders" icon={<ShoppingBag size={18} aria-hidden />} title="Giỏ bị bỏ" value={cart.abandonment.abandoned.toLocaleString('vi-VN')} /></li>
+            <li><MetricCard tone="paid" icon={<Wallet2 size={18} aria-hidden />} title="Giỏ hoàn tất" value={cart.abandonment.completed.toLocaleString('vi-VN')} /></li>
+            <li><MetricCard tone="value" icon={<Receipt size={18} aria-hidden />} title="Tỉ lệ bỏ giỏ" value={`${cart.abandonment.abandonmentPct}%`} /></li>
+            <li><MetricCard tone="revenue" icon={<Wallet size={18} aria-hidden />} title="Thêm giỏ → mua" value={`${cart.funnel.conversionPct}%`} /></li>
+          </ul>
         </section>
 
         <section className="dash__shortcuts">
