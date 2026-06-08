@@ -189,3 +189,48 @@ export function computeViewToBuy(
 
   return rows.sort((a, b) => b.views - a.views);
 }
+
+// ---------------------------------------------------------------------------
+// Discounted-item report
+// ---------------------------------------------------------------------------
+
+export type OnSaleProduct = {
+  productId: string;
+  slug: string;
+  title: string;
+  salePercent: number;
+};
+
+export type DiscountedItemRow = {
+  productId: string;
+  slug: string;
+  title: string;
+  salePercent: number;
+  units: number;
+  revenueVnd: number;
+};
+
+/**
+ * Pair on-sale products with their sales in the window. On-sale products with
+ * no sales are kept (units/revenue 0) so underperforming promotions are visible.
+ * Sorted by revenue descending.
+ */
+export function joinDiscountedItems(
+  onSale: OnSaleProduct[],
+  sales: ProductSales[],
+): DiscountedItemRow[] {
+  const salesMap = new Map(sales.map((s) => [s.productId, s]));
+  return onSale
+    .map((p) => {
+      const s = salesMap.get(p.productId);
+      return {
+        productId: p.productId,
+        slug: p.slug,
+        title: p.title,
+        salePercent: p.salePercent,
+        units: s?.units ?? 0,
+        revenueVnd: s?.revenueVnd ?? 0,
+      };
+    })
+    .sort((a, b) => b.revenueVnd - a.revenueVnd);
+}
