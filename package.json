@@ -45,6 +45,7 @@
     "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.2.0",
     "@payloadcms/db-postgres": "^3.84.1",
+    "@payloadcms/live-preview-react": "^3.85.0",
     "@payloadcms/next": "^3.84.1",
     "@payloadcms/plugin-seo": "^3.84.1",
     "@payloadcms/richtext-lexical": "^3.84.1",
