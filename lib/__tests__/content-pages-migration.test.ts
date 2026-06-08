@@ -10,19 +10,19 @@ describe('plainTextToLexical', () => {
   it('should wrap a single line in one paragraph node', () => {
     const state = plainTextToLexical('Hello world');
     expect(state.root.children).toHaveLength(1);
-    expect(state.root.children[0].children[0].text).toBe('Hello world');
+    expect(state.root.children[0]?.children[0]?.text).toBe('Hello world');
   });
 
   it('should split newlines into separate paragraphs', () => {
     const state = plainTextToLexical('line one\nline two');
     expect(state.root.children).toHaveLength(2);
-    expect(state.root.children[1].children[0].text).toBe('line two');
+    expect(state.root.children[1]?.children[0]?.text).toBe('line two');
   });
 
   it('should produce one empty paragraph for empty input', () => {
     const state = plainTextToLexical('');
     expect(state.root.children).toHaveLength(1);
-    expect(state.root.children[0].children[0].text).toBe('');
+    expect(state.root.children[0]?.children[0]?.text).toBe('');
   });
 });
 
