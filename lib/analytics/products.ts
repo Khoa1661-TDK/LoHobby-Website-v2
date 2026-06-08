@@ -16,10 +16,12 @@ import {
   aggregateAttention,
   computeViewToBuy,
   joinDiscountedItems,
+  computeCtr,
   type ProductSales,
   type ViewToBuyRow,
   type DiscountedItemRow,
   type OnSaleProduct,
+  type CtrRow,
 } from '@/lib/analytics/product-metrics';
 
 const PERFORMANCE_LIMIT = 8;
@@ -83,4 +85,23 @@ export async function getDiscountedItemPerformance(
 
   const sales = aggregateSales(orders.filter(isRevenueOrder));
   return joinDiscountedItems(onSale, sales);
+}
+
+export async function getProductCtr(start: Date, end: Date): Promise<CtrRow[]> {
+  const daily = await prisma.productCtrDaily.findMany({
+    where: { day: { gte: start, lte: end } },
+    select: { productId: true, impressions: true, clicks: true },
+  });
+
+  const map = new Map<string, { impressions: number; clicks: number }>();
+  for (const row of daily) {
+    const e = map.get(row.productId) ?? { impressions: 0, clicks: 0 };
+    e.impressions += row.impressions;
+    e.clicks += row.clicks;
+    map.set(row.productId, e);
+  }
+
+  return computeCtr(
+    [...map.entries()].map(([productId, v]) => ({ productId, ...v })),
+  );
 }
