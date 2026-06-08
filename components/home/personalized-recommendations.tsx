@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState, type ReactElement } from 'react';
@@ -8,6 +9,7 @@ import type { RecommendedProduct } from '@/app/api/recommendations/route';
 import { toNextImageSrc } from '@/lib/product-image-snapshot';
 
 export default function PersonalizedRecommendations(): ReactElement | null {
+  const t = useTranslations('home');
   const [products, setProducts] = useState<RecommendedProduct[]>([]);
 
   useEffect(() => {
@@ -31,10 +33,10 @@ export default function PersonalizedRecommendations(): ReactElement | null {
       aria-labelledby="recommendations-heading"
     >
       <h2 id="recommendations-heading" className="text-xl font-bold tracking-tight sm:text-2xl">
-        Gợi ý cho bạn
+        {t('recommendationsHeading')}
       </h2>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-        Dựa trên các sản phẩm bạn đã mua.
+        {t('recommendationsSubtitle')}
       </p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-5 lg:gap-3">
         {products.map((product) => (

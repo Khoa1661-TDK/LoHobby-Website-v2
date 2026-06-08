@@ -1,6 +1,7 @@
 // components/blog/post-card.tsx — editorial blog post tile (Content)
+import { getLocale, getTranslations } from 'next-intl/server';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import type { BlogPostSummary } from '@/lib/blog';
 import { toNextImageSrc } from '@/lib/product-image-snapshot';
@@ -11,20 +12,22 @@ type Props = {
   index?: number;
 };
 
-const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
+export default async function PostCard({ post, priority, index = 0 }: Props): Promise<ReactElement> {
+  const t = await getTranslations('blog');
+  const locale = await getLocale();
 
-function formatPublishedDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? null : dateFormatter.format(date);
-}
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
-export default function PostCard({ post, priority, index = 0 }: Props): ReactElement {
-  const publishedLabel = formatPublishedDate(post.publishedAt);
+  const publishedLabel = post.publishedAt
+    ? (() => {
+        const date = new Date(post.publishedAt);
+        return Number.isNaN(date.getTime()) ? null : dateFormatter.format(date);
+      })()
+    : null;
 
   return (
     <Link
@@ -80,7 +83,7 @@ export default function PostCard({ post, priority, index = 0 }: Props): ReactEle
         ) : null}
 
         <span className="mt-auto pt-2 text-sm font-semibold text-terracotta-600 dark:text-terracotta-400">
-          Đọc bài viết →
+          {t('readMore')} →
         </span>
       </div>
     </Link>
