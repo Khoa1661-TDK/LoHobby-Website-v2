@@ -7,6 +7,7 @@ import type {
 } from 'payload';
 import { after } from 'next/server';
 
+import { routing } from '@/i18n/routing';
 import { payloadPublicReadAdminWrite } from '@/lib/payload-access';
 import { resolveCollectionSlug } from '@/lib/slugify';
 import { revalidatePageCache } from '@/lib/page-builder';
@@ -75,7 +76,26 @@ export const Pages: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'status', 'updatedAt'],
     group: groups.content.name,
-    description: 'Custom pages built with the drag-and-drop page builder.',
+    description:
+      'Build storefront pages by stacking sections. Use the live preview on the right to see your changes.',
+    livePreview: {
+      url: ({ data }) => {
+        const slug = typeof data?.slug === 'string' ? data.slug.trim() : '';
+        if (!slug) return '';
+        const base =
+          process.env.NEXT_PUBLIC_APP_URL ??
+          process.env.NEXT_PUBLIC_SITE_URL ??
+          'http://localhost:3000';
+        const secret = process.env.PREVIEW_SECRET ?? '';
+        const path = `/${routing.defaultLocale}/pages/${slug}`;
+        return `${base}/api/preview?secret=${encodeURIComponent(secret)}&path=${encodeURIComponent(path)}`;
+      },
+      breakpoints: [
+        { label: 'Mobile', name: 'mobile', width: 375, height: 667 },
+        { label: 'Tablet', name: 'tablet', width: 768, height: 1024 },
+        { label: 'Desktop', name: 'desktop', width: 1440, height: 900 },
+      ],
+    },
   },
   access: payloadPublicReadAdminWrite,
   hooks: {
@@ -108,13 +128,19 @@ export const Pages: CollectionConfig = {
         { label: 'Published', value: 'published' },
       ],
       admin: {
-        description: 'Only published pages are visible on the storefront.',
+        description:
+          'Only published pages are visible on the storefront. Draft pages are visible only in the live preview.',
       },
     },
     {
       name: 'layout',
       type: 'blocks',
       labels: { singular: 'Section', plural: 'Sections' },
+      admin: {
+        components: {
+          RowLabel: '@/src/payload/components/SectionRowLabel#SectionRowLabel',
+        },
+      },
       blocks: [
         Hero,
         FeaturedCollection,
