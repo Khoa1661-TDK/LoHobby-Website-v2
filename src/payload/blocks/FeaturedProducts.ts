@@ -6,6 +6,11 @@ export const FeaturedProducts: Block = {
   slug: 'featuredProducts',
   labels: { singular: 'Featured Products', plural: 'Featured Products' },
   interfaceName: 'FeaturedProductsBlock',
+  imageURL: '/admin/block-previews/featured-products.svg',
+  imageAltText: 'Featured products preview',
+  admin: {
+    description: 'Grid of selected products.',
+  },
   fields: [
     {
       name: 'title',

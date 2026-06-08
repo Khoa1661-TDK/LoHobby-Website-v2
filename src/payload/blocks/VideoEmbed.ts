@@ -6,6 +6,11 @@ export const VideoEmbed: Block = {
   slug: 'videoEmbed',
   labels: { singular: 'Video Embed', plural: 'Video Embeds' },
   interfaceName: 'VideoEmbedBlock',
+  imageURL: '/admin/block-previews/video-embed.svg',
+  imageAltText: 'Video embed preview',
+  admin: {
+    description: 'Embedded video (YouTube/Vimeo/file).',
+  },
   fields: [
     {
       name: 'title',

@@ -6,6 +6,11 @@ export const Hero: Block = {
   slug: 'hero',
   labels: { singular: 'Hero', plural: 'Heroes' },
   interfaceName: 'HeroBlock',
+  imageURL: '/admin/block-previews/hero.svg',
+  imageAltText: 'Hero section preview',
+  admin: {
+    description: 'Large banner with headline, CTA and image.',
+  },
   fields: [
     {
       name: 'headline',

@@ -6,6 +6,11 @@ export const Gallery: Block = {
   slug: 'gallery',
   labels: { singular: 'Gallery', plural: 'Galleries' },
   interfaceName: 'GalleryBlock',
+  imageURL: '/admin/block-previews/gallery.svg',
+  imageAltText: 'Gallery preview',
+  admin: {
+    description: 'Grid of images.',
+  },
   fields: [
     {
       name: 'title',
