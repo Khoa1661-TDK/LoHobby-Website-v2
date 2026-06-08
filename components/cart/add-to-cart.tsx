@@ -7,6 +7,7 @@ import { useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
 import { addItemAction } from '@/components/cart/actions';
 import LoadingDots from '@/components/loading-dots';
+import { beacon, getAnonId, getSession } from '@/lib/analytics/track-client';
 import type { Product } from '@/lib/shopify/types';
 
 type Props = {
@@ -47,6 +48,13 @@ export default function AddToCart({
               ? `Đã thêm ${quantity} ${product.title} vào giỏ hàng`
               : `Đã thêm ${product.title} vào giỏ hàng`,
           );
+          beacon('/api/track/cart', {
+            anonId: getAnonId(),
+            sessionId: getSession().id,
+            productId: product.id,
+            productHandle: product.handle,
+            quantity,
+          });
           router.refresh();
         })
       }
