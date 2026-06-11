@@ -2,6 +2,7 @@
 import type { Payload } from 'payload';
 import type { Order } from '@/src/payload/payload-types';
 import { absoluteUrl } from '@/lib/utils';
+import { getDiscordConfig, isDiscordConfigComplete, sendChannelMessage } from '@/lib/discord/client';
 
 export interface DiscordEmbedField {
   name: string;
@@ -68,7 +69,6 @@ export function buildConfirmComponents(order: Order): DiscordActionRow[] {
 
 export async function notifyNewOrder(args: { payload: Payload; order: Order }): Promise<void> {
   const { payload, order } = args;
-  const { getDiscordConfig, isDiscordConfigComplete, sendChannelMessage } = await import('@/lib/discord/client');
   const config = await getDiscordConfig(payload);
   if (!config.enabled || !isDiscordConfigComplete(config)) return;
   await sendChannelMessage(config, {
