@@ -8,9 +8,6 @@ export const FeaturedCollection: Block = {
   interfaceName: 'FeaturedCollectionBlock',
   imageURL: '/admin/block-previews/featured-collection.svg',
   imageAltText: 'Featured collection preview',
-  admin: {
-    description: 'Showcase a category as a row of collection cards.',
-  },
   fields: [
     {
       name: 'title',

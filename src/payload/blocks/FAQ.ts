@@ -8,9 +8,6 @@ export const FAQ: Block = {
   interfaceName: 'FAQBlock',
   imageURL: '/admin/block-previews/faq.svg',
   imageAltText: 'FAQ preview',
-  admin: {
-    description: 'Expandable question-and-answer list.',
-  },
   fields: [
     {
       name: 'title',

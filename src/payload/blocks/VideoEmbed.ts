@@ -8,9 +8,6 @@ export const VideoEmbed: Block = {
   interfaceName: 'VideoEmbedBlock',
   imageURL: '/admin/block-previews/video-embed.svg',
   imageAltText: 'Video embed preview',
-  admin: {
-    description: 'Embedded video (YouTube/Vimeo/file).',
-  },
   fields: [
     {
       name: 'title',

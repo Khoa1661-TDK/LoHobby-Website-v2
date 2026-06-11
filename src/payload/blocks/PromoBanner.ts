@@ -8,9 +8,6 @@ export const PromoBanner: Block = {
   interfaceName: 'PromoBannerBlock',
   imageURL: '/admin/block-previews/promo-banner.svg',
   imageAltText: 'Promo banner preview',
-  admin: {
-    description: 'Full-width promotional strip with a CTA.',
-  },
   fields: [
     {
       name: 'text',

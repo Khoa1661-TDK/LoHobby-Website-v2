@@ -8,9 +8,6 @@ export const RichText: Block = {
   interfaceName: 'RichTextBlock',
   imageURL: '/admin/block-previews/rich-text.svg',
   imageAltText: 'Rich text preview',
-  admin: {
-    description: 'Formatted text content (headings, lists, links).',
-  },
   fields: [
     {
       name: 'content',

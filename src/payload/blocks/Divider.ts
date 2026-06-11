@@ -8,9 +8,6 @@ export const Divider: Block = {
   interfaceName: 'DividerBlock',
   imageURL: '/admin/block-previews/divider.svg',
   imageAltText: 'Divider preview',
-  admin: {
-    description: 'Visual separator between sections.',
-  },
   fields: [
     {
       name: 'style',

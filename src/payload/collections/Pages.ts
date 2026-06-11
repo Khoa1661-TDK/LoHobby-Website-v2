@@ -7,11 +7,11 @@ import type {
 } from 'payload';
 import { after } from 'next/server';
 
-import { routing } from '@/i18n/routing';
 import { payloadPublicReadAdminWrite } from '@/lib/payload-access';
 import { resolveCollectionSlug } from '@/lib/slugify';
 import { revalidatePageCache } from '@/lib/page-builder';
 import { groups } from '@/src/payload/groups';
+import { routing } from '@/i18n/routing';
 import {
   Hero,
   FeaturedCollection,
@@ -27,6 +27,37 @@ import {
   VideoEmbed,
   Divider,
 } from '@/src/payload/blocks';
+
+// Payload `blocks` fields have no field-level RowLabel slot; per-section labels are
+// driven by each block's `admin.components.Label`. Inject a shared dynamic label
+// (block type + first summary field) onto the layout blocks without mutating the
+// shared block definitions used elsewhere.
+const SECTION_ROW_LABEL = '@/src/payload/components/SectionRowLabel#SectionRowLabel';
+
+const layoutBlocks = [
+  Hero,
+  FeaturedCollection,
+  FeaturedProducts,
+  RichText,
+  ImageWithText,
+  Gallery,
+  Testimonials,
+  LogoCloud,
+  Newsletter,
+  FAQ,
+  PromoBanner,
+  VideoEmbed,
+  Divider,
+].map((block) => ({
+  ...block,
+  admin: {
+    ...block.admin,
+    components: {
+      ...block.admin?.components,
+      Label: SECTION_ROW_LABEL,
+    },
+  },
+}));
 
 const autoSlugFromTitle: CollectionBeforeChangeHook = async ({
   data,
@@ -136,26 +167,7 @@ export const Pages: CollectionConfig = {
       name: 'layout',
       type: 'blocks',
       labels: { singular: 'Section', plural: 'Sections' },
-      admin: {
-        components: {
-          RowLabel: '@/src/payload/components/SectionRowLabel#SectionRowLabel',
-        },
-      },
-      blocks: [
-        Hero,
-        FeaturedCollection,
-        FeaturedProducts,
-        RichText,
-        ImageWithText,
-        Gallery,
-        Testimonials,
-        LogoCloud,
-        Newsletter,
-        FAQ,
-        PromoBanner,
-        VideoEmbed,
-        Divider,
-      ],
+      blocks: layoutBlocks,
     },
   ],
 };

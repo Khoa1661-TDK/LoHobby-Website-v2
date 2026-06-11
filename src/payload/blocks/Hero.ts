@@ -8,9 +8,6 @@ export const Hero: Block = {
   interfaceName: 'HeroBlock',
   imageURL: '/admin/block-previews/hero.svg',
   imageAltText: 'Hero section preview',
-  admin: {
-    description: 'Large banner with headline, CTA and image.',
-  },
   fields: [
     {
       name: 'headline',

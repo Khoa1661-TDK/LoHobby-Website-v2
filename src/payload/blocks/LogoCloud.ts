@@ -8,9 +8,6 @@ export const LogoCloud: Block = {
   interfaceName: 'LogoCloudBlock',
   imageURL: '/admin/block-previews/logo-cloud.svg',
   imageAltText: 'Logo cloud preview',
-  admin: {
-    description: 'Row of partner or brand logos.',
-  },
   fields: [
     {
       name: 'title',

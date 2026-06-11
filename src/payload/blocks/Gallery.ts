@@ -8,9 +8,6 @@ export const Gallery: Block = {
   interfaceName: 'GalleryBlock',
   imageURL: '/admin/block-previews/gallery.svg',
   imageAltText: 'Gallery preview',
-  admin: {
-    description: 'Grid of images.',
-  },
   fields: [
     {
       name: 'title',

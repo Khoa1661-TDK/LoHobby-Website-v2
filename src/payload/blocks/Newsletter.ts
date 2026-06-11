@@ -8,9 +8,6 @@ export const Newsletter: Block = {
   interfaceName: 'NewsletterBlock',
   imageURL: '/admin/block-previews/newsletter.svg',
   imageAltText: 'Newsletter preview',
-  admin: {
-    description: 'Email sign-up form with heading.',
-  },
   fields: [
     {
       name: 'headline',
