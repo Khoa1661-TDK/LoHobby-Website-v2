@@ -2508,32 +2508,30 @@ export interface DropshipSetting {
   createdAt?: string | null;
 }
 /**
- * Zalo Official Account notifications sent to the seller when a new order is placed.
+ * Discord notifications sent to the seller when a new order is placed. The seller can confirm the order from Discord.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "notification-settings".
  */
 export interface NotificationSetting {
   id: number;
-  zaloEnabled?: boolean | null;
+  discordEnabled?: boolean | null;
   /**
-   * From the Zalo for Developers app dashboard.
+   * From the Discord Developer Portal → your app → Bot.
    */
-  zaloAppId?: string | null;
-  zaloAppSecret?: string | null;
+  discordBotToken?: string | null;
   /**
-   * The user_id that has chatted with the OA and will receive messages.
+   * The channel the bot posts new-order notifications to.
    */
-  zaloRecipientUserId?: string | null;
+  discordChannelId?: string | null;
   /**
-   * Paste the initial refresh token obtained from OA OAuth. Auto-rotated thereafter.
+   * From the app General Information page. Used to verify button presses.
    */
-  zaloRefreshToken?: string | null;
+  discordPublicKey?: string | null;
   /**
-   * Set automatically; do not edit.
+   * Comma-separated Discord user IDs permitted to confirm orders.
    */
-  zaloAccessToken?: string | null;
-  zaloTokenExpiresAt?: string | null;
+  discordAllowedUserIds?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2712,13 +2710,11 @@ export interface DropshipSettingsSelect<T extends boolean = true> {
  * via the `definition` "notification-settings_select".
  */
 export interface NotificationSettingsSelect<T extends boolean = true> {
-  zaloEnabled?: T;
-  zaloAppId?: T;
-  zaloAppSecret?: T;
-  zaloRecipientUserId?: T;
-  zaloRefreshToken?: T;
-  zaloAccessToken?: T;
-  zaloTokenExpiresAt?: T;
+  discordEnabled?: T;
+  discordBotToken?: T;
+  discordChannelId?: T;
+  discordPublicKey?: T;
+  discordAllowedUserIds?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -1,4 +1,4 @@
-// src/payload/globals/NotificationSettings.ts — admin-managed Zalo OA notification config
+// src/payload/globals/NotificationSettings.ts — admin-managed Discord order notifications
 import type { GlobalConfig } from 'payload';
 import { payloadAdminAccess } from '@/lib/payload-access';
 
@@ -7,7 +7,7 @@ export const NotificationSettings: GlobalConfig = {
   label: 'Notification settings',
   admin: {
     description:
-      'Zalo Official Account notifications sent to the seller when a new order is placed.',
+      'Discord notifications sent to the seller when a new order is placed. The seller can confirm the order from Discord.',
     group: 'Settings',
   },
   access: {
@@ -16,50 +16,38 @@ export const NotificationSettings: GlobalConfig = {
   },
   fields: [
     {
-      name: 'zaloEnabled',
+      name: 'discordEnabled',
       type: 'checkbox',
-      label: 'Enable Zalo order notifications',
+      label: 'Enable Discord order notifications',
       defaultValue: false,
     },
     {
-      name: 'zaloAppId',
+      name: 'discordBotToken',
       type: 'text',
-      label: 'Zalo OA App ID',
-      admin: { description: 'From the Zalo for Developers app dashboard.' },
+      label: 'Discord bot token',
+      admin: { description: 'From the Discord Developer Portal → your app → Bot.' },
     },
     {
-      name: 'zaloAppSecret',
+      name: 'discordChannelId',
       type: 'text',
-      label: 'Zalo OA App Secret',
+      label: 'Discord channel ID',
+      admin: { description: 'The channel the bot posts new-order notifications to.' },
     },
     {
-      name: 'zaloRecipientUserId',
+      name: 'discordPublicKey',
       type: 'text',
-      label: "Seller's Zalo user ID",
+      label: 'Discord application public key',
       admin: {
-        description: 'The user_id that has chatted with the OA and will receive messages.',
+        description: 'From the app General Information page. Used to verify button presses.',
       },
     },
     {
-      name: 'zaloRefreshToken',
+      name: 'discordAllowedUserIds',
       type: 'text',
-      label: 'Zalo refresh token',
+      label: 'Allowed Discord user IDs',
       admin: {
-        description:
-          'Paste the initial refresh token obtained from OA OAuth. Auto-rotated thereafter.',
+        description: 'Comma-separated Discord user IDs permitted to confirm orders.',
       },
-    },
-    {
-      name: 'zaloAccessToken',
-      type: 'text',
-      label: 'Zalo access token (managed)',
-      admin: { readOnly: true, description: 'Set automatically; do not edit.' },
-    },
-    {
-      name: 'zaloTokenExpiresAt',
-      type: 'date',
-      label: 'Access token expiry (managed)',
-      admin: { readOnly: true },
     },
   ],
 };
