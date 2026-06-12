@@ -1,0 +1,4 @@
+{"type":"server-started","port":56951,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:56951","screen_dir":"/home/khoa1661/Ecommerce-Web/.superpowers/brainstorm/11875-1780997943/content","state_dir":"/home/khoa1661/Ecommerce-Web/.superpowers/brainstorm/11875-1780997943/state"}
+{"type":"screen-added","file":"/home/khoa1661/Ecommerce-Web/.superpowers/brainstorm/11875-1780997943/content/editing-paradigm.html"}
+{"type":"screen-added","file":"/home/khoa1661/Ecommerce-Web/.superpowers/brainstorm/11875-1780997943/content/waiting.html"}
+{"type":"server-stopped","reason":"owner process exited"}

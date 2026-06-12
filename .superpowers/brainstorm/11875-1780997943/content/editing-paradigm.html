@@ -1,0 +1,47 @@
+<h2>How should editing feel?</h2>
+<p class="subtitle">Both show a live preview canvas. The difference is <strong>where you edit a section's content</strong>. Click the one that matches what you pictured.</p>
+
+<div class="cards">
+  <div class="card" data-choice="side-panel" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f4f1ec;padding:0;overflow:hidden">
+      <div style="display:flex;height:200px;font-size:11px">
+        <div style="width:62%;background:#fff;border-right:2px solid #ddd;display:flex;flex-direction:column">
+          <div style="background:#1f2937;color:#fff;padding:6px;text-align:center">Hero — Big Sale ✎ ☰</div>
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;color:#999">[ Hero preview ]</div>
+          <div style="border:2px dashed #c084fc;color:#a855f7;text-align:center;padding:6px;margin:4px">+ Add section</div>
+          <div style="background:#eee;padding:8px;text-align:center;color:#777">[ Promo Banner ]</div>
+        </div>
+        <div style="width:38%;background:#faf9f7;padding:8px">
+          <div style="font-weight:600;margin-bottom:6px">Hero settings</div>
+          <div style="background:#fff;border:1px solid #ddd;padding:4px;margin-bottom:4px">Headline: Big Sale</div>
+          <div style="background:#fff;border:1px solid #ddd;padding:4px;margin-bottom:4px">CTA: Shop now</div>
+          <div style="background:#fff;border:1px solid #ddd;padding:4px">Image ▣</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Side-panel editing (Shopify-style)</h3>
+      <p>Click a section in the canvas → its settings open in a panel beside the preview. Fields stay as structured form inputs. Insertion "+" buttons sit between sections.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="inline" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f4f1ec;padding:0;overflow:hidden">
+      <div style="height:200px;background:#fff;font-size:11px;display:flex;flex-direction:column">
+        <div style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #3b82f6;margin:6px">
+          <div style="position:absolute;top:-1px;right:-1px;background:#3b82f6;color:#fff;padding:2px 6px">✎ ⇅ ⧉ 🗑</div>
+          <div contenteditable style="font-weight:700;font-size:14px;border-bottom:1px dashed #3b82f6">Big Sale ▏</div>
+          <div style="color:#888;margin-top:4px">click text to type directly</div>
+        </div>
+        <div style="border:2px dashed #93c5fd;color:#3b82f6;text-align:center;padding:6px;margin:0 6px">+ insert section here</div>
+        <div style="background:#eee;padding:10px;text-align:center;color:#777;margin:6px">[ Promo Banner ]</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Inline on-canvas editing (SharePoint-style)</h3>
+      <p>Click text right on the canvas and type. Each section has a floating toolbar (move, duplicate, delete). Feels like editing the live page itself.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px">There's also a hybrid: inline for text, side-panel for complex fields (images, product pickers). Tell me in the terminal if that's closer.</p>

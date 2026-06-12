@@ -1,0 +1,64 @@
+<h2>Block picker — wireframe thumbnail style</h2>
+<p class="subtitle">Grayscale layout shapes shown in the "Add Section" drawer. This is the visual language for all 13. Look right?</p>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:760px">
+
+  <div style="background:#fff;border:1px solid #e3e3e6;border-radius:10px;padding:10px">
+    <svg viewBox="0 0 120 70" style="width:100%;display:block;background:#f4f4f6;border-radius:6px">
+      <rect x="10" y="14" width="48" height="8" rx="2" fill="#c4c4cc"/>
+      <rect x="10" y="28" width="38" height="5" rx="2" fill="#dadae0"/>
+      <rect x="10" y="40" width="24" height="11" rx="5" fill="#9a9aa6"/>
+      <rect x="70" y="12" width="40" height="46" rx="4" fill="#d2d2da"/>
+    </svg>
+    <div style="font-size:12px;font-weight:600;margin-top:8px">Hero</div>
+    <div style="font-size:10px;color:#888">Banner + CTA + image</div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #e3e3e6;border-radius:10px;padding:10px">
+    <svg viewBox="0 0 120 70" style="width:100%;display:block;background:#f4f4f6;border-radius:6px">
+      <rect x="10" y="12" width="22" height="22" rx="3" fill="#d2d2da"/>
+      <rect x="36" y="12" width="22" height="22" rx="3" fill="#d2d2da"/>
+      <rect x="62" y="12" width="22" height="22" rx="3" fill="#d2d2da"/>
+      <rect x="88" y="12" width="22" height="22" rx="3" fill="#d2d2da"/>
+      <rect x="10" y="38" width="22" height="22" rx="3" fill="#d2d2da"/>
+      <rect x="36" y="38" width="22" height="22" rx="3" fill="#d2d2da"/>
+      <rect x="62" y="38" width="22" height="22" rx="3" fill="#d2d2da"/>
+      <rect x="88" y="38" width="22" height="22" rx="3" fill="#d2d2da"/>
+    </svg>
+    <div style="font-size:12px;font-weight:600;margin-top:8px">Featured Products</div>
+    <div style="font-size:10px;color:#888">Product grid</div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #e3e3e6;border-radius:10px;padding:10px">
+    <svg viewBox="0 0 120 70" style="width:100%;display:block;background:#f4f4f6;border-radius:6px">
+      <rect x="14" y="14" width="92" height="7" rx="2" fill="#dadae0"/>
+      <rect x="14" y="26" width="92" height="5" rx="2" fill="#e4e4e9"/>
+      <rect x="14" y="36" width="92" height="5" rx="2" fill="#e4e4e9"/>
+      <rect x="14" y="46" width="64" height="5" rx="2" fill="#e4e4e9"/>
+    </svg>
+    <div style="font-size:12px;font-weight:600;margin-top:8px">Rich Text</div>
+    <div style="font-size:10px;color:#888">Paragraph content</div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #e3e3e6;border-radius:10px;padding:10px">
+    <svg viewBox="0 0 120 70" style="width:100%;display:block;background:#f4f4f6;border-radius:6px">
+      <rect x="14" y="14" width="92" height="12" rx="3" fill="#d2d2da"/>
+      <rect x="14" y="30" width="92" height="12" rx="3" fill="#dadae0"/>
+      <rect x="14" y="46" width="92" height="12" rx="3" fill="#e2e2e8"/>
+    </svg>
+    <div style="font-size:12px;font-weight:600;margin-top:8px">FAQ</div>
+    <div style="font-size:10px;color:#888">Stacked Q&amp;A rows</div>
+  </div>
+
+</div>
+
+<div class="options" style="margin-top:26px">
+  <div class="option" data-choice="yes" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>This style works</h3><p>Use grayscale wireframes for all 13</p></div>
+  </div>
+  <div class="option" data-choice="color" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>Add subtle color</h3><p>Tint each block type for faster scanning</p></div>
+  </div>
+</div>

@@ -1,0 +1,64 @@
+<h2>What does "preview" mean to you?</h2>
+<p class="subtitle">Your page builder has 13 block types but the admin shows them as a plain text list. Two different fixes — which pain is bigger?</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">A — Block picker icons</div>
+    <div class="mockup-body" style="background:#f7f7f8;padding:16px">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:10px">Add Block</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:#fff;border:1px solid #e3e3e6;border-radius:8px;padding:10px;text-align:center">
+          <div style="height:34px;background:linear-gradient(135deg,#dbe4ff,#bac8ff);border-radius:4px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:18px">🖼️</div>
+          <div style="font-size:12px;font-weight:600">Hero</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e3e3e6;border-radius:8px;padding:10px;text-align:center">
+          <div style="height:34px;background:linear-gradient(135deg,#d3f9d8,#b2f2bb);border-radius:4px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:18px">🛍️</div>
+          <div style="font-size:12px;font-weight:600">Featured Products</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e3e3e6;border-radius:8px;padding:10px;text-align:center">
+          <div style="height:34px;background:linear-gradient(135deg,#ffe8cc,#ffd8a8);border-radius:4px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:18px">📝</div>
+          <div style="font-size:12px;font-weight:600">Rich Text</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e3e3e6;border-radius:8px;padding:10px;text-align:center">
+          <div style="height:34px;background:linear-gradient(135deg,#fff3bf,#ffec99);border-radius:4px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:18px">🎟️</div>
+          <div style="font-size:12px;font-weight:600">Promo Banner</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:#777;margin-top:12px">Recognize a block before adding it. Fixes "which one is which?"</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">B — Live page preview</div>
+    <div class="mockup-body" style="padding:0;display:flex;height:260px">
+      <div style="width:45%;background:#f7f7f8;border-right:1px solid #e3e3e6;padding:12px">
+        <div style="font-size:11px;color:#888;margin-bottom:8px">EDITING: Hero</div>
+        <div style="background:#fff;border:1px solid #e3e3e6;border-radius:4px;padding:6px;font-size:11px;margin-bottom:6px">Headline: Summer Sale</div>
+        <div style="background:#fff;border:1px solid #e3e3e6;border-radius:4px;padding:6px;font-size:11px;margin-bottom:6px">Subhead: Up to 50% off</div>
+        <div style="background:#fff;border:1px solid #e3e3e6;border-radius:4px;padding:6px;font-size:11px">CTA: Shop now</div>
+      </div>
+      <div style="width:55%;padding:12px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#f3f0ff,#e5dbff);text-align:center">
+        <div style="font-size:11px;color:#999;position:absolute;top:6px">LIVE PREVIEW →</div>
+        <div style="font-size:18px;font-weight:700">Summer Sale</div>
+        <div style="font-size:12px;color:#555;margin:4px 0">Up to 50% off</div>
+        <div style="background:#5c5cff;color:#fff;font-size:11px;padding:5px 12px;border-radius:99px">Shop now</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#777;padding:0 16px 12px">See the real output as you type. Fixes "what will this look like?"</p>
+  </div>
+</div>
+
+<div class="options" style="margin-top:24px">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>Block picker icons</h3><p>Recognizing blocks is the pain</p></div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>Live page preview</h3><p>Not seeing the result is the pain</p></div>
+  </div>
+  <div class="option" data-choice="both" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content"><h3>Both equally</h3><p>The whole workflow feels blind</p></div>
+  </div>
+</div>
