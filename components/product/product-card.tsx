@@ -1,6 +1,7 @@
 // components/product/product-card.tsx — editorial product tile
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import Price from '@/components/price';
 import WishlistButton from '@/components/wishlist/wishlist-button';
@@ -29,6 +30,7 @@ const BADGE_CLASSES: Record<string, string> = {
 };
 
 export default function ProductCard({ product, priority, index = 0 }: Props): ReactElement {
+  const t = useTranslations('product');
   const badge = getProductBadge(product.tags);
   const soldOut = badge === 'sold-out';
   const price = product.priceRange.minVariantPrice;
@@ -79,7 +81,7 @@ export default function ProductCard({ product, priority, index = 0 }: Props): Re
         {/* Quick-view overlay on hover */}
         <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-warm-900/60 via-transparent to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           <span className="rounded-lg bg-white/90 px-4 py-2 text-xs font-semibold text-warm-900 backdrop-blur-sm transition-all duration-300 group-hover:translate-y-0 translate-y-2 dark:bg-warm-950/90 dark:text-warm-100">
-            Xem chi tiết
+            {t('viewDetails')}
           </span>
         </div>
       </div>

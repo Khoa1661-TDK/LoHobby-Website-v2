@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ export default function ReviewForm({
   ownReview,
 }: Props): ReactElement {
   const router = useRouter();
+  const t = useTranslations('product');
   const [rating, setRating] = useState(ownReview?.rating ?? 0);
   const [hover, setHover] = useState(0);
   const [isPending, startTransition] = useTransition();
@@ -35,7 +37,7 @@ export default function ReviewForm({
         toast.error(result.error);
         return;
       }
-      toast.success('Cảm ơn bạn! Đánh giá sẽ hiển thị sau khi được duyệt.');
+      toast.success(t('reviewThankYou'));
       router.refresh();
     });
   };
@@ -48,11 +50,11 @@ export default function ReviewForm({
       className="rounded-2xl border border-neutral-200 p-5 dark:border-neutral-800"
     >
       <h3 className="text-base font-semibold">
-        {ownReview ? 'Cập nhật đánh giá của bạn' : 'Viết đánh giá'}
+        {ownReview ? t('reviewUpdate') : t('reviewWrite')}
       </h3>
       {ownReview && !ownReview.approved ? (
         <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-          Đánh giá hiện tại của bạn đang chờ duyệt.
+          {t('reviewPending')}
         </p>
       ) : null}
 
@@ -61,7 +63,7 @@ export default function ReviewForm({
           <button
             key={value}
             type="button"
-            aria-label={`${value} sao`}
+            aria-label={t('reviewStarsAria', { value })}
             aria-pressed={rating === value}
             onMouseEnter={() => setHover(value)}
             onClick={() => setRating(value)}
@@ -86,7 +88,7 @@ export default function ReviewForm({
         name="title"
         defaultValue={ownReview?.title ?? ''}
         maxLength={120}
-        placeholder="Tiêu đề (tùy chọn)"
+        placeholder={t('reviewTitlePlaceholder')}
         className="mt-4 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
       />
       <textarea
@@ -95,7 +97,7 @@ export default function ReviewForm({
         required
         rows={4}
         maxLength={2000}
-        placeholder="Chia sẻ cảm nhận của bạn về sản phẩm…"
+        placeholder={t('reviewBodyPlaceholder')}
         className="mt-3 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
       />
 
@@ -104,7 +106,7 @@ export default function ReviewForm({
         disabled={isPending || rating === 0}
         className="mt-4 inline-flex rounded-full bg-black px-6 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
       >
-        {isPending ? 'Đang gửi…' : ownReview ? 'Cập nhật' : 'Gửi đánh giá'}
+        {isPending ? t('reviewSubmitting') : ownReview ? t('reviewUpdateBtn') : t('reviewSubmit')}
       </button>
     </form>
   );

@@ -1,6 +1,7 @@
 // app/(storefront)/product/[handle]/page.tsx
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';
 import Footer from '@/components/layout/footer';
@@ -35,10 +36,10 @@ const siteName = getSiteName();
 
 export const dynamic = 'force-dynamic';
 
-type Params = Promise<{ handle: string }>;
+type PageParams = { locale: string; handle: string };
 
-export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
-  const { handle } = await props.params;
+export async function generateMetadata(props: { params: Promise<PageParams> }): Promise<Metadata> {
+  const { handle, locale } = await props.params;
   const doc = await loadPayloadProductDoc(handle);
   if (!doc) return {};
 
@@ -98,8 +99,9 @@ export async function generateMetadata(props: { params: Params }): Promise<Metad
   };
 }
 
-export default async function ProductPage(props: { params: Params }): Promise<ReactElement> {
-  const { handle } = await props.params;
+export default async function ProductPage(props: { params: Promise<PageParams> }): Promise<ReactElement> {
+  const { handle, locale } = await props.params;
+  const t = await getTranslations({ locale, namespace: 'product' });
   const doc = await loadPayloadProductDoc(handle);
   if (!doc) return notFound();
 
@@ -129,13 +131,13 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
     {
       '@type': 'ListItem',
       position: 1,
-      name: 'Trang chủ',
+      name: t('breadcrumbHome'),
       item: baseUrl,
     },
     {
       '@type': 'ListItem',
       position: 2,
-      name: 'Cửa hàng',
+      name: t('breadcrumbStore'),
       item: `${baseUrl}/search`,
     },
   ];
@@ -176,17 +178,17 @@ export default async function ProductPage(props: { params: Params }): Promise<Re
         dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(breadcrumbJsonLd) }}
       />
       <div className="mx-auto max-w-(--breakpoint-2xl) px-4">
-        <nav aria-label="Đường dẫn" className="py-4 text-sm text-warm-500 dark:text-warm-400">
+        <nav aria-label={t('breadcrumbNavAria')} className="py-4 text-sm text-warm-500 dark:text-warm-400">
           <ol className="flex flex-wrap items-center gap-2">
             <li>
               <Link href="/" className="transition-colors hover:text-warm-800 dark:hover:text-warm-200">
-                Trang chủ
+                {t('breadcrumbHome')}
               </Link>
             </li>
             <li aria-hidden className="text-warm-300 dark:text-warm-700">/</li>
             <li>
               <Link href="/search" className="transition-colors hover:text-warm-800 dark:hover:text-warm-200">
-                Cửa hàng
+                {t('breadcrumbStore')}
               </Link>
             </li>
             {categories[0] ? (
@@ -257,10 +259,11 @@ async function RelatedProducts({
 }): Promise<ReactElement | null> {
   const related: Product[] = await getPayloadProductRecommendations(slug, categoryIds);
   if (related.length === 0) return null;
+  const t = await getTranslations('product');
 
   return (
-    <aside className="py-8" aria-label="Sản phẩm liên quan">
-      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">Sản phẩm liên quan</h2>
+    <aside className="py-8" aria-label={t('relatedAria')}>
+      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">{t('relatedHeading')}</h2>
       <ul className="flex w-full gap-4 overflow-x-auto pt-1">
         {related.map((product) => (
           <li

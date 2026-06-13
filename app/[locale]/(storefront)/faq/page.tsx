@@ -20,19 +20,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const siteName = getSiteName();
   return {
     title: t('faqMetaTitle'),
-    description: t('faqMetaDescription') + siteName,
+    description: t('faqMetaDescription') + ' ' + siteName,
     alternates: { canonical },
     openGraph: {
       type: 'website',
       title: t('faqMetaTitle'),
-      description: t('faqMetaDescription') + siteName,
+      description: t('faqMetaDescription') + ' ' + siteName,
       url: absoluteUrl(canonical),
       siteName,
     },
     twitter: {
       card: 'summary_large_image',
       title: t('faqMetaTitle'),
-      description: t('faqMetaDescription') + siteName,
+      description: t('faqMetaDescription') + ' ' + siteName,
     },
   };
 }

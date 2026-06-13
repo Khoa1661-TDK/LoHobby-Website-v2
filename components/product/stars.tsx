@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 
 type Props = {
@@ -8,12 +9,13 @@ type Props = {
 
 /** Static star rating display (rounds to the nearest half is not supported; uses full-star fill). */
 export default function Stars({ rating, className, size = 'sm' }: Props): ReactElement {
+  const t = useTranslations('product');
   const dimension = size === 'md' ? 'h-5 w-5' : 'h-4 w-4';
   return (
     <span
       className={`inline-flex items-center gap-0.5 ${className ?? ''}`}
       role="img"
-      aria-label={`${rating} trên 5 sao`}
+      aria-label={t('starsAria', { rating })}
     >
       {[1, 2, 3, 4, 5].map((index) => (
         <svg

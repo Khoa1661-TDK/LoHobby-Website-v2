@@ -1,7 +1,8 @@
 // app/checkout/page.tsx
 import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import { auth } from '@/auth';
 import CheckoutForm, { type SavedAddress } from '@/components/checkout-form';
 import { getCart } from '@/lib/cart';
@@ -12,12 +13,16 @@ import { getStoreSettings } from '@/lib/store-settings';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Thanh toán',
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('checkout');
+  return {
+    title: t('metaTitle'),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function CheckoutPage(): Promise<ReactElement> {
+  const t = await getTranslations('checkout');
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
@@ -26,15 +31,15 @@ export default async function CheckoutPage(): Promise<ReactElement> {
   if (cart.lines.length === 0) {
     return (
       <section className="mx-auto max-w-xl p-8 text-center">
-        <h1 className="text-2xl font-semibold">Giỏ hàng trống</h1>
+        <h1 className="text-2xl font-semibold">{t('emptyCartHeading')}</h1>
         <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
-          Thêm vài mô hình vào bộ sưu tập trước khi thanh toán nhé.
+          {t('emptyCartBody')}
         </p>
         <Link
           href="/"
           className="mt-6 inline-flex items-center gap-2 rounded-xl bg-warm-900 px-5 py-2.5 text-sm font-semibold text-warm-50 shadow-soft-md transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
         >
-          Xem danh mục
+          {t('browseCta')}
         </Link>
       </section>
     );
@@ -70,17 +75,17 @@ export default async function CheckoutPage(): Promise<ReactElement> {
   return (
     <section className="mx-auto w-full max-w-5xl px-4 py-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Thanh toán</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t('heading')}</h1>
         <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-          Cho chúng tôi biết nơi giao hàng và cách bạn muốn thanh toán.
+          {t('subtitle')}
         </p>
         {isGuest ? (
           <p className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
-            Bạn đang thanh toán với tư cách khách.{' '}
+            {t('guestNotice')}{' '}
             <Link href="/login?callbackUrl=/checkout" className="font-medium underline">
-              Đăng nhập
+              {t('guestLogin')}
             </Link>{' '}
-            để lưu địa chỉ và theo dõi đơn hàng dễ dàng hơn.
+            {t('guestNoticeSuffix')}
           </p>
         ) : null}
       </header>
