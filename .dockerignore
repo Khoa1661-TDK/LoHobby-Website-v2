@@ -1,0 +1,29 @@
+# Dependencies & build output (reinstalled/rebuilt inside the image)
+node_modules
+.next
+generated
+out
+build
+
+# Secrets — never copy real env into the image
+.env
+.env.*
+!.env.example
+
+# Local data that must not enter the image
+public/media
+*.sql
+*.sql.gz
+*.tgz
+
+# VCS, docs, editor, CI noise
+.git
+.gitignore
+docs
+.claude
+.vscode
+.idea
+*.log
+coverage
+.DS_Store
+Thumbs.db

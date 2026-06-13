@@ -51,4 +51,16 @@ describe('isNonLocalizedRoot', () => {
     // `/products-archive` is a distinct path, not under `/products`.
     expect(isNonLocalizedRoot('/products-archive')).toBe(false);
   });
+
+  it('should treat /health as a non-localized root so it bypasses locale prefixing', () => {
+    expect(isNonLocalizedRoot('/health')).toBe(true);
+  });
+
+  it('should still localize a normal storefront path', () => {
+    expect(isNonLocalizedRoot('/products-listing')).toBe(false);
+  });
+
+  it('should keep treating /products as non-localized', () => {
+    expect(isNonLocalizedRoot('/products')).toBe(true);
+  });
 });
