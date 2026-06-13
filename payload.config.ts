@@ -9,7 +9,6 @@ import sharp from 'sharp';
 import { BlogCategories } from './src/payload/collections/BlogCategories';
 import { Carts } from './src/payload/collections/Carts';
 import { Categories } from './src/payload/collections/Categories';
-import { ContentPages } from './src/payload/collections/ContentPages';
 import { Posts } from './src/payload/collections/Posts';
 import { Pages } from './src/payload/collections/Pages';
 import { Media } from './src/payload/collections/Media';
@@ -74,7 +73,6 @@ export default buildConfig({
     PaymentMethods,
     Carts,
     Orders,
-    ContentPages,
     BlogCategories,
     Posts,
     StoreCustomers,

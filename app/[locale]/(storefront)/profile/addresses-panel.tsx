@@ -9,6 +9,7 @@ import {
   TransitionChild,
 } from '@headlessui/react';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import {
   Fragment,
@@ -23,14 +24,15 @@ import {
   createAddressAction,
   deleteAddressAction,
   setDefaultAddressAction,
-} from '@/app/(storefront)/profile/actions';
-import type { ProfileAddress } from '@/app/(storefront)/profile/types';
+} from '@/app/[locale]/(storefront)/profile/actions';
+import type { ProfileAddress } from '@/app/[locale]/(storefront)/profile/types';
 
 type Props = {
   addresses: ProfileAddress[];
 };
 
 export default function AddressesPanel({ addresses }: Props): ReactElement {
+  const t = useTranslations('profile');
   const router = useRouter();
   const [open, setOpen] = useState<boolean>(false);
   const [creating, startCreate] = useTransition();
@@ -48,7 +50,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
     startCreate(async () => {
       const result = await createAddressAction(formData);
       if (result.ok) {
-        toast.success('Đã lưu địa chỉ.');
+        toast.success(t('addressSaved'));
         form.reset();
         setOpen(false);
         router.refresh();
@@ -64,7 +66,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
     const result = await deleteAddressAction(addressId);
     setBusyId(null);
     if (result.ok) {
-      toast.success('Đã xóa địa chỉ.');
+      toast.success(t('addressDeleted'));
       router.refresh();
     } else {
       toast.error(result.error);
@@ -77,7 +79,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
     const result = await setDefaultAddressAction(addressId);
     setBusyId(null);
     if (result.ok) {
-      toast.success('Đã cập nhật địa chỉ mặc định.');
+      toast.success(t('defaultAddressUpdated'));
       router.refresh();
     } else {
       toast.error(result.error);
@@ -88,9 +90,9 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Sổ địa chỉ</h2>
+          <h2 className="text-lg font-semibold">{t('addressesHeading')}</h2>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Địa chỉ đã lưu sẽ tự điền khi thanh toán. Đánh dấu địa chỉ dùng nhiều nhất làm mặc định.
+            {t('addressesSubtitle')}
           </p>
         </div>
         <button
@@ -99,17 +101,17 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
           className="inline-flex items-center gap-2 rounded-full bg-filament-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-filament-600"
         >
           <PlusIcon className="h-4 w-4" aria-hidden="true" />
-          Thêm địa chỉ
+          {t('addAddress')}
         </button>
       </div>
 
       {addresses.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-10 text-center shadow-sm dark:border-neutral-700 dark:bg-neutral-950">
           <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
-            Chưa có địa chỉ nào được lưu.
+            {t('noAddressesTitle')}
           </p>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Thêm một địa chỉ để thanh toán nhanh hơn lần sau.
+            {t('noAddressesBody')}
           </p>
         </div>
       ) : (
@@ -133,7 +135,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                       </p>
                       {address.isDefault && (
                         <span className="inline-flex items-center rounded-full bg-filament-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-filament-700 dark:bg-filament-500/15 dark:text-filament-200">
-                          Mặc định
+                          {t('defaultBadge')}
                         </span>
                       )}
                     </div>
@@ -166,7 +168,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                       disabled={busy}
                       className="rounded-full border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
                     >
-                      Đặt làm mặc định
+                      {t('setAsDefault')}
                     </button>
                   )}
                   <button
@@ -175,7 +177,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                     disabled={busy}
                     className="rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:text-rose-300 dark:hover:bg-rose-500/10"
                   >
-                    {busy ? 'Đang xử lý…' : 'Xóa'}
+                    {busy ? t('processing') : t('deleteAddress')}
                   </button>
                 </div>
               </li>
@@ -211,12 +213,12 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
               <DialogPanel className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-neutral-950">
                 <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
                   <DialogTitle className="text-base font-semibold">
-                    Thêm địa chỉ mới
+                    {t('newAddressTitle')}
                   </DialogTitle>
                   <button
                     type="button"
                     onClick={close}
-                    aria-label="Đóng"
+                    aria-label={t('close')}
                     className="rounded-full p-1 text-neutral-500 transition hover:bg-neutral-100 dark:hover:bg-neutral-900"
                   >
                     <XMarkIcon className="h-5 w-5" aria-hidden="true" />
@@ -224,19 +226,19 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                 </div>
 
                 <form onSubmit={handleCreate} className="space-y-4 p-6">
-                  <DialogField label="Nhãn" htmlFor="address-title">
+                  <DialogField label={t('labelField')} htmlFor="address-title">
                     <input
                       id="address-title"
                       name="title"
                       type="text"
                       required
-                      placeholder="Nhà riêng, Văn phòng, Studio…"
+                      placeholder={t('labelPlaceholder')}
                       className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                     />
                   </DialogField>
 
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <DialogField label="Tên người nhận" htmlFor="address-fullname">
+                    <DialogField label={t('recipientName')} htmlFor="address-fullname">
                       <input
                         id="address-fullname"
                         name="fullName"
@@ -246,7 +248,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                         className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                       />
                     </DialogField>
-                    <DialogField label="Số điện thoại" htmlFor="address-phone">
+                    <DialogField label={t('phoneLabel')} htmlFor="address-phone">
                       <input
                         id="address-phone"
                         name="phone"
@@ -258,7 +260,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                     </DialogField>
                   </div>
 
-                  <DialogField label="Địa chỉ" htmlFor="address-line">
+                  <DialogField label={t('streetAddress')} htmlFor="address-line">
                     <input
                       id="address-line"
                       name="addressLine"
@@ -270,7 +272,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                   </DialogField>
 
                   <div className="grid gap-4 sm:grid-cols-3">
-                    <DialogField label="Phường / xã" htmlFor="address-ward">
+                    <DialogField label={t('wardLabel')} htmlFor="address-ward">
                       <input
                         id="address-ward"
                         name="ward"
@@ -278,7 +280,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                         className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                       />
                     </DialogField>
-                    <DialogField label="Quận / huyện" htmlFor="address-district">
+                    <DialogField label={t('districtLabel')} htmlFor="address-district">
                       <input
                         id="address-district"
                         name="district"
@@ -286,7 +288,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                         className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                       />
                     </DialogField>
-                    <DialogField label="Tỉnh / thành phố" htmlFor="address-city">
+                    <DialogField label={t('cityLabel')} htmlFor="address-city">
                       <input
                         id="address-city"
                         name="city"
@@ -298,7 +300,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                     </DialogField>
                   </div>
 
-                  <DialogField label="Quốc gia" htmlFor="address-country">
+                  <DialogField label={t('countryLabel')} htmlFor="address-country">
                     <input
                       id="address-country"
                       name="country"
@@ -314,7 +316,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                       name="isDefault"
                       className="h-4 w-4 rounded border-neutral-300 text-filament-500 focus:ring-filament-500 dark:border-neutral-600 dark:bg-neutral-900"
                     />
-                    Đặt làm địa chỉ mặc định
+                    {t('setAsDefaultCheckbox')}
                   </label>
 
                   <div className="flex justify-end gap-3 pt-2">
@@ -324,14 +326,14 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                       disabled={creating}
                       className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 disabled:opacity-60 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
                     >
-                      Hủy
+                      {t('cancel')}
                     </button>
                     <button
                       type="submit"
                       disabled={creating}
                       className="rounded-full bg-filament-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-filament-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {creating ? 'Đang lưu…' : 'Lưu địa chỉ'}
+                      {creating ? t('saving') : t('saveAddress')}
                     </button>
                   </div>
                 </form>

@@ -1,5 +1,6 @@
 // components/home/category-section-header.tsx
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import type { StoreCategory } from '@/lib/categories';
 
@@ -8,10 +9,12 @@ type Props = {
   productCount: number;
 };
 
-export default function CategorySectionHeader({
+export default async function CategorySectionHeader({
   category,
   productCount,
-}: Props): ReactElement {
+}: Props): Promise<ReactElement> {
+  const t = await getTranslations('home');
+
   return (
     <div className="flex items-end justify-between gap-4 border-b border-warm-200/60 pb-4 dark:border-warm-800/30">
       <div className="min-w-0">
@@ -35,7 +38,7 @@ export default function CategorySectionHeader({
         prefetch
         className="shrink-0 text-sm font-medium text-terracotta-600 transition-colors duration-200 hover:text-terracotta-700 dark:text-terracotta-400 dark:hover:text-terracotta-300"
       >
-        Xem tất cả →
+        {t('categoryViewAll')} →
       </Link>
     </div>
   );

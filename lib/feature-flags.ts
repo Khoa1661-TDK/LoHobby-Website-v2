@@ -26,11 +26,6 @@ export function isOrderSnapshotMirrorEnabled(): boolean {
   return false;
 }
 
-/** Phase 3: CMS `content-pages` routes on storefront */
-export function isContentPagesEnabled(): boolean {
-  return envFlag('ENABLE_CONTENT_PAGES', true);
-}
-
 /** Phase 3: Email campaign admin (manual send; no ESP integration yet) */
 export function isEmailCampaignsEnabled(): boolean {
   return envFlag('ENABLE_EMAIL_CAMPAIGNS', true);

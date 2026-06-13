@@ -104,11 +104,29 @@ See `rules/common/decisions.md` for the logging format and rules.
 
 ---
 
+## 2026-06-08 — Analytics dashboard time-window selector plumbing
+**Chosen:** Use Payload 3 `searchParams` prop passed to the dashboard view component — `PeriodSelector` writes URL query params (`?period=7d`, `?from=...&to=...`) and `AnalyticsDashboard` reads them server-side via `resolvePeriod(props.searchParams)`.
+**Alternatives:** (1) Cookie fallback: selector writes a `dash_period` cookie, server reads it via `next/headers` `cookies()`. (2) Server-side session storage for the selected window.
+**Why:** Payload 3 custom dashboard views receive `searchParams` from the URL query string as standard props. Using query params keeps the window shareable, bookmarkable, and reduces server state. The pure `resolvePeriod` helper in `lib/analytics/period.ts` has a sensible fallback (current month) on missing/invalid params, so the dashboard remains functional without any selector interaction.
+**Trade-offs:** `?period=7d` in the URL means refreshing or sharing the admin URL carries the window. Peripheral but acceptable — clearing the param or omitting it falls back to the current month.
+**Revisit if:** Payload changes how it passes `searchParams` to the admin dashboard component, or if cookie-based persistence becomes necessary for server actions / form submissions that lose query context.
+
+---
+
 ## 2026-06-03 — Seller order notifications via Zalo OA
 **Chosen:** Notify the seller through a Zalo Official Account message on order creation, triggered by a Payload `Orders.afterChange` hook (operation === 'create'). OA credentials live in an admin-managed `notification-settings` global; access tokens auto-refresh and the rotated refresh token is persisted back.
 **Alternatives:** Zalo ZNS template messages (rejected: template approval + per-message cost, aimed at customers); calling the notifier directly from the checkout route (rejected: misses non-checkout order sources, couples checkout to notifications); a polling/queue worker (rejected: over-engineered for a single-seller ping).
 **Why:** OA messages are free and adequate for notifying one internal recipient; the afterChange hook captures every order source and mirrors the existing inventory-sync hook; admin-managed config fits the template's "configure it to liking" goal. Notification is fire-and-forget so Zalo downtime never blocks an order.
 **Trade-offs:** OA "consultation" message window can expire if the seller goes silent for a long time; the OA app secret/tokens are stored in plaintext in the admin global (admin-only access). Encrypting via the existing PAYMENT_SECRETS_KEY pattern is a noted follow-up.
 **Revisit if:** the seller needs customer-facing notifications, multi-recipient/team alerts, or per-status (paid/shipped) notifications; or if plaintext secret storage becomes unacceptable.
+
+---
+
+## 2026-06-08 — CTR daily-rollup vs per-event storage
+**Chosen:** Store impressions and clicks in a daily rollup table (`ProductCtrDaily` with `@@unique([productId, day])`), with capture endpoints upsert-and-increment counters. NOT per-event rows.
+**Alternatives:** (1) Per-event rows following the existing `ProductViewEvent` / `AddToCartEvent` pattern. (2) Client-side aggregation with a single daily beacon per session.
+**Why:** Impressions are far higher volume than page views — every product card in every grid on every listing page generates one. Per-event rows would bloat the table and slow range aggregation. A daily rollup keeps writes and queries cheap (one upsert per product per day, regardless of impression count). The min-impressions threshold (default 20) in `computeCtr()` further suppresses noisy ratios from tiny sample sizes.
+**Trade-offs:** Loss of per-event granularity — cannot answer "how many cards were seen per session" or "what time of day do users browse." CTR is a summary metric; these questions would need a separate capture path.
+**Revisit if:** Analysts need per-session impression counts or time-of-day breakdowns (add a sampled per-event table alongside the rollup).
 
 ---

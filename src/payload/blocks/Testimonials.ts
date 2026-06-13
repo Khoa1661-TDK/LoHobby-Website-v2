@@ -6,6 +6,8 @@ export const Testimonials: Block = {
   slug: 'testimonials',
   labels: { singular: 'Testimonials', plural: 'Testimonials' },
   interfaceName: 'TestimonialsBlock',
+  imageURL: '/admin/block-previews/testimonials.svg',
+  imageAltText: 'Testimonials preview',
   fields: [
     {
       name: 'title',

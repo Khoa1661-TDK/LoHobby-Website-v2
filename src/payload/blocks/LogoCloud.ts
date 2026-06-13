@@ -6,6 +6,8 @@ export const LogoCloud: Block = {
   slug: 'logoCloud',
   labels: { singular: 'Logo Cloud', plural: 'Logo Clouds' },
   interfaceName: 'LogoCloudBlock',
+  imageURL: '/admin/block-previews/logo-cloud.svg',
+  imageAltText: 'Logo cloud preview',
   fields: [
     {
       name: 'title',

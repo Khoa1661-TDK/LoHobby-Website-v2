@@ -6,6 +6,8 @@ export const ImageWithText: Block = {
   slug: 'imageWithText',
   labels: { singular: 'Image with Text', plural: 'Image with Text' },
   interfaceName: 'ImageWithTextBlock',
+  imageURL: '/admin/block-previews/image-with-text.svg',
+  imageAltText: 'Image with text preview',
   fields: [
     {
       name: 'image',

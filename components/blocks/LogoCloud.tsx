@@ -1,6 +1,6 @@
 // components/blocks/LogoCloud.tsx
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';

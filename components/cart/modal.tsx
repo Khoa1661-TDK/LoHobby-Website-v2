@@ -3,9 +3,10 @@
 
 import { Dialog, Transition } from '@headlessui/react';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
 import {
   Fragment,
   useEffect,
@@ -26,6 +27,7 @@ import type { Cart } from '@/lib/cart';
 type Props = { cart: Cart };
 
 export default function CartModal({ cart }: Props): ReactElement {
+  const t = useTranslations('cart');
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -50,9 +52,9 @@ export default function CartModal({ cart }: Props): ReactElement {
   return (
     <>
       <span aria-live="polite" className="sr-only">
-        {`Giỏ hàng có ${cart.totalQuantity} sản phẩm`}
+        {t('srItemCount', { count: cart.totalQuantity })}
       </span>
-      <button aria-label="Mở giỏ hàng" onClick={openCart}>
+      <button aria-label={t('openCartAria')} onClick={openCart}>
         <OpenCart quantity={cart.totalQuantity} />
       </button>
       <Transition show={isOpen}>
@@ -81,14 +83,14 @@ export default function CartModal({ cart }: Props): ReactElement {
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-bold">Giỏ hàng</p>
+                  <p className="text-lg font-bold">{t('title')}</p>
                   {cart.lines.length > 0 && (
                     <p className="text-xs text-warm-500 dark:text-warm-400">
-                      {cart.totalQuantity} sản phẩm
+                      {t('itemCount', { count: cart.totalQuantity })}
                     </p>
                   )}
                 </div>
-                <button aria-label="Đóng giỏ hàng" onClick={closeCart}>
+                <button aria-label={t('closeCartAria')} onClick={closeCart}>
                   <CloseCart />
                 </button>
               </div>
@@ -98,16 +100,16 @@ export default function CartModal({ cart }: Props): ReactElement {
                   <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-warm-100/80 dark:bg-warm-800/50">
                     <ShoppingCartIcon className="h-8 w-8 text-warm-400" />
                   </div>
-                  <p className="mt-5 text-xl font-bold">Giỏ hàng trống.</p>
+                  <p className="mt-5 text-xl font-bold">{t('empty')}</p>
                   <p className="mt-1.5 text-center text-sm text-warm-500 dark:text-warm-400">
-                    Khám phá bộ sưu tập mô hình hobby của chúng tôi.
+                    {t('emptyBody')}
                   </p>
                   <Link
                     href="/search"
                     onClick={closeCart}
                     className="mt-6 inline-flex rounded-xl bg-warm-900 px-5 py-2.5 text-sm font-medium text-warm-50 transition-all duration-200 hover:bg-warm-800 dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
                   >
-                    Khám phá ngay
+                    {t('exploreNow')}
                   </Link>
                 </div>
               ) : (
@@ -123,7 +125,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                           <div className="relative flex w-full flex-row justify-between px-1 py-4">
                             <div className="absolute z-40 -ml-1 -mt-2">
                               <button
-                                aria-label="Xóa sản phẩm"
+                                aria-label={t('removeItemAria')}
                                 disabled={isPending}
                                 onClick={() =>
                                   startTransition(async () => {
@@ -217,7 +219,7 @@ export default function CartModal({ cart }: Props): ReactElement {
 
                   <div className="py-4 text-sm text-warm-500 dark:text-warm-400">
                     <div className="mb-2 flex items-center justify-between border-b border-warm-200/30 pb-2 dark:border-warm-800/20">
-                      <span>Thuế</span>
+                      <span>{t('tax')}</span>
                       <Price
                         className="text-sm font-medium text-warm-900 dark:text-warm-100"
                         amount="0"
@@ -225,11 +227,11 @@ export default function CartModal({ cart }: Props): ReactElement {
                       />
                     </div>
                     <div className="mb-2 flex items-center justify-between border-b border-warm-200/30 pb-2 dark:border-warm-800/20">
-                      <span>Phí vận chuyển</span>
-                      <span>Tính khi thanh toán</span>
+                      <span>{t('shipping')}</span>
+                      <span>{t('shippingAtCheckout')}</span>
                     </div>
                     <div className="flex items-center justify-between pt-1">
-                      <span className="font-semibold text-warm-900 dark:text-warm-100">Tổng cộng</span>
+                      <span className="font-semibold text-warm-900 dark:text-warm-100">{t('total')}</span>
                       <Price
                         className="text-base font-bold text-warm-900 dark:text-warm-100"
                         amount={cart.cost.totalAmount.amount}
@@ -243,7 +245,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                     onClick={closeCart}
                     className="block w-full rounded-xl bg-warm-900 py-3 text-center text-sm font-semibold text-warm-50 shadow-soft-md transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
                   >
-                    Thanh toán
+                    {t('checkout')}
                   </Link>
                 </div>
               )}
@@ -317,10 +319,11 @@ function QtyButton({
   disabled: boolean;
   onClick: () => void;
 }): ReactElement {
+  const t = useTranslations('cart');
   return (
     <button
       type="button"
-      aria-label={type === 'plus' ? 'Tăng số lượng' : 'Giảm số lượng'}
+      aria-label={type === 'plus' ? t('increaseQtyAria') : t('decreaseQtyAria')}
       disabled={disabled}
       onClick={onClick}
       className="flex h-8 w-8 items-center justify-center rounded-lg text-warm-500 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-800 disabled:opacity-40 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200"

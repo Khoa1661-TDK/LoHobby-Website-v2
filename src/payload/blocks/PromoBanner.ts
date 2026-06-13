@@ -6,6 +6,8 @@ export const PromoBanner: Block = {
   slug: 'promoBanner',
   labels: { singular: 'Promo Banner', plural: 'Promo Banners' },
   interfaceName: 'PromoBannerBlock',
+  imageURL: '/admin/block-previews/promo-banner.svg',
+  imageAltText: 'Promo banner preview',
   fields: [
     {
       name: 'text',

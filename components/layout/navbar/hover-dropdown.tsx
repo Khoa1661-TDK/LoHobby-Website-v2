@@ -3,7 +3,7 @@
 
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 

@@ -1,5 +1,5 @@
 // components/layout/announcement-banner.tsx — CMS-managed bar below the navbar
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import type { CSSProperties, ReactElement } from 'react';
 import { getSiteAnnouncement } from '@/lib/site-header';
 

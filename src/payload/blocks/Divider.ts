@@ -6,6 +6,8 @@ export const Divider: Block = {
   slug: 'divider',
   labels: { singular: 'Divider', plural: 'Dividers' },
   interfaceName: 'DividerBlock',
+  imageURL: '/admin/block-previews/divider.svg',
+  imageAltText: 'Divider preview',
   fields: [
     {
       name: 'style',

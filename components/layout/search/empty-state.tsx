@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import { getStoreCategories } from '@/lib/shopify';
 
@@ -7,6 +8,7 @@ export default async function SearchEmptyState({
 }: {
   query?: string;
 }): Promise<ReactElement> {
+  const t = await getTranslations('search');
   const categories = (await getStoreCategories()).slice(0, 8);
 
   return (
@@ -25,10 +27,10 @@ export default async function SearchEmptyState({
         </svg>
       </div>
       <h2 className="mt-6 text-xl font-bold text-warm-900 dark:text-warm-100">
-        {query ? `Không tìm thấy sản phẩm cho "${query}"` : 'Chưa có sản phẩm nào'}
+        {query ? `${t('metaTitleWithQuery', { query })}` : t('noResults')}
       </h2>
       <p className="mt-2 max-w-md text-sm text-warm-500 dark:text-warm-400">
-        Thử từ khóa khác, kiểm tra chính tả hoặc khám phá các danh mục bên dưới.
+        {t('tryAdjustingFilter')}
       </p>
 
       {categories.length > 0 ? (
@@ -50,7 +52,7 @@ export default async function SearchEmptyState({
         href="/search"
         className="mt-8 inline-flex items-center gap-2 rounded-xl bg-warm-900 px-6 py-2.5 text-sm font-semibold text-warm-50 shadow-soft-md transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
       >
-        Xem tất cả sản phẩm
+        {t('allProducts')}
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
         </svg>

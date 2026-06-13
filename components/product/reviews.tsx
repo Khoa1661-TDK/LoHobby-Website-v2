@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { getTranslations } from 'next-intl/server';
 import type { ReactElement } from 'react';
 import { auth } from '@/auth';
 import ReviewForm from '@/components/product/review-form';
@@ -31,17 +32,19 @@ export default async function ProductReviews({
     userId ? hasPurchasedProduct(userId, productId) : Promise.resolve(false),
   ]);
 
+  const t = await getTranslations('product');
+
   return (
     <section className="py-8" aria-labelledby="reviews-heading">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="reviews-heading" className="text-2xl font-bold">
-          Đánh giá
+          {t('reviewsHeading')}
         </h2>
         {summary.count > 0 ? (
           <div className="flex items-center gap-2">
             <Stars rating={summary.average} size="md" />
             <span className="text-sm text-neutral-600 dark:text-neutral-400">
-              {summary.average} / 5 · {summary.count} đánh giá
+              {t('reviewsCount', { count: summary.count })}
             </span>
           </div>
         ) : null}
@@ -51,7 +54,7 @@ export default async function ProductReviews({
         <div>
           {reviews.length === 0 ? (
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Chưa có đánh giá nào. Hãy là người đầu tiên chia sẻ cảm nhận!
+              {t('reviewsEmpty')}
             </p>
           ) : (
             <ul className="space-y-5">
@@ -89,9 +92,9 @@ export default async function ProductReviews({
                   href={`/login?callbackUrl=/product/${productHandle}`}
                   className="font-medium underline"
                 >
-                  Đăng nhập
+                  {t('reviewsLogin')}
                 </Link>{' '}
-                để viết đánh giá cho sản phẩm bạn đã mua.
+                {t('reviewsLoginSuffix')}
               </p>
             </div>
           ) : purchased || ownReview ? (
@@ -103,7 +106,7 @@ export default async function ProductReviews({
           ) : (
             <div className="rounded-2xl border border-neutral-200 p-5 text-sm dark:border-neutral-800">
               <p className="text-neutral-600 dark:text-neutral-400">
-                Chỉ khách hàng đã mua sản phẩm này mới có thể viết đánh giá.
+                {t('reviewsPurchasedOnly')}
               </p>
             </div>
           )}

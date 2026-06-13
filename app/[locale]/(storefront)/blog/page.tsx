@@ -1,6 +1,7 @@
 // app/(storefront)/blog/page.tsx — aggregate paginated listing of published posts (Content)
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import PostCard from '@/components/blog/post-card';
 import Breadcrumbs from '@/components/layout/breadcrumbs';
@@ -25,45 +26,52 @@ const POSTS_PER_PAGE = 9;
 
 export const revalidate = 60;
 
-const title = 'Blog';
-const description = `Tin tức, hướng dẫn và câu chuyện in 3D từ ${siteName}. Mẹo chăm sóc mô hình, vật liệu PLA/PETG và cảm hứng sáng tạo.`;
-
-export const metadata: Metadata = {
-  title,
-  description,
-  alternates: { canonical: '/blog' },
-  openGraph: {
-    type: 'website',
-    title,
-    description,
-    url: absoluteUrl('/blog'),
-    siteName,
-  },
-  twitter: { card: 'summary_large_image', title, description },
+type Props = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 };
 
-type SearchParams = Promise<Record<string, string | undefined>>;
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'blog' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription', { siteName }),
+    alternates: { canonical: '/blog' },
+    openGraph: {
+      type: 'website',
+      title: t('metaTitle'),
+      description: t('metaDescription', { siteName }),
+      url: absoluteUrl('/blog'),
+      siteName,
+    },
+    twitter: { card: 'summary_large_image', title: t('metaTitle'), description: t('metaDescription', { siteName }) },
+  };
+}
 
-export default async function BlogIndexPage(props: {
-  searchParams: SearchParams;
-}): Promise<ReactElement> {
-  const [posts, categories, searchParams] = await Promise.all([
+export default async function BlogIndexPage({ params, searchParams }: Props): Promise<ReactElement> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'blog' });
+  const title = t('metaTitle');
+
+  const [posts, categories, sp] = await Promise.all([
     getPublishedPosts(MAX_LISTED_POSTS),
     getBlogCategories(),
-    props.searchParams,
+    searchParams,
   ]);
 
   const {
     page: pagePosts,
     currentPage,
     totalPages,
-  } = paginateList(posts, searchParams.page, POSTS_PER_PAGE);
+  } = paginateList(posts, sp.page, POSTS_PER_PAGE);
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Trang chủ', path: '/' },
+    { name: t('breadcrumbHome'), path: '/' },
     { name: title, path: '/blog' },
   ]);
 
+  const description = t('metaDescription', { siteName });
   const itemListJsonLd = buildItemListJsonLd(
     pagePosts.map((post) => ({
       title: post.title,
@@ -87,7 +95,7 @@ export default async function BlogIndexPage(props: {
       />
 
       <section className="mx-auto max-w-6xl px-4 pb-12">
-        <Breadcrumbs items={[{ name: 'Trang chủ', href: '/' }, { name: title }]} />
+        <Breadcrumbs items={[{ name: t('breadcrumbHome'), href: '/' }, { name: title }]} />
 
         <header className="max-w-2xl">
           <h1 className="font-serif text-3xl font-bold tracking-tight md:text-4xl">{title}</h1>
@@ -95,9 +103,9 @@ export default async function BlogIndexPage(props: {
         </header>
 
         {categories.length > 0 ? (
-          <nav aria-label="Chủ đề" className="mt-8 flex flex-wrap gap-2">
+          <nav aria-label={t('categoriesAria')} className="mt-8 flex flex-wrap gap-2">
             <span className="inline-flex h-9 items-center rounded-lg border border-warm-900 bg-warm-900 px-3.5 text-sm font-medium text-warm-50 dark:border-warm-100 dark:bg-warm-100 dark:text-warm-900">
-              Tất cả
+              {t('allLabel')}
             </span>
             {categories.map((category) => (
               <Link
@@ -113,7 +121,7 @@ export default async function BlogIndexPage(props: {
 
         {pagePosts.length === 0 ? (
           <p className="py-16 text-center text-warm-500 dark:text-warm-400">
-            Chưa có bài viết nào. Hãy quay lại sau nhé.
+            {t('empty')}
           </p>
         ) : (
           <>
