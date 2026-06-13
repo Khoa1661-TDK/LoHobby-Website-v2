@@ -4,6 +4,8 @@ import { getSiteName } from '@/lib/brand';
 import { getPayloadProductBySlug } from '@/lib/payload-products';
 
 export const runtime = 'nodejs';
+// Fetches the product from Payload (Postgres); render on demand, never at build.
+export const dynamic = 'force-dynamic';
 export const alt = 'Hình ảnh sản phẩm';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
