@@ -1,6 +1,10 @@
 import type { MetadataRoute } from 'next';
 import { getStoreBranding } from '@/lib/store-branding';
 
+// Reads store branding from Payload (Postgres); render on demand so the build
+// requires no database connection.
+export const dynamic = 'force-dynamic';
+
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const branding = await getStoreBranding();
 

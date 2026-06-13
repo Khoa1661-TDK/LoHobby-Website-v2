@@ -5,6 +5,15 @@ See `rules/common/decisions.md` for the logging format and rules.
 
 ---
 
+## 2026-06-13 — Render storefront dynamically to containerize the image build
+**Chosen:** Make the entire storefront render dynamically (`export const dynamic = 'force-dynamic'` on `app/[locale]/(storefront)/layout.tsx`, plus the CMS-backed metadata routes `app/manifest.ts` and the product OpenGraph image) so the production Docker image can be built without a database. The Dockerfile build stage also gets placeholder `DATABASE_URL`/`PAYLOAD_SECRET` env (build-stage only — never reaches the runtime image) for `prisma generate` / Payload config init, which resolve env but never connect.
+**Alternatives:** (1) Build the image against a live, populated Postgres (host-networked throwaway or the real DB) to preserve static generation. (2) Move `next build` into the container entrypoint so it runs at startup when the DB is up. (3) Per-page `force-dynamic` only on the specific pages that fetch CMS data.
+**Why:** User decision during dockerization (Option "make CMS pages dynamic"). The storefront layout fetches store branding, chat config, and navigation from Payload on every page, so static prerendering inherently connects to the DB at build — making the whole subtree dynamic decouples build from DB at a single point. For a self-hosted CMS shop, per-request rendering is fine at this scale (data is already cached via `unstable_cache`), and pages always reflect current CMS content with no rebuild on content edits. Per-page `force-dynamic` (alt 3) was tried first and proved to be whack-a-mole — the DB dependency lives in the shared layout, not individual pages. Building against a DB (alts 1/2) adds deploy-time DB coupling and rebuild-on-content-change, the wrong trade-off for a CMS site.
+**Trade-offs:** The storefront loses static/ISR optimization — every request renders on the server (mitigated by existing tag-based caching). The build-stage placeholder env is a (harmless, non-secret) coupling that must stay in sync if Prisma/Payload change what they require at build.
+**Revisit if:** Storefront traffic grows enough that per-request rendering becomes a bottleneck (reintroduce static/ISR by building against a populated DB, alt 1), or pages are split so that genuinely-static content no longer sits under the CMS-coupled layout.
+
+---
+
 ## [Date] — Initial Stack Selection
 **Chosen:** [Fill in]  
 **Alternatives:** [Fill in]  
