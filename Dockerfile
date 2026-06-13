@@ -19,6 +19,13 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 
 # --- build: compile Next.js + Payload --------------------------------------
 FROM base AS build
+# Build-time-only placeholders. `prisma generate` (Prisma 7 prisma.config.ts)
+# and Payload config init require these vars to RESOLVE, but never connect to
+# the DB at build. They do NOT reach the runtime image — the runtime stage
+# copies files, not ENV, and injects real values via env_file at start.
+ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
+ENV PAYLOAD_SECRET="build-only-placeholder-not-used-at-runtime"
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Call binaries directly (project `pnpm <script>` hits a deps-status precheck).
