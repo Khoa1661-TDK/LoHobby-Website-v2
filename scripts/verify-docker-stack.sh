@@ -105,11 +105,15 @@ else
 fi
 
 # --- check 2: postgres not published to host -------------------------------
+# Authoritative: inspect the container's actual host port bindings. (`docker
+# compose port` can report an image's merely-EXPOSEd port, giving false hits.)
 note "Check: postgres is not published to the host"
-if [ -z "$("${DC[@]}" port postgres 5432 2>/dev/null || true)" ]; then
-  ok "postgres has no host port mapping"
+PG_CID="$("${DC[@]}" ps -q postgres)"
+PG_BINDINGS="$(docker inspect -f '{{json .HostConfig.PortBindings}}' "$PG_CID" 2>/dev/null || echo null)"
+if [ "$PG_BINDINGS" = "{}" ] || [ "$PG_BINDINGS" = "null" ] || [ -z "$PG_BINDINGS" ]; then
+  ok "postgres has no host port bindings ($PG_BINDINGS)"
 else
-  bad "postgres IS published to the host"
+  bad "postgres IS published to the host: $PG_BINDINGS"
 fi
 
 # --- check 3: media persists across down/up --------------------------------
