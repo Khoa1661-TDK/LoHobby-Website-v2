@@ -23,6 +23,12 @@ import { getChatConfig } from '@/lib/store-settings';
 import { baseUrl } from '@/lib/utils';
 import '../../globals.css';
 
+// The storefront layout fetches store branding, chat config, and navigation
+// from Payload (Postgres) on every request, so the whole storefront renders
+// dynamically. This also keeps the production image build free of any database
+// dependency — nothing under this layout is prerendered at build time.
+export const dynamic = 'force-dynamic';
+
 type LocaleParams = { locale: string };
 
 const OG_LOCALES: Record<string, string> = { vi: 'vi_VN', en: 'en_US' };
