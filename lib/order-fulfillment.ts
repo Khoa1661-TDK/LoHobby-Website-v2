@@ -284,6 +284,84 @@ export async function syncOrderShipment(docId: string | number): Promise<Fulfill
   return { ok: true, order: mapOrderToFulfillmentView(doc) };
 }
 
+/** Admin cancels an order. Allowed from any non-terminal stage incl. shipped. Releases stock via afterChange hook. */
+export async function cancelOrder(docId: string | number): Promise<FulfillmentResult> {
+  const existing = await getPayloadOrderById(docId);
+  if (!existing) return { ok: false, message: 'Không tìm thấy đơn hàng.' };
+  if (existing.orderStatus === 'canceled') {
+    return { ok: false, message: 'Đơn hàng đã bị hủy.' };
+  }
+  if (existing.orderStatus === 'delivered') {
+    return { ok: false, message: 'Đơn đã giao không thể hủy — hãy dùng Hoàn tiền nếu cần.' };
+  }
+
+  const payload = await getPayload({ config });
+  const doc = (await payload.update({
+    collection: 'orders',
+    id: docId,
+    data: { orderStatus: 'canceled' },
+    depth: 0,
+  })) as Order;
+
+  return { ok: true, order: mapOrderToFulfillmentView(doc) };
+}
+
+/** Admin records a full refund. v1: marks the order refunded; the actual money movement is out-of-band. */
+export async function refundOrder(docId: string | number): Promise<FulfillmentResult> {
+  const existing = await getPayloadOrderById(docId);
+  if (!existing) return { ok: false, message: 'Không tìm thấy đơn hàng.' };
+  if (existing.paymentStatus !== 'paid') {
+    return { ok: false, message: 'Chỉ hoàn tiền cho đơn đã thanh toán.' };
+  }
+
+  const payload = await getPayload({ config });
+  const doc = (await payload.update({
+    collection: 'orders',
+    id: docId,
+    data: { paymentStatus: 'refunded' },
+    depth: 0,
+  })) as Order;
+
+  return { ok: true, order: mapOrderToFulfillmentView(doc) };
+}
+
+/** Manual "delivered": fallback for shipped orders carrier sync missed, and the completion step for pickup orders. */
+export async function markOrderDelivered(docId: string | number): Promise<FulfillmentResult> {
+  const existing = await getPayloadOrderById(docId);
+  if (!existing) return { ok: false, message: 'Không tìm thấy đơn hàng.' };
+  if (existing.orderStatus === 'delivered') {
+    return { ok: false, message: 'Đơn hàng đã được giao.' };
+  }
+  if (existing.orderStatus === 'canceled') {
+    return { ok: false, message: 'Đơn hàng đã bị hủy.' };
+  }
+
+  const extras = existing as Order & { confirmedAt?: string | null };
+  const isPickup = existing.deliveryMethod === 'PICKUP';
+  const isShipped = existing.orderStatus === 'shipped';
+  if (!isShipped && !(isPickup && extras.confirmedAt)) {
+    return { ok: false, message: 'Chỉ đánh dấu đã giao cho đơn đang giao hoặc đơn nhận tại cửa hàng đã xác nhận.' };
+  }
+
+  const now = new Date().toISOString();
+  const data: Record<string, unknown> = { orderStatus: 'delivered', deliveredAt: now };
+  // COD: money is collected on delivery → mark paid at the same time.
+  if (existing.paymentKind === 'cod' && existing.paymentStatus !== 'paid') {
+    data.paymentStatus = 'paid';
+    data.paidAt = now;
+  }
+
+  const payload = await getPayload({ config });
+  const doc = (await payload.update({
+    collection: 'orders',
+    id: docId,
+    data,
+    depth: 0,
+  })) as Order;
+
+  return { ok: true, order: mapOrderToFulfillmentView(doc) };
+}
+
 /** Sync all in-transit orders (for cron / background job). */
 export async function syncAllActiveShipments(): Promise<{
   synced: number;
