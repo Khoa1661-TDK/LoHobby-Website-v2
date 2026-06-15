@@ -3,19 +3,31 @@ import type { ProfileOrder, ProfileOrderStatus } from '@/app/[locale]/(storefron
 import { carrierLabel } from '@/lib/shipment/carriers';
 import { SHIPMENT_STATUS_LABELS, type ShipmentStatus } from '@/lib/shipment/types';
 import { listPayloadOrdersForUser } from '@/lib/payload-orders';
+import { deriveOrderStage } from '@/lib/order-stage';
 
 function mapStatus(doc: {
   paymentStatus?: string | null;
   orderStatus?: string | null;
   paymentKind?: string | null;
 }): ProfileOrderStatus {
-  if (doc.orderStatus === 'canceled') return 'CANCELLED';
-  if (doc.orderStatus === 'delivered') return 'DELIVERED';
-  if (doc.orderStatus === 'shipped') return 'SHIPPED';
-  if (doc.paymentStatus === 'paid') return 'PAID';
-  if (doc.paymentKind === 'cod') return 'PENDING_COD';
-  if (doc.paymentKind === 'gateway') return 'PENDING_ONLINE';
-  return 'PENDING';
+  const stage = deriveOrderStage({ ...doc, confirmedAt: null, deliveryMethod: null });
+  switch (stage) {
+    case 'cancelled':
+    case 'refunded':
+      return 'CANCELLED';
+    case 'delivered':
+      return 'DELIVERED';
+    case 'shipped':
+    case 'packing':
+      return 'SHIPPED';
+    case 'to_confirm':
+      return doc.paymentStatus === 'paid' ? 'PAID' : doc.paymentKind === 'cod' ? 'PENDING_COD' : 'PENDING';
+    case 'awaiting_payment':
+      return 'PENDING_ONLINE';
+    case 'payment_failed':
+    default:
+      return 'PENDING';
+  }
 }
 function mapPaymentMethod(
   paymentKind: string | null | undefined,

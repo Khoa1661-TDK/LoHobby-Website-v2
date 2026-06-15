@@ -139,3 +139,12 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** Analysts need per-session impression counts or time-of-day breakdowns (add a sampled per-event table alongside the rollup).
 
 ---
+
+## 2026-06-15 — Order management: derived stage + guarded actions (no schema migration)
+**Chosen:** One pure `deriveOrderStage` + a guarded `availableActions`/`applyOrderAction` layer over the existing fulfillment functions; the `/admin/orders` dashboard is the single screen; raw collection status fields are read-only.
+**Alternatives:** Single stored `status` enum (rejected: payment ⟂ fulfillment are orthogonal; big migration + PayOS webhook rewrite for little user gain); two-axis schema refactor (deferred: optional, not the source of owner pain).
+**Why:** The unfriendliness was in the interface to the state (raw dropdowns, four vocabularies, invalid combos), not storage. Reusing `markOrderAsPaid`'s direct-SQL deadlock workaround avoids regressions.
+**Trade-offs:** The orthogonal payment/fulfillment fields still exist in the DB; the single-stage invariant is enforced by the action layer + read-only UI, not the schema. Refund is record-only (no gateway refund call) in v1.
+**Revisit if:** Partial refunds/fulfillment are needed, or an automated PayOS refund is required.
+
+---

@@ -40,25 +40,6 @@ export function ownsPayloadOrder(
   return false;
 }
 
-/** Map combined storefront status → Payload payment + fulfillment fields (admin actions). */
-export function mapStorefrontStatusToPayloadFields(status: StorefrontOrderStatus): {
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  orderStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'canceled';
-} {
-  switch (status) {
-    case 'PAID':
-      return { paymentStatus: 'paid', orderStatus: 'processing' };
-    case 'SHIPPED':
-      return { paymentStatus: 'paid', orderStatus: 'shipped' };
-    case 'DELIVERED':
-      return { paymentStatus: 'paid', orderStatus: 'delivered' };
-    case 'CANCELLED':
-      return { paymentStatus: 'failed', orderStatus: 'canceled' };
-    default:
-      return { paymentStatus: 'pending', orderStatus: 'pending' };
-  }
-}
-
 export async function cancelPendingGatewayOrder(orderCode: number): Promise<boolean> {
   const config = await import('@payload-config');
   const { getPayload } = await import('payload');
