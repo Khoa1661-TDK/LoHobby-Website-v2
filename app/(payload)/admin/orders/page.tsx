@@ -1,23 +1,14 @@
-// app/(payload)/admin/orders/page.tsx — order fulfillment management dashboard
+// app/(payload)/admin/orders/page.tsx — single order-management screen (card grid, action-driven)
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 import Price from '@/components/price';
-import { isOrderNeedingFulfillment } from '@/lib/order-fulfillment-eligibility';
 import { listOrdersForFulfillment } from '@/lib/order-fulfillment';
-import { SHIPMENT_STATUS_LABELS, type ShipmentStatus } from '@/lib/shipment/types';
-import { FulfillmentControls } from '@/src/payload/components/FulfillmentControls';
+import { deriveOrderStage, STAGE_BADGE, STAGE_LABELS, stageToTab, type OrderTab } from '@/lib/order-stage';
+import OrderActions from './order-actions';
 
 export const dynamic = 'force-dynamic';
 
-const ORDER_STATUS_LABEL: Record<string, string> = {
-  pending: 'Chờ xử lý',
-  processing: 'Đang xử lý',
-  shipped: 'Đang giao',
-  delivered: 'Đã giao',
-  canceled: 'Đã hủy',
-};
-
-const PAYMENT_STATUS_LABEL: Record<string, string> = {
+const PAYMENT_LABEL: Record<string, string> = {
   pending: 'Chưa TT',
   paid: 'Đã TT',
   failed: 'Thất bại',
@@ -25,115 +16,78 @@ const PAYMENT_STATUS_LABEL: Record<string, string> = {
 };
 
 function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString('vi-VN', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
+  return new Date(value).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-type Tab = 'needs_action' | 'in_transit' | 'completed';
+const TAB_LABELS: Record<OrderTab, string> = {
+  needs_action: 'Cần xử lý',
+  in_transit: 'Đang giao',
+  completed: 'Đã giao',
+  cancelled_refunded: 'Hủy / Hoàn',
+};
 
-function filterOrders(
-  orders: Awaited<ReturnType<typeof listOrdersForFulfillment>>,
-  tab: Tab,
-) {
-  switch (tab) {
-    case 'needs_action':
-      return orders.filter((o) =>
-        isOrderNeedingFulfillment({
-          paymentStatus: o.paymentStatus,
-          orderStatus: o.orderStatus,
-          paymentKind: o.paymentKind,
-          confirmedAt: o.confirmedAt,
-          trackingNumber: o.trackingNumber,
-          deliveryMethod: o.deliveryMethod,
-        }),
-      );
-    case 'in_transit':
-      return orders.filter(
-        (o) =>
-          o.trackingNumber &&
-          o.shipmentStatus !== 'delivered' &&
-          o.orderStatus !== 'delivered',
-      );
-    case 'completed':
-      return orders.filter((o) => o.orderStatus === 'delivered');
-    default:
-      return orders;
-  }
-}
+const TAB_ORDER: OrderTab[] = ['needs_action', 'in_transit', 'completed', 'cancelled_refunded'];
 
-export default async function AdminOrdersFulfillmentPage(props: {
+export default async function AdminOrdersPage(props: {
   searchParams: Promise<{ tab?: string }>;
 }): Promise<ReactElement> {
   const { tab: tabParam } = await props.searchParams;
-  const tab: Tab =
-    tabParam === 'in_transit' || tabParam === 'completed' ? tabParam : 'needs_action';
+  const activeTab: OrderTab = TAB_ORDER.includes(tabParam as OrderTab)
+    ? (tabParam as OrderTab)
+    : 'needs_action';
 
-  const allOrders = await listOrdersForFulfillment(150);
-  const orders = filterOrders(allOrders, tab);
+  // listOrdersForFulfillment excludes canceled + failed; fetch all for the Hủy/Hoàn tab.
+  const allOrders = await listOrdersForFulfillment(200);
+  const withStage = allOrders.map((o) => ({ order: o, stage: deriveOrderStage(o) }));
 
-  const counts = {
-    needs_action: filterOrders(allOrders, 'needs_action').length,
-    in_transit: filterOrders(allOrders, 'in_transit').length,
-    completed: filterOrders(allOrders, 'completed').length,
+  const counts: Record<OrderTab, number> = {
+    needs_action: 0, in_transit: 0, completed: 0, cancelled_refunded: 0,
   };
+  for (const { stage } of withStage) counts[stageToTab(stage)] += 1;
 
-  const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: 'needs_action', label: 'Cần xử lý', count: counts.needs_action },
-    { id: 'in_transit', label: 'Đang vận chuyển', count: counts.in_transit },
-    { id: 'completed', label: 'Đã giao', count: counts.completed },
-  ];
+  const visible = withStage.filter(({ stage }) => stageToTab(stage) === activeTab);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6 md:p-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-            Quản trị
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Quản trị</p>
           <h1 className="text-2xl font-semibold text-neutral-900">Quản lý đơn hàng</h1>
           <p className="mt-1 max-w-xl text-sm text-neutral-600">
-            Xác nhận đơn, giao cho đơn vị vận chuyển (GHN, GHTK, …), theo dõi vận đơn và tự động
-            hoàn tất khi giao thành công.
+            Mỗi đơn chỉ có một nút thao tác chính. Hệ thống tự cập nhật trạng thái — bạn không cần chọn trạng thái thủ công.
           </p>
         </div>
         <Link
           href="/admin/collections/orders"
           className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
         >
-          Payload CMS →
+          Xem trong CMS →
         </Link>
       </header>
 
       <nav className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
+        {TAB_ORDER.map((t) => (
           <Link
-            key={t.id}
-            href={`/admin/orders?tab=${t.id}`}
+            key={t}
+            href={`/admin/orders?tab=${t}`}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              tab === t.id
-                ? 'bg-neutral-900 text-white'
-                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+              activeTab === t ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
             }`}
           >
-            {t.label}
-            <span className="ml-1.5 text-xs opacity-70">({t.count})</span>
+            {TAB_LABELS[t]}
+            <span className="ml-1.5 text-xs opacity-70">({counts[t]})</span>
           </Link>
         ))}
       </nav>
 
-      {orders.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-12 text-center">
           <p className="text-neutral-500">Không có đơn hàng trong mục này.</p>
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          {orders.map((order) => (
-            <article
-              key={String(order.id)}
-              className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm"
-            >
+          {visible.map(({ order, stage }) => (
+            <article key={String(order.id)} className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold">#{order.orderCode}</h2>
@@ -144,17 +98,13 @@ export default async function AdminOrdersFulfillmentPage(props: {
                   </p>
                 </div>
                 <div className="text-right">
-                  <Price
-                    amount={order.totalAmount}
-                    currencyCode="VND"
-                    className="text-base font-bold"
-                  />
+                  <Price amount={order.totalAmount} currencyCode="VND" className="text-base font-bold" />
                   <div className="mt-1 flex flex-wrap justify-end gap-1">
                     <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase">
-                      {PAYMENT_STATUS_LABEL[order.paymentStatus] ?? order.paymentStatus}
+                      {PAYMENT_LABEL[order.paymentStatus] ?? order.paymentStatus}
                     </span>
-                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-indigo-800">
-                      {ORDER_STATUS_LABEL[order.orderStatus] ?? order.orderStatus}
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ring-1 ring-inset ${STAGE_BADGE[stage]}`}>
+                      {STAGE_LABELS[stage]}
                     </span>
                   </div>
                 </div>
@@ -167,14 +117,26 @@ export default async function AdminOrdersFulfillmentPage(props: {
                 </p>
               ) : null}
 
-              {order.shipmentStatus ? (
-                <p className="mt-2 text-xs font-medium text-filament-700">
-                  {SHIPMENT_STATUS_LABELS[order.shipmentStatus as ShipmentStatus]}
+              {order.lineItems.length > 0 ? (
+                <p className="mt-2 text-xs text-neutral-500">
+                  {order.lineItems.map((li) => `${li.productTitle}${li.variantName ? ` (${li.variantName})` : ''} ×${li.quantity}`).join(' · ')}
                 </p>
               ) : null}
 
+              {order.trackingNumber ? (
+                <div className="mt-3 rounded-lg bg-neutral-50 p-3 text-xs">
+                  <p className="font-semibold text-neutral-800">{order.shippingCarrierLabel || 'Đơn vị vận chuyển'}</p>
+                  <p className="mt-1 font-mono">{order.trackingNumber}</p>
+                  {order.trackingUrl ? (
+                    <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-indigo-600 underline">
+                      Mở trang theo dõi
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
+
               <div className="mt-4 border-t border-neutral-100 pt-4">
-                <FulfillmentControls order={order} />
+                <OrderActions order={order} />
               </div>
             </article>
           ))}

@@ -35,14 +35,9 @@ export async function listOrdersForFulfillment(limit = 100): Promise<OrderFulfil
     limit,
     pagination: false,
     depth: 0,
-    where: {
-      orderStatus: { not_equals: 'canceled' },
-    },
   });
 
-  return (found.docs as Order[])
-    .map(mapOrderToFulfillmentView)
-    .filter((o) => o.paymentStatus !== 'failed');
+  return (found.docs as Order[]).map(mapOrderToFulfillmentView);
 }
 
 export type FulfillmentResult =
