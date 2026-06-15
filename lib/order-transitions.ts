@@ -63,3 +63,13 @@ export function availableActions(o: TransitionInput): OrderAction[] {
       return [];
   }
 }
+
+const ACTION_VALUES = new Set<OrderAction>([
+  'mark_paid', 'confirm', 'ship', 'sync_tracking', 'mark_delivered', 'cancel', 'refund',
+]);
+
+export function isOrderAction(value: unknown): value is OrderAction {
+  return typeof value === 'string' && ACTION_VALUES.has(value as OrderAction);
+}
+
+export type ShipInput = { carrierKey: string; trackingNumber: string; customTrackingUrl?: string | null };

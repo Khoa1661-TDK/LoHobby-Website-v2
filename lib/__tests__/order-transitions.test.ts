@@ -1,6 +1,6 @@
 // lib/__tests__/order-transitions.test.ts
 import { describe, expect, it } from 'vitest';
-import { availableActions, type TransitionInput } from '@/lib/order-transitions';
+import { availableActions, isOrderAction, type TransitionInput } from '@/lib/order-transitions';
 
 function order(partial: Partial<TransitionInput>): TransitionInput {
   return {
@@ -65,5 +65,17 @@ describe('availableActions', () => {
   it('terminal stages offer nothing', () => {
     expect(availableActions(order({ orderStatus: 'canceled' }))).toEqual([]);
     expect(availableActions(order({ paymentStatus: 'refunded' }))).toEqual([]);
+  });
+});
+
+describe('isOrderAction', () => {
+  it('accepts known actions', () => {
+    expect(isOrderAction('confirm')).toBe(true);
+    expect(isOrderAction('refund')).toBe(true);
+  });
+  it('rejects unknown values', () => {
+    expect(isOrderAction('DELIVERED')).toBe(false);
+    expect(isOrderAction('')).toBe(false);
+    expect(isOrderAction(null)).toBe(false);
   });
 });
