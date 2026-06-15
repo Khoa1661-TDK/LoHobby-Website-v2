@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { useMemo, type ReactElement } from 'react';
 import Price from '@/components/price';
-import type { ProfileOrder, ProfileOrderStatus } from '@/app/(storefront)/profile/types';
+import type { ProfileOrder, ProfileOrderStatus } from '@/app/[locale]/(storefront)/profile/types';
 
 type Props = {
   orders: ProfileOrder[];

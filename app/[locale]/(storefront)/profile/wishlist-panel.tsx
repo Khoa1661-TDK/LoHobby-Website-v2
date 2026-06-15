@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
-import { toggleWishlistAction } from '@/app/(storefront)/wishlist-actions';
+import { toggleWishlistAction } from '@/app/[locale]/(storefront)/wishlist-actions';
 import Price from '@/components/price';
 import { useWishlist } from '@/components/wishlist/wishlist-provider';
 import { toNextImageSrc } from '@/lib/product-image-snapshot';
-import type { ProfileWishlistProduct } from '@/app/(storefront)/profile/types';
+import type { ProfileWishlistProduct } from '@/app/[locale]/(storefront)/profile/types';
 
 export default function WishlistPanel({
   products,

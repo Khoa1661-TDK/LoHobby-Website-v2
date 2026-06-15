@@ -3,14 +3,14 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { auth } from '@/auth';
-import ProfileShell from '@/app/(storefront)/profile/profile-shell';
+import ProfileShell from '@/app/[locale]/(storefront)/profile/profile-shell';
 import type {
   ProfileAddress,
   ProfileOrder,
   ProfileTabId,
   ProfileUser,
   ProfileWishlistProduct,
-} from '@/app/(storefront)/profile/types';
+} from '@/app/[locale]/(storefront)/profile/types';
 import { loadProfileOrders } from '@/lib/profile-orders';
 import { getPayloadProductsByIds } from '@/lib/payload-products';
 import { prisma } from '@/lib/prisma';

@@ -8,17 +8,17 @@ import {
   ShoppingBagIcon,
 } from '@heroicons/react/24/outline';
 import { useState, type ComponentType, type ReactElement, type SVGProps } from 'react';
-import AccountPanel from '@/app/(storefront)/profile/account-panel';
-import AddressesPanel from '@/app/(storefront)/profile/addresses-panel';
-import OrdersPanel from '@/app/(storefront)/profile/orders-panel';
-import WishlistPanel from '@/app/(storefront)/profile/wishlist-panel';
+import AccountPanel from '@/app/[locale]/(storefront)/profile/account-panel';
+import AddressesPanel from '@/app/[locale]/(storefront)/profile/addresses-panel';
+import OrdersPanel from '@/app/[locale]/(storefront)/profile/orders-panel';
+import WishlistPanel from '@/app/[locale]/(storefront)/profile/wishlist-panel';
 import type {
   ProfileAddress,
   ProfileOrder,
   ProfileTabId,
   ProfileUser,
   ProfileWishlistProduct,
-} from '@/app/(storefront)/profile/types';
+} from '@/app/[locale]/(storefront)/profile/types';
 
 type Props = {
   user: ProfileUser;

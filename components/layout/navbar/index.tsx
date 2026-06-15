@@ -86,7 +86,9 @@ export async function Navbar(): Promise<ReactElement> {
 
           <div className="flex items-center gap-1.5">
             <div className="hidden md:block">
-              <LanguageSwitcher />
+              <Suspense fallback={null}>
+                <LanguageSwitcher />
+              </Suspense>
             </div>
             <ThemeToggle />
             <AuthNav />

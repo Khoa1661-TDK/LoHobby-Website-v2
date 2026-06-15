@@ -23,8 +23,8 @@ import {
   createAddressAction,
   deleteAddressAction,
   setDefaultAddressAction,
-} from '@/app/(storefront)/profile/actions';
-import type { ProfileAddress } from '@/app/(storefront)/profile/types';
+} from '@/app/[locale]/(storefront)/profile/actions';
+import type { ProfileAddress } from '@/app/[locale]/(storefront)/profile/types';
 
 type Props = {
   addresses: ProfileAddress[];

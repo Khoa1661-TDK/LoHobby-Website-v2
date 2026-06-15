@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
-import { reorderAction } from '@/app/(storefront)/profile/actions';
+import { reorderAction } from '@/app/[locale]/(storefront)/profile/actions';
 
 export default function ReorderButton({ orderId }: { orderId: string }): ReactElement {
   const router = useRouter();

@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, useTransition, type FormEvent, type ReactElement } from 'react';
 import { toast } from 'sonner';
-import { updateProfileAction } from '@/app/(storefront)/profile/actions';
-import type { ProfileUser } from '@/app/(storefront)/profile/types';
+import { updateProfileAction } from '@/app/[locale]/(storefront)/profile/actions';
+import type { ProfileUser } from '@/app/[locale]/(storefront)/profile/types';
 
 type Props = {
   user: ProfileUser;
