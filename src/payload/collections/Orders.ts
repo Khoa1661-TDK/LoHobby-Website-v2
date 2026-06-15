@@ -18,7 +18,7 @@ export const Orders: CollectionConfig = {
       'createdAt',
     ],
     description:
-      'Click an order to open it — use the green panel at the top to confirm & ship. Pending orders: use the "Đánh dấu TT" column.',
+      'Trạng thái đơn được quản lý ở trang "Quản lý đơn hàng" (/admin/orders). Các trường trạng thái ở đây chỉ để xem.',
   },
   access: {
     read: payloadAdminAccess,
@@ -132,6 +132,7 @@ export const Orders: CollectionConfig = {
           type: 'select',
           required: true,
           defaultValue: 'pending',
+          admin: { readOnly: true },
           options: [
             { label: 'Pending', value: 'pending' },
             { label: 'Paid', value: 'paid' },
@@ -144,6 +145,7 @@ export const Orders: CollectionConfig = {
           type: 'select',
           required: true,
           defaultValue: 'pending',
+          admin: { readOnly: true },
           options: [
             { label: 'Pending', value: 'pending' },
             { label: 'Processing', value: 'processing' },
