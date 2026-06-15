@@ -189,3 +189,81 @@ export function computeViewToBuy(
 
   return rows.sort((a, b) => b.views - a.views);
 }
+
+// ---------------------------------------------------------------------------
+// Discounted-item report
+// ---------------------------------------------------------------------------
+
+export type OnSaleProduct = {
+  productId: string;
+  slug: string;
+  title: string;
+  salePercent: number;
+};
+
+export type DiscountedItemRow = {
+  productId: string;
+  slug: string;
+  title: string;
+  salePercent: number;
+  units: number;
+  revenueVnd: number;
+};
+
+/**
+ * Pair on-sale products with their sales in the window. On-sale products with
+ * no sales are kept (units/revenue 0) so underperforming promotions are visible.
+ * Sorted by revenue descending.
+ */
+export function joinDiscountedItems(
+  onSale: OnSaleProduct[],
+  sales: ProductSales[],
+): DiscountedItemRow[] {
+  const salesMap = new Map(sales.map((s) => [s.productId, s]));
+  return onSale
+    .map((p) => {
+      const s = salesMap.get(p.productId);
+      return {
+        productId: p.productId,
+        slug: p.slug,
+        title: p.title,
+        salePercent: p.salePercent,
+        units: s?.units ?? 0,
+        revenueVnd: s?.revenueVnd ?? 0,
+      };
+    })
+    .sort((a, b) => b.revenueVnd - a.revenueVnd);
+}
+
+// ---------------------------------------------------------------------------
+// Click-through rate
+// ---------------------------------------------------------------------------
+
+export type CtrRow = {
+  productId: string;
+  impressions: number;
+  clicks: number;
+  /** clicks / impressions, 0–100, one decimal. */
+  ctrPct: number;
+};
+
+/**
+ * Compute CTR per product from summed impression/click counts, sorted by
+ * impressions descending. Products below `minImpressions` (default 20) are
+ * dropped to suppress noisy ratios from tiny sample sizes.
+ */
+export function computeCtr(
+  rows: { productId: string; impressions: number; clicks: number }[],
+  opts?: { minImpressions?: number },
+): CtrRow[] {
+  const minImpressions = opts?.minImpressions ?? 20;
+  return rows
+    .filter((r) => r.impressions >= minImpressions)
+    .map((r) => ({
+      productId: r.productId,
+      impressions: r.impressions,
+      clicks: r.clicks,
+      ctrPct: r.impressions > 0 ? round1((r.clicks / r.impressions) * 100) : 0,
+    }))
+    .sort((a, b) => b.impressions - a.impressions);
+}

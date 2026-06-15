@@ -3,6 +3,7 @@
 
 import { MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import AddToCart from '@/components/cart/add-to-cart';
 import { GalleryMediaThumb, GalleryMediaViewer } from '@/components/product/gallery-media';
@@ -25,6 +26,7 @@ export default function VariantSelector({
   baseCompareAtPrice = null,
   variants,
 }: Props): ReactElement {
+  const t = useTranslations('product');
   const [selectedSku, setSelectedSku] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -108,9 +110,7 @@ export default function VariantSelector({
                 <li key={image.url + index} className="h-20 w-20">
                   <button
                     type="button"
-                    aria-label={
-                      image.kind === 'video' ? 'Xem video sản phẩm' : 'Xem ảnh sản phẩm'
-                    }
+                    aria-label={image.kind === 'video' ? t('viewVideoAria') : t('viewImageAria')}
                     aria-pressed={index === galleryIndex}
                     className="h-full w-full"
                     onMouseEnter={() => setHoverGalleryIndex(index)}
@@ -160,7 +160,7 @@ export default function VariantSelector({
           </div>
           {selectedVariant ? (
             <p className="mt-3 text-sm text-warm-500 dark:text-warm-400">
-              Phiên bản: <span className="font-medium text-warm-700 dark:text-warm-300">{selectedVariant.name}</span>
+              {t('variantLabel')} <span className="font-medium text-warm-700 dark:text-warm-300">{selectedVariant.name}</span>
               <span className="mx-2 opacity-30">·</span>
               SKU: <span className="font-mono text-warm-600 dark:text-warm-400">{selectedVariant.sku}</span>
             </p>
@@ -174,7 +174,7 @@ export default function VariantSelector({
         {variants.length > 0 ? (
           <fieldset className="mb-7">
             <legend className="mb-3 text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400">
-              Phiên bản
+              {t('variantLegend')}
             </legend>
             <ul className="flex flex-wrap gap-2">
               {variants.map((variant) => {
@@ -185,7 +185,7 @@ export default function VariantSelector({
                     <button
                       type="button"
                       aria-pressed={isActive}
-                      aria-label={`Chọn phiên bản ${variant.name}`}
+                      aria-label={t('variantSelectAria', { name: variant.name })}
                       disabled={disabled}
                       onClick={() => {
                         setSelectedSku((prev) => {
@@ -204,7 +204,7 @@ export default function VariantSelector({
                       )}
                     >
                       {variant.name}
-                      {disabled ? <span className="ml-1 text-xs">(hết)</span> : null}
+                      {disabled ? <span className="ml-1 text-xs">({t('variantOutOfStock')})</span> : null}
                     </button>
                   </li>
                 );
@@ -222,12 +222,12 @@ export default function VariantSelector({
 
         <div className="mb-4 flex items-center gap-3">
           <span className="text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400">
-            Số lượng
+            {t('quantityLabel')}
           </span>
           <div className="flex items-center rounded-xl border border-warm-200/80 dark:border-warm-800/60">
             <button
               type="button"
-              aria-label="Giảm số lượng"
+              aria-label={t('decreaseQtyAria')}
               disabled={quantity <= 1}
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               className="flex h-10 w-10 items-center justify-center text-warm-700 transition-colors hover:text-terracotta-600 disabled:cursor-not-allowed disabled:opacity-30 dark:text-warm-300 dark:hover:text-terracotta-400"
@@ -239,7 +239,7 @@ export default function VariantSelector({
             </span>
             <button
               type="button"
-              aria-label="Tăng số lượng"
+              aria-label={t('increaseQtyAria')}
               disabled={quantity >= maxQuantity}
               onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
               className="flex h-10 w-10 items-center justify-center text-warm-700 transition-colors hover:text-terracotta-600 disabled:cursor-not-allowed disabled:opacity-30 dark:text-warm-300 dark:hover:text-terracotta-400"
@@ -286,10 +286,11 @@ function StockStatus({
   inStock: boolean;
   stock: number | null;
 }): ReactElement {
+  const t = useTranslations('product');
   if (!inStock) {
     return (
       <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-terracotta-600 dark:text-terracotta-400">
-        <span className="h-2 w-2 rounded-full bg-terracotta-500" aria-hidden /> Hết hàng
+        <span className="h-2 w-2 rounded-full bg-terracotta-500" aria-hidden /> {t('stockOut')}
       </p>
     );
   }
@@ -305,7 +306,7 @@ function StockStatus({
         className={`h-2 w-2 rounded-full ${low ? 'bg-amber-500' : 'bg-emerald-500'}`}
         aria-hidden
       />
-      {low ? `Sắp hết hàng (còn ${stock})` : 'Còn hàng'}
+      {low ? t('stockLow', { stock }) : t('stockIn')}
     </p>
   );
 }

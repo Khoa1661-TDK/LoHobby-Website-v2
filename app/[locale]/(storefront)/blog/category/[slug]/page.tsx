@@ -1,6 +1,7 @@
 // app/(storefront)/blog/category/[slug]/page.tsx — posts scoped to one category slug (Content)
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';
 import PostCard from '@/components/blog/post-card';
@@ -26,7 +27,7 @@ const POSTS_PER_PAGE = 9;
 
 export const revalidate = 60;
 
-type Params = Promise<{ slug: string }>;
+type Params = Promise<{ locale: string; slug: string }>;
 type SearchParams = Promise<Record<string, string | undefined>>;
 
 async function findCategory(slug: string): Promise<BlogCategorySummary | null> {
@@ -36,8 +37,11 @@ async function findCategory(slug: string): Promise<BlogCategorySummary | null> {
   return categories.find((category) => category.slug === trimmed) ?? null;
 }
 
-export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
-  const { slug } = await props.params;
+export async function generateMetadata(props: {
+  params: Params;
+}): Promise<Metadata> {
+  const { locale, slug } = await props.params;
+  const t = await getTranslations({ locale, namespace: 'blog' });
   const category = await findCategory(slug);
   if (!category) return { title: 'Không tìm thấy chủ đề' };
 
@@ -68,11 +72,12 @@ export default async function BlogCategoryPage(props: {
   params: Params;
   searchParams: SearchParams;
 }): Promise<ReactElement> {
-  const { slug } = await props.params;
+  const { locale, slug } = await props.params;
+  const t = await getTranslations({ locale, namespace: 'blog' });
   const category = await findCategory(slug);
   if (!category) notFound();
 
-  const [allPosts, searchParams] = await Promise.all([
+  const [allPosts, sp] = await Promise.all([
     getPublishedPosts(MAX_LISTED_POSTS),
     props.searchParams,
   ]);
@@ -83,12 +88,12 @@ export default async function BlogCategoryPage(props: {
     page: pagePosts,
     currentPage,
     totalPages,
-  } = paginateList(scopedPosts, searchParams.page, POSTS_PER_PAGE);
+  } = paginateList(scopedPosts, sp.page, POSTS_PER_PAGE);
 
   const canonical = `/blog/category/${category.slug}`;
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Trang chủ', path: '/' },
-    { name: 'Blog', path: '/blog' },
+    { name: t('breadcrumbHome'), path: '/' },
+    { name: t('breadcrumbBlog'), path: '/blog' },
     { name: category.name, path: canonical },
   ]);
 
@@ -117,15 +122,15 @@ export default async function BlogCategoryPage(props: {
       <section className="mx-auto max-w-6xl px-4 pb-12">
         <Breadcrumbs
           items={[
-            { name: 'Trang chủ', href: '/' },
-            { name: 'Blog', href: '/blog' },
+            { name: t('breadcrumbHome'), href: '/' },
+            { name: t('breadcrumbBlog'), href: '/blog' },
             { name: category.name },
           ]}
         />
 
         <header className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-600 dark:text-terracotta-400">
-            Chủ đề
+            {t('categoriesAria')}
           </p>
           <h1 className="mt-2 font-serif text-3xl font-bold tracking-tight md:text-4xl">
             {category.name}
@@ -138,13 +143,13 @@ export default async function BlogCategoryPage(props: {
         {pagePosts.length === 0 ? (
           <div className="py-16 text-center">
             <p className="text-warm-500 dark:text-warm-400">
-              Chưa có bài viết nào trong chủ đề này.
+              {t('empty')}
             </p>
             <Link
               href="/blog"
               className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-terracotta-600 transition-colors hover:text-terracotta-700 dark:text-terracotta-400 dark:hover:text-terracotta-300"
             >
-              ← Xem tất cả bài viết
+              ← {t('allLabel')}
             </Link>
           </div>
         ) : (

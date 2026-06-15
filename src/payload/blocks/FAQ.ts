@@ -6,6 +6,8 @@ export const FAQ: Block = {
   slug: 'faq',
   labels: { singular: 'FAQ', plural: 'FAQs' },
   interfaceName: 'FAQBlock',
+  imageURL: '/admin/block-previews/faq.svg',
+  imageAltText: 'FAQ preview',
   fields: [
     {
       name: 'title',

@@ -3,6 +3,7 @@
 
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, type ReactElement } from 'react';
 import { GalleryMediaThumb, GalleryMediaViewer } from '@/components/product/gallery-media';
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export default function Gallery({ images }: Props): ReactElement {
+  const t = useTranslations('product');
   const router = useRouter();
   const searchParams = useSearchParams();
   const imageSearchParam = searchParams.get('image');
@@ -54,7 +56,7 @@ export default function Gallery({ images }: Props): ReactElement {
                 formAction={() => {
                   router.replace(buildUrl(previousImageIndex), { scroll: false });
                 }}
-                aria-label="Mục gallery trước"
+                aria-label={t('prevGalleryAria')}
                 className={buttonClassName}
               >
                 <ArrowLeftIcon className="h-5" />
@@ -64,7 +66,7 @@ export default function Gallery({ images }: Props): ReactElement {
                 formAction={() => {
                   router.replace(buildUrl(nextImageIndex), { scroll: false });
                 }}
-                aria-label="Mục gallery sau"
+                aria-label={t('nextGalleryAria')}
                 className={buttonClassName}
               >
                 <ArrowRightIcon className="h-5" />
@@ -85,9 +87,7 @@ export default function Gallery({ images }: Props): ReactElement {
               <li key={image.url + index} className="h-20 w-20">
                 <button
                   type="button"
-                  aria-label={
-                    image.kind === 'video' ? 'Xem video sản phẩm' : 'Xem ảnh sản phẩm'
-                  }
+                  aria-label={image.kind === 'video' ? t('viewVideoAria') : t('viewImageAria')}
                   aria-pressed={index === imageIndex}
                   className="h-full w-full"
                   onMouseEnter={() => setHoverIndex(index)}

@@ -2,8 +2,9 @@
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical';
 import { RichText } from '@payloadcms/richtext-lexical/react';
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';
 import Breadcrumbs from '@/components/layout/breadcrumbs';
@@ -18,22 +19,11 @@ const siteName = getSiteName();
 
 export const revalidate = 60;
 
-type Params = Promise<{ slug: string }>;
-
-const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
-
-function formatPublishedDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? null : dateFormatter.format(date);
-}
+type Params = Promise<{ locale: string; slug: string }>;
 
 export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
-  const { slug } = await props.params;
+  const { locale, slug } = await props.params;
+  const t = await getTranslations({ locale, namespace: 'blog' });
   const post = await getPostBySlug(slug);
   if (!post) return { title: 'Không tìm thấy bài viết' };
 
@@ -68,17 +58,28 @@ export async function generateMetadata(props: { params: Params }): Promise<Metad
 export default async function BlogPostPage(props: {
   params: Params;
 }): Promise<ReactElement> {
-  const { slug } = await props.params;
+  const { locale, slug } = await props.params;
+  const t = await getTranslations({ locale, namespace: 'blog' });
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
   const canonical = `/blog/${post.slug}`;
-  const publishedLabel = formatPublishedDate(post.publishedAt);
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const publishedLabel = post.publishedAt
+    ? (() => {
+        const date = new Date(post.publishedAt);
+        return Number.isNaN(date.getTime()) ? null : dateFormatter.format(date);
+      })()
+    : null;
   const body = (post.body ?? null) as SerializedEditorState | null;
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Trang chủ', path: '/' },
-    { name: 'Blog', path: '/blog' },
+    { name: t('breadcrumbHome'), path: '/' },
+    { name: t('breadcrumbBlog'), path: '/blog' },
     ...(post.category
       ? [{ name: post.category.name, path: `/blog/category/${post.category.slug}` }]
       : []),
@@ -122,8 +123,8 @@ export default async function BlogPostPage(props: {
       <article className="mx-auto max-w-3xl px-4 pb-16">
         <Breadcrumbs
           items={[
-            { name: 'Trang chủ', href: '/' },
-            { name: 'Blog', href: '/blog' },
+            { name: t('breadcrumbHome'), href: '/' },
+            { name: t('breadcrumbBlog'), href: '/blog' },
             ...(post.category
               ? [{ name: post.category.name, href: `/blog/category/${post.category.slug}` }]
               : []),
@@ -186,7 +187,7 @@ export default async function BlogPostPage(props: {
           />
         ) : (
           <p className="mt-10 text-warm-500 dark:text-warm-400">
-            Bài viết này hiện chưa có nội dung.
+            {t('empty')}
           </p>
         )}
 
@@ -210,7 +211,7 @@ export default async function BlogPostPage(props: {
             href="/blog"
             className="inline-flex items-center gap-2 text-sm font-semibold text-terracotta-600 transition-colors hover:text-terracotta-700 dark:text-terracotta-400 dark:hover:text-terracotta-300"
           >
-            ← Quay lại Blog
+            ← {t('metaTitle')}
           </Link>
         </div>
       </article>

@@ -97,6 +97,30 @@ export type PageDoc = {
   updatedAt?: string;
 };
 
+type RawPageDoc = {
+  id: string | number;
+  title?: unknown;
+  slug?: unknown;
+  status?: unknown;
+  layout?: unknown;
+  meta?: unknown;
+  updatedAt?: unknown;
+};
+
+/** Map a raw Payload page doc to the storefront PageDoc shape, or null if invalid. */
+function toPageDoc(doc: RawPageDoc | undefined, fallbackSlug: string): PageDoc | null {
+  if (!doc || typeof doc.title !== 'string') return null;
+  return {
+    id: doc.id,
+    title: doc.title,
+    slug: typeof doc.slug === 'string' ? doc.slug : fallbackSlug,
+    status: doc.status as 'draft' | 'published',
+    layout: Array.isArray(doc.layout) ? (doc.layout as PageBlock[]) : [],
+    meta: doc.meta as PageDoc['meta'],
+    updatedAt: typeof doc.updatedAt === 'string' ? doc.updatedAt : undefined,
+  };
+}
+
 async function fetchPageBySlug(slug: string): Promise<PageDoc | null> {
   const trimmed = slug.trim();
   if (!trimmed) return null;
@@ -112,18 +136,24 @@ async function fetchPageBySlug(slug: string): Promise<PageDoc | null> {
     pagination: false,
   });
 
-  const doc = result.docs[0];
-  if (!doc || typeof doc.title !== 'string') return null;
+  return toPageDoc(result.docs[0] as RawPageDoc | undefined, trimmed);
+}
 
-  return {
-    id: doc.id,
-    title: doc.title,
-    slug: typeof doc.slug === 'string' ? doc.slug : trimmed,
-    status: doc.status as 'draft' | 'published',
-    layout: Array.isArray(doc.layout) ? (doc.layout as PageBlock[]) : [],
-    meta: doc.meta as PageDoc['meta'],
-    updatedAt: typeof doc.updatedAt === 'string' ? doc.updatedAt : undefined,
-  };
+/** Draft-mode fetch: uncached and status-agnostic so unpublished edits render in live preview. */
+export async function fetchPageBySlugDraft(slug: string): Promise<PageDoc | null> {
+  const trimmed = slug.trim();
+  if (!trimmed) return null;
+
+  const payload = await getPayload({ config });
+  const result = await payload.find({
+    collection: 'pages',
+    where: { slug: { equals: trimmed } },
+    limit: 1,
+    depth: 2,
+    pagination: false,
+  });
+
+  return toPageDoc(result.docs[0] as RawPageDoc | undefined, trimmed);
 }
 
 const getCachedPage = (slug: string) =>

@@ -2,7 +2,7 @@
 'use client';
 
 import clsx from 'clsx';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { ReactElement } from 'react';
 import type { SortFilterItem } from '@/lib/constants';

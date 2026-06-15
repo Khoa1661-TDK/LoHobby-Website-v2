@@ -1,5 +1,6 @@
 // components/layout/navbar/index.tsx
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import { Suspense, type ReactElement } from 'react';
 import BrandLogo from '@/components/brand-logo';
 import HoverDropdown from '@/components/layout/navbar/hover-dropdown';
@@ -14,10 +15,11 @@ import { getStoreBranding } from '@/lib/store-branding';
 import { getSiteHeaderTabs } from '@/lib/site-header';
 
 export async function Navbar(): Promise<ReactElement> {
-  const [tabs, branding, mobileMenu] = await Promise.all([
+  const [tabs, branding, mobileMenu, t] = await Promise.all([
     getSiteHeaderTabs(),
     getStoreBranding(),
     getMobileMenu(),
+    getTranslations('nav'),
   ]);
 
   return (
@@ -46,7 +48,7 @@ export async function Navbar(): Promise<ReactElement> {
               href="/"
               prefetch
               className="mr-2 flex shrink-0 items-center gap-2.5 lg:mr-6"
-              aria-label={`${branding.storeName} — trang chủ`}
+              aria-label={t('homeAria', { store: branding.storeName })}
             >
               <BrandLogo branding={branding} variant="navbar" />
             </Link>
@@ -86,7 +88,9 @@ export async function Navbar(): Promise<ReactElement> {
 
           <div className="flex items-center gap-1.5">
             <div className="hidden md:block">
-              <LanguageSwitcher />
+              <Suspense fallback={<div className="h-10 w-12" aria-hidden />}>
+                <LanguageSwitcher />
+              </Suspense>
             </div>
             <ThemeToggle />
             <AuthNav />

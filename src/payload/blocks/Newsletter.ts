@@ -6,6 +6,8 @@ export const Newsletter: Block = {
   slug: 'newsletter',
   labels: { singular: 'Newsletter', plural: 'Newsletters' },
   interfaceName: 'NewsletterBlock',
+  imageURL: '/admin/block-previews/newsletter.svg',
+  imageAltText: 'Newsletter preview',
   fields: [
     {
       name: 'headline',

@@ -12,29 +12,39 @@ import {
 } from '@/lib/cart';
 import { mergeGuestCartIntoPersisted } from '@/lib/persisted-cart';
 import { syncStoreCustomerForUser } from '@/lib/store-customer-sync';
+import { getTranslations } from 'next-intl/server';
 
 type ActionError = { error: string };
 type ActionOk = Record<string, never>;
 type ActionResult = ActionOk | ActionError;
 
-const ERROR_MESSAGES: Record<string, string> = {
-  INVALID_PRODUCT: 'Thiếu mã sản phẩm.',
-  INVALID_QUANTITY: 'Số lượng không hợp lệ.',
-  PRODUCT_NOT_FOUND: 'Sản phẩm không tồn tại hoặc đã bị xóa.',
-  PRODUCT_UNAVAILABLE: 'Sản phẩm hiện đang hết hàng.',
-  CART_FULL: 'Giỏ hàng đã đạt số lượng tối đa.',
-  VARIANT_REQUIRED: 'Vui lòng chọn biến thể trước khi thêm vào giỏ.',
-  INVALID_VARIANT: 'Biến thể không hợp lệ.',
-  INSUFFICIENT_STOCK: 'Số lượng vượt quá tồn kho.',
-};
+/** Keys thrown by lib/cart that carry a specific message key prefix. */
+const ERROR_KEY_PREFIX = 'errors.' as const;
 
-function toUserError(error: unknown, fallback: string): string {
+const KNOWN_ERROR_KEYS = new Set([
+  'INVALID_PRODUCT',
+  'INVALID_QUANTITY',
+  'PRODUCT_NOT_FOUND',
+  'PRODUCT_UNAVAILABLE',
+  'CART_FULL',
+  'VARIANT_REQUIRED',
+  'INVALID_VARIANT',
+  'INSUFFICIENT_STOCK',
+]);
+
+async function toUserError(
+  t: Awaited<ReturnType<typeof getTranslations>>,
+  error: unknown,
+  fallbackKey: string,
+): Promise<string> {
   if (error instanceof Error) {
-    const mapped = ERROR_MESSAGES[error.message];
-    if (mapped) return mapped;
+    if (KNOWN_ERROR_KEYS.has(error.message)) {
+      const translated = t(`${ERROR_KEY_PREFIX}${error.message}`);
+      if (translated && !translated.startsWith('errors.')) return translated;
+    }
     if (error.message.length > 0) return error.message;
   }
-  return fallback;
+  return t(fallbackKey);
 }
 
 async function cartUserId(): Promise<string | null> {
@@ -53,7 +63,8 @@ export async function mergeCartOnLoginAction(): Promise<ActionResult> {
     await syncStoreCustomerForUser(userId);
     return {};
   } catch {
-    return { error: 'Không thể đồng bộ giỏ hàng.' };
+    const t = await getTranslations('cart');
+    return { error: t('errors.mergeFailed') };
   }
 }
 
@@ -62,12 +73,13 @@ export async function addItemAction(
   variantSku?: string | null,
   quantity = 1,
 ): Promise<ActionResult> {
-  if (!productId) return { error: ERROR_MESSAGES.INVALID_PRODUCT! };
+  const t = await getTranslations('cart');
+  if (!productId) return { error: t('errors.invalidProduct') };
   try {
     await addToCart(productId, quantity, variantSku, await cartUserId());
     return {};
   } catch (error) {
-    return { error: toUserError(error, 'Không thể thêm vào giỏ hàng') };
+    return { error: await toUserError(t, error, 'errors.addFailed') };
   }
 }
 
@@ -76,12 +88,13 @@ export async function updateItemAction(
   quantity: number,
   variantSku?: string | null,
 ): Promise<ActionResult> {
-  if (!productId) return { error: ERROR_MESSAGES.INVALID_PRODUCT! };
+  const t = await getTranslations('cart');
+  if (!productId) return { error: t('errors.invalidProduct') };
   try {
     await updateLine(productId, quantity, variantSku, await cartUserId());
     return {};
   } catch (error) {
-    return { error: toUserError(error, 'Không thể cập nhật sản phẩm') };
+    return { error: await toUserError(t, error, 'errors.updateFailed') };
   }
 }
 
@@ -93,7 +106,8 @@ export async function removeItemAction(
     await removeLine(productId, variantSku, await cartUserId());
     return {};
   } catch (error) {
-    return { error: toUserError(error, 'Không thể xóa sản phẩm') };
+    const t = await getTranslations('cart');
+    return { error: await toUserError(t, error, 'errors.removeFailed') };
   }
 }
 
@@ -102,6 +116,7 @@ export async function clearCartAction(): Promise<ActionResult> {
     await clearCart(await cartUserId());
     return {};
   } catch {
-    return { error: 'Không thể xóa giỏ hàng' };
+    const t = await getTranslations('cart');
+    return { error: t('errors.clearFailed') };
   }
 }

@@ -75,7 +75,6 @@ export interface Config {
     'payment-methods': PaymentMethod;
     carts: Cart;
     orders: Order;
-    'content-pages': ContentPage;
     'blog-categories': BlogCategory;
     posts: Post;
     'store-customers': StoreCustomer;
@@ -102,7 +101,6 @@ export interface Config {
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     carts: CartsSelect<false> | CartsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
-    'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
     'blog-categories': BlogCategoriesSelect<false> | BlogCategoriesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'store-customers': StoreCustomersSelect<false> | StoreCustomersSelect<true>;
@@ -644,57 +642,6 @@ export interface Order {
   createdAt: string;
 }
 /**
- * Marketing/landing pages rendered at /pages/[slug].
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "content-pages".
- */
-export interface ContentPage {
-  id: number;
-  title: string;
-  slug: string;
-  published?: boolean | null;
-  layout?:
-    | (
-        | {
-            headline: string;
-            subheadline?: string | null;
-            ctaLabel?: string | null;
-            ctaHref?: string | null;
-            image?: (number | null) | Media;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'hero';
-          }
-        | {
-            content: string;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'richText';
-          }
-        | {
-            title: string;
-            body?: string | null;
-            buttonLabel: string;
-            buttonHref: string;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'cta';
-          }
-      )[]
-    | null;
-  meta?: {
-    title?: string | null;
-    description?: string | null;
-    /**
-     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
-     */
-    image?: (number | null) | Media;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Topics used to organise blog posts.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -777,7 +724,7 @@ export interface Post {
   createdAt: string;
 }
 /**
- * Custom pages built with the drag-and-drop page builder.
+ * Build storefront pages by stacking sections. Use the live preview on the right to see your changes.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
@@ -790,7 +737,7 @@ export interface Page {
    */
   slug?: string | null;
   /**
-   * Only published pages are visible on the storefront.
+   * Only published pages are visible on the storefront. Draft pages are visible only in the live preview.
    */
   status?: ('draft' | 'published') | null;
   layout?:
@@ -1483,10 +1430,6 @@ export interface PayloadLockedDocument {
         value: number | Order;
       } | null)
     | ({
-        relationTo: 'content-pages';
-        value: number | ContentPage;
-      } | null)
-    | ({
         relationTo: 'blog-categories';
         value: number | BlogCategory;
       } | null)
@@ -1810,56 +1753,6 @@ export interface OrdersSelect<T extends boolean = true> {
         id?: T;
       };
   metadata?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "content-pages_select".
- */
-export interface ContentPagesSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  published?: T;
-  layout?:
-    | T
-    | {
-        hero?:
-          | T
-          | {
-              headline?: T;
-              subheadline?: T;
-              ctaLabel?: T;
-              ctaHref?: T;
-              image?: T;
-              id?: T;
-              blockName?: T;
-            };
-        richText?:
-          | T
-          | {
-              content?: T;
-              id?: T;
-              blockName?: T;
-            };
-        cta?:
-          | T
-          | {
-              title?: T;
-              body?: T;
-              buttonLabel?: T;
-              buttonHref?: T;
-              id?: T;
-              blockName?: T;
-            };
-      };
-  meta?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        image?: T;
-      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2615,32 +2508,30 @@ export interface DropshipSetting {
   createdAt?: string | null;
 }
 /**
- * Zalo Official Account notifications sent to the seller when a new order is placed.
+ * Discord notifications sent to the seller when a new order is placed. The seller can confirm the order from Discord.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "notification-settings".
  */
 export interface NotificationSetting {
   id: number;
-  zaloEnabled?: boolean | null;
+  discordEnabled?: boolean | null;
   /**
-   * From the Zalo for Developers app dashboard.
+   * From the Discord Developer Portal → your app → Bot.
    */
-  zaloAppId?: string | null;
-  zaloAppSecret?: string | null;
+  discordBotToken?: string | null;
   /**
-   * The user_id that has chatted with the OA and will receive messages.
+   * The channel the bot posts new-order notifications to.
    */
-  zaloRecipientUserId?: string | null;
+  discordChannelId?: string | null;
   /**
-   * Paste the initial refresh token obtained from OA OAuth. Auto-rotated thereafter.
+   * From the app General Information page. Used to verify button presses.
    */
-  zaloRefreshToken?: string | null;
+  discordPublicKey?: string | null;
   /**
-   * Set automatically; do not edit.
+   * Comma-separated Discord user IDs permitted to confirm orders.
    */
-  zaloAccessToken?: string | null;
-  zaloTokenExpiresAt?: string | null;
+  discordAllowedUserIds?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2819,13 +2710,11 @@ export interface DropshipSettingsSelect<T extends boolean = true> {
  * via the `definition` "notification-settings_select".
  */
 export interface NotificationSettingsSelect<T extends boolean = true> {
-  zaloEnabled?: T;
-  zaloAppId?: T;
-  zaloAppSecret?: T;
-  zaloRecipientUserId?: T;
-  zaloRefreshToken?: T;
-  zaloAccessToken?: T;
-  zaloTokenExpiresAt?: T;
+  discordEnabled?: T;
+  discordBotToken?: T;
+  discordChannelId?: T;
+  discordPublicKey?: T;
+  discordAllowedUserIds?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

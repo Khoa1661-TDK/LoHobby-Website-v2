@@ -4,7 +4,8 @@
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
 import { Bars3Icon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Fragment, Suspense, useEffect, useState, type ReactElement } from 'react';
 import LanguageSwitcher from '@/components/layout/navbar/language-switcher';
@@ -16,6 +17,7 @@ export default function MobileMenu({
 }: {
   columns: NavColumn[];
 }): ReactElement {
+  const t = useTranslations('nav');
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
@@ -36,7 +38,7 @@ export default function MobileMenu({
     <>
       <button
         onClick={openMobileMenu}
-        aria-label="Mở menu di động"
+        aria-label={t('openMenu')}
         className="flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-700 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-300 dark:hover:bg-warm-800/50 dark:hover:text-warm-100"
       >
         <Bars3Icon className="h-5 w-5" />
@@ -65,10 +67,10 @@ export default function MobileMenu({
           >
             <DialogPanel className="fixed bottom-0 left-0 top-0 flex h-full w-full max-w-sm flex-col bg-warm-50 shadow-soft-xl dark:bg-warm-950">
               <div className="flex items-center justify-between border-b border-warm-200/60 p-4 dark:border-warm-800/40">
-                <p className="text-sm font-semibold uppercase tracking-widest text-warm-400">Menu</p>
+                <p className="text-sm font-semibold uppercase tracking-widest text-warm-400">{t('menu')}</p>
                 <button
                   onClick={closeMobileMenu}
-                  aria-label="Đóng menu di động"
+                  aria-label={t('closeMenu')}
                   className="flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-600 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-100"
                 >
                   <XMarkIcon className="h-5 w-5" />
@@ -148,7 +150,7 @@ export default function MobileMenu({
                       onClick={closeMobileMenu}
                       className="inline-flex items-center gap-2 rounded-xl border border-warm-200/80 px-5 py-2.5 text-sm font-medium text-warm-700 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-300 dark:hover:bg-warm-800/50 dark:hover:text-warm-100"
                     >
-                      Đăng nhập
+                      {t('login')}
                     </Link>
                   </li>
                   <li className="mt-5 border-t border-warm-200/40 pt-5 dark:border-warm-800/30">

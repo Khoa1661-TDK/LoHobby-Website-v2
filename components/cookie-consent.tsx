@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useEffect, useState, type ReactElement } from 'react';
 
 export const CONSENT_COOKIE = 'cookie-consent';

@@ -2,6 +2,7 @@
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical';
 import { RichText } from '@payloadcms/richtext-lexical/react';
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';
 import CategoryBanner from '@/components/home/category-banner';
@@ -27,11 +28,12 @@ const siteName = getSiteName();
 
 export const revalidate = 60;
 
-type Params = Promise<{ collection: string }>;
+type Params = Promise<{ locale: string; collection: string }>;
 type SearchParams = Promise<Record<string, string | undefined>>;
 
 export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
-  const { collection } = await props.params;
+  const { locale, collection } = await props.params;
+  const t = await getTranslations({ locale, namespace: 'search' });
   const data = await getCollection(collection);
   if (!data) return notFound();
 
@@ -39,7 +41,7 @@ export async function generateMetadata(props: { params: Params }): Promise<Metad
   const description =
     data.seo.description ||
     data.description ||
-    `Mua ${data.title} in 3D theo yêu cầu tại ${siteName}. Nhựa PLA/PETG an toàn, in theo mẫu riêng, giao toàn quốc, thanh toán VietQR.`;
+    t('metaDescriptionWithQuery', { query: data.title, storeName: siteName });
   const canonical = categoryCanonicalPath(data.handle);
   const seoImage = data.seoImage;
 
@@ -84,12 +86,13 @@ export default async function CategoryPage(props: {
   params: Params;
   searchParams: SearchParams;
 }): Promise<ReactElement> {
-  const { collection } = await props.params;
+  const { locale, collection } = await props.params;
+  const t = await getTranslations({ locale, namespace: 'search' });
   const data = await getCollection(collection);
   if (!data) return notFound();
 
-  const searchParams = await props.searchParams;
-  const sortOption = sorting.find((item) => item.slug === searchParams.sort) ?? defaultSort;
+  const sp = await props.searchParams;
+  const sortOption = sorting.find((item) => item.slug === sp.sort) ?? defaultSort;
 
   const allProducts = await getCollectionProducts({
     collection,
@@ -97,12 +100,12 @@ export default async function CategoryPage(props: {
     sortKey: sortOption.sortKey,
   });
 
-  const filters = parseProductFilters(searchParams);
+  const filters = parseProductFilters(sp);
   const filteredProducts = applyProductFilters(allProducts, filters);
 
   const { page: products, currentPage, totalPages } = paginateList(
     filteredProducts,
-    searchParams.page,
+    sp.page,
   );
 
   const categoryMeta = toStoreCategory({
@@ -111,8 +114,6 @@ export default async function CategoryPage(props: {
     description: data.description,
   });
   const featured = allProducts[0];
-  // Prefer the category's own product imagery (CMS media) over an external
-  // placeholder so the banner stays self-hosted and fast.
   const bannerImage =
     featured?.featuredImage.url ??
     (categoryMeta?.bannerSeed
@@ -123,8 +124,8 @@ export default async function CategoryPage(props: {
   const faq = data.faq ?? [];
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Trang chủ', path: '/' },
-    { name: 'Cửa hàng', path: '/search' },
+    { name: t('breadcrumbHome'), path: '/' },
+    { name: t('breadcrumbStore'), path: '/search' },
     { name: data.title, path: categoryCanonicalPath(data.handle) },
   ]);
 
@@ -164,8 +165,8 @@ export default async function CategoryPage(props: {
 
       <Breadcrumbs
         items={[
-          { name: 'Trang chủ', href: '/' },
-          { name: 'Cửa hàng', href: '/search' },
+          { name: t('breadcrumbHome'), href: '/' },
+          { name: t('breadcrumbStore'), href: '/search' },
           { name: data.title },
         ]}
       />
@@ -193,13 +194,13 @@ export default async function CategoryPage(props: {
       ) : null}
 
       <h2 className="mt-8 mb-4 font-serif text-xl font-bold tracking-tight sm:text-2xl">
-        Sản phẩm {data.title} nổi bật
+        {t('featuredProducts', { title: data.title })}
       </h2>
       {products.length === 0 ? (
         <p className="py-8 text-center text-neutral-500">
           {allProducts.length === 0
-            ? 'Chưa có sản phẩm trong danh mục này.'
-            : 'Không có sản phẩm phù hợp với bộ lọc. Hãy thử điều chỉnh bộ lọc.'}
+            ? t('noProductsInCategory')
+            : `${t('noFilterResults')} ${t('tryAdjustingFilter')}`}
         </p>
       ) : (
         <>
@@ -214,7 +215,7 @@ export default async function CategoryPage(props: {
             id="faq-heading"
             className="mb-4 font-serif text-xl font-bold tracking-tight sm:text-2xl"
           >
-            Câu hỏi thường gặp về {data.title}
+            {t('faqHeading', { title: data.title })}
           </h2>
           <dl className="space-y-4">
             {faq.map((item, index) => (

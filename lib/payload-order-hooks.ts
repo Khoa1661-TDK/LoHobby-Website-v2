@@ -3,7 +3,7 @@ import type { CollectionAfterChangeHook, CollectionBeforeChangeHook } from 'payl
 import type { Order } from '@/src/payload/payload-types';
 import { isOrderInventorySync, isSkipOrderInventoryHook } from '@/lib/payload-hooks';
 import { syncOrderInventoryForStatusChange } from '@/lib/order-inventory';
-import { notifyNewOrder } from '@/lib/zalo/order-notification';
+import { notifyNewOrder } from '@/lib/discord/order-notification';
 
 /** Auto-set paidAt / processing when admin marks an order paid in CMS. */
 export const normalizeOrderPaymentOnChange: CollectionBeforeChangeHook = ({ data, originalDoc }) => {
@@ -58,12 +58,12 @@ export const syncOrderInventoryOnStatusChange: CollectionAfterChangeHook = async
   return doc;
 };
 
-/** Notify the seller on Zalo when a brand-new order is created. Fire-and-forget. */
+/** Notify the seller on Discord when a brand-new order is created. Fire-and-forget. */
 export const notifySellerOnNewOrder: CollectionAfterChangeHook = ({ doc, operation, req }) => {
   if (operation !== 'create') return doc;
 
   void notifyNewOrder({ payload: req.payload, order: doc as Order }).catch((err: unknown) => {
-    console.warn('[orders.afterChange] zalo notify failed', { orderId: doc?.id, err });
+    console.warn('[orders.afterChange] discord notify failed', { orderId: doc?.id, err });
   });
 
   return doc;
