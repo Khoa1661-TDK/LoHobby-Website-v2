@@ -26,6 +26,7 @@ export type OrderFulfillmentView = {
   createdAt: string;
   paidAt: string | null;
   paymentKind: string | null;
+  lineItems: { productTitle: string; variantName: string | null; quantity: number; unitPrice: number }[];
 };
 
 type OrderExtras = Order & {
@@ -59,6 +60,22 @@ export function parseShipmentEvents(raw: unknown): ShipmentEvent[] {
     });
   }
   return events;
+}
+
+function parseLineItems(raw: unknown): OrderFulfillmentView['lineItems'] {
+  if (!Array.isArray(raw)) return [];
+  const items: OrderFulfillmentView['lineItems'] = [];
+  for (const row of raw) {
+    if (typeof row !== 'object' || row === null) continue;
+    const item = row as Record<string, unknown>;
+    items.push({
+      productTitle: typeof item.productTitle === 'string' ? item.productTitle : '',
+      variantName: typeof item.variantName === 'string' ? item.variantName : null,
+      quantity: typeof item.quantity === 'number' ? item.quantity : 0,
+      unitPrice: typeof item.unitPrice === 'number' ? item.unitPrice : 0,
+    });
+  }
+  return items;
 }
 
 export function mapOrderToFulfillmentView(doc: Order): OrderFulfillmentView {
@@ -105,5 +122,6 @@ export function mapOrderToFulfillmentView(doc: Order): OrderFulfillmentView {
       typeof doc.createdAt === 'string' ? doc.createdAt : new Date().toISOString(),
     paidAt: typeof doc.paidAt === 'string' ? doc.paidAt : null,
     paymentKind: typeof doc.paymentKind === 'string' ? doc.paymentKind : null,
+    lineItems: parseLineItems((doc as { lineItems?: unknown }).lineItems),
   };
 }
