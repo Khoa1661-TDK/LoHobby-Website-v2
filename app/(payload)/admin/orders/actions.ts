@@ -131,7 +131,7 @@ export async function runOrderAction(
   revalidatePath(`/admin/collections/orders/${docId}`);
   revalidatePath(`/profile/orders/${result.order.orderCode}`);
 
-  const messages: Record<string, string> = {
+  const messages: Record<OrderAction, string> = {
     mark_paid: `Đã đánh dấu thanh toán đơn #${result.order.orderCode}.`,
     confirm: `Đã xác nhận đơn #${result.order.orderCode}.`,
     ship: `Đã giao cho ${result.order.shippingCarrierLabel} — mã ${result.order.trackingNumber}.`,
@@ -143,5 +143,5 @@ export async function runOrderAction(
     cancel: `Đã hủy đơn #${result.order.orderCode}.`,
     refund: `Đã hoàn tiền đơn #${result.order.orderCode}.`,
   };
-  return { ok: true, message: messages[action] ?? 'Đã cập nhật đơn hàng.' };
+  return { ok: true, message: messages[action] };
 }
