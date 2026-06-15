@@ -3,6 +3,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, useTransition, type FormEvent, type ReactElement } from 'react';
 import { toast } from 'sonner';
@@ -14,6 +15,8 @@ type Props = {
 };
 
 export default function AccountPanel({ user }: Props): ReactElement {
+  const t = useTranslations('profile');
+  const locale = useLocale();
   const router = useRouter();
   const { update: updateSession } = useSession();
   const [name, setName] = useState<string>(user.name ?? '');
@@ -35,7 +38,7 @@ export default function AccountPanel({ user }: Props): ReactElement {
       const result = await updateProfileAction(formData);
       if (result.ok) {
         await updateSession();
-        toast.success('Đã cập nhật hồ sơ.');
+        toast.success(t('profileUpdated'));
         router.refresh();
       } else {
         toast.error(result.error);
@@ -49,9 +52,9 @@ export default function AccountPanel({ user }: Props): ReactElement {
       className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950"
     >
       <header>
-        <h2 className="text-lg font-semibold">Cài đặt tài khoản</h2>
+        <h2 className="text-lg font-semibold">{t('accountHeading')}</h2>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          Cập nhật tên và ảnh đại diện hiển thị trên Lô Hobby.
+          {t('accountSubtitle')}
         </p>
       </header>
 
@@ -76,13 +79,13 @@ export default function AccountPanel({ user }: Props): ReactElement {
           </p>
           <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p>
           <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
-            Tham gia {new Date(user.createdAt).toLocaleDateString('vi-VN')}
+            {t('joinedOn', { date: new Date(user.createdAt).toLocaleDateString(locale) })}
           </p>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Tên hiển thị" htmlFor="profile-name">
+        <Field label={t('displayNameLabel')} htmlFor="profile-name">
           <input
             id="profile-name"
             name="name"
@@ -94,7 +97,7 @@ export default function AccountPanel({ user }: Props): ReactElement {
             className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
           />
         </Field>
-        <Field label="Địa chỉ email" htmlFor="profile-email">
+        <Field label={t('emailLabel')} htmlFor="profile-email">
           <input
             id="profile-email"
             type="email"
@@ -105,7 +108,7 @@ export default function AccountPanel({ user }: Props): ReactElement {
         </Field>
       </div>
 
-      <Field label="URL ảnh đại diện" htmlFor="profile-image">
+      <Field label={t('avatarUrlLabel')} htmlFor="profile-image">
         <input
           id="profile-image"
           name="image"
@@ -117,7 +120,7 @@ export default function AccountPanel({ user }: Props): ReactElement {
           className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
         />
         <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-          Để trống nếu muốn dùng chữ cái đầu như ở trên.
+          {t('avatarUrlHint')}
         </p>
       </Field>
 
@@ -127,7 +130,7 @@ export default function AccountPanel({ user }: Props): ReactElement {
           disabled={pending}
           className="rounded-full bg-filament-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-filament-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pending ? 'Đang lưu…' : 'Lưu thay đổi'}
+          {pending ? t('saving') : t('saveChanges')}
         </button>
       </div>
     </form>

@@ -7,6 +7,7 @@ import {
   MapPinIcon,
   ShoppingBagIcon,
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { useState, type ComponentType, type ReactElement, type SVGProps } from 'react';
 import AccountPanel from '@/app/[locale]/(storefront)/profile/account-panel';
 import AddressesPanel from '@/app/[locale]/(storefront)/profile/addresses-panel';
@@ -30,34 +31,34 @@ type Props = {
 
 type TabDef = {
   id: ProfileTabId;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
 };
 
 const TABS: TabDef[] = [
   {
     id: 'account',
-    label: 'Cài đặt tài khoản',
-    description: 'Tên hiển thị & ảnh đại diện',
+    labelKey: 'tabAccount',
+    descriptionKey: 'tabAccountDesc',
     icon: Cog6ToothIcon,
   },
   {
     id: 'orders',
-    label: 'Lịch sử đơn hàng',
-    description: 'Theo dõi mọi đơn hàng',
+    labelKey: 'tabOrders',
+    descriptionKey: 'tabOrdersDesc',
     icon: ShoppingBagIcon,
   },
   {
     id: 'addresses',
-    label: 'Sổ địa chỉ',
-    description: 'Địa chỉ giao hàng đã lưu',
+    labelKey: 'tabAddresses',
+    descriptionKey: 'tabAddressesDesc',
     icon: MapPinIcon,
   },
   {
     id: 'wishlist',
-    label: 'Yêu thích',
-    description: 'Sản phẩm đã lưu',
+    labelKey: 'tabWishlist',
+    descriptionKey: 'tabWishlistDesc',
     icon: HeartIcon,
   },
 ];
@@ -69,11 +70,12 @@ export default function ProfileShell({
   wishlist,
   initialTab = 'account',
 }: Props): ReactElement {
+  const t = useTranslations('profile');
   const [active, setActive] = useState<ProfileTabId>(initialTab);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <nav aria-label="Các mục trong tài khoản">
+      <nav aria-label={t('navAriaLabel')}>
         <ul className="flex gap-2 overflow-x-auto rounded-2xl border border-neutral-200 bg-white p-2 shadow-sm dark:border-neutral-800 dark:bg-neutral-950 lg:flex-col lg:gap-1 lg:overflow-visible">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -97,13 +99,13 @@ export default function ProfileShell({
                     aria-hidden="true"
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate">{tab.label}</span>
+                    <span className="block truncate">{t(tab.labelKey as Parameters<typeof t>[0])}</span>
                     <span
                       className={`hidden text-[11px] font-normal lg:block ${
                         isActive ? 'text-white/80' : 'text-neutral-400'
                       }`}
                     >
-                      {tab.description}
+                      {t(tab.descriptionKey as Parameters<typeof t>[0])}
                     </span>
                   </span>
                 </button>

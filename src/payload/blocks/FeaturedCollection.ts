@@ -6,6 +6,8 @@ export const FeaturedCollection: Block = {
   slug: 'featuredCollection',
   labels: { singular: 'Featured Collection', plural: 'Featured Collections' },
   interfaceName: 'FeaturedCollectionBlock',
+  imageURL: '/admin/block-previews/featured-collection.svg',
+  imageAltText: 'Featured collection preview',
   fields: [
     {
       name: 'title',

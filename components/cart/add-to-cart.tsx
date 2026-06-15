@@ -2,11 +2,13 @@
 'use client';
 
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
 import { addItemAction } from '@/components/cart/actions';
 import LoadingDots from '@/components/loading-dots';
+import { beacon, getAnonId, getSession } from '@/lib/analytics/track-client';
 import type { Product } from '@/lib/shopify/types';
 
 type Props = {
@@ -24,16 +26,17 @@ export default function AddToCart({
 }: Props): ReactElement {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const t = useTranslations('cart');
   const available = product.availableForSale && canAdd;
   const label = !available
-    ? 'Hết hàng'
+    ? t('outOfStock')
     : isPending
-      ? 'Đang thêm…'
-      : 'Thêm vào giỏ';
+      ? t('adding')
+      : t('addToCart');
 
   return (
     <button
-      aria-label="Thêm vào giỏ hàng"
+      aria-label={t('addToCartAria')}
       disabled={!available || isPending}
       onClick={() =>
         startTransition(async () => {
@@ -44,9 +47,16 @@ export default function AddToCart({
           }
           toast.success(
             quantity > 1
-              ? `Đã thêm ${quantity} ${product.title} vào giỏ hàng`
-              : `Đã thêm ${product.title} vào giỏ hàng`,
+              ? t('addedQtyToast', { quantity, title: product.title })
+              : t('addedToast', { title: product.title }),
           );
+          beacon('/api/track/cart', {
+            anonId: getAnonId(),
+            sessionId: getSession().id,
+            productId: product.id,
+            productHandle: product.handle,
+            quantity,
+          });
           router.refresh();
         })
       }

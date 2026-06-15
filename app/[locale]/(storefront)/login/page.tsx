@@ -1,18 +1,29 @@
-// app/(storefront)/login/page.tsx
+// app/[locale]/(storefront)/login/page.tsx
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { auth } from '@/auth';
 import AuthForm from '@/components/auth-form';
 import Footer from '@/components/layout/footer';
 import { isAdminEmail } from '@/lib/admin-emails';
 
-export const metadata: Metadata = {
-  title: 'Đăng nhập',
-  description: 'Đăng nhập hoặc tạo tài khoản để theo dõi đơn hàng và lưu mô hình yêu thích.',
-  robots: { index: false, follow: false },
-};
+type LocaleParams = { locale: string };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<LocaleParams>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'auth' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+    robots: { index: false, follow: false },
+  };
+}
 
 type SearchParams = Promise<{ callbackUrl?: string; error?: string }>;
 
@@ -20,6 +31,7 @@ export default async function LoginPage(props: {
   searchParams: SearchParams;
 }): Promise<ReactElement> {
   const { callbackUrl, error } = await props.searchParams;
+  const t = await getTranslations('auth');
   const safeCallback =
     callbackUrl?.startsWith('/') && !callbackUrl.startsWith('//') ? callbackUrl : '/';
 
@@ -30,13 +42,13 @@ export default async function LoginPage(props: {
         <>
           <section className="mx-auto max-w-screen-sm px-4 py-12 md:py-16">
             <div className="mx-auto w-full max-w-md rounded-2xl border border-warm-200/80 bg-white p-6 shadow-soft-md dark:border-warm-800/40 dark:bg-warm-900">
-              <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">Cần quyền quản trị</h1>
+              <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">{t('adminRequiredTitle')}</h1>
               <p className="text-sm text-warm-500 dark:text-warm-400">
-                Bạn đang đăng nhập bằng{' '}
+                {t('adminRequiredBefore')}
                 <span className="font-medium text-warm-900 dark:text-warm-100">
                   {session.user.email}
                 </span>
-                , nhưng tài khoản này không nằm trong danh sách quản trị viên.
+                {t('adminRequiredAfter')}
               </p>
             </div>
           </section>
@@ -65,7 +77,7 @@ export default async function LoginPage(props: {
             href="/forgot-password"
             className="text-warm-500 transition-colors hover:text-warm-800 dark:text-warm-400 dark:hover:text-warm-200"
           >
-            Quên mật khẩu?
+            {t('forgotPassword')}
           </Link>
         </p>
       </section>

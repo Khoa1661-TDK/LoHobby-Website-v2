@@ -1,5 +1,6 @@
 // components/home/new-arrivals-hero.tsx — CMS-driven homepage hero with product carousel
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import ProductHeroCarousel, { type HeroSlide } from '@/components/home/product-hero-carousel';
 import type { StoreBranding } from '@/lib/store-branding';
@@ -26,11 +27,12 @@ function toHeroSlides(products: Product[]): HeroSlide[] {
     });
 }
 
-export default function NewArrivalsHero({ branding, products, categories }: Props): ReactElement | null {
+export default async function NewArrivalsHero({ branding, products, categories }: Props): Promise<ReactElement | null> {
+  const t = await getTranslations('home');
   const { hero } = branding;
 
   if (!hero.enabled) {
-    return null;
+    return null as unknown as ReactElement | null;
   }
 
   const slides = toHeroSlides(products);
@@ -94,7 +96,7 @@ export default function NewArrivalsHero({ branding, products, categories }: Prop
                 prefetch
                 className="text-sm font-medium text-warm-500 transition-colors duration-200 hover:text-warm-800 dark:text-warm-400 dark:hover:text-warm-200"
               >
-                Xem tất cả →
+                {t('heroViewAll')} →
               </Link>
             </div>
           ) : null}
@@ -112,7 +114,7 @@ export default function NewArrivalsHero({ branding, products, categories }: Prop
                   {hero.carouselTitle}
                 </h2>
                 <p className="mt-0.5 text-sm text-warm-500 dark:text-warm-400">
-                  Mới nhất từ bộ sưu tập
+                  {t('heroCarouselSubtitle')}
                 </p>
               </div>
               <Link
@@ -120,7 +122,7 @@ export default function NewArrivalsHero({ branding, products, categories }: Prop
                 prefetch
                 className="shrink-0 text-sm font-medium text-terracotta-600 transition-colors hover:text-terracotta-700 dark:text-terracotta-400 dark:hover:text-terracotta-300"
               >
-                Xem tất cả →
+                {t('heroViewAll')} →
               </Link>
             </div>
 
@@ -134,14 +136,14 @@ export default function NewArrivalsHero({ branding, products, categories }: Prop
                   </svg>
                 </div>
                 <p className="mt-4 text-sm font-medium text-warm-600 dark:text-warm-400">
-                  Sản phẩm mới sẽ xuất hiện tại đây
+                  {t('heroEmptyTitle')}
                 </p>
                 <Link
                   href="/search"
                   prefetch
                   className="mt-4 text-sm font-semibold text-terracotta-600 transition-colors hover:text-terracotta-700 dark:text-terracotta-400 dark:hover:text-terracotta-300"
                 >
-                  Khám phá cửa hàng →
+                  {t('heroEmptyCta')} →
                 </Link>
               </div>
             )}
@@ -151,7 +153,7 @@ export default function NewArrivalsHero({ branding, products, categories }: Prop
         {/* Category pills */}
         {categories.length > 0 ? (
           <nav
-            aria-label="Danh mục sản phẩm"
+            aria-label={t('heroCategoriesAria')}
             className="mt-7 flex animate-reveal-up flex-wrap gap-2"
             style={{ animationDelay: '300ms' }}
           >
@@ -170,7 +172,7 @@ export default function NewArrivalsHero({ branding, products, categories }: Prop
               prefetch
               className="inline-flex shrink-0 items-center rounded-xl border border-dashed border-warm-300/80 bg-warm-100/50 px-4 py-2 text-sm font-medium text-warm-600 transition-all duration-200 hover:border-warm-400 hover:bg-warm-100 dark:border-warm-700/60 dark:bg-warm-900/50 dark:text-warm-400 dark:hover:border-warm-600 dark:hover:bg-warm-900"
             >
-              Tất cả
+              {t('heroAllCategories')}
             </Link>
           </nav>
         ) : null}

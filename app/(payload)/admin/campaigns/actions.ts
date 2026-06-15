@@ -4,6 +4,8 @@
 import { revalidatePath } from 'next/cache';
 import { CampaignStatus } from '@/generated/prisma/enums';
 import { requireAdmin } from '@/lib/admin';
+import { getEmailConfig, sendBulkEmail } from '@/lib/email/client';
+import { renderCampaignBody } from '@/lib/email/render';
 import { isEmailCampaignsEnabled } from '@/lib/feature-flags';
 import { prisma } from '@/lib/prisma';
 
@@ -38,8 +40,9 @@ export async function createCampaignAction(input: {
 }
 
 /**
- * v1: marks campaign SENT and records subscriber count — no ESP integration yet.
- * Wire Resend/SendGrid in a follow-up when API keys are available.
+ * Send a campaign to every newsletter subscriber via Resend (lib/email/client).
+ * Credential-agnostic: stays DRAFT with a clear message until RESEND_API_KEY and
+ * EMAIL_FROM are configured. Marks SENT only when at least one email is delivered.
  */
 export async function sendCampaignToNewsletterAction(
   campaignId: string,
@@ -59,19 +62,33 @@ export async function sendCampaignToNewsletterAction(
     return { ok: false, message: 'Chiến dịch đã gửi.' };
   }
 
-  const count = await prisma.newsletterSubscriber.count();
-  console.info('[campaign] send stub', {
-    campaignId,
+  if (!getEmailConfig().configured) {
+    return { ok: false, message: 'Email chưa cấu hình (đặt RESEND_API_KEY) — chưa gửi.' };
+  }
+
+  const subscribers = await prisma.newsletterSubscriber.findMany({ select: { email: true } });
+  if (subscribers.length === 0) {
+    return { ok: false, message: 'Chưa có người đăng ký.' };
+  }
+
+  const { text, html } = renderCampaignBody(campaign.body);
+  const result = await sendBulkEmail({
     subject: campaign.subject,
-    recipients: count,
+    text,
+    html,
+    recipients: subscribers.map((s) => s.email),
   });
+
+  if (result.sent === 0) {
+    return { ok: false, message: 'Gửi thất bại — vui lòng thử lại.' };
+  }
 
   await prisma.emailCampaign.update({
     where: { id: campaignId },
     data: {
       status: CampaignStatus.SENT,
       sentAt: new Date(),
-      recipientCount: count,
+      recipientCount: result.sent,
     },
   });
 

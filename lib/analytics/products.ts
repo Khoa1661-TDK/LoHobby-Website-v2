@@ -2,6 +2,8 @@
 //
 // Orchestrates fetching orders and view events, then delegates to the pure
 // aggregation functions in product-metrics.ts.
+import config from '@payload-config';
+import { getPayload } from 'payload';
 import { prisma } from '@/lib/prisma';
 import {
   fetchOrdersInRange,
@@ -13,8 +15,13 @@ import {
   bottomSellers,
   aggregateAttention,
   computeViewToBuy,
+  joinDiscountedItems,
+  computeCtr,
   type ProductSales,
   type ViewToBuyRow,
+  type DiscountedItemRow,
+  type OnSaleProduct,
+  type CtrRow,
 } from '@/lib/analytics/product-metrics';
 
 const PERFORMANCE_LIMIT = 8;
@@ -51,4 +58,50 @@ export async function getProductPerformance(
     bottomSellers: bottomSellers(sales, PERFORMANCE_LIMIT),
     viewToBuy: computeViewToBuy(sales, aggregateAttention(viewEvents)),
   };
+}
+
+export async function getDiscountedItemPerformance(
+  start: Date,
+  end: Date,
+): Promise<DiscountedItemRow[]> {
+  const payload = await getPayload({ config });
+  const [onSaleResult, orders] = await Promise.all([
+    payload.find({
+      collection: 'products',
+      where: { onSale: { equals: true } },
+      pagination: false,
+      limit: 1000,
+      select: { title: true, slug: true, salePercent: true },
+    }),
+    fetchOrdersInRange(start, end),
+  ]);
+
+  const onSale: OnSaleProduct[] = onSaleResult.docs.map((d) => ({
+    productId: String(d.id),
+    slug: (d as { slug?: string }).slug ?? '',
+    title: (d as { title?: string }).title ?? '',
+    salePercent: (d as { salePercent?: number }).salePercent ?? 0,
+  }));
+
+  const sales = aggregateSales(orders.filter(isRevenueOrder));
+  return joinDiscountedItems(onSale, sales);
+}
+
+export async function getProductCtr(start: Date, end: Date): Promise<CtrRow[]> {
+  const daily = await prisma.productCtrDaily.findMany({
+    where: { day: { gte: start, lte: end } },
+    select: { productId: true, impressions: true, clicks: true },
+  });
+
+  const map = new Map<string, { impressions: number; clicks: number }>();
+  for (const row of daily) {
+    const e = map.get(row.productId) ?? { impressions: 0, clicks: 0 };
+    e.impressions += row.impressions;
+    e.clicks += row.clicks;
+    map.set(row.productId, e);
+  }
+
+  return computeCtr(
+    [...map.entries()].map(([productId, v]) => ({ productId, ...v })),
+  );
 }

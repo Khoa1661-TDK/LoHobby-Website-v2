@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState, type ReactElement } from 'react';
 import Price from '@/components/price';
 import { readRecentlyViewed, recordRecentlyViewed, type RecentProduct } from '@/lib/recently-viewed';
@@ -14,8 +15,10 @@ type Props = {
 
 export default function RecentlyViewed({
   current,
-  title = 'Đã xem gần đây',
+  title,
 }: Props): ReactElement | null {
+  const t = useTranslations('product');
+  const resolvedTitle = title ?? t('recentlyViewed');
   const [items, setItems] = useState<RecentProduct[]>([]);
 
   useEffect(() => {
@@ -27,8 +30,8 @@ export default function RecentlyViewed({
   if (items.length === 0) return null;
 
   return (
-    <section className="py-10" aria-label={title}>
-      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">{title}</h2>
+    <section className="py-10" aria-label={resolvedTitle}>
+      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">{resolvedTitle}</h2>
       <ul className="flex w-full gap-4 overflow-x-auto pt-1 pb-2">
         {items.map((item) => (
           <li

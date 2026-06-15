@@ -1,6 +1,7 @@
 'use client';
 
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { PAGE_SIZE } from '@/lib/constants';
@@ -14,6 +15,7 @@ export default function Pagination({
   currentPage: number;
   totalPages: number;
 }): ReactElement | null {
+  const t = useTranslations('common');
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -36,7 +38,7 @@ export default function Pagination({
     'inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-all duration-200';
 
   return (
-    <nav aria-label="Phân trang" className="mt-10 flex items-center justify-center gap-1.5">
+    <nav aria-label={t('paginationAria')} className="mt-10 flex items-center justify-center gap-1.5">
       {currentPage > 1 ? (
         <Link
           href={hrefForPage(currentPage - 1)}

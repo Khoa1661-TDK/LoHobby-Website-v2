@@ -1,11 +1,13 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 
 export type Crumb = { name: string; href?: string };
 
-export default function Breadcrumbs({ items }: { items: Crumb[] }): ReactElement {
+export default async function Breadcrumbs({ items }: { items: Crumb[] }): Promise<ReactElement> {
+  const t = await getTranslations('common');
   return (
-    <nav aria-label="Đường dẫn" className="py-4 text-sm text-warm-500 dark:text-warm-400">
+    <nav aria-label={t('breadcrumbNavAria')} className="py-4 text-sm text-warm-500 dark:text-warm-400">
       <ol className="flex flex-wrap items-center gap-2">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

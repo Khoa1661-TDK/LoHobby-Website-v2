@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
@@ -15,6 +16,7 @@ export default function CartCrossSell({
   excludeHandles: string[];
 }): ReactElement | null {
   const router = useRouter();
+  const t = useTranslations('cart');
   const [items, setItems] = useState<CrossSellProduct[]>([]);
   const [isPending, startTransition] = useTransition();
 
@@ -32,7 +34,7 @@ export default function CartCrossSell({
   return (
     <div className="border-t border-neutral-200 py-3 dark:border-neutral-700">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-        Gợi ý thêm
+        {t('crossSellHeading')}
       </p>
       <ul className="flex gap-3 overflow-x-auto">
         {items.map((item) => (
@@ -64,13 +66,13 @@ export default function CartCrossSell({
                     toast.error(result.error);
                     return;
                   }
-                  toast.success('Đã thêm vào giỏ');
+                  toast.success(t('addedShort'));
                   router.refresh();
                 })
               }
               className="mt-1 w-full rounded-full border border-neutral-300 py-1 text-[11px] font-medium transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
             >
-              + Thêm
+              {t('add')}
             </button>
           </li>
         ))}

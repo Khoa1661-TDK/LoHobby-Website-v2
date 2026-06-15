@@ -1,5 +1,6 @@
 // app/search/page.tsx
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import type { ReactElement } from 'react';
 import Breadcrumbs from '@/components/layout/breadcrumbs';
 import SearchEmptyState from '@/components/layout/search/empty-state';
@@ -17,14 +18,17 @@ const siteName = getSiteName();
 type SearchParams = Promise<Record<string, string | undefined>>;
 
 export async function generateMetadata(props: {
+  params: Promise<{ locale: string }>;
   searchParams: SearchParams;
 }): Promise<Metadata> {
+  const { locale } = await props.params;
+  const t = await getTranslations({ locale, namespace: 'search' });
   const { q } = await props.searchParams;
   const trimmed = q?.trim();
-  const title = trimmed ? `Tìm kiếm: "${trimmed}"` : 'Tìm kiếm';
+  const title = trimmed ? t('metaTitleWithQuery', { query: trimmed }) : t('metaTitle');
   const description = trimmed
-    ? `Kết quả tìm kiếm "${trimmed}" trong cửa hàng ${siteName}.`
-    : 'Tìm móc khóa, mô hình, figure & sản phẩm hobby trong cửa hàng.';
+    ? t('metaDescriptionWithQuery', { query: trimmed, storeName: siteName })
+    : t('metaDescription');
   const canonical = trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : '/search';
 
   return {
@@ -50,9 +54,15 @@ export async function generateMetadata(props: {
 export const revalidate = 60;
 
 export default async function SearchPage(props: {
+  params: Promise<{ locale: string }>;
   searchParams: SearchParams;
 }): Promise<ReactElement> {
-  const searchParams = await props.searchParams;
+  const [searchParams, { locale }] = await Promise.all([
+    props.searchParams,
+    props.params,
+  ]);
+
+  const t = await getTranslations({ locale, namespace: 'search' });
   const { q: query, sort } = searchParams;
   const sortOption = sorting.find((item) => item.slug === sort) ?? defaultSort;
 
@@ -76,24 +86,24 @@ export default async function SearchPage(props: {
     <>
       <Breadcrumbs
         items={[
-          { name: 'Trang chủ', href: '/' },
-          { name: trimmedQuery ? 'Tìm kiếm' : 'Cửa hàng' },
+          { name: t('breadcrumbHome'), href: '/' },
+          { name: trimmedQuery ? t('breadcrumbSearch') : t('breadcrumbStore') },
         ]}
       />
       <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100 sm:text-3xl">
-        {trimmedQuery ? `Kết quả tìm kiếm: "${trimmedQuery}"` : 'Tất cả sản phẩm'}
+        {trimmedQuery ? t('resultsCount', { count: filtered.length }) + ` "${trimmedQuery}"` : t('allProducts')}
       </h1>
       {filtered.length > 0 ? (
         <p className="mb-5 text-sm text-warm-500 dark:text-warm-400">
           {trimmedQuery ? (
             <>
-              Hiển thị {filtered.length} kết quả cho{' '}
+              {t('resultsCount', { count: filtered.length })}{' '}
               <span className="font-semibold text-warm-900 dark:text-warm-100">
                 &quot;{trimmedQuery}&quot;
               </span>
             </>
           ) : (
-            `${filtered.length} sản phẩm`
+            t('productCount', { count: filtered.length })
           )}
         </p>
       ) : null}

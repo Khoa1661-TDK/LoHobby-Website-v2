@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
@@ -16,6 +17,7 @@ export default function WishlistPanel({
 }: {
   products: ProfileWishlistProduct[];
 }): ReactElement {
+  const t = useTranslations('profile');
   const router = useRouter();
   const { setSaved } = useWishlist();
   const [pending, startTransition] = useTransition();
@@ -23,15 +25,15 @@ export default function WishlistPanel({
   if (products.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-10 text-center shadow-sm dark:border-neutral-700 dark:bg-neutral-950">
-        <h2 className="text-lg font-semibold">Chưa có sản phẩm yêu thích</h2>
+        <h2 className="text-lg font-semibold">{t('noWishlistTitle')}</h2>
         <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-          Nhấn vào biểu tượng trái tim trên sản phẩm để lưu lại xem sau.
+          {t('noWishlistBody')}
         </p>
         <Link
           href="/search"
           className="mt-4 inline-block rounded-full bg-filament-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-filament-600"
         >
-          Khám phá sản phẩm
+          {t('exploreProducts')}
         </Link>
       </div>
     );
@@ -45,7 +47,7 @@ export default function WishlistPanel({
         return;
       }
       setSaved(productId, false);
-      toast.success('Đã bỏ khỏi yêu thích');
+      toast.success(t('removedFromWishlist'));
       router.refresh();
     });
   };
@@ -84,7 +86,7 @@ export default function WishlistPanel({
               onClick={() => remove(product.id, product.handle)}
               className="rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-rose-300 hover:text-rose-600 disabled:opacity-60 dark:border-neutral-700 dark:text-neutral-300"
             >
-              Bỏ lưu
+              {t('unsave')}
             </button>
           </div>
         </div>

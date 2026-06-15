@@ -25,13 +25,13 @@ export default function SendCampaignButton({
             toast.error(result.message);
             return;
           }
-          toast.success('Đã đánh dấu đã gửi (stub). Kiểm tra server log.');
+          toast.success('Đã gửi chiến dịch tới người đăng ký.');
           router.refresh();
         })
       }
       className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
     >
-      {pending ? '…' : 'Gửi (stub)'}
+      {pending ? '…' : 'Gửi'}
     </button>
   );
 }

@@ -4,7 +4,8 @@ import {
   MapPinIcon,
   PhoneIcon,
 } from '@heroicons/react/24/outline';
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import FooterNewsletter from '@/components/layout/footer-newsletter';
 import { DEFAULT_SOCIAL_LINKS } from '@/lib/brand';
@@ -67,7 +68,11 @@ function SocialIcon({ label }: { label: string }): ReactElement {
 
 export default async function Footer(): Promise<ReactElement> {
   const currentYear = new Date().getFullYear();
-  const [branding, footerMenu] = await Promise.all([getStoreBranding(), getFooterMenu()]);
+  const [branding, footerMenu, t] = await Promise.all([
+    getStoreBranding(),
+    getFooterMenu(),
+    getTranslations('footer'),
+  ]);
   const socialLinks =
     branding.socialLinks.length > 0 ? branding.socialLinks : DEFAULT_SOCIAL_LINKS;
 
@@ -103,7 +108,7 @@ export default async function Footer(): Promise<ReactElement> {
                   href={`tel:${branding.contact.phone.replace(/\s/g, '')}`}
                   className="text-warm-400 transition-colors duration-200 hover:text-warm-100"
                 >
-                  Hotline: {branding.contact.phone}
+                  {t('hotline')}: {branding.contact.phone}
                 </a>
               </li>
               <li className="flex gap-3 text-sm">
@@ -141,7 +146,7 @@ export default async function Footer(): Promise<ReactElement> {
           {branding.footer.showNewsletter ? (
             <div>
               <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-warm-400">
-                Newsletter
+                {t('newsletterHeading')}
               </h3>
               <div className="mt-5">
                 <FooterNewsletter />
@@ -155,7 +160,7 @@ export default async function Footer(): Promise<ReactElement> {
       <div className="border-t border-warm-900">
         <div className="mx-auto flex max-w-screen-2xl flex-col gap-2 px-4 py-6 text-xs text-warm-600 sm:flex-row sm:items-center sm:justify-between lg:px-6">
           <p>
-            &copy; {currentYear} {branding.storeName}. Bảo lưu mọi quyền.
+            &copy; {currentYear} {branding.storeName}. {t('rights')}
           </p>
           {branding.footer.credit ? (
             <p className="text-warm-700">{branding.footer.credit}</p>

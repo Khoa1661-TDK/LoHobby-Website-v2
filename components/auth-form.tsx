@@ -1,6 +1,7 @@
 // components/auth-form.tsx
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent, type ReactElement } from 'react';
 import { signIn } from 'next-auth/react';
 
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
+  const t = useTranslations('auth');
   const [mode, setMode] = useState<Mode>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -33,7 +35,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
         });
         if (!res.ok) {
           const payload = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(payload.error ?? 'Đăng ký thất bại');
+          throw new Error(payload.error ?? t('registerFailed'));
         }
       }
 
@@ -44,12 +46,12 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
       });
 
       if (!result || result.error) {
-        throw new Error('Email hoặc mật khẩu không đúng');
+        throw new Error(t('invalidCredentials'));
       }
 
       window.location.assign(callbackUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
+      setError(err instanceof Error ? err.message : t('genericError'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
               : 'text-warm-500 hover:text-warm-700 dark:text-warm-400'
           }`}
         >
-          Đăng nhập
+          {t('tabLogin')}
         </button>
         <button
           type="button"
@@ -83,17 +85,15 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
               : 'text-warm-500 hover:text-warm-700 dark:text-warm-400'
           }`}
         >
-          Đăng ký
+          {t('tabRegister')}
         </button>
       </div>
 
       <h1 className="mb-1 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">
-        {isRegister ? 'Tạo tài khoản' : 'Chào mừng trở lại'}
+        {isRegister ? t('createAccount') : t('welcomeBack')}
       </h1>
       <p className="mb-6 text-sm text-warm-500 dark:text-warm-400">
-        {isRegister
-          ? 'Đăng ký để theo dõi đơn hàng và lưu mô hình yêu thích.'
-          : 'Đăng nhập để tiếp tục.'}
+        {isRegister ? t('registerSubtitle') : t('loginSubtitle')}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,7 +103,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
               htmlFor="name"
               className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400"
             >
-              Họ tên
+              {t('nameLabel')}
             </label>
             <input
               id="name"
@@ -122,7 +122,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
             htmlFor="email"
             className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400"
           >
-            Email
+            {t('emailLabel')}
           </label>
           <input
             id="email"
@@ -140,7 +140,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
             htmlFor="password"
             className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400"
           >
-            Mật khẩu
+            {t('passwordLabel')}
           </label>
           <input
             id="password"
@@ -168,13 +168,13 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
           disabled={loading}
           className="w-full rounded-xl bg-warm-900 px-4 py-3 text-sm font-semibold text-warm-50 shadow-soft-md transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
         >
-          {loading ? 'Vui lòng đợi…' : isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}
+          {loading ? t('submitLoading') : isRegister ? t('submitRegister') : t('submitLogin')}
         </button>
       </form>
 
       <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wider text-warm-400">
         <span className="h-px flex-1 bg-warm-200 dark:bg-warm-800" />
-        hoặc tiếp tục với
+        {t('orContinueWith')}
         <span className="h-px flex-1 bg-warm-200 dark:bg-warm-800" />
       </div>
 
