@@ -5,8 +5,10 @@ import RenderBlocks from '@/components/blocks/RenderBlocks';
 import type { PageDoc, PageBlock } from '@/lib/page-builder';
 import type { BlockSchema } from '@/lib/page-builder/block-schemas';
 import FieldRenderer from './FieldRenderer';
-import { updateBlockField } from '@/lib/page-builder/layout-reducer';
+import { updateBlockField, insertBlock } from '@/lib/page-builder/layout-reducer';
+import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import { useAutosave } from './use-autosave';
+import AddSectionPicker from './AddSectionPicker';
 
 type Props = {
   locale: string;
@@ -18,6 +20,13 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
   const [layout, setLayout] = useState<PageBlock[]>(page.layout);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const { status, publish } = useAutosave(page.id, layout);
+  const [addAt, setAddAt] = useState<number | null>(null);
+
+  const handlePick = (slug: string) => {
+    const block = createDefaultBlock(slug);
+    if (block && addAt !== null) setLayout((prev) => insertBlock(prev, addAt, block));
+    setAddAt(null);
+  };
 
   const handleFieldChange = (name: string, value: unknown) => {
     if (selectedIndex === null) return;
@@ -58,16 +67,37 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
         {/* Canvas */}
         <main className="flex-1 overflow-auto bg-warm-50 p-6">
           <div className="mx-auto max-w-screen-xl bg-white shadow-sm">
-            {layout.map((block, index) => (
-              <div
-                key={index}
-                onClick={() => setSelectedIndex(index)}
-                className={
-                  'relative cursor-pointer outline-offset-2 ' +
-                  (selectedIndex === index ? 'outline outline-2 outline-blue-500' : '')
-                }
+            {/* Add button before first block */}
+            <div className="py-2 text-center">
+              <button
+                type="button"
+                onClick={() => setAddAt(0)}
+                className="text-xs text-warm-400 hover:text-blue-500"
               >
-                <RenderBlocks blocks={[block]} />
+                + Add section
+              </button>
+            </div>
+            {layout.map((block, index) => (
+              <div key={index}>
+                <div
+                  onClick={() => setSelectedIndex(index)}
+                  className={
+                    'relative cursor-pointer outline-offset-2 ' +
+                    (selectedIndex === index ? 'outline outline-2 outline-blue-500' : '')
+                  }
+                >
+                  <RenderBlocks blocks={[block]} />
+                </div>
+                {/* Add button after each block */}
+                <div className="py-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setAddAt(index + 1)}
+                    className="text-xs text-warm-400 hover:text-blue-500"
+                  >
+                    + Add section
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -86,6 +116,10 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
           )}
         </aside>
       </div>
+
+      {addAt !== null && (
+        <AddSectionPicker schemas={schemas} onPick={handlePick} onClose={() => setAddAt(null)} />
+      )}
     </div>
   );
 }
