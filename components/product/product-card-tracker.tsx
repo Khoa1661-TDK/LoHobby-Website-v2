@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactElement } from 'react';
 import { beacon, getAnonId, getSession } from '@/lib/analytics/track-client';
 import { hasAnalyticsConsent } from '@/components/cookie-consent';
 
@@ -33,7 +33,7 @@ function ensureFlushBound(): void {
 const VISIBLE_RATIO = 0.5;
 const DWELL_MS = 1000;
 
-export default function ProductCardTracker({ productId, productHandle }: Props): null {
+export default function ProductCardTracker({ productId, productHandle }: Props): ReactElement {
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {

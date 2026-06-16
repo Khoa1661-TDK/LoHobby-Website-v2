@@ -90,16 +90,25 @@ export async function AnalyticsDashboard(props: DashboardProps): Promise<ReactEl
   const period = resolvePeriod(props.searchParams ?? {}, now);
   const prev = previousPeriod(period);
 
-  const [currentOrders, lastOrders, trafficBySource, productPerformance, discounted, cart, ctr] =
-    await Promise.all([
-      fetchOrdersInRange(period.start, period.end),
-      fetchOrdersInRange(prev.start, prev.end),
-      getTrafficBySource(period.start, period.end),
-      getProductPerformance(period.start, period.end),
-      getDiscountedItemPerformance(period.start, period.end),
-      getCartAbandonment(period.start, period.end),
-      getProductCtr(period.start, period.end),
-    ]);
+  const [
+    currentOrders,
+    lastOrders,
+    trafficBySource,
+    productPerformance,
+    discounted,
+    cart,
+    lastCart,
+    ctr,
+  ] = await Promise.all([
+    fetchOrdersInRange(period.start, period.end),
+    fetchOrdersInRange(prev.start, prev.end),
+    getTrafficBySource(period.start, period.end),
+    getProductPerformance(period.start, period.end),
+    getDiscountedItemPerformance(period.start, period.end),
+    getCartAbandonment(period.start, period.end),
+    getCartAbandonment(prev.start, prev.end),
+    getProductCtr(period.start, period.end),
+  ]);
 
   const currentMetrics = computeMonthlyMetrics(currentOrders);
   const lastMetrics = computeMonthlyMetrics(lastOrders);
@@ -307,10 +316,10 @@ export async function AnalyticsDashboard(props: DashboardProps): Promise<ReactEl
             </p>
           </header>
           <ul className="dash__metrics">
-            <li><MetricCard tone="orders" icon={<ShoppingBag size={18} aria-hidden />} title="Giỏ bị bỏ" value={cart.abandonment.abandoned.toLocaleString('vi-VN')} /></li>
-            <li><MetricCard tone="paid" icon={<Wallet2 size={18} aria-hidden />} title="Giỏ hoàn tất" value={cart.abandonment.completed.toLocaleString('vi-VN')} /></li>
-            <li><MetricCard tone="value" icon={<Receipt size={18} aria-hidden />} title="Tỉ lệ bỏ giỏ" value={`${cart.abandonment.abandonmentPct}%`} /></li>
-            <li><MetricCard tone="revenue" icon={<Wallet size={18} aria-hidden />} title="Thêm giỏ → mua" value={`${cart.funnel.conversionPct}%`} /></li>
+            <li><MetricCard tone="orders" icon={<ShoppingBag size={18} aria-hidden />} title="Giỏ bị bỏ" value={cart.abandonment.abandoned.toLocaleString('vi-VN')} change={formatPercentChange(cart.abandonment.abandoned, lastCart.abandonment.abandoned)} /></li>
+            <li><MetricCard tone="paid" icon={<Wallet2 size={18} aria-hidden />} title="Giỏ hoàn tất" value={cart.abandonment.completed.toLocaleString('vi-VN')} change={formatPercentChange(cart.abandonment.completed, lastCart.abandonment.completed)} /></li>
+            <li><MetricCard tone="value" icon={<Receipt size={18} aria-hidden />} title="Tỉ lệ bỏ giỏ" value={`${cart.abandonment.abandonmentPct}%`} change={formatPercentChange(cart.abandonment.abandonmentPct, lastCart.abandonment.abandonmentPct)} /></li>
+            <li><MetricCard tone="revenue" icon={<Wallet size={18} aria-hidden />} title="Thêm giỏ → mua" value={`${cart.funnel.conversionPct}%`} change={formatPercentChange(cart.funnel.conversionPct, lastCart.funnel.conversionPct)} /></li>
           </ul>
         </section>
 
