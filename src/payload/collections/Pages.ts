@@ -127,6 +127,11 @@ export const Pages: CollectionConfig = {
         { label: 'Desktop', name: 'desktop', width: 1440, height: 900 },
       ],
     },
+    components: {
+      edit: {
+        beforeDocumentControls: ['@/src/payload/components/OpenBuilderButton#OpenBuilderButton'],
+      },
+    },
   },
   access: payloadPublicReadAdminWrite,
   hooks: {
