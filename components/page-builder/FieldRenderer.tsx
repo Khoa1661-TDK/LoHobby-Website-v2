@@ -3,6 +3,8 @@
 import { useState, type ReactElement } from 'react';
 import type { BlockSchema, FieldDescriptor } from '@/lib/page-builder/block-schemas';
 import { isFieldVisible } from '@/lib/page-builder/conditions';
+import { defaultRowFor } from '@/lib/page-builder/default-block';
+import { addRow, removeRow, moveRow, updateRowField } from '@/lib/page-builder/array-reducer';
 import MediaPicker from './MediaPicker';
 
 type Props = {
@@ -47,6 +49,75 @@ export default function FieldRenderer({ schema, values, onChange }: Props): Reac
           </div>
         </details>
       )}
+    </div>
+  );
+}
+
+function ArrayField({
+  field,
+  rows,
+  onChange,
+}: {
+  field: FieldDescriptor;
+  rows: Record<string, unknown>[];
+  onChange: (rows: Record<string, unknown>[]) => void;
+}): ReactElement {
+  const subFields = field.fields ?? [];
+  return (
+    <div className="flex flex-col gap-2 rounded border border-warm-200 p-2">
+      <span className="text-xs font-medium text-warm-600">{field.label ?? field.name}</span>
+      {rows.map((row, index) => (
+        <div key={index} className="flex flex-col gap-2 rounded border border-warm-100 p-2">
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-warm-400">Row {index + 1}</span>
+            <div className="ml-auto flex gap-1">
+              <button
+                type="button"
+                disabled={index === 0}
+                onClick={() => onChange(moveRow(rows, index, index - 1))}
+                className="text-xs"
+                aria-label="Move row up"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                disabled={index === rows.length - 1}
+                onClick={() => onChange(moveRow(rows, index, index + 1))}
+                className="text-xs"
+                aria-label="Move row down"
+              >
+                ↓
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange(removeRow(rows, index))}
+                className="text-xs text-red-500"
+                aria-label="Remove row"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          {subFields.map((subField) => (
+            <Field
+              key={subField.name}
+              field={subField}
+              value={row[subField.name]}
+              onChange={(name, value) =>
+                onChange(updateRowField(rows, index, name, value))
+              }
+            />
+          ))}
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange(addRow(rows, defaultRowFor(subFields)))}
+        className="rounded border border-dashed border-warm-300 px-2 py-1 text-xs text-warm-500 hover:border-blue-400"
+      >
+        + Add {field.label ?? 'item'}
+      </button>
     </div>
   );
 }
@@ -144,8 +215,16 @@ function Field({
           </div>
         );
       }
+      case 'array':
+        return (
+          <ArrayField
+            field={field}
+            rows={Array.isArray(value) ? (value as Record<string, unknown>[]) : []}
+            onChange={(rows) => set(rows)}
+          />
+        );
       default:
-        // array / richText handled in later phases; show a placeholder badge.
+        // richText handled in a later phase; show a placeholder badge.
         return (
           <span className="text-xs italic text-warm-400">
             {field.type} field — editable in a later phase

@@ -2,7 +2,7 @@
 import { getBlockSchema, type FieldDescriptor } from '@/lib/page-builder/block-schemas';
 import type { PageBlock } from '@/lib/page-builder';
 
-function defaultForField(field: FieldDescriptor): unknown {
+export function defaultForField(field: FieldDescriptor): unknown {
   if (field.defaultValue !== undefined) return field.defaultValue;
   if (field.type === 'array') {
     if (field.required) {
@@ -14,6 +14,12 @@ function defaultForField(field: FieldDescriptor): unknown {
   }
   if (field.type === 'text' || field.type === 'textarea') return '';
   return null;
+}
+
+export function defaultRowFor(fields: FieldDescriptor[]): Record<string, unknown> {
+  const row: Record<string, unknown> = {};
+  for (const f of fields) row[f.name] = defaultForField(f);
+  return row;
 }
 
 export function createDefaultBlock(slug: string): PageBlock | null {
