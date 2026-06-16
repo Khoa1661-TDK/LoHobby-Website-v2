@@ -5,6 +5,8 @@ import RenderBlocks from '@/components/blocks/RenderBlocks';
 import type { PageDoc, PageBlock } from '@/lib/page-builder';
 import type { BlockSchema } from '@/lib/page-builder/block-schemas';
 import FieldRenderer from './FieldRenderer';
+import { updateBlockField } from '@/lib/page-builder/layout-reducer';
+import { useAutosave } from './use-autosave';
 
 type Props = {
   locale: string;
@@ -13,8 +15,14 @@ type Props = {
 };
 
 export default function EditorShell({ locale, page, schemas }: Props): ReactElement {
-  const [layout] = useState<PageBlock[]>(page.layout);
+  const [layout, setLayout] = useState<PageBlock[]>(page.layout);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const { status, publish } = useAutosave(page.id, layout);
+
+  const handleFieldChange = (name: string, value: unknown) => {
+    if (selectedIndex === null) return;
+    setLayout((prev) => updateBlockField(prev, selectedIndex, name, value));
+  };
 
   const selectedBlock = selectedIndex !== null ? layout[selectedIndex] : null;
   const selectedSchema = selectedBlock
@@ -32,6 +40,18 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
         <span className="rounded-full bg-warm-100 px-2 py-0.5 text-xs uppercase text-warm-500">
           {page.status}
         </span>
+        <span className="ml-auto text-xs text-warm-400">
+          {status === 'saving' && 'Saving...'}
+          {status === 'saved' && 'All changes saved'}
+          {status === 'error' && 'Save failed -- retry'}
+        </span>
+        <button
+          type="button"
+          onClick={publish}
+          className="rounded bg-warm-900 px-3 py-1 text-sm text-white"
+        >
+          Publish
+        </button>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -59,6 +79,7 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
             <FieldRenderer
               schema={selectedSchema}
               values={selectedBlock as Record<string, unknown>}
+              onChange={handleFieldChange}
             />
           ) : (
             <p className="p-4 text-sm text-warm-400">Select a section to edit its fields.</p>
