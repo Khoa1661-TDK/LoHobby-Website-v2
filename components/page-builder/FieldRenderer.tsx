@@ -1,8 +1,9 @@
 // components/page-builder/FieldRenderer.tsx — schema-driven field panel.
 'use client';
-import type { ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 import type { BlockSchema, FieldDescriptor } from '@/lib/page-builder/block-schemas';
 import { isFieldVisible } from '@/lib/page-builder/conditions';
+import MediaPicker from './MediaPicker';
 
 type Props = {
   schema: BlockSchema;
@@ -104,8 +105,47 @@ function Field({
             ))}
           </select>
         );
+      case 'upload': {
+        const [pickerOpen, setPickerOpen] = useState(false);
+        const mediaUrl = value && typeof value === 'object' && 'url' in (value as Record<string, unknown>)
+          ? (value as Record<string, unknown>).url as string | undefined
+          : undefined;
+        const mediaId = value && typeof value === 'object' && 'id' in (value as Record<string, unknown>)
+          ? (value as Record<string, unknown>).id
+          : typeof value === 'string' || typeof value === 'number'
+            ? value
+            : undefined;
+
+        return (
+          <div className="flex flex-col gap-1">
+            {mediaUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={mediaUrl} alt="" className="h-24 w-full rounded border object-cover" />
+            ) : mediaId ? (
+              <span className="text-xs text-warm-500">Media #{String(mediaId)}</span>
+            ) : null}
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => setPickerOpen(true)}
+              className="rounded border border-warm-300 px-2 py-1 text-xs"
+            >
+              {mediaUrl || mediaId ? 'Change image' : 'Choose image'}
+            </button>
+            {pickerOpen && (
+              <MediaPicker
+                onSelect={(media) => {
+                  set(media.id);
+                  setPickerOpen(false);
+                }}
+                onClose={() => setPickerOpen(false)}
+              />
+            )}
+          </div>
+        );
+      }
       default:
-        // upload / array / richText handled in later phases; show a placeholder badge.
+        // array / richText handled in later phases; show a placeholder badge.
         return (
           <span className="text-xs italic text-warm-400">
             {field.type} field — editable in a later phase
