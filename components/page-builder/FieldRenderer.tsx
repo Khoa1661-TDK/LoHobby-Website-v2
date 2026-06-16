@@ -2,6 +2,7 @@
 'use client';
 import type { ReactElement } from 'react';
 import type { BlockSchema, FieldDescriptor } from '@/lib/page-builder/block-schemas';
+import { isFieldVisible } from '@/lib/page-builder/conditions';
 
 type Props = {
   schema: BlockSchema;
@@ -18,8 +19,9 @@ const APPEARANCE_FIELDS = new Set([
 ]);
 
 export default function FieldRenderer({ schema, values, onChange }: Props): ReactElement {
-  const sectionFields = schema.fields.filter((f) => !APPEARANCE_FIELDS.has(f.name));
-  const appearanceFields = schema.fields.filter((f) => APPEARANCE_FIELDS.has(f.name));
+  const visible = (f: FieldDescriptor) => isFieldVisible(f, values);
+  const sectionFields = schema.fields.filter((f) => !APPEARANCE_FIELDS.has(f.name) && visible(f));
+  const appearanceFields = schema.fields.filter((f) => APPEARANCE_FIELDS.has(f.name) && visible(f));
 
   return (
     <div className="flex flex-col gap-4 p-4">
