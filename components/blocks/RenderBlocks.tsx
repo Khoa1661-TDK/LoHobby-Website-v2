@@ -15,6 +15,8 @@ import FAQBlock from './FAQ';
 import PromoBannerBlock from './PromoBanner';
 import VideoEmbedBlock from './VideoEmbed';
 import DividerBlock from './Divider';
+import RecommendationsBlock from './Recommendations';
+import RecentlyViewedBlock from './RecentlyViewed';
 
 type Props = {
   blocks: PageBlock[];
@@ -81,6 +83,10 @@ function BlockRenderer({ block }: { block: PageBlock }): ReactElement | null {
       return <VideoEmbedBlock {...asProps<ComponentProps<typeof VideoEmbedBlock>>(block)} />;
     case 'divider':
       return <DividerBlock {...asProps<ComponentProps<typeof DividerBlock>>(block)} />;
+    case 'recommendations':
+      return <RecommendationsBlock {...asProps<ComponentProps<typeof RecommendationsBlock>>(block)} />;
+    case 'recentlyViewed':
+      return <RecentlyViewedBlock {...asProps<ComponentProps<typeof RecentlyViewedBlock>>(block)} />;
     default:
       return null;
   }

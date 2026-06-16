@@ -85,7 +85,9 @@ export type PageBlock =
   | { blockType: 'faq' } & Record<string, unknown>
   | { blockType: 'promoBanner' } & Record<string, unknown>
   | { blockType: 'videoEmbed' } & Record<string, unknown>
-  | { blockType: 'divider' } & Record<string, unknown>;
+  | { blockType: 'divider' } & Record<string, unknown>
+  | { blockType: 'recommendations' } & Record<string, unknown>
+  | { blockType: 'recentlyViewed' } & Record<string, unknown>;
 
 export type PageDoc = {
   id: string | number;

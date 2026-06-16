@@ -12,7 +12,7 @@ describe('getBlockSchemas', () => {
     expect(slugs).toContain('hero');
     expect(slugs).toContain('faq');
     expect(slugs).toContain('gallery');
-    expect(slugs).toHaveLength(13);
+    expect(slugs).toHaveLength(15);
   });
 
   it('should describe hero text and select fields with options', () => {
@@ -47,6 +47,21 @@ describe('getBlockSchemas', () => {
     expect(items.type).toBe('array');
     expect(items.fields?.map((f) => f.name)).toEqual(['question', 'answer']);
     expect(items.fields?.find((f) => f.name === 'answer')?.type).toBe('richText');
+  });
+
+  it('should include recommendations and recentlyViewed blocks', () => {
+    const schemas = getBlockSchemas();
+    const slugs = schemas.map((s) => s.slug);
+    expect(slugs).toContain('recommendations');
+    expect(slugs).toContain('recentlyViewed');
+  });
+
+  it('should describe recommendations title and limit fields', () => {
+    const recs = getBlockSchema('recommendations')!;
+    const title = recs.fields.find((f) => f.name === 'title');
+    expect(title).toMatchObject({ type: 'text', defaultValue: 'Recommended for you' });
+    const limit = recs.fields.find((f) => f.name === 'limit');
+    expect(limit?.type).toBe('number');
   });
 
   it('should be JSON-serializable (no functions leak through)', () => {

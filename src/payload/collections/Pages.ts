@@ -26,6 +26,8 @@ import {
   PromoBanner,
   VideoEmbed,
   Divider,
+  Recommendations,
+  RecentlyViewed,
 } from '@/src/payload/blocks';
 
 // Payload `blocks` fields have no field-level RowLabel slot; per-section labels are
@@ -48,6 +50,8 @@ const layoutBlocks = [
   PromoBanner,
   VideoEmbed,
   Divider,
+  Recommendations,
+  RecentlyViewed,
 ].map((block) => ({
   ...block,
   admin: {

@@ -16,6 +16,8 @@ import {
   PromoBanner,
   VideoEmbed,
   Divider,
+  Recommendations,
+  RecentlyViewed,
 } from '@/src/payload/blocks';
 
 export type FieldCondition = { field: string; equals: unknown };
@@ -55,6 +57,8 @@ const REGISTERED_BLOCKS: Block[] = [
   PromoBanner,
   VideoEmbed,
   Divider,
+  Recommendations,
+  RecentlyViewed,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the
