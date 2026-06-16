@@ -5,7 +5,8 @@ import RenderBlocks from '@/components/blocks/RenderBlocks';
 import type { PageDoc, PageBlock } from '@/lib/page-builder';
 import type { BlockSchema } from '@/lib/page-builder/block-schemas';
 import FieldRenderer from './FieldRenderer';
-import { updateBlockField, insertBlock } from '@/lib/page-builder/layout-reducer';
+import { updateBlockField, insertBlock, moveBlock, duplicateBlock, deleteBlock } from '@/lib/page-builder/layout-reducer';
+import BlockToolbar from './BlockToolbar';
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import { useAutosave } from './use-autosave';
 import AddSectionPicker from './AddSectionPicker';
@@ -87,6 +88,27 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
                   }
                 >
                   <RenderBlocks blocks={[block]} />
+                  {selectedIndex === index && (
+                    <BlockToolbar
+                      index={index}
+                      count={layout.length}
+                      onMoveUp={() => {
+                        setLayout((prev) => moveBlock(prev, index, index - 1));
+                        setSelectedIndex(index - 1);
+                      }}
+                      onMoveDown={() => {
+                        setLayout((prev) => moveBlock(prev, index, index + 1));
+                        setSelectedIndex(index + 1);
+                      }}
+                      onDuplicate={() =>
+                        setLayout((prev) => duplicateBlock(prev, index))
+                      }
+                      onDelete={() => {
+                        setLayout((prev) => deleteBlock(prev, index));
+                        setSelectedIndex(null);
+                      }}
+                    />
+                  )}
                 </div>
                 {/* Add button after each block */}
                 <div className="py-2 text-center">
