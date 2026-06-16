@@ -9,6 +9,7 @@ type Props = {
   onMoveDown: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 };
 
 export default function BlockToolbar({
@@ -18,9 +19,10 @@ export default function BlockToolbar({
   onMoveDown,
   onDuplicate,
   onDelete,
+  dragHandleProps,
 }: Props): ReactElement {
   return (
-    <div className="absolute right-2 top-2 z-10 flex gap-1 rounded bg-white/95 p-1 shadow">
+    <div className="absolute right-2 top-2 z-10 flex gap-1 rounded bg-white/95 p-1 shadow" {...dragHandleProps}>
       <button type="button" disabled={index === 0} onClick={onMoveUp} aria-label="Move up">↑</button>
       <button type="button" disabled={index === count - 1} onClick={onMoveDown} aria-label="Move down">↓</button>
       <button type="button" onClick={onDuplicate} aria-label="Duplicate">⧉</button>

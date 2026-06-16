@@ -10,12 +10,75 @@ import BlockToolbar from './BlockToolbar';
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import { useAutosave } from './use-autosave';
 import AddSectionPicker from './AddSectionPicker';
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type Props = {
   locale: string;
   page: PageDoc;
   schemas: BlockSchema[];
 };
+
+function SortableBlock({
+  id,
+  index,
+  selectedIndex,
+  onSelect,
+  layoutLength,
+  setLayout,
+  setSelectedIndex,
+  block,
+}: {
+  id: string;
+  index: number;
+  selectedIndex: number | null;
+  onSelect: (index: number) => void;
+  layoutLength: number;
+  setLayout: React.Dispatch<React.SetStateAction<PageBlock[]>>;
+  setSelectedIndex: React.Dispatch<React.SetStateAction<number | null>>;
+  block: PageBlock;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <div
+        onClick={() => onSelect(index)}
+        className={
+          'relative cursor-pointer outline-offset-2 ' +
+          (selectedIndex === index ? 'outline outline-2 outline-blue-500' : '')
+        }
+      >
+        <RenderBlocks blocks={[block]} />
+        {selectedIndex === index && (
+          <BlockToolbar
+            index={index}
+            count={layoutLength}
+            onMoveUp={() => {
+              setLayout((prev) => moveBlock(prev, index, index - 1));
+              setSelectedIndex(index - 1);
+            }}
+            onMoveDown={() => {
+              setLayout((prev) => moveBlock(prev, index, index + 1));
+              setSelectedIndex(index + 1);
+            }}
+            onDuplicate={() => setLayout((prev) => duplicateBlock(prev, index))}
+            onDelete={() => {
+              setLayout((prev) => deleteBlock(prev, index));
+              setSelectedIndex(null);
+            }}
+            dragHandleProps={listeners}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function EditorShell({ locale, page, schemas }: Props): ReactElement {
   const [layout, setLayout] = useState<PageBlock[]>(page.layout);
@@ -32,6 +95,15 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
   const handleFieldChange = (name: string, value: unknown) => {
     if (selectedIndex === null) return;
     setLayout((prev) => updateBlockField(prev, selectedIndex, name, value));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const from = Number(active.id);
+    const to = Number(over.id);
+    setLayout((prev) => moveBlock(prev, from, to));
+    setSelectedIndex(to);
   };
 
   const selectedBlock = selectedIndex !== null ? layout[selectedIndex] : null;
@@ -68,60 +140,47 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
         {/* Canvas */}
         <main className="flex-1 overflow-auto bg-warm-50 p-6">
           <div className="mx-auto max-w-screen-xl bg-white shadow-sm">
-            {/* Add button before first block */}
-            <div className="py-2 text-center">
-              <button
-                type="button"
-                onClick={() => setAddAt(0)}
-                className="text-xs text-warm-400 hover:text-blue-500"
+            <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext
+                items={layout.map((_, i) => String(i))}
+                strategy={verticalListSortingStrategy}
               >
-                + Add section
-              </button>
-            </div>
-            {layout.map((block, index) => (
-              <div key={index}>
-                <div
-                  onClick={() => setSelectedIndex(index)}
-                  className={
-                    'relative cursor-pointer outline-offset-2 ' +
-                    (selectedIndex === index ? 'outline outline-2 outline-blue-500' : '')
-                  }
-                >
-                  <RenderBlocks blocks={[block]} />
-                  {selectedIndex === index && (
-                    <BlockToolbar
-                      index={index}
-                      count={layout.length}
-                      onMoveUp={() => {
-                        setLayout((prev) => moveBlock(prev, index, index - 1));
-                        setSelectedIndex(index - 1);
-                      }}
-                      onMoveDown={() => {
-                        setLayout((prev) => moveBlock(prev, index, index + 1));
-                        setSelectedIndex(index + 1);
-                      }}
-                      onDuplicate={() =>
-                        setLayout((prev) => duplicateBlock(prev, index))
-                      }
-                      onDelete={() => {
-                        setLayout((prev) => deleteBlock(prev, index));
-                        setSelectedIndex(null);
-                      }}
-                    />
-                  )}
-                </div>
-                {/* Add button after each block */}
+                {/* Add button before first block */}
                 <div className="py-2 text-center">
                   <button
                     type="button"
-                    onClick={() => setAddAt(index + 1)}
+                    onClick={() => setAddAt(0)}
                     className="text-xs text-warm-400 hover:text-blue-500"
                   >
                     + Add section
                   </button>
                 </div>
-              </div>
-            ))}
+                {layout.map((block, index) => (
+                  <div key={index}>
+                    <SortableBlock
+                      id={String(index)}
+                      index={index}
+                      selectedIndex={selectedIndex}
+                      onSelect={setSelectedIndex}
+                      layoutLength={layout.length}
+                      setLayout={setLayout}
+                      setSelectedIndex={setSelectedIndex}
+                      block={block}
+                    />
+                    {/* Add button after each block */}
+                    <div className="py-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setAddAt(index + 1)}
+                        className="text-xs text-warm-400 hover:text-blue-500"
+                      >
+                        + Add section
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </SortableContext>
+            </DndContext>
           </div>
         </main>
 
