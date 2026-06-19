@@ -10,6 +10,7 @@ import { after } from 'next/server';
 import { payloadPublicReadAdminWrite } from '@/lib/payload-access';
 import { resolveCollectionSlug } from '@/lib/slugify';
 import { revalidatePageCache } from '@/lib/page-builder';
+import { shouldPreserveSlug } from '@/lib/page-builder/slug';
 import { groups } from '@/src/payload/groups';
 import { routing } from '@/i18n/routing';
 import {
@@ -70,6 +71,15 @@ const autoSlugFromTitle: CollectionBeforeChangeHook = async ({
   req,
 }) => {
   if (!data) return data;
+
+  const existingSlug = typeof originalDoc?.slug === 'string' ? originalDoc.slug.trim() : '';
+  const providedSlug = typeof data.slug === 'string' ? data.slug.trim() : '';
+
+  // Keep the stored slug on a plain update so a live builder URL never moves.
+  if (shouldPreserveSlug({ operation, existingSlug, providedSlug })) {
+    data.slug = existingSlug;
+    return data;
+  }
 
   const slug = await resolveCollectionSlug(req.payload, 'pages', {
     title: typeof data.title === 'string' ? data.title : undefined,
