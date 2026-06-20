@@ -159,6 +159,11 @@ export const Pages: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      admin: {
+        components: {
+          Cell: '@/src/payload/components/PageTitleCell#PageTitleCell',
+        },
+      },
     },
     {
       name: 'slug',
