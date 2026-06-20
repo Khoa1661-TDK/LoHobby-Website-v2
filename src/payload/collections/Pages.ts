@@ -12,7 +12,6 @@ import { resolveCollectionSlug } from '@/lib/slugify';
 import { revalidatePageCache } from '@/lib/page-builder';
 import { shouldPreserveSlug } from '@/lib/page-builder/slug';
 import { groups } from '@/src/payload/groups';
-import { routing } from '@/i18n/routing';
 import {
   Hero,
   FeaturedCollection,
@@ -122,25 +121,7 @@ export const Pages: CollectionConfig = {
     defaultColumns: ['title', 'slug', 'status', 'updatedAt'],
     group: groups.content.name,
     description:
-      'Build storefront pages by stacking sections. Use the live preview on the right to see your changes.',
-    livePreview: {
-      url: ({ data }) => {
-        const slug = typeof data?.slug === 'string' ? data.slug.trim() : '';
-        if (!slug) return '';
-        const base =
-          process.env.NEXT_PUBLIC_APP_URL ??
-          process.env.NEXT_PUBLIC_SITE_URL ??
-          'http://localhost:3000';
-        const secret = process.env.PREVIEW_SECRET ?? '';
-        const path = `/${routing.defaultLocale}/pages/${slug}`;
-        return `${base}/api/preview?secret=${encodeURIComponent(secret)}&path=${encodeURIComponent(path)}`;
-      },
-      breakpoints: [
-        { label: 'Mobile', name: 'mobile', width: 375, height: 667 },
-        { label: 'Tablet', name: 'tablet', width: 768, height: 1024 },
-        { label: 'Desktop', name: 'desktop', width: 1440, height: 900 },
-      ],
-    },
+      'Click a page title to edit it in the visual builder. Use “+ New page” to start a blank page.',
     components: {
       beforeListTable: ['@/src/payload/components/NewPageButton#NewPageButton'],
       edit: {
@@ -193,6 +174,10 @@ export const Pages: CollectionConfig = {
       type: 'blocks',
       labels: { singular: 'Section', plural: 'Sections' },
       blocks: layoutBlocks,
+      admin: {
+        hidden: true,
+        description: 'Edited in the visual builder.',
+      },
     },
   ],
 };
