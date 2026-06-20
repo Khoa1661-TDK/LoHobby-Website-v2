@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
+import { BuildPlateGrid } from './_primitives';
 
 type Props = {
   headline?: string | null;
@@ -33,7 +34,7 @@ export default function HeroBlock(props: Props): ReactElement {
   const ctaClass = (() => {
     switch (ctaStyle) {
       case 'outline':
-        return 'border border-warm-900 px-6 py-3 text-sm font-medium rounded-full hover:bg-warm-900 hover:text-warm-50 transition-colors';
+        return 'border border-line px-6 py-3 text-sm font-medium rounded-full hover:bg-ink hover:text-surface transition-colors';
       case 'minimal':
         return 'text-sm font-medium underline underline-offset-4 hover:opacity-70 transition-opacity';
       default:
@@ -55,19 +56,19 @@ export default function HeroBlock(props: Props): ReactElement {
             sizes="100vw"
             priority
           />
-          <div className="absolute inset-0 bg-warm-900/50" />
+          <div className="absolute inset-0 bg-ink/50" />
         </div>
         <div className={`relative ${container} flex min-h-[60vh] flex-col justify-center ${textAlignClass}`}>
           <h1 className="max-w-2xl font-display text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl">
             {headline}
           </h1>
           {subheadline ? (
-            <p className="mt-4 max-w-xl text-lg text-warm-200">{subheadline}</p>
+            <p className="mt-4 max-w-xl text-lg text-surface/80">{subheadline}</p>
           ) : null}
           {ctaLabel && ctaHref ? (
             <Link
               href={ctaHref}
-              className={`mt-6 inline-block rounded-full bg-white px-6 py-3 text-sm font-medium text-warm-900 hover:bg-warm-100 transition-colors`}
+              className={`mt-6 inline-block rounded-full bg-white px-6 py-3 text-sm font-medium text-ink hover:bg-surface transition-colors`}
             >
               {ctaLabel}
             </Link>
@@ -80,8 +81,9 @@ export default function HeroBlock(props: Props): ReactElement {
   const hasImage = imagePosition !== 'none' && image?.url;
 
   return (
-    <section className={section} style={style}>
-      <div className={container}>
+    <section className={`relative ${section}`} style={style}>
+      <BuildPlateGrid />
+      <div className={`relative z-10 ${container}`}>
         <div
           className={`flex flex-col gap-8 ${
             hasImage
@@ -107,7 +109,7 @@ export default function HeroBlock(props: Props): ReactElement {
               {headline}
             </h1>
             {subheadline ? (
-              <p className="mt-4 max-w-xl text-lg text-warm-600 dark:text-warm-300">
+              <p className="mt-4 max-w-xl text-lg text-ink/60">
                 {subheadline}
               </p>
             ) : null}
