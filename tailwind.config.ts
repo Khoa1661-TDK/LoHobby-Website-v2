@@ -16,6 +16,7 @@ const config: Config = {
         sans: ['var(--font-sans-active, var(--font-jakarta))', 'system-ui', 'sans-serif'],
         serif: ['var(--font-serif-active, var(--font-fraunces))', 'Georgia', 'serif'],
         display: ['var(--font-serif-active, var(--font-fraunces))', 'Georgia', 'serif'],
+        mono: ['var(--font-mono-active, var(--font-space-mono))', 'ui-monospace', 'monospace'],
       },
       keyframes: {
         fade: { from: { opacity: '0' }, to: { opacity: '1' } },

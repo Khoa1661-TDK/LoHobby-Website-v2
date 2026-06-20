@@ -1,5 +1,5 @@
 // app/[locale]/(storefront)/layout.tsx
-import { Fraunces, Inter, Plus_Jakarta_Sans, Roboto } from 'next/font/google';
+import { Fraunces, Inter, Plus_Jakarta_Sans, Roboto, Space_Grotesk, Space_Mono } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactElement, ReactNode } from 'react';
@@ -59,6 +59,19 @@ const roboto = Roboto({
   subsets: ['latin', 'vietnamese'],
   weight: ['400', '500', '700'],
   variable: '--font-roboto',
+  display: 'swap',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-space-grotesk',
+  display: 'swap',
+});
+
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-space-mono',
   display: 'swap',
 });
 
@@ -169,7 +182,7 @@ export default async function StorefrontLayout({
   return (
     <html
       lang={locale}
-      className={`${jakarta.variable} ${fraunces.variable} ${inter.variable} ${roboto.variable}`}
+      className={`${jakarta.variable} ${fraunces.variable} ${inter.variable} ${roboto.variable} ${spaceGrotesk.variable} ${spaceMono.variable}`}
       suppressHydrationWarning
     >
       <head>
