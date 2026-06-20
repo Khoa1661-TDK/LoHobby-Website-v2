@@ -14,10 +14,10 @@ export function blockAppearanceClasses(appearance: BlockAppearance): {
   style: Record<string, string>;
 } {
   const bgClass = (() => {
-    if (appearance.background === 'light') return 'bg-warm-50';
-    if (appearance.background === 'dark') return 'bg-warm-900 text-warm-100';
+    if (appearance.background === 'light') return 'bg-surface-raised text-ink';
+    if (appearance.background === 'dark') return 'bg-ink text-surface';
     if (appearance.background === 'custom') return '';
-    return ''; // 'theme' inherits from parent
+    return ''; // 'theme' inherits from the page surface
   })();
 
   const widthClass = (() => {
