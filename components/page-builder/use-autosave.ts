@@ -19,8 +19,14 @@ export function buildPatchBody(
   return trimmed ? { layout, status, title: trimmed } : { layout, status };
 }
 
+// Payload's REST API is mounted at routes.api = '/admin/api' (see payload.config.ts),
+// not the default '/api', so patch requests must target that prefix.
+export function pagePatchPath(id: string | number): string {
+  return `/admin/api/pages/${id}`;
+}
+
 async function patchPage(id: string | number, body: PatchBody): Promise<void> {
-  const res = await fetch(`/api/pages/${id}`, {
+  const res = await fetch(pagePatchPath(id), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'same-origin',

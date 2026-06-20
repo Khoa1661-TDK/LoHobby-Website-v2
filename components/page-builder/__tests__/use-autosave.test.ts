@@ -1,6 +1,6 @@
 // components/page-builder/__tests__/use-autosave.test.ts
 import { describe, expect, it } from 'vitest';
-import { buildPatchBody } from '@/components/page-builder/use-autosave';
+import { buildPatchBody, pagePatchPath } from '@/components/page-builder/use-autosave';
 
 describe('buildPatchBody', () => {
   it('should include a non-empty title in the patch body', () => {
@@ -17,5 +17,11 @@ describe('buildPatchBody', () => {
 
   it('should omit the title when not provided', () => {
     expect(buildPatchBody([], 'published')).toEqual({ layout: [], status: 'published' });
+  });
+});
+
+describe('pagePatchPath', () => {
+  it('should target Payload REST mounted at /admin/api', () => {
+    expect(pagePatchPath(7)).toBe('/admin/api/pages/7');
   });
 });
