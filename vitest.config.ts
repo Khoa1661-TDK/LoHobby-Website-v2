@@ -3,11 +3,13 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    globals: true,
     environment: 'node',
     include: [
       'lib/__tests__/**/*.test.ts',
       'app/**/__tests__/**/*.test.ts',
       'components/**/__tests__/**/*.test.ts',
+      'components/**/__tests__/**/*.test.tsx',
       'scripts/__tests__/**/*.test.ts',
     ],
     setupFiles: ['lib/__tests__/vitest-setup.ts'],
