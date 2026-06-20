@@ -13,8 +13,8 @@ export default function RecentlyViewedBlock({ title, limit = 8 }: Props): ReactE
   return (
     <section className={section}>
       <div className={container}>
-        {title && <h2 className="mb-6 text-2xl font-bold">{title}</h2>}
-        <p className="text-sm text-warm-500">Recently viewed items for {limit} items (client-side)</p>
+        {title && <h2 className="mb-6 font-display text-2xl font-bold text-ink">{title}</h2>}
+        <p className="text-sm text-ink/60">Recently viewed items for {limit} items (client-side)</p>
       </div>
     </section>
   );
