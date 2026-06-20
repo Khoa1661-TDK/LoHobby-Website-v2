@@ -93,23 +93,27 @@ const autoSlugFromTitle: CollectionBeforeChangeHook = async ({
   return data;
 };
 
+// Cache revalidation is scheduled to run after the HTTP response via next/server
+// `after()`. When a page is written outside a request scope (CLI seed scripts, e.g.
+// scripts/seed-home-page.ts), `after()` throws — and there is no live server cache to
+// revalidate anyway, so the revalidation is safely skipped.
+function revalidatePageAfterResponse(doc: { slug?: unknown }): void {
+  const slug = typeof doc.slug === 'string' ? doc.slug : '';
+  if (!slug) return;
+  try {
+    after(() => revalidatePageCache(slug));
+  } catch {
+    // Not in a request scope (e.g. a seed/CLI script) — nothing to revalidate.
+  }
+}
+
 const afterChangeHook: CollectionAfterChangeHook = ({ doc }) => {
-  after(() => {
-    const slug = typeof doc.slug === 'string' ? doc.slug : '';
-    if (slug) {
-      revalidatePageCache(slug);
-    }
-  });
+  revalidatePageAfterResponse(doc);
   return doc;
 };
 
 const afterDeleteHook: CollectionAfterDeleteHook = ({ doc }) => {
-  after(() => {
-    const slug = typeof doc.slug === 'string' ? doc.slug : '';
-    if (slug) {
-      revalidatePageCache(slug);
-    }
-  });
+  revalidatePageAfterResponse(doc);
   return doc;
 };
 
