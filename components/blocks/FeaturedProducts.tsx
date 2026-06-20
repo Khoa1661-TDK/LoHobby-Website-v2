@@ -18,7 +18,7 @@ export default function FeaturedProductsBlock(props: Props): ReactElement {
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">
+          <p className="text-center text-sm text-ink/60">
             No products selected — configure this block in the admin panel.
           </p>
         </div>
@@ -30,7 +30,7 @@ export default function FeaturedProductsBlock(props: Props): ReactElement {
     <section className={section} style={style}>
       <div className={container}>
         {title ? (
-          <h2 className="mb-8 font-display text-2xl font-bold tracking-tight md:text-3xl">
+          <h2 className="mb-8 font-display text-2xl font-bold tracking-tight text-ink md:text-3xl">
             {title}
           </h2>
         ) : null}
