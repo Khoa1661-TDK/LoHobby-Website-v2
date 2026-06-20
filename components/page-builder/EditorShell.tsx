@@ -18,9 +18,10 @@ type Props = { locale: string; page: PageDoc; schemas: BlockSchema[] };
 
 export default function EditorShell({ locale, page, schemas }: Props): ReactElement {
   const [layout, setLayout] = useState<PageBlock[]>(page.layout);
+  const [title, setTitle] = useState<string>(page.title);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
-  const { status, publish } = useAutosave(page.id, layout);
+  const { status, publish } = useAutosave(page.id, layout, title);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const readyRef = useRef(false);
@@ -82,8 +83,19 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
     <div className="flex h-screen flex-col">
       <header className="flex items-center gap-4 border-b border-warm-200 bg-white px-4 py-2">
         <a href="/admin/collections/pages" className="text-sm text-warm-500 hover:underline">← Back</a>
-        <span className="font-semibold">{page.title}</span>
+        <input
+          aria-label="Page title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="min-w-0 flex-1 max-w-xs rounded border border-transparent bg-transparent px-2 py-1 font-semibold hover:border-warm-200 focus:border-warm-300 focus:outline-none"
+        />
         <span className="rounded-full bg-warm-100 px-2 py-0.5 text-xs uppercase text-warm-500">{page.status}</span>
+        <a
+          href={`/admin/collections/pages/${page.id}`}
+          className="text-xs text-warm-500 hover:underline"
+        >
+          Advanced settings
+        </a>
         <span className="ml-auto text-xs text-warm-400">
           {status === 'saving' && 'Saving...'}
           {status === 'saved' && 'All changes saved'}
