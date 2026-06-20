@@ -142,6 +142,7 @@ export const Pages: CollectionConfig = {
       ],
     },
     components: {
+      beforeListTable: ['@/src/payload/components/NewPageButton#NewPageButton'],
       edit: {
         beforeDocumentControls: ['@/src/payload/components/OpenBuilderButton#OpenBuilderButton'],
       },
