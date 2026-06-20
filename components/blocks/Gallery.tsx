@@ -23,7 +23,7 @@ export default function GalleryBlock(props: Props): ReactElement {
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">
+          <p className="text-center text-sm text-ink/60">
             No images — configure this block in the admin panel.
           </p>
         </div>
@@ -37,7 +37,7 @@ export default function GalleryBlock(props: Props): ReactElement {
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">
+          <p className="text-center text-sm text-ink/60">
             No valid images found.
           </p>
         </div>
@@ -69,7 +69,7 @@ export default function GalleryBlock(props: Props): ReactElement {
                   sizes="300px"
                 />
                 {item.caption ? (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-warm-900/70 to-transparent p-3">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-ink/70 to-transparent p-3">
                     <p className="text-sm text-white">{item.caption}</p>
                   </div>
                 ) : null}
@@ -97,7 +97,7 @@ export default function GalleryBlock(props: Props): ReactElement {
                     sizes={isFirst ? '50vw' : '25vw'}
                   />
                   {item.caption ? (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-warm-900/70 to-transparent p-3">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-ink/70 to-transparent p-3">
                       <p className="text-sm text-white">{item.caption}</p>
                     </div>
                   ) : null}
@@ -119,7 +119,7 @@ export default function GalleryBlock(props: Props): ReactElement {
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   />
                   {item.caption ? (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-warm-900/70 to-transparent p-3">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-ink/70 to-transparent p-3">
                       <p className="text-sm text-white">{item.caption}</p>
                     </div>
                   ) : null}

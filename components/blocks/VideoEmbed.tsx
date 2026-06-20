@@ -26,7 +26,7 @@ export default function VideoEmbedBlock(props: Props): ReactElement {
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">
+          <p className="text-center text-sm text-ink/60">
             No video URL — configure this block in the admin panel.
           </p>
         </div>
@@ -44,7 +44,7 @@ export default function VideoEmbedBlock(props: Props): ReactElement {
         ) : null}
         <div
           className={`relative overflow-hidden rounded-2xl ${ratioClass} ${
-            props.background === 'dark' ? 'bg-warm-800' : 'bg-warm-100'
+            props.background === 'dark' ? 'bg-ink' : 'bg-surface-raised'
           }`}
         >
           {coverImage?.url ? (

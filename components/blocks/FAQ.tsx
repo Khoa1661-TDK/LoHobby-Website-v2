@@ -22,7 +22,7 @@ export default function FAQBlock(props: Props): ReactElement {
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">
+          <p className="text-center text-sm text-ink/60">
             No FAQ items — configure this block in the admin panel.
           </p>
         </div>
@@ -66,9 +66,9 @@ export default function FAQBlock(props: Props): ReactElement {
           {items.map((item, i) => (
             <details
               key={i}
-              className="group rounded-xl border border-warm-200 dark:border-warm-800"
+              className="group rounded-xl border border-line"
             >
-              <summary className="cursor-pointer px-5 py-4 font-medium text-warm-800 dark:text-warm-200 list-none flex items-center justify-between gap-4 [&::-webkit-details-marker]:hidden">
+              <summary className="cursor-pointer px-5 py-4 font-medium text-ink list-none flex items-center justify-between gap-4 [&::-webkit-details-marker]:hidden">
                 {item.question}
                 <svg
                   className="h-4 w-4 flex-shrink-0 transition-transform group-open:rotate-180"
@@ -84,7 +84,7 @@ export default function FAQBlock(props: Props): ReactElement {
                   />
                 </svg>
               </summary>
-              <div className="px-5 pb-4 text-sm text-warm-600 dark:text-warm-300">
+              <div className="px-5 pb-4 text-sm text-ink/60">
                 {answerText(item.answer)}
               </div>
             </details>
