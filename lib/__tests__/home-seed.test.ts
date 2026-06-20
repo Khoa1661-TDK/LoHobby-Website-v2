@@ -8,7 +8,11 @@ describe('buildHomeSeedLayout', () => {
     expect(layout.length).toBeGreaterThan(0);
     const types = layout.map((b) => b.blockType);
     expect(types).toContain('hero');
-    expect(types).toContain('featuredProducts');
+    expect(types).toContain('recommendations');
+  });
+  it('should omit featuredProducts (its required products relationship cannot be auto-seeded)', () => {
+    const types = buildHomeSeedLayout().map((b) => b.blockType);
+    expect(types).not.toContain('featuredProducts');
   });
   it('should produce blocks that carry blockType (renderable)', () => {
     for (const block of buildHomeSeedLayout()) {

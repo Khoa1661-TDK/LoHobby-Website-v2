@@ -5,14 +5,17 @@ import type { PageBlock } from '@/lib/page-builder';
 
 export function buildHomeSeedLayout(): PageBlock[] {
   const hero = createDefaultBlock('hero');
-  const featured = createDefaultBlock('featuredProducts');
   const recommendations = createDefaultBlock('recommendations');
 
+  // NOTE: featuredProducts is intentionally omitted. Its `products` relationship is
+  // `required` with `minRows: 1`, so a default-instantiated block (empty products)
+  // fails Payload validation and the whole page create is rejected. The seed produces
+  // a valid, non-blank starting layout; the admin adds a Featured Products section with
+  // real products from the visual builder.
   const blocks: PageBlock[] = [];
   if (hero) {
     blocks.push({ ...hero, headline: 'Welcome', subheadline: 'Discover our latest products' } as unknown as PageBlock);
   }
-  if (featured) blocks.push(featured);
   if (recommendations) blocks.push(recommendations);
   return blocks;
 }
