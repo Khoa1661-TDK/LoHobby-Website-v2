@@ -10,10 +10,10 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   DROP TABLE "payload"."content_pages_blocks_rich_text" CASCADE;
   DROP TABLE "payload"."content_pages_blocks_cta" CASCADE;
   DROP TABLE "payload"."content_pages" CASCADE;
-  ALTER TABLE "payload"."payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_content_pages_fk";
-  
-  DROP INDEX "payload"."payload_locked_documents_rels_content_pages_id_idx";
-  ALTER TABLE "payload"."payload_locked_documents_rels" DROP COLUMN "content_pages_id";`)
+  ALTER TABLE "payload"."payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_content_pages_fk";
+
+  DROP INDEX IF EXISTS "payload"."payload_locked_documents_rels_content_pages_id_idx";
+  ALTER TABLE "payload"."payload_locked_documents_rels" DROP COLUMN IF EXISTS "content_pages_id";`)
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {

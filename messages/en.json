@@ -49,6 +49,7 @@
     "removeItemAria": "Remove item",
     "increaseQtyAria": "Increase quantity",
     "decreaseQtyAria": "Decrease quantity",
+    "quantityAria": "Quantity",
     "tax": "Tax",
     "shipping": "Shipping",
     "shippingAtCheckout": "Calculated at checkout",

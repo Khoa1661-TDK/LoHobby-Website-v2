@@ -17,7 +17,6 @@ export const FeaturedCollection: Block = {
       name: 'collection',
       type: 'relationship',
       relationTo: 'categories',
-      required: true,
       hasMany: false,
     },
     {

@@ -6,7 +6,7 @@ import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 
 type Props = {
-  headline: string;
+  headline?: string | null;
   body?: { root?: { children?: unknown } } | string | null;
   image?: { url?: string; alt?: string } | null;
   imagePosition?: 'left' | 'right' | null;
@@ -64,7 +64,7 @@ export default function ImageWithTextBlock(props: Props): ReactElement {
           >
             <Image
               src={image.url}
-              alt={image.alt ?? headline}
+              alt={image.alt ?? headline ?? ''}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"

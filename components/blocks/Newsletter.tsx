@@ -5,7 +5,7 @@ import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 
 type Props = {
-  headline: string;
+  headline?: string | null;
   subheadline?: string | null;
   placeholder?: string | null;
   buttonLabel?: string | null;

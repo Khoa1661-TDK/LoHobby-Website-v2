@@ -16,19 +16,15 @@ export const Testimonials: Block = {
     {
       name: 'entries',
       type: 'array',
-      required: true,
-      minRows: 1,
       labels: { singular: 'Testimonial', plural: 'Testimonials' },
       fields: [
         {
           name: 'quote',
           type: 'textarea',
-          required: true,
         },
         {
           name: 'author',
           type: 'text',
-          required: true,
         },
         {
           name: 'role',

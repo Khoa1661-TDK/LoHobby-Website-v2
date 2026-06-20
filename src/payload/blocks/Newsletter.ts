@@ -12,7 +12,6 @@ export const Newsletter: Block = {
     {
       name: 'headline',
       type: 'text',
-      required: true,
     },
     {
       name: 'subheadline',

@@ -17,9 +17,7 @@ export const FeaturedProducts: Block = {
       name: 'products',
       type: 'relationship',
       relationTo: 'products',
-      required: true,
       hasMany: true,
-      minRows: 1,
       maxRows: 12,
     },
     {

@@ -49,6 +49,7 @@
     "removeItemAria": "Xóa sản phẩm",
     "increaseQtyAria": "Tăng số lượng",
     "decreaseQtyAria": "Giảm số lượng",
+    "quantityAria": "Số lượng",
     "tax": "Thuế",
     "shipping": "Phí vận chuyển",
     "shippingAtCheckout": "Tính khi thanh toán",

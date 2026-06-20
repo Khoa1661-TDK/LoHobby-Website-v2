@@ -16,15 +16,12 @@ export const Gallery: Block = {
     {
       name: 'images',
       type: 'array',
-      required: true,
-      minRows: 1,
       labels: { singular: 'Image', plural: 'Images' },
       fields: [
         {
           name: 'image',
           type: 'upload',
           relationTo: 'media',
-          required: true,
         },
         {
           name: 'caption',

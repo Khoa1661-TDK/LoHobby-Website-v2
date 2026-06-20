@@ -314,13 +314,11 @@ export default function UserMenu({ name, email, image, isAdmin = false }: UserMe
 
               <li role="none">
 
-                <Link
+                <a
 
                   href="/admin"
 
                   role="menuitem"
-
-                  prefetch
 
                   tabIndex={open ? 0 : -1}
 
@@ -334,7 +332,7 @@ export default function UserMenu({ name, email, image, isAdmin = false }: UserMe
 
                   Quản trị
 
-                </Link>
+                </a>
 
               </li>
 

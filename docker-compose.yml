@@ -1,22 +1,4 @@
 services:
-  postgres:
-    image: postgres:16
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    networks:
-      - appnet
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   app:
     build:
       context: .
@@ -24,9 +6,10 @@ services:
     image: shopnex-app:latest
     restart: unless-stopped
     env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
+    ports:
+      # Serve the app directly at http://localhost:3000 to match serverURL /
+      # AUTH_URL / Google OAuth redirect. Caddy stays for HTTPS in production.
+      - '3000:3000'
     volumes:
       - media:/app/public/media
     networks:
@@ -59,7 +42,6 @@ networks:
     driver: bridge
 
 volumes:
-  pgdata:
   media:
   caddy_data:
   caddy_config:

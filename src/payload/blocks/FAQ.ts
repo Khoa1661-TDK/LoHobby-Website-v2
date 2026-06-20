@@ -16,19 +16,15 @@ export const FAQ: Block = {
     {
       name: 'items',
       type: 'array',
-      required: true,
-      minRows: 1,
       labels: { singular: 'FAQ item', plural: 'FAQ items' },
       fields: [
         {
           name: 'question',
           type: 'text',
-          required: true,
         },
         {
           name: 'answer',
           type: 'richText',
-          required: true,
         },
       ],
     },

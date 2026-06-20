@@ -55,38 +55,49 @@ export default function BrandLogo({
       maxWidth: width,
     };
 
+    const logo = logoDarkUrl ? (
+      <>
+        <LogoImage
+          src={logoUrl}
+          alt={alt}
+          width={width}
+          height={height}
+          className="h-auto w-auto object-contain dark:hidden"
+          style={imageStyle}
+        />
+        <LogoImage
+          src={logoDarkUrl}
+          alt={alt}
+          width={width}
+          height={height}
+          className="hidden h-auto w-auto object-contain dark:inline-block"
+          style={imageStyle}
+        />
+      </>
+    ) : (
+      <LogoImage
+        src={logoUrl}
+        alt={alt}
+        width={width}
+        height={height}
+        className="h-auto w-auto object-contain dark:invert"
+        style={imageStyle}
+      />
+    );
+
+    if (variant === 'navbar' && storeSubtitle) {
+      return (
+        <span className={clsx('inline-flex shrink-0 flex-col items-start leading-tight', className)}>
+          <span className="inline-flex items-center">{logo}</span>
+          <span className="mt-0.5 text-[11px] font-medium tracking-wide text-neutral-500 dark:text-neutral-400">
+            {storeSubtitle}
+          </span>
+        </span>
+      );
+    }
+
     return (
-      <span className={clsx('inline-flex shrink-0 items-center', className)}>
-        {logoDarkUrl ? (
-          <>
-            <LogoImage
-              src={logoUrl}
-              alt={alt}
-              width={width}
-              height={height}
-              className="h-auto w-auto object-contain dark:hidden"
-              style={imageStyle}
-            />
-            <LogoImage
-              src={logoDarkUrl}
-              alt={alt}
-              width={width}
-              height={height}
-              className="hidden h-auto w-auto object-contain dark:inline-block"
-              style={imageStyle}
-            />
-          </>
-        ) : (
-          <LogoImage
-            src={logoUrl}
-            alt={alt}
-            width={width}
-            height={height}
-            className="h-auto w-auto object-contain dark:invert"
-            style={imageStyle}
-          />
-        )}
-      </span>
+      <span className={clsx('inline-flex shrink-0 items-center', className)}>{logo}</span>
     );
   }
 

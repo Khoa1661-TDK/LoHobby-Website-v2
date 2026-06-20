@@ -143,7 +143,7 @@ function Field({
           <input
             id={id}
             type="text"
-            className="rounded border border-warm-300 px-2 py-1 text-sm"
+            className="rounded border border-warm-300 bg-warm-50 px-2 py-1 text-sm text-warm-900 dark:border-warm-700 dark:bg-warm-900 dark:text-warm-100"
             value={typeof value === 'string' ? value : ''}
             disabled={disabled}
             onChange={(e) => set(e.target.value)}
@@ -153,7 +153,7 @@ function Field({
         return (
           <textarea
             id={id}
-            className="rounded border border-warm-300 px-2 py-1 text-sm"
+            className="rounded border border-warm-300 bg-warm-50 px-2 py-1 text-sm text-warm-900 dark:border-warm-700 dark:bg-warm-900 dark:text-warm-100"
             rows={3}
             value={typeof value === 'string' ? value : ''}
             disabled={disabled}
@@ -164,7 +164,7 @@ function Field({
         return (
           <select
             id={id}
-            className="rounded border border-warm-300 px-2 py-1 text-sm"
+            className="rounded border border-warm-300 bg-warm-50 px-2 py-1 text-sm text-warm-900 dark:border-warm-700 dark:bg-warm-900 dark:text-warm-100"
             value={typeof value === 'string' ? value : ''}
             disabled={disabled}
             onChange={(e) => set(e.target.value)}

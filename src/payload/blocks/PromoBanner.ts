@@ -12,7 +12,6 @@ export const PromoBanner: Block = {
     {
       name: 'text',
       type: 'text',
-      required: true,
     },
     {
       name: 'ctaLabel',

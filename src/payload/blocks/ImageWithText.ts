@@ -13,7 +13,6 @@ export const ImageWithText: Block = {
       name: 'image',
       type: 'upload',
       relationTo: 'media',
-      required: true,
     },
     {
       name: 'imagePosition',
@@ -27,7 +26,6 @@ export const ImageWithText: Block = {
     {
       name: 'headline',
       type: 'text',
-      required: true,
     },
     {
       name: 'body',

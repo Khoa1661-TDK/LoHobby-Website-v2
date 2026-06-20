@@ -5,7 +5,7 @@ import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 
 type Props = {
-  text: string;
+  text?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
   dismissible?: boolean;
