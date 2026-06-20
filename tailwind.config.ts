@@ -88,7 +88,6 @@ const config: Config = {
         'draw-line': 'draw-line 0.7s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       colors: {
-        ink: '#000000',
         paper: '#f5f5f5',
         // Warm off-white palette
         cream: {
@@ -152,6 +151,18 @@ const config: Config = {
           700: '#404040',
           800: '#262626',
           900: '#171717',
+        },
+        // Semantic color tokens (light/dark modes)
+        surface: {
+          DEFAULT: 'var(--surface)',
+          raised: 'var(--surface-raised)',
+        },
+        ink: 'var(--ink)',
+        line: 'var(--line)',
+        accent: {
+          DEFAULT: 'var(--accent)',
+          2: 'var(--accent-2)',
+          3: 'var(--accent-3)',
         },
       },
       // Custom border radius scales

@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --surface: #ECEFF3;
+    --surface-raised: #FFFFFF;
+    --ink: #1B2027;
+    --line: #C9D2DC;
+    --accent: #1F6FEB;
+    --accent-2: #FFC21A;
+    --accent-3: #FF4D6D;
+  }
+  .dark {
+    --surface: #14181D;
+    --surface-raised: #1C222A;
+    --ink: #E7ECF1;
+    --line: #2C353F;
+    --accent: #4D90FF;
+    --accent-2: #FFCE3A;
+    --accent-3: #FF6B85;
+  }
+  body {
+    background-color: var(--surface);
+    color: var(--ink);
+  }
+}
+
 @layer components {
   /* Image utilities */
   .img-fit {
