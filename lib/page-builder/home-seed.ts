@@ -5,7 +5,9 @@ import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import type { PageBlock } from '@/lib/page-builder';
 
 export type HomeSeedOptions = {
-  featuredProductIds?: string[];
+  // Relationship IDs for the `products` collection. Payload's default ID type here is
+  // numeric, so these are usually numbers; strings are accepted for test fixtures.
+  featuredProductIds?: Array<string | number>;
 };
 
 function block(slug: string, overrides: Record<string, unknown> = {}): PageBlock | null {

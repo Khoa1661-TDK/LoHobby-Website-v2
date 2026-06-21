@@ -27,7 +27,9 @@ export async function ensureHomePage(
     sort: '-createdAt',
     pagination: false,
   });
-  const featuredProductIds = products.docs.map((d) => String(d.id));
+  // Keep IDs in the products collection's native type (numeric here) — stringifying
+  // them makes the `products` relationship field fail validation.
+  const featuredProductIds = products.docs.map((d) => d.id);
 
   const data = {
     title: 'Home',
