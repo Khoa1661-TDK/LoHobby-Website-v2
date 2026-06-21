@@ -6,7 +6,7 @@ export const RecentlyViewed: Block = {
   slug: 'recentlyViewed',
   labels: { singular: 'Recently viewed', plural: 'Recently viewed' },
   interfaceName: 'RecentlyViewedBlock',
-  imageURL: '/admin/block-previews/featured-products.svg',
+  imageURL: '/admin/block-previews/recently-viewed.svg',
   imageAltText: 'Recently viewed preview',
   fields: [
     { name: 'title', type: 'text', defaultValue: 'Recently viewed' },

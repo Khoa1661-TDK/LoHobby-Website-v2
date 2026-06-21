@@ -6,7 +6,7 @@ export const Recommendations: Block = {
   slug: 'recommendations',
   labels: { singular: 'Personalized recommendations', plural: 'Personalized recommendations' },
   interfaceName: 'RecommendationsBlock',
-  imageURL: '/admin/block-previews/featured-products.svg',
+  imageURL: '/admin/block-previews/recommendations.svg',
   imageAltText: 'Personalized recommendations preview',
   fields: [
     { name: 'title', type: 'text', defaultValue: 'Recommended for you' },
