@@ -1,21 +1,33 @@
-// lib/page-builder/home-seed.ts — starting layout for a freshly created `home` page,
-// mirroring the existing hardcoded homepage sections so conversion isn't a blank slate.
+// lib/page-builder/home-seed.ts — designed home layout, authored as page-builder blocks.
+// This seed IS the home page: the storefront renders the CMS `home` page's `layout`
+// via RenderBlocks when it exists, falling back to the hardcoded homepage otherwise.
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import type { PageBlock } from '@/lib/page-builder';
 
-export function buildHomeSeedLayout(): PageBlock[] {
-  const hero = createDefaultBlock('hero');
-  const recommendations = createDefaultBlock('recommendations');
+export type HomeSeedOptions = {
+  featuredProductIds?: string[];
+};
 
-  // NOTE: featuredProducts is intentionally omitted. Its `products` relationship is
-  // `required` with `minRows: 1`, so a default-instantiated block (empty products)
-  // fails Payload validation and the whole page create is rejected. The seed produces
-  // a valid, non-blank starting layout; the admin adds a Featured Products section with
-  // real products from the visual builder.
-  const blocks: PageBlock[] = [];
-  if (hero) {
-    blocks.push({ ...hero, headline: 'Welcome', subheadline: 'Discover our latest products' } as unknown as PageBlock);
-  }
-  if (recommendations) blocks.push(recommendations);
-  return blocks;
+function block(slug: string, overrides: Record<string, unknown> = {}): PageBlock | null {
+  const base = createDefaultBlock(slug);
+  return base ? ({ ...base, ...overrides } as unknown as PageBlock) : null;
+}
+
+export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
+  const ids = opts.featuredProductIds ?? [];
+
+  const blocks: (PageBlock | null)[] = [
+    block('hero', {
+      headline: 'Printed to order.',
+      subheadline: 'Keychains, aircraft models, and brainrot figures — straight off the plate.',
+    }),
+    block('featuredCollection', { title: 'Off the plate' }),
+    ids.length > 0 ? block('featuredProducts', { title: 'New drops', products: ids }) : null,
+    block('imageWithText', { headline: 'How we print' }),
+    block('gallery'),
+    block('recommendations'),
+    block('newsletter'),
+  ];
+
+  return blocks.filter((b): b is PageBlock => b !== null);
 }
