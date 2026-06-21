@@ -191,7 +191,14 @@ function RelationshipField({
       });
   }, [ids, labels, relationTo]);
 
-  const commit = (nextIds: string[]) => onChange(hasMany ? nextIds : (nextIds[0] ?? null));
+  // The internal id machinery is string-keyed for display/dedupe, but the repo's
+  // Payload defaultIDType is `number` and relationship validation rejects stringified
+  // ids on write. Coerce numeric-string ids back to numbers at the persistence boundary
+  // so autosave PATCHes ids Payload accepts (matches the upload field, which stores the
+  // native numeric id).
+  const toNativeId = (id: string): string | number => (/^\d+$/.test(id) ? Number(id) : id);
+  const commit = (nextIds: string[]) =>
+    onChange(hasMany ? nextIds.map(toNativeId) : nextIds.length ? toNativeId(nextIds[0]!) : null);
 
   const add = (item: RelationItem) => {
     setLabels((prev) => ({ ...prev, [String(item.id)]: item.title }));

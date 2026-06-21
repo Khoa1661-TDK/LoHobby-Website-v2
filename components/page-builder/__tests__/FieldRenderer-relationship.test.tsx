@@ -28,7 +28,7 @@ describe('FieldRenderer relationship + number', () => {
     fireEvent.click(screen.getByText('+ Add product'));
     const result = await screen.findByText('Bench Plate');
     fireEvent.click(result);
-    expect(onChange).toHaveBeenCalledWith('products', ['7']);
+    expect(onChange).toHaveBeenCalledWith('products', [7]);
   });
 
   it('should emit a number when the number input changes', () => {
