@@ -14,3 +14,6 @@ prisma/migrations/**/migration_lock.toml
 
 # Visual brainstorm companion (superpowers)
 .superpowers/
+
+# Nested git worktrees created by the agent harness
+.claude/worktrees/
