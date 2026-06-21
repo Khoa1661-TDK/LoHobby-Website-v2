@@ -24,17 +24,19 @@ export default async function ResetPasswordPage(props: {
   return (
     <>
       <section className="mx-auto max-w-screen-sm px-4 py-12 md:py-16">
-        <div className="mx-auto w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
-          <h1 className="mb-2 text-2xl font-bold tracking-tight">{t('resetPasswordHeading')}</h1>
+        <div className="mx-auto w-full max-w-md rounded-2xl border border-line bg-surface-raised p-6 shadow-soft-md">
+          <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">
+            {t('resetPasswordHeading')}
+          </h1>
           {token ? (
             <>
-              <p className="mb-6 text-sm text-neutral-600 dark:text-neutral-400">
+              <p className="mb-6 text-sm text-warm-600 dark:text-warm-400">
                 {t('resetPasswordInstruction')}
               </p>
               <ResetPasswordForm token={token} />
             </>
           ) : (
-            <p className="text-sm text-rose-600 dark:text-rose-400">
+            <p className="rounded-xl border border-terracotta-200 bg-terracotta-50 px-3 py-2.5 text-sm text-terracotta-700 dark:border-terracotta-900 dark:bg-terracotta-950 dark:text-terracotta-300">
               {t('resetPasswordInvalidToken')}
             </p>
           )}

@@ -41,7 +41,7 @@ export default async function LoginPage(props: {
       return (
         <>
           <section className="mx-auto max-w-screen-sm px-4 py-12 md:py-16">
-            <div className="mx-auto w-full max-w-md rounded-2xl border border-warm-200/80 bg-white p-6 shadow-soft-md dark:border-warm-800/40 dark:bg-warm-900">
+            <div className="mx-auto w-full max-w-md rounded-2xl border border-line bg-surface-raised p-6 shadow-soft-md">
               <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">{t('adminRequiredTitle')}</h1>
               <p className="text-sm text-warm-500 dark:text-warm-400">
                 {t('adminRequiredBefore')}

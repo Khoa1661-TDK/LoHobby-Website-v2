@@ -19,9 +19,11 @@ export default async function ForgotPasswordPage(): Promise<ReactElement> {
   return (
     <>
       <section className="mx-auto max-w-screen-sm px-4 py-12 md:py-16">
-        <div className="mx-auto w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
-          <h1 className="mb-2 text-2xl font-bold tracking-tight">{t('forgotPasswordHeading')}</h1>
-          <p className="mb-6 text-sm text-neutral-600 dark:text-neutral-400">
+        <div className="mx-auto w-full max-w-md rounded-2xl border border-line bg-surface-raised p-6 shadow-soft-md">
+          <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">
+            {t('forgotPasswordHeading')}
+          </h1>
+          <p className="mb-6 text-sm text-warm-600 dark:text-warm-400">
             {t('forgotPasswordInstruction')}
           </p>
           <ForgotPasswordForm />
