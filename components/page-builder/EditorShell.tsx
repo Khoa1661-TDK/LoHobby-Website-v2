@@ -13,6 +13,7 @@ import { updateBlockField, insertBlock, moveBlock, duplicateBlock, deleteBlock }
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import { useAutosave } from './use-autosave';
 import { highlight, refresh, isPreviewToParent } from '@/lib/page-builder/preview-messages';
+import { routing } from '@/i18n/routing';
 
 type Props = { locale: string; page: PageDoc; schemas: BlockSchema[] };
 
@@ -21,7 +22,7 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
   const [title, setTitle] = useState<string>(page.title);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
-  const { status, publish } = useAutosave(page.id, layout, title);
+  const { status, publish } = useAutosave(page.id, layout, title, locale);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const readyRef = useRef(false);
@@ -90,6 +91,26 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
           className="min-w-0 flex-1 max-w-xs rounded border border-transparent bg-transparent px-2 py-1 font-semibold hover:border-warm-200 focus:border-warm-300 focus:outline-none"
         />
         <span className="rounded-full bg-warm-100 px-2 py-0.5 text-xs uppercase text-warm-500">{page.status}</span>
+        <div
+          role="group"
+          aria-label="Editing language"
+          className="flex items-center gap-1 rounded-full border border-warm-200 p-0.5"
+        >
+          {routing.locales.map((code) => (
+            <a
+              key={code}
+              href={`/${code}/build/${page.slug}`}
+              aria-current={code === locale ? 'true' : undefined}
+              className={
+                code === locale
+                  ? 'rounded-full bg-warm-900 px-2.5 py-0.5 text-xs font-semibold uppercase text-white'
+                  : 'rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase text-warm-500 hover:text-warm-800'
+              }
+            >
+              {code}
+            </a>
+          ))}
+        </div>
         <a
           href={`/admin/collections/pages/${page.id}`}
           className="text-xs text-warm-500 hover:underline"

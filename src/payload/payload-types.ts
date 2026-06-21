@@ -116,7 +116,7 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  fallbackLocale: null;
+  fallbackLocale: ('false' | 'none' | 'null') | false | null | ('vi' | 'en') | ('vi' | 'en')[];
   globals: {
     'site-header': SiteHeader;
     navigation: Navigation;
@@ -133,7 +133,7 @@ export interface Config {
     'dropship-settings': DropshipSettingsSelect<false> | DropshipSettingsSelect<true>;
     'notification-settings': NotificationSettingsSelect<false> | NotificationSettingsSelect<true>;
   };
-  locale: null;
+  locale: 'vi' | 'en';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -1325,6 +1325,7 @@ export interface Export {
   format: 'csv' | 'json';
   limit?: number | null;
   sort?: string | null;
+  locale?: ('all' | 'vi' | 'en') | null;
   drafts?: ('yes' | 'no') | null;
   selectionToUse?: ('currentSelection' | 'currentFilters' | 'all') | null;
   fields?: string[] | null;
@@ -2210,6 +2211,7 @@ export interface ExportsSelect<T extends boolean = true> {
   format?: T;
   limit?: T;
   sort?: T;
+  locale?: T;
   drafts?: T;
   selectionToUse?: T;
   fields?: T;
@@ -2840,6 +2842,7 @@ export interface TaskCreateCollectionExport {
     format: 'csv' | 'json';
     limit?: number | null;
     sort?: string | null;
+    locale?: ('all' | 'vi' | 'en') | null;
     drafts?: ('yes' | 'no') | null;
     selectionToUse?: ('currentSelection' | 'currentFilters' | 'all') | null;
     fields?: string[] | null;

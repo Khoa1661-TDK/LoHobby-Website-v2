@@ -9,12 +9,13 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 import { fetchPageBySlugDraft } from '@/lib/page-builder';
+import { type Locale } from '@/i18n/routing';
 import PreviewCanvas from '@/components/page-builder/preview/PreviewCanvas';
 import PreviewBridge from '@/components/page-builder/preview/PreviewBridge';
 import Providers from '@/components/providers';
 import { getStoreBranding } from '@/lib/store-branding';
 
-type Props = { params: Promise<{ locale: string; slug: string }> };
+type Props = { params: Promise<{ locale: Locale; slug: string }> };
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ export default async function BuilderPreviewPage(props: Props): Promise<ReactEle
     redirect(`/admin/login?redirect=${encodeURIComponent(`/${locale}/build/${slug}/preview`)}`);
   }
 
-  const page = await fetchPageBySlugDraft(slug);
+  const page = await fetchPageBySlugDraft(slug, locale);
   if (!page) notFound();
 
   // The preview renders the REAL storefront blocks, some of which consume storefront

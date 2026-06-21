@@ -21,7 +21,11 @@ describe('buildPatchBody', () => {
 });
 
 describe('pagePatchPath', () => {
-  it('should target Payload REST mounted at /admin/api', () => {
-    expect(pagePatchPath(7)).toBe('/admin/api/pages/7');
+  it('should target Payload REST mounted at /admin/api with the locale query', () => {
+    expect(pagePatchPath(7, 'vi')).toBe('/admin/api/pages/7?locale=vi');
+  });
+
+  it('should scope the write to the given locale', () => {
+    expect(pagePatchPath(7, 'en')).toBe('/admin/api/pages/7?locale=en');
   });
 });

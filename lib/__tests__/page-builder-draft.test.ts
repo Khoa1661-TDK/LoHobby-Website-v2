@@ -23,24 +23,26 @@ describe('fetchPageBySlugDraft', () => {
       docs: [{ id: 1, title: 'Draft Page', slug: 'draft-page', status: 'draft', layout: [] }],
     });
 
-    const result = await fetchPageBySlugDraft('draft-page');
+    const result = await fetchPageBySlugDraft('draft-page', 'vi');
 
     expect(result?.title).toBe('Draft Page');
     expect(result?.status).toBe('draft');
     // The where clause must NOT filter on status.
     const whereArg = mockFind.mock.calls[0]?.[0]?.where;
     expect(JSON.stringify(whereArg)).not.toContain('status');
+    // The locale must be forwarded to Payload.
+    expect(mockFind.mock.calls[0]?.[0]?.locale).toBe('vi');
   });
 
   it('should return null for a blank slug without querying', async () => {
-    const result = await fetchPageBySlugDraft('   ');
+    const result = await fetchPageBySlugDraft('   ', 'vi');
     expect(result).toBeNull();
     expect(mockFind).not.toHaveBeenCalled();
   });
 
   it('should return null when no doc is found', async () => {
     mockFind.mockResolvedValue({ docs: [] });
-    const result = await fetchPageBySlugDraft('missing');
+    const result = await fetchPageBySlugDraft('missing', 'vi');
     expect(result).toBeNull();
   });
 });

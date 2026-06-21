@@ -8,6 +8,7 @@ import Footer from '@/components/layout/footer';
 import RecentlyViewed from '@/components/product/recently-viewed';
 import RenderBlocks from '@/components/blocks/RenderBlocks';
 import { getHomePage } from '@/lib/page-builder';
+import { type Locale } from '@/i18n/routing';
 import { getStoreBranding } from '@/lib/store-branding';
 import { groupProductsByCategory } from '@/lib/categories';
 import { jsonLdToScriptString } from '@/lib/seo';
@@ -31,9 +32,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const revalidate = 60;
 
-export default async function HomePage(): Promise<ReactElement> {
-  // If a page with slug "home" exists, render it via the page builder.
-  const homePage = await getHomePage();
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<ReactElement> {
+  const { locale } = await params;
+  // If a page with slug "home" exists for this locale, render it via the page builder.
+  const homePage = await getHomePage(locale);
   if (homePage) {
     return (
       <article>

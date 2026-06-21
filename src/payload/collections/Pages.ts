@@ -144,6 +144,7 @@ export const Pages: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
       admin: {
         components: {
           Cell: '@/src/payload/components/PageTitleCell#PageTitleCell',
@@ -176,6 +177,7 @@ export const Pages: CollectionConfig = {
     {
       name: 'layout',
       type: 'blocks',
+      localized: true,
       labels: { singular: 'Section', plural: 'Sections' },
       blocks: layoutBlocks,
       admin: {

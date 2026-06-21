@@ -59,6 +59,16 @@ export default buildConfig({
     fallbackLanguage: 'en',
     supportedLanguages: { en },
   },
+  // Content localization (distinct from admin-UI i18n above). Mirrors the
+  // storefront locales in i18n/routing.ts so CMS pages can hold vi + en content.
+  localization: {
+    locales: [
+      { label: 'Tiếng Việt', code: 'vi' },
+      { label: 'English', code: 'en' },
+    ],
+    defaultLocale: 'vi',
+    fallback: true,
+  },
   routes: {
     admin: '/admin',
     api: '/admin/api',

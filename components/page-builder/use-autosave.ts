@@ -20,13 +20,14 @@ export function buildPatchBody(
 }
 
 // Payload's REST API is mounted at routes.api = '/admin/api' (see payload.config.ts),
-// not the default '/api', so patch requests must target that prefix.
-export function pagePatchPath(id: string | number): string {
-  return `/admin/api/pages/${id}`;
+// not the default '/api', so patch requests must target that prefix. The `locale`
+// query param scopes the write to that locale's values for localized fields.
+export function pagePatchPath(id: string | number, locale: string): string {
+  return `/admin/api/pages/${id}?locale=${locale}`;
 }
 
-async function patchPage(id: string | number, body: PatchBody): Promise<void> {
-  const res = await fetch(pagePatchPath(id), {
+async function patchPage(id: string | number, body: PatchBody, locale: string): Promise<void> {
+  const res = await fetch(pagePatchPath(id, locale), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'same-origin',
@@ -35,7 +36,12 @@ async function patchPage(id: string | number, body: PatchBody): Promise<void> {
   if (!res.ok) throw new Error(`Autosave failed: ${res.status}`);
 }
 
-export function useAutosave(pageId: string | number, layout: PageBlock[], title: string) {
+export function useAutosave(
+  pageId: string | number,
+  layout: PageBlock[],
+  title: string,
+  locale: string,
+) {
   const [status, setStatus] = useState<SaveStatus>('idle');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstRun = useRef(true);
@@ -49,24 +55,24 @@ export function useAutosave(pageId: string | number, layout: PageBlock[], title:
     if (timer.current) clearTimeout(timer.current);
     setStatus('saving');
     timer.current = setTimeout(() => {
-      patchPage(pageId, buildPatchBody(layout, 'draft', title))
+      patchPage(pageId, buildPatchBody(layout, 'draft', title), locale)
         .then(() => setStatus('saved'))
         .catch(() => setStatus('error'));
     }, 800);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [pageId, layout, title]);
+  }, [pageId, layout, title, locale]);
 
   const publish = useCallback(async () => {
     setStatus('saving');
     try {
-      await patchPage(pageId, buildPatchBody(layout, 'published', title));
+      await patchPage(pageId, buildPatchBody(layout, 'published', title), locale);
       setStatus('saved');
     } catch {
       setStatus('error');
     }
-  }, [pageId, layout, title]);
+  }, [pageId, layout, title, locale]);
 
   return { status, publish };
 }

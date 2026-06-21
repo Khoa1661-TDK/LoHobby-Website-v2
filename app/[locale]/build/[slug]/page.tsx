@@ -7,9 +7,10 @@ import { getPayload } from 'payload';
 import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
 import { fetchPageBySlugDraft } from '@/lib/page-builder';
+import { type Locale } from '@/i18n/routing';
 import EditorShell from '@/components/page-builder/EditorShell';
 
-type Props = { params: Promise<{ locale: string; slug: string }> };
+type Props = { params: Promise<{ locale: Locale; slug: string }> };
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export default async function BuilderPage(props: Props): Promise<ReactElement> {
     redirect(`/admin/login?redirect=${encodeURIComponent(`/${locale}/build/${slug}`)}`);
   }
 
-  const page = await fetchPageBySlugDraft(slug);
+  const page = await fetchPageBySlugDraft(slug, locale);
   if (!page) notFound();
 
   return (
