@@ -35,7 +35,7 @@ export async function POST(): Promise<Response> {
       data: {
         title: 'Home',
         slug: 'home',
-        status: 'draft',
+        status: 'published',
         layout: buildHomeSeedLayout({ featuredProductIds }) as never,
       },
     });

@@ -33,7 +33,7 @@ export async function ensureHomePage(
     data: {
       title: 'Home',
       slug: 'home',
-      status: 'draft',
+      status: 'published',
       layout: buildHomeSeedLayout({ featuredProductIds }) as never,
     },
   });
