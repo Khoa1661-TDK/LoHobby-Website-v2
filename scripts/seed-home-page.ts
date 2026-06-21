@@ -6,19 +6,20 @@ import { buildHomeSeedLayout } from '@/lib/page-builder/home-seed';
 
 loadEnv();
 
+// Bootstrapping behavior: the seed is authoritative for the `home` page. If a
+// `home` page already exists (e.g. an older draft), it is UPDATED to a published
+// page with the freshly designed layout — otherwise re-running could never heal a
+// stale draft, and the storefront would keep falling back to the hardcoded home.
+// Once you start editing the home page in the builder, stop running this seed.
 export async function ensureHomePage(
-  payload: Pick<Payload, 'find' | 'create'>,
-): Promise<'created' | 'exists'> {
+  payload: Pick<Payload, 'find' | 'create' | 'update'>,
+): Promise<'created' | 'updated'> {
   const existing = await payload.find({
     collection: 'pages',
     where: { slug: { equals: 'home' } },
     limit: 1,
     pagination: false,
   });
-
-  if (existing.docs.length > 0) {
-    return 'exists';
-  }
 
   const products = await payload.find({
     collection: 'products',
@@ -28,15 +29,20 @@ export async function ensureHomePage(
   });
   const featuredProductIds = products.docs.map((d) => String(d.id));
 
-  await payload.create({
-    collection: 'pages',
-    data: {
-      title: 'Home',
-      slug: 'home',
-      status: 'published',
-      layout: buildHomeSeedLayout({ featuredProductIds }) as never,
-    },
-  });
+  const data = {
+    title: 'Home',
+    slug: 'home',
+    status: 'published',
+    layout: buildHomeSeedLayout({ featuredProductIds }) as never,
+  };
+
+  const current = existing.docs[0];
+  if (current) {
+    await payload.update({ collection: 'pages', id: current.id, data });
+    return 'updated';
+  }
+
+  await payload.create({ collection: 'pages', data });
   return 'created';
 }
 
@@ -49,8 +55,8 @@ async function main(): Promise<void> {
   const result = await ensureHomePage(payload);
   console.log(
     result === 'created'
-      ? '[home-page] created.'
-      : '[home-page] already exists — skipped.',
+      ? '[home-page] created (published).'
+      : '[home-page] updated existing to published with fresh layout.',
   );
 }
 
