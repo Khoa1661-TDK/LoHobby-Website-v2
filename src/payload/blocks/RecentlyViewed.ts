@@ -11,6 +11,14 @@ export const RecentlyViewed: Block = {
   fields: [
     { name: 'title', type: 'text', defaultValue: 'Recently viewed' },
     { name: 'limit', type: 'number', defaultValue: 8 },
+    {
+      name: 'products',
+      label: 'Pinned products — overrides the auto list when set',
+      type: 'relationship',
+      relationTo: 'products',
+      hasMany: true,
+      maxRows: 12,
+    },
     ...appearanceFields,
   ],
 };

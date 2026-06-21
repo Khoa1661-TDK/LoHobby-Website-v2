@@ -85,3 +85,13 @@ describe('relationship field descriptors', () => {
     expect(collection).toMatchObject({ type: 'relationship', relationTo: 'categories', hasMany: false });
   });
 });
+
+describe('pinned products on auto blocks', () => {
+  it.each(['recommendations', 'recentlyViewed'])(
+    'should expose an optional products relationship on %s',
+    (slug) => {
+      const products = getBlockSchema(slug)?.fields.find((f) => f.name === 'products');
+      expect(products).toMatchObject({ type: 'relationship', relationTo: 'products', hasMany: true });
+    },
+  );
+});

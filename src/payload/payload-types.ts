@@ -1239,6 +1239,7 @@ export interface DividerBlock {
 export interface RecommendationsBlock {
   title?: string | null;
   limit?: number | null;
+  products?: (number | Product)[] | null;
   /**
    * Background mode for this section.
    */
@@ -1266,6 +1267,7 @@ export interface RecommendationsBlock {
 export interface RecentlyViewedBlock {
   title?: string | null;
   limit?: number | null;
+  products?: (number | Product)[] | null;
   /**
    * Background mode for this section.
    */
@@ -2164,6 +2166,7 @@ export interface DividerBlockSelect<T extends boolean = true> {
 export interface RecommendationsBlockSelect<T extends boolean = true> {
   title?: T;
   limit?: T;
+  products?: T;
   background?: T;
   backgroundCustom?: T;
   containerWidth?: T;
@@ -2178,6 +2181,7 @@ export interface RecommendationsBlockSelect<T extends boolean = true> {
 export interface RecentlyViewedBlockSelect<T extends boolean = true> {
   title?: T;
   limit?: T;
+  products?: T;
   background?: T;
   backgroundCustom?: T;
   containerWidth?: T;
