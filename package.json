@@ -30,6 +30,7 @@
     "payload:db-push": "tsx scripts/payload-db-push.ts",
     "payload:migrate-variants": "tsx scripts/migrate-inline-product-variants.ts",
     "payload:ensure-variants-schema": "tsx scripts/ensure-product-variants-schema.ts",
+    "payload:seed-home": "tsx scripts/seed-home-page.ts",
     "payload:seed-site-header": "tsx scripts/seed-site-header.ts",
     "payload:seed-store-settings": "tsx scripts/seed-store-settings.ts",
     "seed:theme": "tsx scripts/seed-theme-preset.ts",
