@@ -22,13 +22,21 @@ export async function POST(): Promise<Response> {
   });
 
   if (existing.docs.length === 0) {
+    const products = await payload.find({
+      collection: 'products',
+      limit: 8,
+      sort: '-createdAt',
+      pagination: false,
+    });
+    const featuredProductIds = products.docs.map((d) => String(d.id));
+
     await payload.create({
       collection: 'pages',
       data: {
         title: 'Home',
         slug: 'home',
         status: 'draft',
-        layout: buildHomeSeedLayout() as never,
+        layout: buildHomeSeedLayout({ featuredProductIds }) as never,
       },
     });
   }
