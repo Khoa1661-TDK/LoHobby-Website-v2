@@ -1,11 +1,12 @@
 // components/page-builder/FieldRenderer.tsx — schema-driven field panel.
 'use client';
-import { useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import type { BlockSchema, FieldDescriptor } from '@/lib/page-builder/block-schemas';
 import { isFieldVisible } from '@/lib/page-builder/conditions';
 import { defaultRowFor } from '@/lib/page-builder/default-block';
 import { addRow, removeRow, moveRow, updateRowField } from '@/lib/page-builder/array-reducer';
 import MediaPicker from './MediaPicker';
+import RelationshipPicker, { type RelationItem } from './RelationshipPicker';
 
 type Props = {
   schema: BlockSchema;
@@ -122,6 +123,160 @@ function ArrayField({
   );
 }
 
+function RelationshipField({
+  field,
+  value,
+  disabled,
+  onChange,
+}: {
+  field: FieldDescriptor;
+  value: unknown;
+  disabled: boolean;
+  onChange: (v: unknown) => void;
+}): ReactElement {
+  const relationTo: 'products' | 'categories' =
+    field.relationTo === 'categories' ? 'categories' : 'products';
+  const hasMany = field.hasMany ?? false;
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [labels, setLabels] = useState<Record<string, string>>({});
+
+  const ids = useMemo<string[]>(() => {
+    const raw = hasMany
+      ? Array.isArray(value)
+        ? value
+        : []
+      : value != null && value !== ''
+        ? [value]
+        : [];
+    return raw
+      .map((item) =>
+        item && typeof item === 'object' && 'id' in item
+          ? String((item as { id: string | number }).id)
+          : String(item),
+      )
+      .filter((s) => s && s !== 'null' && s !== 'undefined');
+  }, [value, hasMany]);
+
+  // Seed labels from populated docs that arrive in the initial value (depth:2 load).
+  useEffect(() => {
+    const raw = hasMany ? (Array.isArray(value) ? value : []) : value != null ? [value] : [];
+    const seed: Record<string, string> = {};
+    for (const item of raw) {
+      if (item && typeof item === 'object' && 'id' in item) {
+        const o = item as { id: string | number; title?: string };
+        if (typeof o.title === 'string') seed[String(o.id)] = o.title;
+      }
+    }
+    if (Object.keys(seed).length) setLabels((prev) => ({ ...seed, ...prev }));
+  }, [value, hasMany]);
+
+  // Fetch labels for ids we don't yet have a title for (e.g. bare-id values).
+  useEffect(() => {
+    const missing = ids.filter((id) => !labels[id]);
+    if (missing.length === 0) return;
+    const params = new URLSearchParams({ depth: '0', limit: String(missing.length) });
+    missing.forEach((id) => params.append('where[id][in][]', id));
+    fetch(`/api/${relationTo}?${params.toString()}`, { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .then((data) => {
+        const docs = Array.isArray(data?.docs) ? data.docs : [];
+        const next: Record<string, string> = {};
+        for (const d of docs) {
+          if (d && d.id != null) next[String(d.id)] = typeof d.title === 'string' ? d.title : `#${d.id}`;
+        }
+        if (Object.keys(next).length) setLabels((prev) => ({ ...prev, ...next }));
+      })
+      .catch(() => {
+        /* ignore */
+      });
+  }, [ids, labels, relationTo]);
+
+  const commit = (nextIds: string[]) => onChange(hasMany ? nextIds : (nextIds[0] ?? null));
+
+  const add = (item: RelationItem) => {
+    setLabels((prev) => ({ ...prev, [String(item.id)]: item.title }));
+    if (hasMany) {
+      if (!ids.includes(String(item.id))) commit([...ids, String(item.id)]);
+    } else {
+      commit([String(item.id)]);
+    }
+    setPickerOpen(false);
+  };
+
+  const remove = (id: string) => commit(ids.filter((x) => x !== id));
+
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= ids.length) return;
+    const next = [...ids];
+    const [m] = next.splice(from, 1);
+    if (m === undefined) return;
+    next.splice(to, 0, m);
+    commit(next);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-1">
+        {ids.map((id, index) => (
+          <li
+            key={id}
+            className="flex items-center gap-1 rounded border border-warm-200 px-2 py-1 text-sm"
+          >
+            <span className="truncate">{labels[id] ?? `#${id}`}</span>
+            {hasMany && (
+              <span className="ml-auto flex gap-1">
+                <button
+                  type="button"
+                  disabled={disabled || index === 0}
+                  onClick={() => move(index, index - 1)}
+                  aria-label="Move up"
+                  className="text-xs"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  disabled={disabled || index === ids.length - 1}
+                  onClick={() => move(index, index + 1)}
+                  aria-label="Move down"
+                  className="text-xs"
+                >
+                  ↓
+                </button>
+              </span>
+            )}
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => remove(id)}
+              aria-label="Remove"
+              className={(hasMany ? '' : 'ml-auto ') + 'text-xs text-red-500'}
+            >
+              ✕
+            </button>
+          </li>
+        ))}
+        {ids.length === 0 && <li className="px-1 text-xs text-warm-400">None selected.</li>}
+      </ul>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setPickerOpen(true)}
+        className="rounded border border-warm-300 px-2 py-1 text-xs"
+      >
+        {relationTo === 'products' ? '+ Add product' : 'Choose collection'}
+      </button>
+      {pickerOpen && (
+        <RelationshipPicker
+          relationTo={relationTo}
+          onSelect={add}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
 function Field({
   field,
   value,
@@ -223,6 +378,19 @@ function Field({
             onChange={(rows) => set(rows)}
           />
         );
+      case 'number':
+        return (
+          <input
+            id={id}
+            type="number"
+            className="rounded border border-warm-300 bg-warm-50 px-2 py-1 text-sm text-warm-900 dark:border-warm-700 dark:bg-warm-900 dark:text-warm-100"
+            value={typeof value === 'number' ? value : ''}
+            disabled={disabled}
+            onChange={(e) => set(e.target.value === '' ? null : Number(e.target.value))}
+          />
+        );
+      case 'relationship':
+        return <RelationshipField field={field} value={value} disabled={disabled} onChange={set} />;
       default:
         // richText handled in a later phase; show a placeholder badge.
         return (
