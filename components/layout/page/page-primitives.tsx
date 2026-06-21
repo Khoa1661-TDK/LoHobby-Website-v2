@@ -77,9 +77,11 @@ export function StorefrontPageHeader({
   );
 }
 
-const PRIMARY =
+// Exported so pages that must use the locale-aware next-intl `Link` (instead of a
+// plain <a>) can apply the identical button styling without duplicating the string.
+export const primaryButtonClass =
   'inline-flex items-center justify-center gap-2 rounded-xl bg-warm-900 px-6 py-3 text-sm font-semibold text-warm-50 shadow-soft-md transition-all duration-300 hover:-translate-y-px hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200';
-const SECONDARY =
+export const secondaryButtonClass =
   'inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-6 py-3 text-sm font-semibold text-warm-800 transition-all duration-300 hover:-translate-y-px hover:border-warm-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:text-warm-200';
 
 type AnchorOrButton =
@@ -88,7 +90,7 @@ type AnchorOrButton =
 
 export function PrimaryButton(props: AnchorOrButton): ReactElement {
   const { as = 'a', className = '', ...rest } = props as { as?: 'a' | 'button'; className?: string };
-  const cls = `${PRIMARY} ${className}`;
+  const cls = `${primaryButtonClass} ${className}`;
   return as === 'button' ? (
     <button className={cls} {...(rest as ButtonHTMLAttributes<HTMLButtonElement>)} />
   ) : (
@@ -98,7 +100,7 @@ export function PrimaryButton(props: AnchorOrButton): ReactElement {
 
 export function SecondaryButton(props: AnchorOrButton): ReactElement {
   const { as = 'a', className = '', ...rest } = props as { as?: 'a' | 'button'; className?: string };
-  const cls = `${SECONDARY} ${className}`;
+  const cls = `${secondaryButtonClass} ${className}`;
   return as === 'button' ? (
     <button className={cls} {...(rest as ButtonHTMLAttributes<HTMLButtonElement>)} />
   ) : (

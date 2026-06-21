@@ -4,4 +4,6 @@ export {
   StorefrontPageHeader,
   PrimaryButton,
   SecondaryButton,
+  primaryButtonClass,
+  secondaryButtonClass,
 } from './page-primitives';

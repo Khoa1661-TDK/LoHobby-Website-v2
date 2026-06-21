@@ -3,6 +3,12 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import Footer from '@/components/layout/footer';
+import {
+  ContentSection,
+  PageShell,
+  StorefrontPageHeader,
+  secondaryButtonClass,
+} from '@/components/layout/page';
 import { getSiteName } from '@/lib/brand';
 import { buildFaqJsonLd, buildWebPageJsonLd, jsonLdToScriptString } from '@/lib/seo';
 import { absoluteUrl } from '@/lib/utils';
@@ -79,40 +85,44 @@ export default async function FaqPage({ params }: Props): Promise<ReactElement> 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(webPageJsonLd) }}
       />
-      <section className="mx-auto max-w-3xl px-4 py-12 md:py-16">
-        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{t('faqHeading')}</h1>
-        <p className="mt-3 text-neutral-600 dark:text-neutral-400">{t('faqMetaDescription')}</p>
+      <PageShell width="narrow">
+        <ContentSection>
+          <StorefrontPageHeader
+            title={t('faqHeading')}
+            subtitle={t('faqMetaDescription')}
+          />
 
-        <div className="mt-8 divide-y divide-neutral-200 border-y border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
-          {faqs.map((faq) => (
-            <details key={faq.question} className="group py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium">
-                {faq.question}
-                <span className="text-neutral-400 transition group-open:rotate-45">+</span>
-              </summary>
-              <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-                {faq.answer}
-              </p>
-            </details>
-          ))}
-        </div>
+          <div className="mt-8 space-y-3">
+            {faqs.map((faq) => (
+              <details
+                key={faq.question}
+                className="group rounded-2xl border border-line bg-surface-raised p-5 shadow-soft-sm"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-warm-900 dark:text-warm-100">
+                  {faq.question}
+                  <span className="text-accent transition group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-warm-600 dark:text-warm-400">
+                  {faq.answer}
+                </p>
+              </details>
+            ))}
+          </div>
 
-        <div className="mt-10">
-          <h2 className="text-lg font-semibold">{t('faqSeeMore')}</h2>
-          <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            {RELATED_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="text-neutral-600 underline-offset-4 hover:text-black hover:underline dark:text-neutral-400 dark:hover:text-white"
-                >
+          <div className="mt-10">
+            <h2 className="font-display text-lg font-semibold text-warm-900 dark:text-warm-100">
+              {t('faqSeeMore')}
+            </h2>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {RELATED_LINKS.map((link) => (
+                <Link key={link.href} href={link.href} className={secondaryButtonClass}>
                   {link.label}
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+              ))}
+            </div>
+          </div>
+        </ContentSection>
+      </PageShell>
       <Footer />
     </>
   );
