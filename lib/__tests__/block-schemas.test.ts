@@ -71,3 +71,17 @@ describe('getBlockSchemas', () => {
     expect(roundTripped[0].fields[0]).not.toHaveProperty('condition.fn');
   });
 });
+
+describe('relationship field descriptors', () => {
+  it('should expose relationTo and hasMany for a hasMany relationship (featuredProducts.products)', () => {
+    const schema = getBlockSchema('featuredProducts');
+    const products = schema?.fields.find((f) => f.name === 'products');
+    expect(products).toMatchObject({ type: 'relationship', relationTo: 'products', hasMany: true });
+  });
+
+  it('should expose relationTo and hasMany=false for a single relationship (featuredCollection.collection)', () => {
+    const schema = getBlockSchema('featuredCollection');
+    const collection = schema?.fields.find((f) => f.name === 'collection');
+    expect(collection).toMatchObject({ type: 'relationship', relationTo: 'categories', hasMany: false });
+  });
+});

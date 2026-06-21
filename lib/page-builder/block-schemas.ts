@@ -30,6 +30,8 @@ export type FieldDescriptor = {
   defaultValue?: unknown;
   options?: { label: string; value: string }[];
   relationTo?: string;
+  /** Present for `relationship` fields. */
+  hasMany?: boolean;
   /** Present for `array` fields. */
   fields?: FieldDescriptor[];
   /** Simplified, serializable condition (only the common siblingData equality form). */
@@ -108,8 +110,15 @@ function describeField(field: Field): FieldDescriptor | null {
           : { label: String(opt), value: String(opt) },
       );
   }
-  if (field.type === 'upload' && 'relationTo' in field && typeof field.relationTo === 'string') {
+  if (
+    (field.type === 'upload' || field.type === 'relationship') &&
+    'relationTo' in field &&
+    typeof field.relationTo === 'string'
+  ) {
     base.relationTo = field.relationTo;
+  }
+  if (field.type === 'relationship') {
+    base.hasMany = 'hasMany' in field && field.hasMany === true;
   }
   if (field.type === 'array' && 'fields' in field && Array.isArray(field.fields)) {
     base.fields = field.fields
