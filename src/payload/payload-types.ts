@@ -116,7 +116,7 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  fallbackLocale: null;
+  fallbackLocale: ('false' | 'none' | 'null') | false | null | ('vi' | 'en') | ('vi' | 'en')[];
   globals: {
     'site-header': SiteHeader;
     navigation: Navigation;
@@ -133,7 +133,7 @@ export interface Config {
     'dropship-settings': DropshipSettingsSelect<false> | DropshipSettingsSelect<true>;
     'notification-settings': NotificationSettingsSelect<false> | NotificationSettingsSelect<true>;
   };
-  locale: null;
+  locale: 'vi' | 'en';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -531,7 +531,7 @@ export interface StoreCustomer {
   createdAt: string;
 }
 /**
- * Click an order to open it — use the green panel at the top to confirm & ship. Pending orders: use the "Đánh dấu TT" column.
+ * Trạng thái đơn được quản lý ở trang "Quản lý đơn hàng" (/admin/orders). Các trường trạng thái ở đây chỉ để xem.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "orders".
@@ -724,7 +724,7 @@ export interface Post {
   createdAt: string;
 }
 /**
- * Build storefront pages by stacking sections. Use the live preview on the right to see your changes.
+ * Click a page title to edit it in the visual builder. Use “+ New page” to start a blank page.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
@@ -740,6 +740,9 @@ export interface Page {
    * Only published pages are visible on the storefront. Draft pages are visible only in the live preview.
    */
   status?: ('draft' | 'published') | null;
+  /**
+   * Edited in the visual builder.
+   */
   layout?:
     | (
         | HeroBlock
@@ -755,6 +758,8 @@ export interface Page {
         | PromoBannerBlock
         | VideoEmbedBlock
         | DividerBlock
+        | RecommendationsBlock
+        | RecentlyViewedBlock
       )[]
     | null;
   meta?: {
@@ -773,7 +778,7 @@ export interface Page {
  * via the `definition` "HeroBlock".
  */
 export interface HeroBlock {
-  headline: string;
+  headline?: string | null;
   subheadline?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
@@ -807,7 +812,7 @@ export interface HeroBlock {
  */
 export interface FeaturedCollectionBlock {
   title?: string | null;
-  collection: number | Category;
+  collection?: (number | null) | Category;
   /**
    * Max number of products to show from this collection.
    */
@@ -839,7 +844,7 @@ export interface FeaturedCollectionBlock {
  */
 export interface FeaturedProductsBlock {
   title?: string | null;
-  products: (number | Product)[];
+  products?: (number | Product)[] | null;
   layout?: ('grid' | 'carousel') | null;
   /**
    * Background mode for this section.
@@ -866,7 +871,7 @@ export interface FeaturedProductsBlock {
  * via the `definition` "RichTextBlock".
  */
 export interface RichTextBlock {
-  content: {
+  content?: {
     root: {
       type: string;
       children: {
@@ -880,7 +885,7 @@ export interface RichTextBlock {
       version: number;
     };
     [k: string]: unknown;
-  };
+  } | null;
   textAlign?: ('left' | 'center') | null;
   /**
    * Background mode for this section.
@@ -907,9 +912,9 @@ export interface RichTextBlock {
  * via the `definition` "ImageWithTextBlock".
  */
 export interface ImageWithTextBlock {
-  image: number | Media;
+  image?: (number | null) | Media;
   imagePosition?: ('left' | 'right') | null;
-  headline: string;
+  headline?: string | null;
   body?: {
     root: {
       type: string;
@@ -954,11 +959,13 @@ export interface ImageWithTextBlock {
  */
 export interface GalleryBlock {
   title?: string | null;
-  images: {
-    image: number | Media;
-    caption?: string | null;
-    id?: string | null;
-  }[];
+  images?:
+    | {
+        image?: (number | null) | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   layout?: ('grid' | 'row' | 'bento') | null;
   /**
    * Background mode for this section.
@@ -986,14 +993,16 @@ export interface GalleryBlock {
  */
 export interface TestimonialsBlock {
   title?: string | null;
-  entries: {
-    quote: string;
-    author: string;
-    role?: string | null;
-    avatar?: (number | null) | Media;
-    rating?: number | null;
-    id?: string | null;
-  }[];
+  entries?:
+    | {
+        quote?: string | null;
+        author?: string | null;
+        role?: string | null;
+        avatar?: (number | null) | Media;
+        rating?: number | null;
+        id?: string | null;
+      }[]
+    | null;
   layout?: ('grid' | 'single') | null;
   /**
    * Background mode for this section.
@@ -1021,12 +1030,14 @@ export interface TestimonialsBlock {
  */
 export interface LogoCloudBlock {
   title?: string | null;
-  logos: {
-    image: number | Media;
-    alt: string;
-    href?: string | null;
-    id?: string | null;
-  }[];
+  logos?:
+    | {
+        image?: (number | null) | Media;
+        alt?: string | null;
+        href?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   animate?: boolean | null;
   /**
    * Background mode for this section.
@@ -1053,7 +1064,7 @@ export interface LogoCloudBlock {
  * via the `definition` "NewsletterBlock".
  */
 export interface NewsletterBlock {
-  headline: string;
+  headline?: string | null;
   subheadline?: string | null;
   placeholder?: string | null;
   buttonLabel?: string | null;
@@ -1084,25 +1095,27 @@ export interface NewsletterBlock {
  */
 export interface FAQBlock {
   title?: string | null;
-  items: {
-    question: string;
-    answer: {
-      root: {
-        type: string;
-        children: {
-          type: any;
-          version: number;
+  items?:
+    | {
+        question?: string | null;
+        answer?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
           [k: string]: unknown;
-        }[];
-        direction: ('ltr' | 'rtl') | null;
-        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-        indent: number;
-        version: number;
-      };
-      [k: string]: unknown;
-    };
-    id?: string | null;
-  }[];
+        } | null;
+        id?: string | null;
+      }[]
+    | null;
   layout?: ('accordion' | 'twoCol') | null;
   /**
    * Background mode for this section.
@@ -1129,7 +1142,7 @@ export interface FAQBlock {
  * via the `definition` "PromoBannerBlock".
  */
 export interface PromoBannerBlock {
-  text: string;
+  text?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
   dismissible?: boolean | null;
@@ -1166,7 +1179,7 @@ export interface VideoEmbedBlock {
   /**
    * YouTube or Vimeo embed URL.
    */
-  url: string;
+  url?: string | null;
   aspectRatio?: ('16/9' | '4/3' | '1/1') | null;
   /**
    * Optional poster image before playback.
@@ -1220,6 +1233,62 @@ export interface DividerBlock {
   blockType: 'divider';
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RecommendationsBlock".
+ */
+export interface RecommendationsBlock {
+  title?: string | null;
+  limit?: number | null;
+  products?: (number | Product)[] | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'recommendations';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RecentlyViewedBlock".
+ */
+export interface RecentlyViewedBlock {
+  title?: string | null;
+  limit?: number | null;
+  products?: (number | Product)[] | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'recentlyViewed';
+}
+/**
  * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1256,6 +1325,7 @@ export interface Export {
   format: 'csv' | 'json';
   limit?: number | null;
   sort?: string | null;
+  locale?: ('all' | 'vi' | 'en') | null;
   drafts?: ('yes' | 'no') | null;
   selectionToUse?: ('currentSelection' | 'currentFilters' | 'all') | null;
   fields?: string[] | null;
@@ -1841,6 +1911,8 @@ export interface PagesSelect<T extends boolean = true> {
         promoBanner?: T | PromoBannerBlockSelect<T>;
         videoEmbed?: T | VideoEmbedBlockSelect<T>;
         divider?: T | DividerBlockSelect<T>;
+        recommendations?: T | RecommendationsBlockSelect<T>;
+        recentlyViewed?: T | RecentlyViewedBlockSelect<T>;
       };
   meta?:
     | T
@@ -2090,6 +2162,36 @@ export interface DividerBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RecommendationsBlock_select".
+ */
+export interface RecommendationsBlockSelect<T extends boolean = true> {
+  title?: T;
+  limit?: T;
+  products?: T;
+  background?: T;
+  backgroundCustom?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RecentlyViewedBlock_select".
+ */
+export interface RecentlyViewedBlockSelect<T extends boolean = true> {
+  title?: T;
+  limit?: T;
+  products?: T;
+  background?: T;
+  backgroundCustom?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects_select".
  */
 export interface RedirectsSelect<T extends boolean = true> {
@@ -2109,6 +2211,7 @@ export interface ExportsSelect<T extends boolean = true> {
   format?: T;
   limit?: T;
   sort?: T;
+  locale?: T;
   drafts?: T;
   selectionToUse?: T;
   fields?: T;
@@ -2739,6 +2842,7 @@ export interface TaskCreateCollectionExport {
     format: 'csv' | 'json';
     limit?: number | null;
     sort?: string | null;
+    locale?: ('all' | 'vi' | 'en') | null;
     drafts?: ('yes' | 'no') | null;
     selectionToUse?: ('currentSelection' | 'currentFilters' | 'all') | null;
     fields?: string[] | null;

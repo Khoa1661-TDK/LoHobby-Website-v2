@@ -13,11 +13,22 @@ export async function syncStoreCustomerForUser(userId: string): Promise<string |
   });
   if (!user?.email) return null;
 
+  const payload = await getPayload({ config });
+
+  // Trust the cached pointer only if the store-customer row still exists.
+  // Payload's tables can be reset/reseeded independently of the Prisma users
+  // table (e.g. `payload schema push` on deploy), leaving a dangling
+  // payloadCustomerId. Returning it blindly inserts an order with a
+  // non-existent customer_id → foreign-key violation at checkout.
   if (user.payloadCustomerId) {
-    return user.payloadCustomerId;
+    const cached = await payload
+      .findByID({ collection: 'store-customers', id: user.payloadCustomerId, depth: 0 })
+      .catch(() => null);
+    if (cached?.id) {
+      return user.payloadCustomerId;
+    }
   }
 
-  const payload = await getPayload({ config });
   const existing = await payload.find({
     collection: 'store-customers',
     where: { email: { equals: user.email.trim().toLowerCase() } },

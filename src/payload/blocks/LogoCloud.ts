@@ -16,20 +16,16 @@ export const LogoCloud: Block = {
     {
       name: 'logos',
       type: 'array',
-      required: true,
-      minRows: 1,
       labels: { singular: 'Logo', plural: 'Logos' },
       fields: [
         {
           name: 'image',
           type: 'upload',
           relationTo: 'media',
-          required: true,
         },
         {
           name: 'alt',
           type: 'text',
-          required: true,
         },
         {
           name: 'href',

@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { auth } from '@/auth';
+import { SpecTag } from '@/components/blocks/_primitives';
 import ProfileShell from '@/app/[locale]/(storefront)/profile/profile-shell';
 import type {
   ProfileAddress,
@@ -112,14 +113,12 @@ export default async function ProfilePage(props: {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-10">
-      <header className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-wider text-filament-600 dark:text-filament-300">
-          {t('eyebrow')}
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">
+      <header className="mb-8 flex flex-col gap-2">
+        <SpecTag>{t('eyebrow')}</SpecTag>
+        <h1 className="font-display text-3xl font-bold tracking-tight text-balance text-warm-900 dark:text-warm-100">
           {t('welcomeBack', { name: user.name ?? user.email.split('@')[0] ?? user.email })}
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="max-w-2xl text-sm text-warm-600 dark:text-warm-400">
           {t('heroSubtitle')}
         </p>
       </header>

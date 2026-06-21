@@ -22,7 +22,7 @@ export default function RichTextBlock(props: Props): ReactElement {
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">
+          <p className="text-center text-sm text-ink/60">
             No content — configure this block in the admin panel.
           </p>
         </div>
@@ -53,13 +53,13 @@ export default function RichTextBlock(props: Props): ReactElement {
     <section className={section} style={style}>
       <div className={container}>
         <div
-          className={`prose prose-warm max-w-none dark:prose-invert ${alignClass}`}
+          className={`prose dark:prose-invert max-w-none ${alignClass}`}
           {...(htmlContent
             ? { dangerouslySetInnerHTML: { __html: htmlContent } }
             : {})}
         >
           {!htmlContent ? (
-            <p className="text-sm text-warm-500">Unsupported content format.</p>
+            <p className="text-sm text-ink/60">Unsupported content format.</p>
           ) : null}
         </div>
       </div>

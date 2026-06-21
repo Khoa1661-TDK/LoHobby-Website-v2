@@ -54,13 +54,13 @@ export default async function CheckoutCancelPage(props: {
 
   return (
     <section className="mx-auto max-w-xl p-8">
-      <h1 className="text-2xl font-semibold">{t('heading')}</h1>
-      <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
+      <h1 className="font-display text-2xl font-semibold text-warm-900 dark:text-warm-100">{t('heading')}</h1>
+      <p className="mt-4 text-sm text-warm-600 dark:text-warm-400">
         {t('body')}
       </p>
       <Link
         href="/"
-        className="mt-6 inline-block rounded-full bg-filament-500 px-5 py-2 text-sm font-medium text-white hover:bg-filament-600 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-warm-900 px-6 py-3 text-sm font-semibold text-warm-50 shadow-soft-md transition-all duration-300 hover:-translate-y-px hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
       >
         {t('backToCatalog')}
       </Link>

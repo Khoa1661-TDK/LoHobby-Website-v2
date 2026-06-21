@@ -6,7 +6,7 @@ import { blockAppearanceClasses } from '@/lib/page-builder';
 
 type Props = {
   title?: string | null;
-  url: string;
+  url?: string | null;
   aspectRatio?: '16/9' | '4/3' | '1/1' | null;
   coverImage?: { url?: string; alt?: string } | null;
 } & BlockAppearance;
@@ -22,9 +22,17 @@ export default function VideoEmbedBlock(props: Props): ReactElement {
   const { section, container, style } = blockAppearanceClasses(props);
   const ratioClass = ratioMap[aspectRatio ?? '16/9'] ?? 'aspect-video';
 
-  const isYouTube =
-    url.includes('youtube.com/embed') || url.includes('youtu.be');
-  const isVimeo = url.includes('vimeo.com') || url.includes('player.vimeo.com');
+  if (!url) {
+    return (
+      <section className={section} style={style}>
+        <div className={container}>
+          <p className="text-center text-sm text-ink/60">
+            No video URL — configure this block in the admin panel.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className={section} style={style}>
@@ -36,7 +44,7 @@ export default function VideoEmbedBlock(props: Props): ReactElement {
         ) : null}
         <div
           className={`relative overflow-hidden rounded-2xl ${ratioClass} ${
-            props.background === 'dark' ? 'bg-warm-800' : 'bg-warm-100'
+            props.background === 'dark' ? 'bg-ink' : 'bg-surface-raised'
           }`}
         >
           {coverImage?.url ? (

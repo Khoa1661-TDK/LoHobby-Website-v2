@@ -12,7 +12,6 @@ export const RichText: Block = {
     {
       name: 'content',
       type: 'richText',
-      required: true,
     },
     {
       name: 'textAlign',

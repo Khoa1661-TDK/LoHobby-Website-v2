@@ -4,6 +4,13 @@ import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import Footer from '@/components/layout/footer';
 import {
+  ContentSection,
+  PageShell,
+  StorefrontPageHeader,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from '@/components/layout/page';
+import {
   BRAND_DESCRIPTION,
   BRAND_ORIGIN,
   BRAND_TAGLINE,
@@ -71,47 +78,41 @@ export default async function AboutPage({ params }: Props): Promise<ReactElement
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: jsonLdToScriptString(webPageJsonLd) }}
       />
-      <section className="mx-auto max-w-3xl px-4 py-12 md:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-filament-600 dark:text-filament-300">
-          {BRAND_ORIGIN}
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">
-          {t('aboutHeading', { siteName })}
-        </h1>
-        <p className="mt-4 text-lg text-neutral-600 dark:text-neutral-400">{BRAND_DESCRIPTION}</p>
+      <PageShell width="narrow">
+        <ContentSection>
+          <StorefrontPageHeader
+            eyebrow={BRAND_ORIGIN}
+            title={t('aboutHeading', { siteName })}
+            subtitle={BRAND_DESCRIPTION}
+          />
 
-        <div className="prose prose-neutral mt-8 max-w-none dark:prose-invert">
-          <p>{t('aboutStoryP1', { siteName })}</p>
-          <p>{t('aboutStoryP2')}</p>
-        </div>
+          <div className="prose prose-neutral mt-8 max-w-none dark:prose-invert">
+            <p>{t('aboutStoryP1', { siteName })}</p>
+            <p>{t('aboutStoryP2')}</p>
+          </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          {values.map((value) => (
-            <div
-              key={value.title}
-              className="rounded-2xl border border-neutral-200 p-5 dark:border-neutral-800"
-            >
-              <h2 className="text-base font-semibold">{value.title}</h2>
-              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{value.body}</p>
-            </div>
-          ))}
-        </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            {values.map((value) => (
+              <div
+                key={value.title}
+                className="rounded-2xl border border-line bg-surface-raised p-5 shadow-soft-sm"
+              >
+                <h2 className="text-base font-semibold">{value.title}</h2>
+                <p className="mt-2 text-sm text-warm-600 dark:text-warm-400">{value.body}</p>
+              </div>
+            ))}
+          </div>
 
-        <div className="mt-10 flex flex-wrap gap-3">
-          <Link
-            href="/search"
-            className="inline-flex rounded-full bg-black px-6 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
-          >
-            {t('aboutCtaBrowse')}
-          </Link>
-          <Link
-            href="/contact"
-            className="inline-flex rounded-full border border-neutral-300 px-6 py-2.5 text-sm font-medium transition hover:border-neutral-500 dark:border-neutral-700"
-          >
-            {t('aboutCtaContact')}
-          </Link>
-        </div>
-      </section>
+          <div className="mt-10 flex flex-wrap gap-3">
+            <Link href="/search" className={primaryButtonClass}>
+              {t('aboutCtaBrowse')}
+            </Link>
+            <Link href="/contact" className={secondaryButtonClass}>
+              {t('aboutCtaContact')}
+            </Link>
+          </div>
+        </ContentSection>
+      </PageShell>
       <Footer />
     </>
   );

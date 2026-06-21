@@ -44,6 +44,7 @@ export function fontCssVariables(preset: FontPreset): Record<string, string> {
   const config = FONT_PRESETS[preset];
   return {
     '--font-sans-active': config.sansVar,
-    '--font-serif-active': config.serifVar,
+    '--font-serif-active': 'var(--font-space-grotesk)',
+    '--font-mono-active': 'var(--font-space-mono)',
   };
 }

@@ -179,9 +179,11 @@ export default async function CategoryPage(props: {
         />
       ) : (
         <header className="mb-6">
-          <h1 className="font-serif text-2xl font-bold tracking-tight">{data.title}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">
+            {data.title}
+          </h1>
           {data.description ? (
-            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{data.description}</p>
+            <p className="mt-1 text-sm text-warm-600 dark:text-warm-400">{data.description}</p>
           ) : null}
         </header>
       )}
@@ -197,7 +199,7 @@ export default async function CategoryPage(props: {
         {t('featuredProducts', { title: data.title })}
       </h2>
       {products.length === 0 ? (
-        <p className="py-8 text-center text-neutral-500">
+        <p className="py-8 text-center text-warm-500 dark:text-warm-400">
           {allProducts.length === 0
             ? t('noProductsInCategory')
             : `${t('noFilterResults')} ${t('tryAdjustingFilter')}`}
@@ -221,14 +223,14 @@ export default async function CategoryPage(props: {
             {faq.map((item, index) => (
               <div
                 key={`${index}-${item.question}`}
-                className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+                className="rounded-2xl border border-line bg-surface-raised p-5 shadow-soft-sm"
               >
                 <dt>
-                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+                  <h3 className="font-semibold text-warm-900 dark:text-warm-100">
                     {item.question}
                   </h3>
                 </dt>
-                <dd className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+                <dd className="mt-2 text-sm text-warm-600 dark:text-warm-400">
                   {item.answer}
                 </dd>
               </div>

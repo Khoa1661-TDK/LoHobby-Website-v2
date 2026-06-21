@@ -15,15 +15,24 @@ export default function ThemeToggle(): ReactElement {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
     const stored = localStorage.getItem(STORAGE_KEY);
     const initial =
-      stored === 'dark' || stored === 'light'
-        ? stored
-        : window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light';
+      stored === 'dark' || stored === 'light' ? stored : mql.matches ? 'dark' : 'light';
     setTheme(initial);
     setMounted(true);
+
+    // Track OS appearance changes live, but only while the user hasn't made an
+    // explicit choice — a saved preference always overrides the system setting.
+    function handleSystemChange(event: MediaQueryListEvent): void {
+      if (localStorage.getItem(STORAGE_KEY)) return;
+      const next = event.matches ? 'dark' : 'light';
+      setTheme(next);
+      applyTheme(next);
+    }
+
+    mql.addEventListener('change', handleSystemChange);
+    return () => mql.removeEventListener('change', handleSystemChange);
   }, []);
 
   function toggle(): void {

@@ -14,10 +14,10 @@ export function blockAppearanceClasses(appearance: BlockAppearance): {
   style: Record<string, string>;
 } {
   const bgClass = (() => {
-    if (appearance.background === 'light') return 'bg-warm-50';
-    if (appearance.background === 'dark') return 'bg-warm-900 text-warm-100';
+    if (appearance.background === 'light') return 'bg-surface-raised text-ink';
+    if (appearance.background === 'dark') return 'bg-ink text-surface';
     if (appearance.background === 'custom') return '';
-    return ''; // 'theme' inherits from parent
+    return ''; // 'theme' inherits from the page surface
   })();
 
   const widthClass = (() => {
@@ -57,6 +57,7 @@ export function blockAppearanceClasses(appearance: BlockAppearance): {
 import config from '@payload-config';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload } from 'payload';
+import { type Locale } from '@/i18n/routing';
 
 const PAGES_TAG = 'pages';
 
@@ -85,7 +86,9 @@ export type PageBlock =
   | { blockType: 'faq' } & Record<string, unknown>
   | { blockType: 'promoBanner' } & Record<string, unknown>
   | { blockType: 'videoEmbed' } & Record<string, unknown>
-  | { blockType: 'divider' } & Record<string, unknown>;
+  | { blockType: 'divider' } & Record<string, unknown>
+  | { blockType: 'recommendations' } & Record<string, unknown>
+  | { blockType: 'recentlyViewed' } & Record<string, unknown>;
 
 export type PageDoc = {
   id: string | number;
@@ -121,13 +124,14 @@ function toPageDoc(doc: RawPageDoc | undefined, fallbackSlug: string): PageDoc |
   };
 }
 
-async function fetchPageBySlug(slug: string): Promise<PageDoc | null> {
+async function fetchPageBySlug(slug: string, locale: Locale): Promise<PageDoc | null> {
   const trimmed = slug.trim();
   if (!trimmed) return null;
 
   const payload = await getPayload({ config });
   const result = await payload.find({
     collection: 'pages',
+    locale,
     where: {
       and: [{ slug: { equals: trimmed } }, { status: { equals: 'published' } }],
     },
@@ -140,13 +144,14 @@ async function fetchPageBySlug(slug: string): Promise<PageDoc | null> {
 }
 
 /** Draft-mode fetch: uncached and status-agnostic so unpublished edits render in live preview. */
-export async function fetchPageBySlugDraft(slug: string): Promise<PageDoc | null> {
+export async function fetchPageBySlugDraft(slug: string, locale: Locale): Promise<PageDoc | null> {
   const trimmed = slug.trim();
   if (!trimmed) return null;
 
   const payload = await getPayload({ config });
   const result = await payload.find({
     collection: 'pages',
+    locale,
     where: { slug: { equals: trimmed } },
     limit: 1,
     depth: 2,
@@ -156,16 +161,18 @@ export async function fetchPageBySlugDraft(slug: string): Promise<PageDoc | null
   return toPageDoc(result.docs[0] as RawPageDoc | undefined, trimmed);
 }
 
-const getCachedPage = (slug: string) =>
-  unstable_cache(() => fetchPageBySlug(slug), [`page-${slug}`], {
+// Cache key and the per-slug tag both include the locale; the shared `page-${slug}`
+// tag is also attached so revalidatePageCache(slug) clears every locale at once.
+const getCachedPage = (slug: string, locale: Locale) =>
+  unstable_cache(() => fetchPageBySlug(slug, locale), [`page-${slug}-${locale}`], {
     revalidate: 60,
-    tags: [PAGES_TAG, `page-${slug}`],
+    tags: [PAGES_TAG, `page-${slug}`, `page-${slug}-${locale}`],
   });
 
-export async function getPageBySlug(slug: string): Promise<PageDoc | null> {
-  return getCachedPage(slug)();
+export async function getPageBySlug(slug: string, locale: Locale): Promise<PageDoc | null> {
+  return getCachedPage(slug, locale)();
 }
 
-export async function getHomePage(): Promise<PageDoc | null> {
-  return getPageBySlug('home');
+export async function getHomePage(locale: Locale): Promise<PageDoc | null> {
+  return getPageBySlug('home', locale);
 }

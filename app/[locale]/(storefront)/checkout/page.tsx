@@ -31,8 +31,10 @@ export default async function CheckoutPage(): Promise<ReactElement> {
   if (cart.lines.length === 0) {
     return (
       <section className="mx-auto max-w-xl p-8 text-center">
-        <h1 className="text-2xl font-semibold">{t('emptyCartHeading')}</h1>
-        <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
+        <h1 className="font-display text-2xl font-semibold text-warm-900 dark:text-warm-100">
+          {t('emptyCartHeading')}
+        </h1>
+        <p className="mt-3 text-sm text-warm-600 dark:text-warm-400">
           {t('emptyCartBody')}
         </p>
         <Link
@@ -75,14 +77,16 @@ export default async function CheckoutPage(): Promise<ReactElement> {
   return (
     <section className="mx-auto w-full max-w-5xl px-4 py-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">{t('heading')}</h1>
-        <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-balance text-warm-900 dark:text-warm-100">
+          {t('heading')}
+        </h1>
+        <p className="mt-2 text-sm text-warm-600 dark:text-warm-400">
           {t('subtitle')}
         </p>
         {isGuest ? (
-          <p className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
+          <p className="mt-3 rounded-2xl border border-line bg-surface-raised px-4 py-3 text-sm text-warm-600 shadow-soft-sm dark:text-warm-400">
             {t('guestNotice')}{' '}
-            <Link href="/login?callbackUrl=/checkout" className="font-medium underline">
+            <Link href="/login?callbackUrl=/checkout" className="font-medium text-accent underline">
               {t('guestLogin')}
             </Link>{' '}
             {t('guestNoticeSuffix')}

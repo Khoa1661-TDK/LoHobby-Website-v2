@@ -16,7 +16,6 @@ export const VideoEmbed: Block = {
     {
       name: 'url',
       type: 'text',
-      required: true,
       admin: {
         description: 'YouTube or Vimeo embed URL.',
         placeholder: 'https://www.youtube.com/embed/...',

@@ -3,22 +3,36 @@ import type { ReactElement } from 'react';
 import ProductCard from '@/components/product/product-card';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
+import { getPayloadProductsByIds } from '@/lib/payload-products';
+
+// The `products` field is a Payload relationship: depending on populate depth it
+// arrives as full product docs or bare IDs. Either way ProductCard needs the
+// Shopify-shaped Product, so we resolve the IDs through the data layer rather than
+// passing raw Payload docs (which lack priceRange/featuredImage and crash the card).
+type ProductRef = { id: string | number } | string | number;
 
 type Props = {
   title?: string | null;
-  products?: { id: string | number; title: string; handle: string; [key: string]: unknown }[];
+  products?: ProductRef[] | null;
   layout?: 'grid' | 'carousel' | null;
 } & BlockAppearance;
 
-export default function FeaturedProductsBlock(props: Props): ReactElement {
+function toId(ref: ProductRef): string {
+  return typeof ref === 'object' && ref !== null ? String(ref.id) : String(ref);
+}
+
+export default async function FeaturedProductsBlock(props: Props): Promise<ReactElement> {
   const { title, products, layout = 'grid' } = props;
   const { section, container, style } = blockAppearanceClasses(props);
 
-  if (!products || products.length === 0) {
+  const ids = (products ?? []).map(toId).filter(Boolean);
+  const resolved = ids.length > 0 ? await getPayloadProductsByIds(ids) : [];
+
+  if (resolved.length === 0) {
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">
+          <p className="text-center text-sm text-ink/60">
             No products selected — configure this block in the admin panel.
           </p>
         </div>
@@ -30,7 +44,7 @@ export default function FeaturedProductsBlock(props: Props): ReactElement {
     <section className={section} style={style}>
       <div className={container}>
         {title ? (
-          <h2 className="mb-8 font-display text-2xl font-bold tracking-tight md:text-3xl">
+          <h2 className="mb-8 font-display text-2xl font-bold tracking-tight text-ink md:text-3xl">
             {title}
           </h2>
         ) : null}
@@ -41,12 +55,12 @@ export default function FeaturedProductsBlock(props: Props): ReactElement {
               : 'grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4'
           }
         >
-          {products.map((product) => (
+          {resolved.map((product) => (
             <div
-              key={String(product.id)}
+              key={product.id}
               className={layout === 'carousel' ? 'min-w-[250px] snap-start' : ''}
             >
-              <ProductCard product={product as Parameters<typeof ProductCard>[0]['product']} />
+              <ProductCard product={product} />
             </div>
           ))}
         </div>

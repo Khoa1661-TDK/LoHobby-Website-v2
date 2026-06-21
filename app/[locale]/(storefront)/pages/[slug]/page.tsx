@@ -6,20 +6,21 @@ import type { ReactElement } from 'react';
 import RenderBlocks from '@/components/blocks/RenderBlocks';
 import PreviewRefresh from '@/components/blocks/PreviewRefresh';
 import { fetchPageBySlugDraft, getPageBySlug, type PageDoc } from '@/lib/page-builder';
+import { type Locale } from '@/i18n/routing';
 import { getResolvedSiteName } from '@/lib/store-settings';
 
 type PageProps = {
-  params: Promise<{ locale: string; slug: string }>;
+  params: Promise<{ locale: Locale; slug: string }>;
 };
 
-async function loadPage(slug: string): Promise<PageDoc | null> {
+async function loadPage(slug: string, locale: Locale): Promise<PageDoc | null> {
   const { isEnabled } = await draftMode();
-  return isEnabled ? fetchPageBySlugDraft(slug) : getPageBySlug(slug);
+  return isEnabled ? fetchPageBySlugDraft(slug, locale) : getPageBySlug(slug, locale);
 }
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
-  const { slug } = await props.params;
-  const page = await loadPage(slug);
+  const { slug, locale } = await props.params;
+  const page = await loadPage(slug, locale);
   if (!page) return { title: 'Page not found' };
 
   const siteName = await getResolvedSiteName();
@@ -41,9 +42,9 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 export const revalidate = 60;
 
 export default async function PageBuilderPage(props: PageProps): Promise<ReactElement> {
-  const { slug } = await props.params;
+  const { slug, locale } = await props.params;
   const { isEnabled: isDraft } = await draftMode();
-  const page = isDraft ? await fetchPageBySlugDraft(slug) : await getPageBySlug(slug);
+  const page = await loadPage(slug, locale);
 
   if (!page) {
     notFound();

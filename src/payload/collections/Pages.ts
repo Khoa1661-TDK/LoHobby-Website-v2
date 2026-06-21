@@ -10,8 +10,8 @@ import { after } from 'next/server';
 import { payloadPublicReadAdminWrite } from '@/lib/payload-access';
 import { resolveCollectionSlug } from '@/lib/slugify';
 import { revalidatePageCache } from '@/lib/page-builder';
+import { shouldPreserveSlug } from '@/lib/page-builder/slug';
 import { groups } from '@/src/payload/groups';
-import { routing } from '@/i18n/routing';
 import {
   Hero,
   FeaturedCollection,
@@ -26,6 +26,8 @@ import {
   PromoBanner,
   VideoEmbed,
   Divider,
+  Recommendations,
+  RecentlyViewed,
 } from '@/src/payload/blocks';
 
 // Payload `blocks` fields have no field-level RowLabel slot; per-section labels are
@@ -48,6 +50,8 @@ const layoutBlocks = [
   PromoBanner,
   VideoEmbed,
   Divider,
+  Recommendations,
+  RecentlyViewed,
 ].map((block) => ({
   ...block,
   admin: {
@@ -67,6 +71,15 @@ const autoSlugFromTitle: CollectionBeforeChangeHook = async ({
 }) => {
   if (!data) return data;
 
+  const existingSlug = typeof originalDoc?.slug === 'string' ? originalDoc.slug.trim() : '';
+  const providedSlug = typeof data.slug === 'string' ? data.slug.trim() : '';
+
+  // Keep the stored slug on a plain update so a live builder URL never moves.
+  if (shouldPreserveSlug({ operation, existingSlug, providedSlug })) {
+    data.slug = existingSlug;
+    return data;
+  }
+
   const slug = await resolveCollectionSlug(req.payload, 'pages', {
     title: typeof data.title === 'string' ? data.title : undefined,
     slug: typeof data.slug === 'string' ? data.slug : undefined,
@@ -80,23 +93,27 @@ const autoSlugFromTitle: CollectionBeforeChangeHook = async ({
   return data;
 };
 
+// Cache revalidation is scheduled to run after the HTTP response via next/server
+// `after()`. When a page is written outside a request scope (CLI seed scripts, e.g.
+// scripts/seed-home-page.ts), `after()` throws — and there is no live server cache to
+// revalidate anyway, so the revalidation is safely skipped.
+function revalidatePageAfterResponse(doc: { slug?: unknown }): void {
+  const slug = typeof doc.slug === 'string' ? doc.slug : '';
+  if (!slug) return;
+  try {
+    after(() => revalidatePageCache(slug));
+  } catch {
+    // Not in a request scope (e.g. a seed/CLI script) — nothing to revalidate.
+  }
+}
+
 const afterChangeHook: CollectionAfterChangeHook = ({ doc }) => {
-  after(() => {
-    const slug = typeof doc.slug === 'string' ? doc.slug : '';
-    if (slug) {
-      revalidatePageCache(slug);
-    }
-  });
+  revalidatePageAfterResponse(doc);
   return doc;
 };
 
 const afterDeleteHook: CollectionAfterDeleteHook = ({ doc }) => {
-  after(() => {
-    const slug = typeof doc.slug === 'string' ? doc.slug : '';
-    if (slug) {
-      revalidatePageCache(slug);
-    }
-  });
+  revalidatePageAfterResponse(doc);
   return doc;
 };
 
@@ -108,24 +125,12 @@ export const Pages: CollectionConfig = {
     defaultColumns: ['title', 'slug', 'status', 'updatedAt'],
     group: groups.content.name,
     description:
-      'Build storefront pages by stacking sections. Use the live preview on the right to see your changes.',
-    livePreview: {
-      url: ({ data }) => {
-        const slug = typeof data?.slug === 'string' ? data.slug.trim() : '';
-        if (!slug) return '';
-        const base =
-          process.env.NEXT_PUBLIC_APP_URL ??
-          process.env.NEXT_PUBLIC_SITE_URL ??
-          'http://localhost:3000';
-        const secret = process.env.PREVIEW_SECRET ?? '';
-        const path = `/${routing.defaultLocale}/pages/${slug}`;
-        return `${base}/api/preview?secret=${encodeURIComponent(secret)}&path=${encodeURIComponent(path)}`;
+      'Click a page title to edit it in the visual builder. Use “+ New page” to start a blank page.',
+    components: {
+      beforeListTable: ['@/src/payload/components/NewPageButton#NewPageButton'],
+      edit: {
+        beforeDocumentControls: ['@/src/payload/components/OpenBuilderButton#OpenBuilderButton'],
       },
-      breakpoints: [
-        { label: 'Mobile', name: 'mobile', width: 375, height: 667 },
-        { label: 'Tablet', name: 'tablet', width: 768, height: 1024 },
-        { label: 'Desktop', name: 'desktop', width: 1440, height: 900 },
-      ],
     },
   },
   access: payloadPublicReadAdminWrite,
@@ -139,6 +144,12 @@ export const Pages: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
+      admin: {
+        components: {
+          Cell: '@/src/payload/components/PageTitleCell#PageTitleCell',
+        },
+      },
     },
     {
       name: 'slug',
@@ -166,8 +177,13 @@ export const Pages: CollectionConfig = {
     {
       name: 'layout',
       type: 'blocks',
+      localized: true,
       labels: { singular: 'Section', plural: 'Sections' },
       blocks: layoutBlocks,
+      admin: {
+        hidden: true,
+        description: 'Edited in the visual builder.',
+      },
     },
   ],
 };

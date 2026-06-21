@@ -189,9 +189,20 @@ export default function CartModal({ cart }: Props): ReactElement {
                                     })
                                   }
                                 />
-                                <span className="flex w-8 items-center justify-center text-sm tabular-nums">
-                                  {item.quantity}
-                                </span>
+                                <QtyInput
+                                  quantity={item.quantity}
+                                  disabled={isPending}
+                                  onCommit={(value) =>
+                                    startTransition(async () => {
+                                      await updateItemAction(
+                                        item.merchandiseId,
+                                        value,
+                                        item.variantSku,
+                                      );
+                                      refresh();
+                                    })
+                                  }
+                                />
                                 <QtyButton
                                   type="plus"
                                   disabled={isPending}
@@ -307,6 +318,54 @@ function CloseIcon({ className }: { className?: string }): ReactElement {
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
     </svg>
+  );
+}
+
+function QtyInput({
+  quantity,
+  disabled,
+  onCommit,
+}: {
+  quantity: number;
+  disabled: boolean;
+  onCommit: (value: number) => void;
+}): ReactElement {
+  const t = useTranslations('cart');
+  const [value, setValue] = useState(String(quantity));
+
+  // Re-sync the field with the canonical quantity after a server refresh
+  // (e.g. the value was clamped, or +/- buttons changed it).
+  useEffect(() => {
+    setValue(String(quantity));
+  }, [quantity]);
+
+  const commit = (): void => {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed === quantity) {
+      setValue(String(quantity));
+      return;
+    }
+    onCommit(parsed);
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      aria-label={t('quantityAria')}
+      disabled={disabled}
+      value={value}
+      onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, ''))}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+      }}
+      className="w-8 bg-transparent text-center text-sm tabular-nums text-warm-900 outline-none focus:ring-0 disabled:opacity-50 dark:text-warm-100"
+    />
   );
 }
 

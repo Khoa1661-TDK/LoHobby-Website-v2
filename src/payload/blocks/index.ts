@@ -12,3 +12,5 @@ export { FAQ } from './FAQ';
 export { PromoBanner } from './PromoBanner';
 export { VideoEmbed } from './VideoEmbed';
 export { Divider } from './Divider';
+export { Recommendations } from './Recommendations';
+export { RecentlyViewed } from './RecentlyViewed';

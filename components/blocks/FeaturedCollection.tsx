@@ -28,7 +28,7 @@ export default async function FeaturedCollectionBlock(props: Props): Promise<Rea
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">
+          <p className="text-center text-sm text-ink/60">
             No collection selected — configure this block in the admin panel.
           </p>
         </div>
@@ -51,7 +51,7 @@ export default async function FeaturedCollectionBlock(props: Props): Promise<Rea
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">No products found.</p>
+          <p className="text-center text-sm text-ink/60">No products found.</p>
         </div>
       </section>
     );
@@ -60,14 +60,14 @@ export default async function FeaturedCollectionBlock(props: Props): Promise<Rea
   return (
     <section className={section} style={style}>
       <div className={container}>
-        <div className="flex items-end justify-between gap-4 border-b border-warm-200/60 pb-4 dark:border-warm-800/30">
-          <h2 className="text-xl font-bold tracking-tight text-warm-900 sm:text-2xl dark:text-warm-100">
+        <div className="flex items-end justify-between gap-4 border-b border-line pb-4">
+          <h2 className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">
             {collectionTitle}
           </h2>
           <Link
             href={`/search/${collectionSlug}`}
             prefetch
-            className="shrink-0 text-sm font-medium text-terracotta-600 transition-colors duration-200 hover:text-terracotta-700 dark:text-terracotta-400 dark:hover:text-terracotta-300"
+            className="shrink-0 text-sm font-medium text-accent transition-colors duration-200 hover:text-accent/80"
           >
             Xem tất cả →
           </Link>

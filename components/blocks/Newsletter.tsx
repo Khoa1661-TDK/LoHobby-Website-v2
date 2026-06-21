@@ -5,7 +5,7 @@ import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 
 type Props = {
-  headline: string;
+  headline?: string | null;
   subheadline?: string | null;
   placeholder?: string | null;
   buttonLabel?: string | null;
@@ -14,24 +14,34 @@ type Props = {
 
 export default function NewsletterBlock(props: Props): ReactElement {
   const { headline, subheadline, disclaimer } = props;
-  const { section, container, style } = blockAppearanceClasses(props);
+  // Newsletter is the designated filament-yellow accent block — its background is
+  // fixed regardless of the editor-configurable `background` appearance field, so
+  // we derive padding/width only and apply bg-accent-2 ourselves. Foreground colors
+  // are fixed hex values (not theme tokens) because this block stays yellow in both
+  // light and dark mode, so flipping tokens like text-ink would break contrast.
+  const { section, container, style } = blockAppearanceClasses({
+    ...props,
+    background: 'theme',
+  });
 
   return (
-    <section className={section} style={style}>
+    <section className={`bg-accent-2 ${section}`} style={style}>
       <div className={`${container} text-center`}>
-        <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+        <h2 className="font-display text-2xl font-bold tracking-tight text-[#1B2027] md:text-3xl">
           {headline}
         </h2>
         {subheadline ? (
-          <p className="mt-3 text-warm-600 dark:text-warm-300 max-w-lg mx-auto">
+          <p className="mt-3 text-[#1B2027]/70 max-w-lg mx-auto">
             {subheadline}
           </p>
         ) : null}
         <div className="mt-6">
-          <FooterNewsletter />
+          <div className="mx-auto max-w-xl rounded-2xl bg-[#14181D] p-6 text-left">
+            <FooterNewsletter />
+          </div>
         </div>
         {disclaimer ? (
-          <p className="mt-3 text-xs text-warm-400">{disclaimer}</p>
+          <p className="mt-3 text-xs text-[#1B2027]/70">{disclaimer}</p>
         ) : null}
       </div>
     </section>

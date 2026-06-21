@@ -40,8 +40,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 COPY --from=build /app ./
 # public/media is a mounted volume at runtime; ensure the dir exists and is owned.
-RUN mkdir -p /app/public/media \
- && chown -R node:node /app/public/media \
+# .next/cache is written at runtime (image optimization, fetch/prerender cache);
+# the build runs as root, so hand .next to the non-root runtime user or those
+# writes fail with EACCES (broken images + cache).
+RUN mkdir -p /app/public/media /app/.next/cache \
+ && chown -R node:node /app/public/media /app/.next \
  && chmod +x docker/entrypoint.sh
 USER node
 EXPOSE 3000

@@ -30,7 +30,10 @@ import { ExportListMenuItem as ExportListMenuItem_2cddc2e1d3f965d7263141af56b26a
 import { ImportListMenuItem as ImportListMenuItem_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { OrderFulfillmentPanel as OrderFulfillmentPanel_2fd51c9bcd845da5b2138d2139d51a79 } from '@/src/payload/components/OrderFulfillmentPanel'
 import { OrderFulfillmentListCell as OrderFulfillmentListCell_79069c0ee68bf4b676e07f84ff39e4bc } from '@/src/payload/components/OrderFulfillmentListCell'
+import { PageTitleCell as PageTitleCell_1e7e9ec5d13cfeb5858a40c6a339a23d } from '@/src/payload/components/PageTitleCell'
 import { SectionRowLabel as SectionRowLabel_5bd5b1883ff6675f703ee3063c405278 } from '@/src/payload/components/SectionRowLabel'
+import { NewPageButton as NewPageButton_74f9a1a93b7de9aa3d66ef85fa9991ce } from '@/src/payload/components/NewPageButton'
+import { OpenBuilderButton as OpenBuilderButton_8824d7dbf23d8d76582a7be7cfd9d295 } from '@/src/payload/components/OpenBuilderButton'
 import { SortBy as SortBy_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { FieldsToExport as FieldsToExport_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { CollectionField as CollectionField_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
@@ -80,7 +83,10 @@ export const importMap = {
   "@shopnex/import-export-plugin/rsc#ImportListMenuItem": ImportListMenuItem_2cddc2e1d3f965d7263141af56b26a90,
   "@/src/payload/components/OrderFulfillmentPanel#OrderFulfillmentPanel": OrderFulfillmentPanel_2fd51c9bcd845da5b2138d2139d51a79,
   "@/src/payload/components/OrderFulfillmentListCell#OrderFulfillmentListCell": OrderFulfillmentListCell_79069c0ee68bf4b676e07f84ff39e4bc,
+  "@/src/payload/components/PageTitleCell#PageTitleCell": PageTitleCell_1e7e9ec5d13cfeb5858a40c6a339a23d,
   "@/src/payload/components/SectionRowLabel#SectionRowLabel": SectionRowLabel_5bd5b1883ff6675f703ee3063c405278,
+  "@/src/payload/components/NewPageButton#NewPageButton": NewPageButton_74f9a1a93b7de9aa3d66ef85fa9991ce,
+  "@/src/payload/components/OpenBuilderButton#OpenBuilderButton": OpenBuilderButton_8824d7dbf23d8d76582a7be7cfd9d295,
   "@shopnex/import-export-plugin/rsc#SortBy": SortBy_2cddc2e1d3f965d7263141af56b26a90,
   "@shopnex/import-export-plugin/rsc#FieldsToExport": FieldsToExport_2cddc2e1d3f965d7263141af56b26a90,
   "@shopnex/import-export-plugin/rsc#CollectionField": CollectionField_2cddc2e1d3f965d7263141af56b26a90,

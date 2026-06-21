@@ -6,7 +6,7 @@ import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 
 type Props = {
-  headline: string;
+  headline?: string | null;
   body?: { root?: { children?: unknown } } | string | null;
   image?: { url?: string; alt?: string } | null;
   imagePosition?: 'left' | 'right' | null;
@@ -42,7 +42,7 @@ export default function ImageWithTextBlock(props: Props): ReactElement {
         <div className={container}>
           <h2 className="font-display text-2xl font-bold">{headline}</h2>
           {body ? (
-            <div className="prose prose-warm mt-4 max-w-none dark:prose-invert">
+            <div className="prose mt-4 max-w-none dark:prose-invert">
               {typeof body === 'string' ? <p>{body}</p> : null}
             </div>
           ) : null}
@@ -64,7 +64,7 @@ export default function ImageWithTextBlock(props: Props): ReactElement {
           >
             <Image
               src={image.url}
-              alt={image.alt ?? headline}
+              alt={image.alt ?? headline ?? ''}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
@@ -75,7 +75,7 @@ export default function ImageWithTextBlock(props: Props): ReactElement {
               {headline}
             </h2>
             {body ? (
-              <div className="prose prose-warm mt-4 max-w-none dark:prose-invert">
+              <div className="prose mt-4 max-w-none dark:prose-invert">
                 {typeof body === 'string' ? <p>{body}</p> : null}
               </div>
             ) : null}

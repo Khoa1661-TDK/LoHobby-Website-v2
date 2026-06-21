@@ -94,9 +94,9 @@ export default async function CheckoutSuccessPage(props: {
     <section className="mx-auto max-w-xl px-4 py-8">
       {shouldPoll && <OrderStatusPoller orderCode={code} initialStatus={status} />}
 
-      <h1 className="text-2xl font-semibold">{heading}</h1>
+      <h1 className="font-display text-2xl font-semibold text-warm-900 dark:text-warm-100">{heading}</h1>
 
-      <dl className="mt-6 space-y-2 text-sm">
+      <dl className="mt-6 space-y-2 rounded-2xl border border-line bg-surface-raised p-5 text-sm shadow-soft-sm">
         <div className="flex justify-between border-b py-2">
           <dt>{t('orderCode')}</dt>
           <dd className="font-mono">{code}</dd>

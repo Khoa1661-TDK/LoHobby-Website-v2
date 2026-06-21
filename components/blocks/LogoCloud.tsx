@@ -25,7 +25,7 @@ export default function LogoCloudBlock(props: Props): ReactElement {
     return (
       <section className={section} style={style}>
         <div className={container}>
-          <p className="text-center text-sm text-warm-500">
+          <p className="text-center text-sm text-ink/60">
             No logos — configure this block in the admin panel.
           </p>
         </div>
