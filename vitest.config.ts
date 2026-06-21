@@ -27,6 +27,9 @@ export default defineConfig({
       },
       {
         resolve: { alias },
+        // App components rely on the automatic JSX runtime (Next compiles them that
+        // way and most don't import React). Match that here so they render under SSR.
+        esbuild: { jsx: 'automatic' },
         test: {
           name: 'jsdom',
           globals: true,
