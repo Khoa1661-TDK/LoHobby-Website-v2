@@ -16,7 +16,7 @@ describe('RelationshipPicker', () => {
     const fetchSpy = mockFetchOnce([{ id: 7, title: 'Bench Plate' }]);
     render(<RelationshipPicker relationTo="products" onSelect={() => {}} onClose={() => {}} />);
     await waitFor(() => expect(screen.getByText('Bench Plate')).toBeInTheDocument());
-    expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/api/products');
+    expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/admin/api/products');
   });
 
   it('should call onSelect with the chosen item', async () => {

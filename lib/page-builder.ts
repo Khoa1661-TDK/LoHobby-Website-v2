@@ -88,7 +88,10 @@ export type PageBlock =
   | { blockType: 'videoEmbed' } & Record<string, unknown>
   | { blockType: 'divider' } & Record<string, unknown>
   | { blockType: 'recommendations' } & Record<string, unknown>
-  | { blockType: 'recentlyViewed' } & Record<string, unknown>;
+  | { blockType: 'recentlyViewed' } & Record<string, unknown>
+  | { blockType: 'button' } & Record<string, unknown>
+  | { blockType: 'text' } & Record<string, unknown>
+  | { blockType: 'socialBar' } & Record<string, unknown>;
 
 export type PageDoc = {
   id: string | number;

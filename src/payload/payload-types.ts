@@ -760,6 +760,9 @@ export interface Page {
         | DividerBlock
         | RecommendationsBlock
         | RecentlyViewedBlock
+        | ButtonBlock
+        | TextBlock
+        | SocialBarBlock
       )[]
     | null;
   meta?: {
@@ -963,6 +966,10 @@ export interface GalleryBlock {
     | {
         image?: (number | null) | Media;
         caption?: string | null;
+        /**
+         * Optional — makes this image a link.
+         */
+        href?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1287,6 +1294,122 @@ export interface RecentlyViewedBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'recentlyViewed';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ButtonBlock".
+ */
+export interface ButtonBlock {
+  label: string;
+  /**
+   * Use "/" for internal pages or "http(s)://" for external links.
+   */
+  url?: string | null;
+  openInNewTab?: boolean | null;
+  style?: ('primary' | 'outline' | 'minimal') | null;
+  align?: ('left' | 'center' | 'right') | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'button';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TextBlock".
+ */
+export interface TextBlock {
+  heading?: string | null;
+  body?: string | null;
+  textAlign?: ('left' | 'center') | null;
+  size?: ('small' | 'normal' | 'large') | null;
+  /**
+   * Use "/" for internal pages or "http(s)://" for external links.
+   */
+  url?: string | null;
+  openInNewTab?: boolean | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'text';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SocialBarBlock".
+ */
+export interface SocialBarBlock {
+  title?: string | null;
+  items?:
+    | {
+        platform:
+          | 'facebook'
+          | 'instagram'
+          | 'x'
+          | 'youtube'
+          | 'tiktok'
+          | 'discord'
+          | 'linkedin'
+          | 'threads'
+          | 'pinterest'
+          | 'telegram'
+          | 'whatsapp'
+          | 'github'
+          | 'email';
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  align?: ('left' | 'center' | 'right') | null;
+  iconStyle?: ('solid' | 'outline') | null;
+  size?: ('small' | 'medium' | 'large') | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'socialBar';
 }
 /**
  * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
@@ -1913,6 +2036,9 @@ export interface PagesSelect<T extends boolean = true> {
         divider?: T | DividerBlockSelect<T>;
         recommendations?: T | RecommendationsBlockSelect<T>;
         recentlyViewed?: T | RecentlyViewedBlockSelect<T>;
+        button?: T | ButtonBlockSelect<T>;
+        text?: T | TextBlockSelect<T>;
+        socialBar?: T | SocialBarBlockSelect<T>;
       };
   meta?:
     | T
@@ -2019,6 +2145,7 @@ export interface GalleryBlockSelect<T extends boolean = true> {
     | {
         image?: T;
         caption?: T;
+        href?: T;
         id?: T;
       };
   layout?: T;
@@ -2183,6 +2310,64 @@ export interface RecentlyViewedBlockSelect<T extends boolean = true> {
   title?: T;
   limit?: T;
   products?: T;
+  background?: T;
+  backgroundCustom?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ButtonBlock_select".
+ */
+export interface ButtonBlockSelect<T extends boolean = true> {
+  label?: T;
+  url?: T;
+  openInNewTab?: T;
+  style?: T;
+  align?: T;
+  background?: T;
+  backgroundCustom?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TextBlock_select".
+ */
+export interface TextBlockSelect<T extends boolean = true> {
+  heading?: T;
+  body?: T;
+  textAlign?: T;
+  size?: T;
+  url?: T;
+  openInNewTab?: T;
+  background?: T;
+  backgroundCustom?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SocialBarBlock_select".
+ */
+export interface SocialBarBlockSelect<T extends boolean = true> {
+  title?: T;
+  items?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  align?: T;
+  iconStyle?: T;
+  size?: T;
   background?: T;
   backgroundCustom?: T;
   containerWidth?: T;

@@ -27,6 +27,14 @@ export const Gallery: Block = {
           name: 'caption',
           type: 'text',
         },
+        {
+          name: 'href',
+          type: 'text',
+          admin: {
+            placeholder: '/products/… or https://…',
+            description: 'Optional — makes this image a link.',
+          },
+        },
       ],
     },
     {

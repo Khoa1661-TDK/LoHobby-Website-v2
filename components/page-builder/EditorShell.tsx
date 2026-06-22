@@ -22,7 +22,7 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
   const [title, setTitle] = useState<string>(page.title);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
-  const { status, publish } = useAutosave(page.id, layout, title, locale);
+  const { status, publish } = useAutosave(page.id, layout, title, locale, schemas);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const readyRef = useRef(false);

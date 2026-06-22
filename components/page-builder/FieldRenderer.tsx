@@ -176,7 +176,8 @@ function RelationshipField({
     if (missing.length === 0) return;
     const params = new URLSearchParams({ depth: '0', limit: String(missing.length) });
     missing.forEach((id) => params.append('where[id][in][]', id));
-    fetch(`/api/${relationTo}?${params.toString()}`, { credentials: 'same-origin' })
+    // Payload REST is mounted at '/admin/api' (see payload.config.ts routes.api).
+    fetch(`/admin/api/${relationTo}?${params.toString()}`, { credentials: 'same-origin' })
       .then((r) => r.json())
       .then((data) => {
         const docs = Array.isArray(data?.docs) ? data.docs : [];
@@ -284,6 +285,59 @@ function RelationshipField({
   );
 }
 
+// Names of `text` fields that hold a CSS color and should render a swatch picker
+// instead of a raw hex input. backgroundCustom is the appearance custom-color field.
+const COLOR_FIELDS = new Set(['backgroundCustom']);
+const HEX6 = /^#[0-9a-fA-F]{6}$/;
+
+function ColorField({
+  id,
+  value,
+  disabled,
+  onChange,
+}: {
+  id: string;
+  value: unknown;
+  disabled: boolean;
+  onChange: (v: unknown) => void;
+}): ReactElement {
+  const hex = typeof value === 'string' ? value : '';
+  // Native <input type="color"> needs a valid #rrggbb; fall back to a neutral
+  // swatch for display when empty/invalid without committing it.
+  const swatch = HEX6.test(hex) ? hex : '#f5f0eb';
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        id={id}
+        type="color"
+        value={swatch}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Pick color"
+        className="h-8 w-10 shrink-0 cursor-pointer rounded border border-warm-300 bg-transparent p-0 disabled:cursor-not-allowed"
+      />
+      <input
+        type="text"
+        value={hex}
+        disabled={disabled}
+        placeholder="#f5f0eb"
+        onChange={(e) => onChange(e.target.value)}
+        className="w-28 rounded border border-warm-300 bg-warm-50 px-2 py-1 text-sm text-warm-900 dark:border-warm-700 dark:bg-warm-900 dark:text-warm-100"
+      />
+      {hex && !disabled && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          aria-label="Clear color"
+          className="text-xs text-red-500"
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
+}
+
 function Field({
   field,
   value,
@@ -301,6 +355,9 @@ function Field({
   const control = (() => {
     switch (field.type) {
       case 'text':
+        if (COLOR_FIELDS.has(field.name)) {
+          return <ColorField id={id} value={value} disabled={disabled} onChange={set} />;
+        }
         return (
           <input
             id={id}

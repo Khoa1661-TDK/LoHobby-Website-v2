@@ -19,7 +19,9 @@ export default function RelationshipPicker({ relationTo, onSelect, onClose }: Pr
     const controller = new AbortController();
     const params = new URLSearchParams({ limit: '20', depth: '0' });
     if (query.trim()) params.set('where[title][like]', query.trim());
-    fetch(`/api/${relationTo}?${params.toString()}`, {
+    // Payload's REST API is mounted at routes.api = '/admin/api' (see payload.config.ts),
+    // not the default '/api' — match use-autosave.ts's pagePatchPath base.
+    fetch(`/admin/api/${relationTo}?${params.toString()}`, {
       credentials: 'same-origin',
       signal: controller.signal,
     })

@@ -28,6 +28,9 @@ import {
   Divider,
   Recommendations,
   RecentlyViewed,
+  Button,
+  Text,
+  SocialBar,
 } from '@/src/payload/blocks';
 
 // Payload `blocks` fields have no field-level RowLabel slot; per-section labels are
@@ -52,6 +55,9 @@ const layoutBlocks = [
   Divider,
   Recommendations,
   RecentlyViewed,
+  Button,
+  Text,
+  SocialBar,
 ].map((block) => ({
   ...block,
   admin: {

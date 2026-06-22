@@ -13,7 +13,8 @@ export default function MediaPicker({ onSelect, onClose }: Props): ReactElement 
   const [items, setItems] = useState<MediaDoc[]>([]);
 
   useEffect(() => {
-    fetch('/api/media?limit=60&depth=0', { credentials: 'same-origin' })
+    // Payload REST is mounted at '/admin/api' (see payload.config.ts routes.api), not '/api'.
+    fetch('/admin/api/media?limit=60&depth=0', { credentials: 'same-origin' })
       .then((r) => r.json())
       .then((data) => setItems(Array.isArray(data?.docs) ? data.docs : []))
       .catch(() => setItems([]));
@@ -22,7 +23,7 @@ export default function MediaPicker({ onSelect, onClose }: Props): ReactElement 
   const upload = async (file: File) => {
     const form = new FormData();
     form.append('file', file);
-    const res = await fetch('/api/media', {
+    const res = await fetch('/admin/api/media', {
       method: 'POST',
       credentials: 'same-origin',
       body: form,

@@ -14,3 +14,6 @@ export { VideoEmbed } from './VideoEmbed';
 export { Divider } from './Divider';
 export { Recommendations } from './Recommendations';
 export { RecentlyViewed } from './RecentlyViewed';
+export { Button } from './Button';
+export { Text } from './Text';
+export { SocialBar } from './SocialBar';

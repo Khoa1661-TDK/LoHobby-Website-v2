@@ -1,6 +1,8 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PageBlock } from '@/lib/page-builder';
+import type { BlockSchema } from '@/lib/page-builder/block-schemas';
+import { stripBlockIds } from '@/lib/page-builder/strip-block-ids';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -41,6 +43,7 @@ export function useAutosave(
   layout: PageBlock[],
   title: string,
   locale: string,
+  schemas: BlockSchema[],
 ) {
   const [status, setStatus] = useState<SaveStatus>('idle');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,24 +58,28 @@ export function useAutosave(
     if (timer.current) clearTimeout(timer.current);
     setStatus('saving');
     timer.current = setTimeout(() => {
-      patchPage(pageId, buildPatchBody(layout, 'draft', title), locale)
+      patchPage(pageId, buildPatchBody(stripBlockIds(layout, schemas), 'draft', title), locale)
         .then(() => setStatus('saved'))
         .catch(() => setStatus('error'));
     }, 800);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [pageId, layout, title, locale]);
+  }, [pageId, layout, title, locale, schemas]);
 
   const publish = useCallback(async () => {
     setStatus('saving');
     try {
-      await patchPage(pageId, buildPatchBody(layout, 'published', title), locale);
+      await patchPage(
+        pageId,
+        buildPatchBody(stripBlockIds(layout, schemas), 'published', title),
+        locale,
+      );
       setStatus('saved');
     } catch {
       setStatus('error');
     }
-  }, [pageId, layout, title, locale]);
+  }, [pageId, layout, title, locale, schemas]);
 
   return { status, publish };
 }

@@ -18,6 +18,9 @@ import {
   Divider,
   Recommendations,
   RecentlyViewed,
+  Button,
+  Text,
+  SocialBar,
 } from '@/src/payload/blocks';
 
 export type FieldCondition = { field: string; equals: unknown };
@@ -61,6 +64,9 @@ const REGISTERED_BLOCKS: Block[] = [
   Divider,
   Recommendations,
   RecentlyViewed,
+  Button,
+  Text,
+  SocialBar,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the
