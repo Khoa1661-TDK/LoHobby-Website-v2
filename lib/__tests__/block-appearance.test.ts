@@ -17,10 +17,28 @@ describe('blockAppearanceClasses', () => {
     expect(section).not.toContain('bg-');
   });
 
-  it('should set inline backgroundColor and no bg class when custom', () => {
+  it('should emit blk-custom-bg class and CSS vars when custom', () => {
     const r = blockAppearanceClasses({ background: 'custom', backgroundCustom: '#abcdef' });
-    expect(r.style.backgroundColor).toBe('#abcdef');
-    expect(r.section).not.toContain('bg-warm');
+    expect(r.section).toContain('blk-custom-bg');
+    expect(r.style['--blk-bg']).toBe('#abcdef');
+    expect(r.style['--blk-bg-dark']).toBe('#abcdef'); // dark falls back to light
+    expect(r.style.backgroundColor).toBeUndefined();
+  });
+
+  it('should use the dark custom color for the dark var when provided', () => {
+    const r = blockAppearanceClasses({
+      background: 'custom',
+      backgroundCustom: '#ffffff',
+      backgroundCustomDark: '#14181d',
+    });
+    expect(r.style['--blk-bg']).toBe('#ffffff');
+    expect(r.style['--blk-bg-dark']).toBe('#14181d');
+  });
+
+  it('should not emit blk-custom-bg or color vars for non-custom backgrounds', () => {
+    const r = blockAppearanceClasses({ background: 'theme' });
+    expect(r.section).not.toContain('blk-custom-bg');
+    expect(r.style['--blk-bg']).toBeUndefined();
   });
 
   it('should keep padding and width mapping intact', () => {

@@ -3,6 +3,7 @@
 export type BlockAppearance = {
   background?: 'theme' | 'light' | 'dark' | 'custom' | null;
   backgroundCustom?: string | null;
+  backgroundCustomDark?: string | null;
   containerWidth?: 'narrow' | 'normal' | 'wide' | 'full' | null;
   paddingY?: 'compact' | 'base' | 'spacious' | 'none' | null;
 };
@@ -16,7 +17,7 @@ export function blockAppearanceClasses(appearance: BlockAppearance): {
   const bgClass = (() => {
     if (appearance.background === 'light') return 'bg-surface-raised text-ink';
     if (appearance.background === 'dark') return 'bg-ink text-surface';
-    if (appearance.background === 'custom') return '';
+    if (appearance.background === 'custom') return 'blk-custom-bg';
     return ''; // 'theme' inherits from the page surface
   })();
 
@@ -46,12 +47,17 @@ export function blockAppearanceClasses(appearance: BlockAppearance): {
     }
   })();
 
+  const customStyle: Record<string, string> = {};
+  if (appearance.background === 'custom' && appearance.backgroundCustom) {
+    const light = appearance.backgroundCustom;
+    customStyle['--blk-bg'] = light;
+    customStyle['--blk-bg-dark'] = appearance.backgroundCustomDark || light;
+  }
+
   return {
     section: [bgClass, pyClass].filter(Boolean).join(' '),
     container: `${widthClass} px-4`,
-    style: appearance.background === 'custom' && appearance.backgroundCustom
-      ? { backgroundColor: appearance.backgroundCustom }
-      : {},
+    style: customStyle,
   };
 }
 import config from '@payload-config';
