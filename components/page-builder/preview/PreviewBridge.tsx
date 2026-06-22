@@ -12,7 +12,11 @@ export default function PreviewBridge(): ReactElement {
     function onMessage(event: MessageEvent): void {
       if (event.origin !== window.location.origin) return;
       const msg = event.data;
-      if (isParentToPreview(msg) && msg.type === 'refresh') router.refresh();
+      if (!isParentToPreview(msg)) return;
+      if (msg.type === 'refresh') router.refresh();
+      if (msg.type === 'setTheme') {
+        document.documentElement.classList.toggle('dark', msg.mode === 'dark');
+      }
     }
     window.addEventListener('message', onMessage);
     window.parent.postMessage(ready(), window.location.origin);

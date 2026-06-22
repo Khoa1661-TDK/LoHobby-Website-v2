@@ -4,6 +4,7 @@ import {
   select,
   highlight,
   refresh,
+  setTheme,
   isPreviewToParent,
   isParentToPreview,
 } from '@/lib/page-builder/preview-messages';
@@ -35,5 +36,19 @@ describe('preview-messages protocol', () => {
   it('should not cross-accept directions', () => {
     expect(isParentToPreview(select(0))).toBe(false);
     expect(isPreviewToParent(refresh())).toBe(false);
+  });
+});
+
+describe('setTheme preview message', () => {
+  it('should build a typed setTheme message', () => {
+    expect(setTheme('dark')).toEqual({ source: 'pb', type: 'setTheme', mode: 'dark' });
+  });
+
+  it('should accept a valid setTheme message in the guard', () => {
+    expect(isParentToPreview(setTheme('light'))).toBe(true);
+  });
+
+  it('should reject a setTheme message with an invalid mode', () => {
+    expect(isParentToPreview({ source: 'pb', type: 'setTheme', mode: 'blue' })).toBe(false);
   });
 });
