@@ -798,6 +798,10 @@ export interface HeroBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -830,6 +834,10 @@ export interface FeaturedCollectionBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -857,6 +865,10 @@ export interface FeaturedProductsBlock {
    * Hex color, e.g. #f5f0eb.
    */
   backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
   /**
    * Max content width for this section.
    */
@@ -898,6 +910,10 @@ export interface RichTextBlock {
    * Hex color, e.g. #f5f0eb.
    */
   backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
   /**
    * Max content width for this section.
    */
@@ -945,6 +961,10 @@ export interface ImageWithTextBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -983,6 +1003,10 @@ export interface GalleryBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -1020,6 +1044,10 @@ export interface TestimonialsBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -1055,6 +1083,10 @@ export interface LogoCloudBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -1084,6 +1116,10 @@ export interface NewsletterBlock {
    * Hex color, e.g. #f5f0eb.
    */
   backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
   /**
    * Max content width for this section.
    */
@@ -1133,6 +1169,10 @@ export interface FAQBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -1165,6 +1205,10 @@ export interface PromoBannerBlock {
    * Hex color, e.g. #f5f0eb.
    */
   backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
   /**
    * Max content width for this section.
    */
@@ -1201,6 +1245,10 @@ export interface VideoEmbedBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -1227,6 +1275,10 @@ export interface DividerBlock {
    * Hex color, e.g. #f5f0eb.
    */
   backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
   /**
    * Max content width for this section.
    */
@@ -1256,6 +1308,10 @@ export interface RecommendationsBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -1283,6 +1339,10 @@ export interface RecentlyViewedBlock {
    * Hex color, e.g. #f5f0eb.
    */
   backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
   /**
    * Max content width for this section.
    */
@@ -1317,6 +1377,10 @@ export interface ButtonBlock {
    */
   backgroundCustom?: string | null;
   /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
    * Max content width for this section.
    */
   containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
@@ -1350,6 +1414,10 @@ export interface TextBlock {
    * Hex color, e.g. #f5f0eb.
    */
   backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
   /**
    * Max content width for this section.
    */
@@ -1399,6 +1467,10 @@ export interface SocialBarBlock {
    * Hex color, e.g. #f5f0eb.
    */
   backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
   /**
    * Max content width for this section.
    */
@@ -2065,6 +2137,7 @@ export interface HeroBlockSelect<T extends boolean = true> {
   textAlign?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2081,6 +2154,7 @@ export interface FeaturedCollectionBlockSelect<T extends boolean = true> {
   layout?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2096,6 +2170,7 @@ export interface FeaturedProductsBlockSelect<T extends boolean = true> {
   layout?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2110,6 +2185,7 @@ export interface RichTextBlockSelect<T extends boolean = true> {
   textAlign?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2129,6 +2205,7 @@ export interface ImageWithTextBlockSelect<T extends boolean = true> {
   imageRatio?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2151,6 +2228,7 @@ export interface GalleryBlockSelect<T extends boolean = true> {
   layout?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2175,6 +2253,7 @@ export interface TestimonialsBlockSelect<T extends boolean = true> {
   layout?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2197,6 +2276,7 @@ export interface LogoCloudBlockSelect<T extends boolean = true> {
   animate?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2214,6 +2294,7 @@ export interface NewsletterBlockSelect<T extends boolean = true> {
   disclaimer?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2235,6 +2316,7 @@ export interface FAQBlockSelect<T extends boolean = true> {
   layout?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2252,6 +2334,7 @@ export interface PromoBannerBlockSelect<T extends boolean = true> {
   countdown?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2268,6 +2351,7 @@ export interface VideoEmbedBlockSelect<T extends boolean = true> {
   coverImage?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2282,6 +2366,7 @@ export interface DividerBlockSelect<T extends boolean = true> {
   showIcon?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2297,6 +2382,7 @@ export interface RecommendationsBlockSelect<T extends boolean = true> {
   products?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2312,6 +2398,7 @@ export interface RecentlyViewedBlockSelect<T extends boolean = true> {
   products?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2329,6 +2416,7 @@ export interface ButtonBlockSelect<T extends boolean = true> {
   align?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2347,6 +2435,7 @@ export interface TextBlockSelect<T extends boolean = true> {
   openInNewTab?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;
@@ -2370,6 +2459,7 @@ export interface SocialBarBlockSelect<T extends boolean = true> {
   size?: T;
   background?: T;
   backgroundCustom?: T;
+  backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
   id?: T;

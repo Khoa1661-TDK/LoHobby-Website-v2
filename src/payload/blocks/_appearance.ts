@@ -26,6 +26,15 @@ export const appearanceFields: Field[] = [
     },
   },
   {
+    name: 'backgroundCustomDark',
+    type: 'text',
+    admin: {
+      condition: (_, siblingData) => siblingData?.background === 'custom',
+      description: 'Dark-theme background hex. Leave empty to reuse the light color.',
+      placeholder: '#14181d',
+    },
+  },
+  {
     name: 'containerWidth',
     type: 'select',
     defaultValue: 'normal',

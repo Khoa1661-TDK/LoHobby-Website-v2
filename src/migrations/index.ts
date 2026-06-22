@@ -7,6 +7,7 @@ import * as migration_20260619_204518_page_builder_blocks from './20260619_20451
 import * as migration_20260621_053000_relax_page_block_required from './20260621_053000_relax_page_block_required';
 import * as migration_20260621_155341_localize_pages from './20260621_155341_localize_pages';
 import * as migration_20260622_131922_page_builder_link_text_button_social from './20260622_131922_page_builder_link_text_button_social';
+import * as migration_20260622_141438_page_builder_dark_custom_bg from './20260622_141438_page_builder_dark_custom_bg';
 
 export const migrations = [
   {
@@ -52,6 +53,11 @@ export const migrations = [
   {
     up: migration_20260622_131922_page_builder_link_text_button_social.up,
     down: migration_20260622_131922_page_builder_link_text_button_social.down,
-    name: '20260622_131922_page_builder_link_text_button_social'
+    name: '20260622_131922_page_builder_link_text_button_social',
+  },
+  {
+    up: migration_20260622_141438_page_builder_dark_custom_bg.up,
+    down: migration_20260622_141438_page_builder_dark_custom_bg.down,
+    name: '20260622_141438_page_builder_dark_custom_bg'
   },
 ];
