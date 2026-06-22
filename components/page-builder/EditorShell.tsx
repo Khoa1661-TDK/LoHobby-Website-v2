@@ -6,13 +6,14 @@
 import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { PageDoc, PageBlock } from '@/lib/page-builder';
 import type { BlockSchema } from '@/lib/page-builder/block-schemas';
+import type { ThemeMode } from '@/lib/page-builder/themed-color';
 import FieldRenderer from './FieldRenderer';
 import LayersRail from './LayersRail';
 import AddSectionPicker from './AddSectionPicker';
 import { updateBlockField, insertBlock, moveBlock, duplicateBlock, deleteBlock } from '@/lib/page-builder/layout-reducer';
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import { useAutosave } from './use-autosave';
-import { highlight, refresh, isPreviewToParent } from '@/lib/page-builder/preview-messages';
+import { highlight, refresh, setTheme, isPreviewToParent } from '@/lib/page-builder/preview-messages';
 import { routing } from '@/i18n/routing';
 
 type Props = { locale: string; page: PageDoc; schemas: BlockSchema[] };
@@ -22,13 +23,14 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
   const [title, setTitle] = useState<string>(page.title);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
+  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const { status, publish } = useAutosave(page.id, layout, title, locale, schemas);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const readyRef = useRef(false);
   const pendingRefresh = useRef(false);
 
-  const post = useCallback((msg: ReturnType<typeof highlight> | ReturnType<typeof refresh>): void => {
+  const post = useCallback((msg: ReturnType<typeof highlight> | ReturnType<typeof refresh> | ReturnType<typeof setTheme>): void => {
     iframeRef.current?.contentWindow?.postMessage(msg, window.location.origin);
   }, []);
 
@@ -41,6 +43,7 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
       if (msg.type === 'select') setSelectedIndex(msg.index);
       if (msg.type === 'ready') {
         readyRef.current = true;
+        post(setTheme(themeMode));
         if (pendingRefresh.current) {
           pendingRefresh.current = false;
           post(refresh());
@@ -49,12 +52,17 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [post]);
+  }, [post, themeMode]);
 
   // Mirror selection into the iframe.
   useEffect(() => {
     if (readyRef.current) post(highlight(selectedIndex));
   }, [selectedIndex, post]);
+
+  // Reflect the editor theme mode into the preview iframe.
+  useEffect(() => {
+    if (readyRef.current) post(setTheme(themeMode));
+  }, [themeMode, post]);
 
   // Re-render the preview after each completed autosave so live data reflects edits.
   useEffect(() => {
@@ -111,6 +119,27 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
             </a>
           ))}
         </div>
+        <div
+          role="group"
+          aria-label="Editing theme"
+          className="flex items-center gap-1 rounded-full border border-warm-200 p-0.5"
+        >
+          {(['light', 'dark'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setThemeMode(mode)}
+              aria-pressed={mode === themeMode}
+              className={
+                mode === themeMode
+                  ? 'rounded-full bg-warm-900 px-2.5 py-0.5 text-xs font-semibold uppercase text-white'
+                  : 'rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase text-warm-500 hover:text-warm-800'
+              }
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
         <a
           href={`/admin/collections/pages/${page.id}`}
           className="text-xs text-warm-500 hover:underline"
@@ -154,6 +183,7 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
               schema={selectedSchema}
               values={selectedBlock as Record<string, unknown>}
               onChange={handleFieldChange}
+              themeMode={themeMode}
             />
           ) : (
             <p className="p-4 text-sm text-warm-400">Select a section to edit its fields.</p>
