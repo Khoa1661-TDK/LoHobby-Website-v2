@@ -10,9 +10,21 @@ describe('createDefaultBlock', () => {
     expect((block as Record<string, unknown>).background).toBe('theme');
   });
   it('should seed required array fields with one empty row', () => {
+    // No registered block keeps a required array after the relax-required change,
+    // so exercise the seeding branch directly on defaultForField.
+    const seeded = defaultForField({
+      name: 'items',
+      type: 'array',
+      required: true,
+      fields: [{ name: 'question', type: 'text' }],
+    }) as unknown[];
+    expect(seeded).toHaveLength(1);
+    expect(seeded[0]).toEqual({ question: '' });
+  });
+  it('should seed a relaxed (non-required) array as empty', () => {
     const block = createDefaultBlock('faq') as Record<string, unknown>;
     expect(Array.isArray(block.items)).toBe(true);
-    expect((block.items as unknown[]).length).toBe(1);
+    expect((block.items as unknown[]).length).toBe(0);
   });
   it('should return null for an unknown block type', () => {
     expect(createDefaultBlock('nope')).toBeNull();

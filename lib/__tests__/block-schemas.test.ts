@@ -12,14 +12,19 @@ describe('getBlockSchemas', () => {
     expect(slugs).toContain('hero');
     expect(slugs).toContain('faq');
     expect(slugs).toContain('gallery');
-    expect(slugs).toHaveLength(15);
+    // The link/text/button/social blocks added button, text, and socialBar.
+    expect(slugs).toContain('button');
+    expect(slugs).toContain('text');
+    expect(slugs).toContain('socialBar');
+    expect(slugs).toHaveLength(18);
   });
 
   it('should describe hero text and select fields with options', () => {
     const hero = getBlockSchema('hero');
     expect(hero).not.toBeNull();
     const headline = hero!.fields.find((f) => f.name === 'headline');
-    expect(headline).toMatchObject({ name: 'headline', type: 'text', required: true });
+    // headline is no longer required (relaxed by 20260621_053000_relax_page_block_required).
+    expect(headline).toMatchObject({ name: 'headline', type: 'text' });
     const ctaStyle = hero!.fields.find((f) => f.name === 'ctaStyle');
     expect(ctaStyle?.type).toBe('select');
     expect(ctaStyle?.options).toEqual([
