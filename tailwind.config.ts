@@ -9,6 +9,10 @@ const config: Config = {
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
+    // lib/page-builder.ts returns class strings (e.g. blk-custom-bg, bg-ink) that
+    // are never written in JSX. Without scanning lib, those classes are purged and
+    // the page-builder custom background silently stops applying.
+    './lib/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {
