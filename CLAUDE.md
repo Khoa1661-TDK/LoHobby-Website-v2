@@ -315,5 +315,11 @@ See `.claude/phases/` — always check the active phase file before starting wor
 ## Project-Specific Constraints
 <!-- Things Claude must not do in this project. Add as you discover them. -->
 
+### Git workflow (overrides global git rules)
+This is a personal/solo project. Commit directly to `main` and push to `origin/main` —
+no feature branches or pull requests required. This overrides the team-branching and
+PR requirements in `~/.claude/rules/common/git.md`. Still keep commits atomic and use
+Conventional Commit messages. (User decision, 2026-06-22.)
+
 ## Context
 <!-- Anything not obvious from the code: target platform, known constraints, current focus. -->
