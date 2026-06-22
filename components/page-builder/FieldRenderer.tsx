@@ -295,6 +295,8 @@ function RelationshipField({
 
 // Names of `text` fields that hold a CSS color and should render a swatch picker
 // instead of a raw hex input. backgroundCustom is the appearance custom-color field.
+// Invariant: every THEMED_COLOR_BASES entry (lib/page-builder/themed-color.ts) must
+// also appear here, or its themed picker would fall through to a plain text input.
 const COLOR_FIELDS = new Set(['backgroundCustom']);
 const HEX6 = /^#[0-9a-fA-F]{6}$/;
 

@@ -35,6 +35,15 @@ describe('blockAppearanceClasses', () => {
     expect(r.style['--blk-bg-dark']).toBe('#14181d');
   });
 
+  it('should emit blk-custom-bg but no color vars when custom has no color', () => {
+    // Empty custom: the class is emitted but no --blk-bg var, so the invalid
+    // var() is dropped at runtime and the block's own background shows.
+    const r = blockAppearanceClasses({ background: 'custom' });
+    expect(r.section).toContain('blk-custom-bg');
+    expect(r.style['--blk-bg']).toBeUndefined();
+    expect(r.style['--blk-bg-dark']).toBeUndefined();
+  });
+
   it('should not emit blk-custom-bg or color vars for non-custom backgrounds', () => {
     const r = blockAppearanceClasses({ background: 'theme' });
     expect(r.section).not.toContain('blk-custom-bg');

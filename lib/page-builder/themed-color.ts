@@ -4,7 +4,9 @@
 
 export type ThemeMode = 'light' | 'dark';
 
-/** Base appearance color fields that have a paired `<base>Dark` slot. */
+/** Base appearance color fields that have a paired `<base>Dark` slot.
+ *  Invariant: every entry here must also be in COLOR_FIELDS
+ *  (components/page-builder/FieldRenderer.tsx) so it renders a swatch picker. */
 export const THEMED_COLOR_BASES: ReadonlySet<string> = new Set(['backgroundCustom']);
 
 /** The dark-slot field names, hidden as standalone fields in the panel. */
