@@ -23,6 +23,11 @@ const schema: BlockSchema = {
       type: 'text',
       condition: { field: 'background', equals: 'custom' },
     },
+    {
+      name: 'backgroundCustomDark',
+      type: 'text',
+      condition: { field: 'background', equals: 'custom' },
+    },
   ],
 };
 
@@ -62,5 +67,59 @@ describe('FieldRenderer custom color', () => {
     );
     fireEvent.click(screen.getByLabelText('Clear color'));
     expect(onChange).toHaveBeenCalledWith('backgroundCustom', '');
+  });
+});
+
+describe('FieldRenderer themed color slot', () => {
+  it('should write to backgroundCustom in light mode', () => {
+    const onChange = vi.fn();
+    render(
+      <FieldRenderer
+        schema={schema}
+        values={{ background: 'custom', backgroundCustom: '', backgroundCustomDark: '' }}
+        onChange={onChange}
+        themeMode="light"
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('Pick color'), { target: { value: '#ffffff' } });
+    expect(onChange).toHaveBeenCalledWith('backgroundCustom', '#ffffff');
+  });
+
+  it('should write to backgroundCustomDark in dark mode', () => {
+    const onChange = vi.fn();
+    render(
+      <FieldRenderer
+        schema={schema}
+        values={{ background: 'custom', backgroundCustom: '#ffffff', backgroundCustomDark: '' }}
+        onChange={onChange}
+        themeMode="dark"
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('Pick color'), { target: { value: '#14181d' } });
+    expect(onChange).toHaveBeenCalledWith('backgroundCustomDark', '#14181d');
+  });
+
+  it('should render only one color picker (dark slot is not a standalone field)', () => {
+    render(
+      <FieldRenderer
+        schema={schema}
+        values={{ background: 'custom', backgroundCustom: '#fff', backgroundCustomDark: '#000' }}
+        onChange={() => {}}
+        themeMode="light"
+      />,
+    );
+    expect(screen.getAllByLabelText('Pick color')).toHaveLength(1);
+  });
+
+  it('should show the inherit hint when the dark slot is empty', () => {
+    render(
+      <FieldRenderer
+        schema={schema}
+        values={{ background: 'custom', backgroundCustom: '#ffffff', backgroundCustomDark: '' }}
+        onChange={() => {}}
+        themeMode="dark"
+      />,
+    );
+    expect(screen.getByText(/inherits the light color/i)).toBeInTheDocument();
   });
 });

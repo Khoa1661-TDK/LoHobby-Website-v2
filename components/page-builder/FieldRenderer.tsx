@@ -7,25 +7,31 @@ import { defaultRowFor } from '@/lib/page-builder/default-block';
 import { addRow, removeRow, moveRow, updateRowField } from '@/lib/page-builder/array-reducer';
 import MediaPicker from './MediaPicker';
 import RelationshipPicker, { type RelationItem } from './RelationshipPicker';
+import { activeColorSlot, THEMED_COLOR_BASES, THEMED_DARK_SLOTS, type ThemeMode } from '@/lib/page-builder/themed-color';
 
 type Props = {
   schema: BlockSchema;
   values: Record<string, unknown>;
   /** Phase 1: omit to render read-only. Phase 2 wires this. */
   onChange?: (name: string, value: unknown) => void;
+  /** Which theme slot themed color fields edit. Defaults to light. */
+  themeMode?: ThemeMode;
 };
 
 const APPEARANCE_FIELDS = new Set([
   'background',
   'backgroundCustom',
+  'backgroundCustomDark',
   'containerWidth',
   'paddingY',
 ]);
 
-export default function FieldRenderer({ schema, values, onChange }: Props): ReactElement {
+export default function FieldRenderer({ schema, values, onChange, themeMode = 'light' }: Props): ReactElement {
   const visible = (f: FieldDescriptor) => isFieldVisible(f, values);
   const sectionFields = schema.fields.filter((f) => !APPEARANCE_FIELDS.has(f.name) && visible(f));
-  const appearanceFields = schema.fields.filter((f) => APPEARANCE_FIELDS.has(f.name) && visible(f));
+  const appearanceFields = schema.fields.filter(
+    (f) => APPEARANCE_FIELDS.has(f.name) && !THEMED_DARK_SLOTS.has(f.name) && visible(f),
+  );
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -33,7 +39,7 @@ export default function FieldRenderer({ schema, values, onChange }: Props): Reac
         {schema.label}
       </h2>
       {sectionFields.map((field) => (
-        <Field key={field.name} field={field} value={values[field.name]} onChange={onChange} />
+        <Field key={field.name} field={field} value={values[field.name]} onChange={onChange} themeMode={themeMode} values={values} />
       ))}
       {appearanceFields.length > 0 && (
         <details className="rounded border border-warm-200">
@@ -45,6 +51,8 @@ export default function FieldRenderer({ schema, values, onChange }: Props): Reac
                 field={field}
                 value={values[field.name]}
                 onChange={onChange}
+                themeMode={themeMode}
+                values={values}
               />
             ))}
           </div>
@@ -342,21 +350,36 @@ function Field({
   field,
   value,
   onChange,
+  themeMode = 'light',
+  values,
 }: {
   field: FieldDescriptor;
   value: unknown;
   onChange?: (name: string, value: unknown) => void;
+  themeMode?: ThemeMode;
+  values?: Record<string, unknown>;
 }): ReactElement | null {
   const disabled = !onChange;
   const label = field.label ?? field.name;
   const id = `fld-${field.name}`;
-  const set = (v: unknown) => onChange?.(field.name, v);
+  const isThemedColor = THEMED_COLOR_BASES.has(field.name);
+  const activeName = isThemedColor ? activeColorSlot(field.name, themeMode) : field.name;
+  const activeValue = isThemedColor ? values?.[activeName] : value;
+  const set = (v: unknown) => onChange?.(activeName, v);
 
   const control = (() => {
     switch (field.type) {
       case 'text':
         if (COLOR_FIELDS.has(field.name)) {
-          return <ColorField id={id} value={value} disabled={disabled} onChange={set} />;
+          const showInheritHint = isThemedColor && themeMode === 'dark' && !activeValue;
+          return (
+            <div className="flex flex-col gap-1">
+              <ColorField id={id} value={activeValue} disabled={disabled} onChange={set} />
+              {showInheritHint && (
+                <span className="text-xs text-warm-400">Empty — inherits the light color.</span>
+              )}
+            </div>
+          );
         }
         return (
           <input
