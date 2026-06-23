@@ -1,14 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isPaymentMethodOfferable } from '@/lib/payment-methods';
 
-const original = { ...process.env };
-
-beforeEach(() => {
-  delete process.env.ALLOW_DEMO_PAYMENTS;
-});
-
 afterEach(() => {
-  process.env = { ...original };
+  vi.unstubAllEnvs();
 });
 
 describe('isPaymentMethodOfferable', () => {
@@ -21,14 +15,16 @@ describe('isPaymentMethodOfferable', () => {
   });
 
   it('should accept the demo method outside production', () => {
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('ALLOW_DEMO_PAYMENTS', '');
     expect(isPaymentMethodOfferable({ enabled: true, provider: 'demo' })).toBe(true);
   });
 
   it('should hide the demo method in production unless explicitly enabled', () => {
-    process.env.NODE_ENV = 'production';
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('ALLOW_DEMO_PAYMENTS', '');
     expect(isPaymentMethodOfferable({ enabled: true, provider: 'demo' })).toBe(false);
-    process.env.ALLOW_DEMO_PAYMENTS = 'true';
+    vi.stubEnv('ALLOW_DEMO_PAYMENTS', 'true');
     expect(isPaymentMethodOfferable({ enabled: true, provider: 'demo' })).toBe(true);
   });
 });
