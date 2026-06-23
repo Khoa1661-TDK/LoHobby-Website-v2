@@ -1,5 +1,9 @@
 // app/[locale]/build/[slug]/preview/page.tsx — server-rendered preview surface
-// embedded by EditorShell via <iframe>. Renders the REAL draft blocks.
+// embedded by EditorShell via <iframe>. Renders the initial draft layout, pre-rendering
+// the async data blocks to HTML so PreviewClient can paint them without a client fetch.
+// After mount, PreviewClient renders from the layout state the editor pushes over
+// postMessage — presentational edits repaint instantly, data blocks refresh via the
+// /api/build/preview-block endpoint.
 import config from '@payload-config';
 import { headers as nextHeaders } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
@@ -9,9 +13,10 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 import { fetchPageBySlugDraft } from '@/lib/page-builder';
+import { renderBlockToHtml } from '@/lib/page-builder/render-block-html';
 import { type Locale } from '@/i18n/routing';
-import PreviewCanvas from '@/components/page-builder/preview/PreviewCanvas';
-import PreviewBridge from '@/components/page-builder/preview/PreviewBridge';
+import PreviewClient from '@/components/page-builder/preview/PreviewClient';
+import { DATA_BLOCK_TYPES } from '@/components/page-builder/preview/clientBlockMap';
 import Providers from '@/components/providers';
 import { getStoreBranding } from '@/lib/store-branding';
 
@@ -41,12 +46,34 @@ export default async function BuilderPreviewPage(props: Props): Promise<ReactEle
   // so the preview surface supplies them here to match the storefront layout.
   const [branding, messages] = await Promise.all([getStoreBranding(), getMessages()]);
 
+  // Pre-render the async data blocks to HTML so PreviewClient/DataBlockSlot can paint
+  // them on first load without a client round-trip. Presentational blocks render
+  // client-side from layout state and need no seeding.
+  const dataBlockEntries = page.layout
+    .map((block, index) => ({ block, index }))
+    .filter(({ block }) => DATA_BLOCK_TYPES.has(block.blockType));
+
+  const renderedDataBlocks = await Promise.all(
+    dataBlockEntries.map(async ({ block, index }) => ({
+      index,
+      html: await renderBlockToHtml(block, { locale, messages, branding }),
+    })),
+  );
+
+  const initialBlockHtml: Record<number, string> = {};
+  for (const { index, html } of renderedDataBlocks) {
+    initialBlockHtml[index] = html;
+  }
+
   return (
     <NextIntlClientProvider messages={messages}>
       <Providers branding={branding}>
         <div className="min-h-screen bg-white">
-          <PreviewBridge />
-          <PreviewCanvas blocks={page.layout} />
+          <PreviewClient
+            initialBlocks={page.layout}
+            initialBlockHtml={initialBlockHtml}
+            locale={locale}
+          />
         </div>
       </Providers>
     </NextIntlClientProvider>

@@ -3,11 +3,12 @@ import {
   ready,
   select,
   highlight,
-  refresh,
+  setLayout,
   setTheme,
   isPreviewToParent,
   isParentToPreview,
 } from '@/lib/page-builder/preview-messages';
+import type { PageBlock } from '@/lib/page-builder';
 
 describe('preview-messages protocol', () => {
   it('should build a select message carrying the block index', () => {
@@ -22,7 +23,7 @@ describe('preview-messages protocol', () => {
     expect(isPreviewToParent(ready())).toBe(true);
     expect(isPreviewToParent(select(0))).toBe(true);
     expect(isParentToPreview(highlight(1))).toBe(true);
-    expect(isParentToPreview(refresh())).toBe(true);
+    expect(isParentToPreview(setLayout([]))).toBe(true);
   });
 
   it('should reject foreign or malformed messages', () => {
@@ -35,7 +36,23 @@ describe('preview-messages protocol', () => {
 
   it('should not cross-accept directions', () => {
     expect(isParentToPreview(select(0))).toBe(false);
-    expect(isPreviewToParent(refresh())).toBe(false);
+    expect(isPreviewToParent(setLayout([]))).toBe(false);
+  });
+});
+
+describe('setLayout preview message', () => {
+  const blocks: PageBlock[] = [{ blockType: 'text', content: 'hi' } as PageBlock];
+
+  it('should build a typed setLayout message carrying the blocks', () => {
+    expect(setLayout(blocks)).toEqual({ source: 'pb', type: 'setLayout', blocks });
+  });
+
+  it('should accept a valid setLayout message in the parent->preview guard', () => {
+    expect(isParentToPreview(setLayout(blocks))).toBe(true);
+  });
+
+  it('should reject a setLayout message whose blocks is not an array', () => {
+    expect(isParentToPreview({ source: 'pb', type: 'setLayout', blocks: 'nope' })).toBe(false);
   });
 });
 

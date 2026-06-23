@@ -2,6 +2,7 @@
 // builder shell (parent) and the server-rendered preview iframe. Same-origin only.
 
 import type { ThemeMode } from './themed-color';
+import type { PageBlock } from '@/lib/page-builder';
 
 const SOURCE = 'pb' as const;
 
@@ -11,7 +12,7 @@ export type PreviewToParent =
 
 export type ParentToPreview =
   | { source: typeof SOURCE; type: 'highlight'; index: number | null }
-  | { source: typeof SOURCE; type: 'refresh' }
+  | { source: typeof SOURCE; type: 'setLayout'; blocks: PageBlock[] }
   | { source: typeof SOURCE; type: 'setTheme'; mode: ThemeMode };
 
 export function ready(): PreviewToParent {
@@ -26,8 +27,11 @@ export function highlight(index: number | null): ParentToPreview {
   return { source: SOURCE, type: 'highlight', index };
 }
 
-export function refresh(): ParentToPreview {
-  return { source: SOURCE, type: 'refresh' };
+// Pushes the full draft layout into the preview iframe so it re-renders from live
+// editor state, decoupled from the (background) autosave. This is what makes
+// presentational edits feel instant — no save round-trip, no router.refresh().
+export function setLayout(blocks: PageBlock[]): ParentToPreview {
+  return { source: SOURCE, type: 'setLayout', blocks };
 }
 
 export function setTheme(mode: ThemeMode): ParentToPreview {
@@ -47,7 +51,7 @@ export function isPreviewToParent(data: unknown): data is PreviewToParent {
 
 export function isParentToPreview(data: unknown): data is ParentToPreview {
   if (!isRecord(data)) return false;
-  if (data.type === 'refresh') return true;
+  if (data.type === 'setLayout') return Array.isArray(data.blocks);
   if (data.type === 'highlight') return data.index === null || typeof data.index === 'number';
   if (data.type === 'setTheme') return data.mode === 'light' || data.mode === 'dark';
   return false;

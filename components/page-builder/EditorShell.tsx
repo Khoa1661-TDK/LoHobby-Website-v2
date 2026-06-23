@@ -13,7 +13,7 @@ import AddSectionPicker from './AddSectionPicker';
 import { updateBlockField, insertBlock, moveBlock, duplicateBlock, deleteBlock } from '@/lib/page-builder/layout-reducer';
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import { useAutosave } from './use-autosave';
-import { highlight, refresh, setTheme, isPreviewToParent } from '@/lib/page-builder/preview-messages';
+import { highlight, setLayout as setLayoutMsg, setTheme, isPreviewToParent } from '@/lib/page-builder/preview-messages';
 import { routing } from '@/i18n/routing';
 
 type Props = { locale: string; page: PageDoc; schemas: BlockSchema[] };
@@ -28,9 +28,8 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const readyRef = useRef(false);
-  const pendingRefresh = useRef(false);
 
-  const post = useCallback((msg: ReturnType<typeof highlight> | ReturnType<typeof refresh> | ReturnType<typeof setTheme>): void => {
+  const post = useCallback((msg: ReturnType<typeof highlight> | ReturnType<typeof setLayoutMsg> | ReturnType<typeof setTheme>): void => {
     iframeRef.current?.contentWindow?.postMessage(msg, window.location.origin);
   }, []);
 
@@ -44,15 +43,13 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
       if (msg.type === 'ready') {
         readyRef.current = true;
         post(setTheme(themeMode));
-        if (pendingRefresh.current) {
-          pendingRefresh.current = false;
-          post(refresh());
-        }
+        // Sync the iframe to current editor state on (re)load.
+        post(setLayoutMsg(layout));
       }
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [post, themeMode]);
+  }, [post, themeMode, layout]);
 
   // Mirror selection into the iframe.
   useEffect(() => {
@@ -64,12 +61,11 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
     if (readyRef.current) post(setTheme(themeMode));
   }, [themeMode, post]);
 
-  // Re-render the preview after each completed autosave so live data reflects edits.
+  // Push layout into the preview iframe on every change so edits reflect live, decoupled
+  // from autosave. On (re)load the ready handler also syncs the iframe to current state.
   useEffect(() => {
-    if (status !== 'saved') return;
-    if (readyRef.current) post(refresh());
-    else pendingRefresh.current = true;
-  }, [status, post]);
+    if (readyRef.current) post(setLayoutMsg(layout));
+  }, [layout, post]);
 
   const handlePick = (slug: string): void => {
     const block = createDefaultBlock(slug);
