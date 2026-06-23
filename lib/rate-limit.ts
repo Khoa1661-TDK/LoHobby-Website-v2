@@ -1,4 +1,11 @@
 // lib/rate-limit.ts — in-memory sliding-window rate limiter for API protection
+//
+// TOPOLOGY LIMIT: state lives in a per-process `Map`. This is correct for a
+// SINGLE app instance (one VPS / one container). On multiple instances or a
+// serverless/edge fanout, each instance keeps its own counters, so the
+// effective limit multiplies by the instance count and resets on every cold
+// start. Before scaling horizontally, move this to a shared store (Upstash
+// Redis or Postgres-backed counters). See DECISIONS.md 2026-06-23.
 
 export type RateLimitConfig = {
   /** Max requests allowed within the window. */

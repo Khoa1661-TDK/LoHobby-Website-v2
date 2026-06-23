@@ -157,3 +157,12 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** Partial refunds/fulfillment are needed, or an automated PayOS refund is required.
 
 ---
+
+## 2026-06-23 — Rate limiting stays in-memory (single-instance) for now
+**Chosen:** Keep `lib/rate-limit.ts` as a per-process in-memory `Map`. Auth/credential endpoints (`/api/auth/*`, `/api/register`) are covered by the `auth` preset in `middleware.ts`; behavior is pinned by tests in `lib/__tests__/rate-limit.test.ts`.
+**Alternatives:** Upstash Redis or a Postgres-backed counter table for shared, durable limits across instances.
+**Why:** Current deploy target is a single app instance (one VPS/container), where an in-memory map is correct and zero-dependency. A shared store adds an external dependency and latency for no benefit at one instance.
+**Trade-offs:** On multiple instances or serverless fanout the effective limit multiplies by instance count and resets on cold start — i.e. the limit is unreliable when scaled horizontally. Documented in the file header.
+**Revisit if:** The app is deployed to >1 instance or a serverless/edge platform — then move counters to Redis/Postgres before relying on the limit.
+
+---
