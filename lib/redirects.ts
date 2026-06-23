@@ -7,6 +7,7 @@
 import config from '@payload-config';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload } from 'payload';
+import { logger } from '@/lib/logger';
 
 import {
   matchRedirect,
@@ -57,9 +58,9 @@ async function fetchValidRedirects(): Promise<RedirectRule[]> {
   } catch (error) {
     // Most likely the collection schema has not been pushed yet. Fail open: an
     // empty map means "no redirects" rather than a broken request pipeline.
-    console.warn(
+    logger.warn(
+      { err: error instanceof Error ? error.message : error },
       '[redirects] find failed; serving empty redirect map.',
-      error instanceof Error ? error.message : error,
     );
     return [];
   }
@@ -85,9 +86,9 @@ export function revalidateRedirectsCache(): void {
   } catch (error) {
     // Safe outside a Next.js request (seed scripts) / during admin saves where
     // the static-generation store may be unavailable.
-    console.warn(
-      '[redirects] revalidate skipped:',
-      error instanceof Error ? error.message : error,
+    logger.warn(
+      { err: error instanceof Error ? error.message : error },
+      '[redirects] revalidate skipped',
     );
   }
 }

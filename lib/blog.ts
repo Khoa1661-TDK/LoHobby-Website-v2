@@ -3,6 +3,7 @@ import config from '@payload-config';
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload, type Where } from 'payload';
+import { logger } from '@/lib/logger';
 
 export type BlogPostSummary = {
   id: string | number;
@@ -43,9 +44,9 @@ export function revalidateBlogCache(): void {
   } catch (error) {
     // Safe outside a Next.js request (seed scripts) and during Payload admin
     // saves where the static-generation store may be unavailable.
-    console.warn(
-      '[blog] revalidate skipped:',
-      error instanceof Error ? error.message : error,
+    logger.warn(
+      { err: error instanceof Error ? error.message : error },
+      '[blog] revalidate skipped',
     );
   }
 }

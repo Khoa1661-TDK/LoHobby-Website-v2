@@ -6,6 +6,8 @@
 //
 // No SDK dependency — raw fetch against the batch endpoint, mirroring lib/zalo/oa-client.ts.
 
+import { logger } from '@/lib/logger';
+
 const BATCH_URL = 'https://api.resend.com/emails/batch';
 const BATCH_LIMIT = 100; // Resend accepts up to 100 emails per batch request
 
@@ -51,10 +53,10 @@ export async function sendBulkEmail(args: {
   const config = getEmailConfig();
 
   if (!config.configured) {
-    console.info('[email] not configured — skipping send', {
-      recipients: recipients.length,
-      subject,
-    });
+    logger.info(
+      { recipients: recipients.length, subject },
+      '[email] not configured — skipping send',
+    );
     return { configured: false, sent: 0, failed: 0 };
   }
 
@@ -77,11 +79,11 @@ export async function sendBulkEmail(args: {
       } else {
         failed += batch.length;
         const detail = await res.json().catch(() => ({}));
-        console.warn('[email] batch send failed', { status: res.status, detail });
+        logger.warn({ status: res.status, detail }, '[email] batch send failed');
       }
     } catch (err: unknown) {
       failed += batch.length;
-      console.warn('[email] batch send threw', err);
+      logger.warn({ err }, '[email] batch send threw');
     }
   }
 

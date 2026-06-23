@@ -1,6 +1,7 @@
 // lib/dropshipping/index.ts — Phase 3 dropship integration stub (CJ-ready)
 import { isDropshippingEnabled } from '@/lib/feature-flags';
 import { getDropshipSettings } from '@/lib/dropshipping/settings';
+import { logger } from '@/lib/logger';
 
 export type DropshipFulfillmentRequest = {
   orderCode: number;
@@ -35,11 +36,14 @@ export async function submitDropshipOrder(
   }
 
   // v1 stub: log intent only; wire CJ SDK when credentials are available.
-  console.info('[dropship] stub submit', {
-    provider: settings.provider,
-    orderCode: request.orderCode,
-    itemCount: request.items.length,
-  });
+  logger.info(
+    {
+      provider: settings.provider,
+      orderCode: request.orderCode,
+      itemCount: request.items.length,
+    },
+    '[dropship] stub submit',
+  );
 
   return {
     ok: true,
