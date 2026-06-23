@@ -75,6 +75,7 @@
     "next-intl": "^4.13.0",
     "payload": "^3.84.1",
     "pg": "^8.21.0",
+    "pino": "^10.3.1",
     "postgres": "^3.4.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -82,7 +83,8 @@
     "server-only": "^0.0.1",
     "sharp": "^0.34.5",
     "sonner": "^2.0.7",
-    "stripe": "^22.2.0"
+    "stripe": "^22.2.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.1",
