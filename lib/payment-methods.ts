@@ -5,6 +5,7 @@
 import config from '@payload-config';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload } from 'payload';
+import { isDemoPaymentAllowed } from '@/lib/feature-flags';
 import { logger } from '@/lib/logger';
 
 const PAYMENT_METHODS_TAG = 'payment-methods';
@@ -147,11 +148,24 @@ const getAllPaymentMethods = unstable_cache(fetchPaymentMethods, ['payment-metho
   tags: [PAYMENT_METHODS_TAG],
 });
 
+/**
+ * Whether a method may be offered at checkout. Demo/test methods are hidden
+ * unless demo payments are allowed in this environment.
+ */
+export function isPaymentMethodOfferable(method: {
+  enabled: boolean;
+  provider: string | null;
+}): boolean {
+  if (!method.enabled) return false;
+  if (method.provider === 'demo' && !isDemoPaymentAllowed()) return false;
+  return true;
+}
+
 /** Enabled methods in display order, reduced to client-safe fields. */
 export async function getCheckoutPaymentMethods(): Promise<CheckoutPaymentMethod[]> {
   const methods = await getAllPaymentMethods();
   return methods
-    .filter((method) => method.enabled)
+    .filter(isPaymentMethodOfferable)
     .map((method) => ({
       key: method.key,
       label: method.label,

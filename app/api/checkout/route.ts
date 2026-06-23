@@ -10,7 +10,7 @@ import { commitOrderInventory } from '@/lib/order-inventory';
 import { enforceRateLimit } from '@/lib/api-guard';
 import { RATE_LIMIT_PRESETS } from '@/lib/rate-limit';
 import { getGatewayConfigForMethod } from '@/lib/payment-gateway-credentials';
-import { getPaymentMethodByKey, type PaymentMethodKind } from '@/lib/payment-methods';
+import { getPaymentMethodByKey, isPaymentMethodOfferable, type PaymentMethodKind } from '@/lib/payment-methods';
 import { credentialsForProvider, getPaymentProvider } from '@/lib/payment-providers';
 import { generateOrderCode } from '@/lib/payos';
 import { getPayloadProductsByIds, isPurchasableProduct } from '@/lib/payload-products';
@@ -303,7 +303,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
   }
 
   const method = await getPaymentMethodByKey(body.paymentMethodKey);
-  if (!method || !method.enabled) {
+  if (!method || !isPaymentMethodOfferable(method)) {
     return NextResponse.json(
       { error: 'Hình thức thanh toán không khả dụng.' },
       { status: 400 },
