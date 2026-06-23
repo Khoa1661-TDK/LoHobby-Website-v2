@@ -31,6 +31,14 @@ import {
   Button,
   Text,
   SocialBar,
+  Spacer,
+  Columns,
+  CallToAction,
+  Stats,
+  Quote,
+  CardGrid,
+  Banner,
+  Steps,
 } from '@/src/payload/blocks';
 
 // Payload `blocks` fields have no field-level RowLabel slot; per-section labels are
@@ -58,6 +66,14 @@ const layoutBlocks = [
   Button,
   Text,
   SocialBar,
+  Spacer,
+  Columns,
+  CallToAction,
+  Stats,
+  Quote,
+  CardGrid,
+  Banner,
+  Steps,
 ].map((block) => ({
   ...block,
   admin: {

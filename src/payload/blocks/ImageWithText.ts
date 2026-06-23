@@ -1,6 +1,7 @@
 // src/payload/blocks/ImageWithText.ts
 import type { Block } from 'payload';
 import { appearanceFields } from './_appearance';
+import { linkFields } from './_link';
 
 export const ImageWithText: Block = {
   slug: 'imageWithText',
@@ -14,6 +15,8 @@ export const ImageWithText: Block = {
       type: 'upload',
       relationTo: 'media',
     },
+    // Optional link: when set, the image becomes clickable.
+    ...linkFields,
     {
       name: 'imagePosition',
       type: 'select',

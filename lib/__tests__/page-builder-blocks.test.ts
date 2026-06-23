@@ -47,6 +47,84 @@ describe('new page-builder block schemas', () => {
   });
 });
 
+describe('section-library block schemas', () => {
+  it('should register all eight new presentational blocks', () => {
+    const slugs = getBlockSchemas().map((s) => s.slug);
+    expect(slugs).toEqual(
+      expect.arrayContaining([
+        'spacer',
+        'columns',
+        'callToAction',
+        'stats',
+        'quote',
+        'cardGrid',
+        'banner',
+        'steps',
+      ]),
+    );
+  });
+
+  it('should expose a height select with five options on spacer', () => {
+    const schema = getBlockSchemas().find((s) => s.slug === 'spacer');
+    const height = schema?.fields.find((f) => f.name === 'height');
+    expect(height?.type).toBe('select');
+    expect((height?.options ?? []).map((o) => o.value)).toEqual(['xs', 'sm', 'md', 'lg', 'xl']);
+    expect(height?.defaultValue).toBe('md');
+  });
+
+  it('should expose a column array with link fields on columns', () => {
+    const schema = getBlockSchemas().find((s) => s.slug === 'columns');
+    const columns = schema?.fields.find((f) => f.name === 'columns');
+    expect(columns?.type).toBe('array');
+    expect((columns?.fields ?? []).map((f) => f.name)).toEqual([
+      'heading',
+      'body',
+      'image',
+      'url',
+      'openInNewTab',
+    ]);
+  });
+
+  it('should require the quote text on the quote block', () => {
+    const schema = getBlockSchemas().find((s) => s.slug === 'quote');
+    const quote = schema?.fields.find((f) => f.name === 'quote');
+    expect(quote).toMatchObject({ type: 'textarea', required: true });
+  });
+
+  it('should expose two button links on callToAction', () => {
+    expect(fieldNames('callToAction')).toEqual(
+      expect.arrayContaining([
+        'primaryLabel',
+        'primaryUrl',
+        'primaryOpenInNewTab',
+        'secondaryLabel',
+        'secondaryUrl',
+        'align',
+      ]),
+    );
+  });
+
+  it('should require text on the banner block', () => {
+    const schema = getBlockSchemas().find((s) => s.slug === 'banner');
+    const text = schema?.fields.find((f) => f.name === 'text');
+    expect(text).toMatchObject({ type: 'text', required: true });
+  });
+});
+
+describe('link support added to visual blocks (Part B)', () => {
+  it('should expose url + openInNewTab on the imageWithText block', () => {
+    expect(fieldNames('imageWithText')).toEqual(
+      expect.arrayContaining(['image', 'url', 'openInNewTab']),
+    );
+  });
+
+  it('should expose url + openInNewTab on the promoBanner block', () => {
+    expect(fieldNames('promoBanner')).toEqual(
+      expect.arrayContaining(['text', 'url', 'openInNewTab']),
+    );
+  });
+});
+
 describe('createDefaultBlock for new blocks', () => {
   it('should default a button to its schema values', () => {
     const block = asRecord(createDefaultBlock('button') ?? undefined);

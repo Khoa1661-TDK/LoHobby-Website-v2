@@ -21,6 +21,14 @@ import {
   Button,
   Text,
   SocialBar,
+  Spacer,
+  Columns,
+  CallToAction,
+  Stats,
+  Quote,
+  CardGrid,
+  Banner,
+  Steps,
 } from '@/src/payload/blocks';
 
 export type FieldCondition = { field: string; equals: unknown };
@@ -67,6 +75,14 @@ const REGISTERED_BLOCKS: Block[] = [
   Button,
   Text,
   SocialBar,
+  Spacer,
+  Columns,
+  CallToAction,
+  Stats,
+  Quote,
+  CardGrid,
+  Banner,
+  Steps,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the

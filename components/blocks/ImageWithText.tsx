@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
+import { linkAttrs } from '@/lib/page-builder/link';
 
 type Props = {
   headline?: string | null;
@@ -13,6 +14,8 @@ type Props = {
   imageRatio?: '1/1' | '4/3' | '3/4' | '16/9' | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
+  url?: string | null;
+  openInNewTab?: boolean | null;
 } & BlockAppearance;
 
 const ratioMap: Record<string, string> = {
@@ -31,6 +34,8 @@ export default function ImageWithTextBlock(props: Props): ReactElement {
     imageRatio = '1/1',
     ctaLabel,
     ctaHref,
+    url,
+    openInNewTab,
   } = props;
 
   const { section, container, style } = blockAppearanceClasses(props);
@@ -62,13 +67,25 @@ export default function ImageWithTextBlock(props: Props): ReactElement {
           <div
             className={`relative w-full overflow-hidden rounded-2xl md:w-1/2 ${ratioClass}`}
           >
-            <Image
-              src={image.url}
-              alt={image.alt ?? headline ?? ''}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
+            {url ? (
+              <Link href={url} className="contents" {...linkAttrs(url, openInNewTab)}>
+                <Image
+                  src={image.url}
+                  alt={image.alt ?? headline ?? ''}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </Link>
+            ) : (
+              <Image
+                src={image.url}
+                alt={image.alt ?? headline ?? ''}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            )}
           </div>
           <div className="flex flex-col md:w-1/2">
             <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">

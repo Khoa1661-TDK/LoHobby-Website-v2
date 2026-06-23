@@ -763,6 +763,14 @@ export interface Page {
         | ButtonBlock
         | TextBlock
         | SocialBarBlock
+        | SpacerBlock
+        | ColumnsBlock
+        | CallToActionBlock
+        | StatsBlock
+        | QuoteBlock
+        | CardGridBlock
+        | BannerBlock
+        | StepsBlock
       )[]
     | null;
   meta?: {
@@ -932,6 +940,11 @@ export interface RichTextBlock {
  */
 export interface ImageWithTextBlock {
   image?: (number | null) | Media;
+  /**
+   * Use "/" for internal pages or "http(s)://" for external links.
+   */
+  url?: string | null;
+  openInNewTab?: boolean | null;
   imagePosition?: ('left' | 'right') | null;
   headline?: string | null;
   body?: {
@@ -1192,6 +1205,11 @@ export interface PromoBannerBlock {
   text?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
+  /**
+   * Use "/" for internal pages or "http(s)://" for external links.
+   */
+  url?: string | null;
+  openInNewTab?: boolean | null;
   dismissible?: boolean | null;
   /**
    * Optional expiry date for countdown display.
@@ -1482,6 +1500,295 @@ export interface SocialBarBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'socialBar';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SpacerBlock".
+ */
+export interface SpacerBlock {
+  height?: ('xs' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'spacer';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ColumnsBlock".
+ */
+export interface ColumnsBlock {
+  columnCount?: ('2' | '3' | '4') | null;
+  columns?:
+    | {
+        heading?: string | null;
+        body?: string | null;
+        image?: (number | null) | Media;
+        url?: string | null;
+        openInNewTab?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'columns';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CallToActionBlock".
+ */
+export interface CallToActionBlock {
+  heading?: string | null;
+  subheading?: string | null;
+  primaryLabel?: string | null;
+  primaryUrl?: string | null;
+  primaryOpenInNewTab?: boolean | null;
+  secondaryLabel?: string | null;
+  secondaryUrl?: string | null;
+  secondaryOpenInNewTab?: boolean | null;
+  align?: ('left' | 'center') | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'callToAction';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StatsBlock".
+ */
+export interface StatsBlock {
+  heading?: string | null;
+  items?:
+    | {
+        value?: string | null;
+        label?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'stats';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "QuoteBlock".
+ */
+export interface QuoteBlock {
+  quote: string;
+  author?: string | null;
+  role?: string | null;
+  avatar?: (number | null) | Media;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'quote';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CardGridBlock".
+ */
+export interface CardGridBlock {
+  heading?: string | null;
+  columnCount?: ('2' | '3' | '4') | null;
+  cards?:
+    | {
+        image?: (number | null) | Media;
+        title?: string | null;
+        body?: string | null;
+        url?: string | null;
+        openInNewTab?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'cardGrid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BannerBlock".
+ */
+export interface BannerBlock {
+  text: string;
+  linkLabel?: string | null;
+  url?: string | null;
+  openInNewTab?: boolean | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'banner';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StepsBlock".
+ */
+export interface StepsBlock {
+  heading?: string | null;
+  steps?:
+    | {
+        title?: string | null;
+        body?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'steps';
 }
 /**
  * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
@@ -2111,6 +2418,14 @@ export interface PagesSelect<T extends boolean = true> {
         button?: T | ButtonBlockSelect<T>;
         text?: T | TextBlockSelect<T>;
         socialBar?: T | SocialBarBlockSelect<T>;
+        spacer?: T | SpacerBlockSelect<T>;
+        columns?: T | ColumnsBlockSelect<T>;
+        callToAction?: T | CallToActionBlockSelect<T>;
+        stats?: T | StatsBlockSelect<T>;
+        quote?: T | QuoteBlockSelect<T>;
+        cardGrid?: T | CardGridBlockSelect<T>;
+        banner?: T | BannerBlockSelect<T>;
+        steps?: T | StepsBlockSelect<T>;
       };
   meta?:
     | T
@@ -2197,6 +2512,8 @@ export interface RichTextBlockSelect<T extends boolean = true> {
  */
 export interface ImageWithTextBlockSelect<T extends boolean = true> {
   image?: T;
+  url?: T;
+  openInNewTab?: T;
   imagePosition?: T;
   headline?: T;
   body?: T;
@@ -2330,6 +2647,8 @@ export interface PromoBannerBlockSelect<T extends boolean = true> {
   text?: T;
   ctaLabel?: T;
   ctaHref?: T;
+  url?: T;
+  openInNewTab?: T;
   dismissible?: T;
   countdown?: T;
   background?: T;
@@ -2457,6 +2776,167 @@ export interface SocialBarBlockSelect<T extends boolean = true> {
   align?: T;
   iconStyle?: T;
   size?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SpacerBlock_select".
+ */
+export interface SpacerBlockSelect<T extends boolean = true> {
+  height?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ColumnsBlock_select".
+ */
+export interface ColumnsBlockSelect<T extends boolean = true> {
+  columnCount?: T;
+  columns?:
+    | T
+    | {
+        heading?: T;
+        body?: T;
+        image?: T;
+        url?: T;
+        openInNewTab?: T;
+        id?: T;
+      };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CallToActionBlock_select".
+ */
+export interface CallToActionBlockSelect<T extends boolean = true> {
+  heading?: T;
+  subheading?: T;
+  primaryLabel?: T;
+  primaryUrl?: T;
+  primaryOpenInNewTab?: T;
+  secondaryLabel?: T;
+  secondaryUrl?: T;
+  secondaryOpenInNewTab?: T;
+  align?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StatsBlock_select".
+ */
+export interface StatsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "QuoteBlock_select".
+ */
+export interface QuoteBlockSelect<T extends boolean = true> {
+  quote?: T;
+  author?: T;
+  role?: T;
+  avatar?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CardGridBlock_select".
+ */
+export interface CardGridBlockSelect<T extends boolean = true> {
+  heading?: T;
+  columnCount?: T;
+  cards?:
+    | T
+    | {
+        image?: T;
+        title?: T;
+        body?: T;
+        url?: T;
+        openInNewTab?: T;
+        id?: T;
+      };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BannerBlock_select".
+ */
+export interface BannerBlockSelect<T extends boolean = true> {
+  text?: T;
+  linkLabel?: T;
+  url?: T;
+  openInNewTab?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StepsBlock_select".
+ */
+export interface StepsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  steps?:
+    | T
+    | {
+        title?: T;
+        body?: T;
+        id?: T;
+      };
   background?: T;
   backgroundCustom?: T;
   backgroundCustomDark?: T;

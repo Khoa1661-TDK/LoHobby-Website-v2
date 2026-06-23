@@ -1,6 +1,7 @@
 // src/payload/blocks/PromoBanner.ts
 import type { Block } from 'payload';
 import { appearanceFields } from './_appearance';
+import { linkFields } from './_link';
 
 export const PromoBanner: Block = {
   slug: 'promoBanner',
@@ -21,6 +22,9 @@ export const PromoBanner: Block = {
       name: 'ctaHref',
       type: 'text',
     },
+    // Optional link for the whole banner. Distinct from the inline CTA above so the
+    // entire strip can be clickable even without a button.
+    ...linkFields,
     {
       name: 'dismissible',
       type: 'checkbox',

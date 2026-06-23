@@ -97,7 +97,15 @@ export type PageBlock =
   | { blockType: 'recentlyViewed' } & Record<string, unknown>
   | { blockType: 'button' } & Record<string, unknown>
   | { blockType: 'text' } & Record<string, unknown>
-  | { blockType: 'socialBar' } & Record<string, unknown>;
+  | { blockType: 'socialBar' } & Record<string, unknown>
+  | { blockType: 'spacer' } & Record<string, unknown>
+  | { blockType: 'columns' } & Record<string, unknown>
+  | { blockType: 'callToAction' } & Record<string, unknown>
+  | { blockType: 'stats' } & Record<string, unknown>
+  | { blockType: 'quote' } & Record<string, unknown>
+  | { blockType: 'cardGrid' } & Record<string, unknown>
+  | { blockType: 'banner' } & Record<string, unknown>
+  | { blockType: 'steps' } & Record<string, unknown>;
 
 export type PageDoc = {
   id: string | number;

@@ -16,7 +16,20 @@ describe('getBlockSchemas', () => {
     expect(slugs).toContain('button');
     expect(slugs).toContain('text');
     expect(slugs).toContain('socialBar');
-    expect(slugs).toHaveLength(18);
+    // The section-library blocks added 8 presentational sections.
+    expect(slugs).toEqual(
+      expect.arrayContaining([
+        'spacer',
+        'columns',
+        'callToAction',
+        'stats',
+        'quote',
+        'cardGrid',
+        'banner',
+        'steps',
+      ]),
+    );
+    expect(slugs).toHaveLength(26);
   });
 
   it('should describe hero text and select fields with options', () => {

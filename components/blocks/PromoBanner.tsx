@@ -1,8 +1,9 @@
 // components/blocks/PromoBanner.tsx
 import { Link } from '@/i18n/navigation';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
+import { linkAttrs } from '@/lib/page-builder/link';
 
 type Props = {
   text?: string | null;
@@ -10,13 +11,26 @@ type Props = {
   ctaHref?: string | null;
   dismissible?: boolean;
   countdown?: string | null;
+  url?: string | null;
+  openInNewTab?: boolean | null;
 } & BlockAppearance;
 
 export default function PromoBannerBlock(props: Props): ReactElement {
-  const { text, ctaLabel, ctaHref, dismissible = false } = props;
+  const { text, ctaLabel, ctaHref, dismissible = false, url, openInNewTab } = props;
   const { section, container, style } = blockAppearanceClasses(props);
 
   const darkBg = props.background === 'dark';
+
+  // Wrap the banner content in a link when `url` is set and there is no inline CTA
+  // taking the click. Keeps the strip clickable as a whole.
+  const wrap = (children: ReactNode): ReactNode =>
+    url ? (
+      <Link href={url} className="contents" {...linkAttrs(url, openInNewTab)}>
+        {children}
+      </Link>
+    ) : (
+      children
+    );
 
   return (
     <section
@@ -31,7 +45,7 @@ export default function PromoBannerBlock(props: Props): ReactElement {
       <div
         className={`${container} flex items-center justify-center gap-4 py-3 text-center text-sm font-medium ${darkBg ? 'text-surface' : 'text-ink'}`}
       >
-        <span>{text}</span>
+        {wrap(<span>{text}</span>)}
         {ctaLabel && ctaHref ? (
           <Link
             href={ctaHref}

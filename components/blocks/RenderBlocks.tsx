@@ -20,6 +20,14 @@ import RecentlyViewedBlock from './RecentlyViewed';
 import ButtonBlock from './Button';
 import TextBlock from './Text';
 import SocialBarBlock from './SocialBar';
+import SpacerBlock from './Spacer';
+import ColumnsBlock from './Columns';
+import CallToActionBlock from './CallToAction';
+import StatsBlock from './Stats';
+import QuoteBlock from './Quote';
+import CardGridBlock from './CardGrid';
+import BannerBlock from './Banner';
+import StepsBlock from './Steps';
 
 type Props = {
   blocks: PageBlock[];
@@ -96,6 +104,22 @@ function BlockRenderer({ block }: { block: PageBlock }): ReactElement | null {
       return <TextBlock {...asProps<ComponentProps<typeof TextBlock>>(block)} />;
     case 'socialBar':
       return <SocialBarBlock {...asProps<ComponentProps<typeof SocialBarBlock>>(block)} />;
+    case 'spacer':
+      return <SpacerBlock {...asProps<ComponentProps<typeof SpacerBlock>>(block)} />;
+    case 'columns':
+      return <ColumnsBlock {...asProps<ComponentProps<typeof ColumnsBlock>>(block)} />;
+    case 'callToAction':
+      return <CallToActionBlock {...asProps<ComponentProps<typeof CallToActionBlock>>(block)} />;
+    case 'stats':
+      return <StatsBlock {...asProps<ComponentProps<typeof StatsBlock>>(block)} />;
+    case 'quote':
+      return <QuoteBlock {...asProps<ComponentProps<typeof QuoteBlock>>(block)} />;
+    case 'cardGrid':
+      return <CardGridBlock {...asProps<ComponentProps<typeof CardGridBlock>>(block)} />;
+    case 'banner':
+      return <BannerBlock {...asProps<ComponentProps<typeof BannerBlock>>(block)} />;
+    case 'steps':
+      return <StepsBlock {...asProps<ComponentProps<typeof StepsBlock>>(block)} />;
     default:
       return null;
   }
