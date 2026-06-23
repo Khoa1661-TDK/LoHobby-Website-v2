@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { hasPurchasedProduct } from '@/lib/reviews';
+import { logger } from '@/lib/logger';
 
 export type ReviewActionResult = { ok: true } | { ok: false; error: string };
 
@@ -56,7 +57,7 @@ export async function submitReviewAction(formData: FormData): Promise<ReviewActi
       },
     });
   } catch (error) {
-    console.error('[reviews.submitReviewAction] failed:', error);
+    logger.error({ err: error }, '[reviews.submitReviewAction] failed');
     return { ok: false, error: 'Không thể gửi đánh giá. Vui lòng thử lại.' };
   }
 

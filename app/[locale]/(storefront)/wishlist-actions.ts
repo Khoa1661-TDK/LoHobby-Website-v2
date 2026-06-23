@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export type WishlistToggleResult =
   | { ok: true; saved: boolean }
@@ -39,7 +40,7 @@ export async function toggleWishlistAction(
     revalidatePath('/profile');
     return { ok: true, saved: true };
   } catch (error) {
-    console.error('[wishlist.toggleWishlistAction] failed:', error);
+    logger.error({ err: error }, '[wishlist.toggleWishlistAction] failed');
     return { ok: false, error: 'Không thể cập nhật danh sách yêu thích.' };
   }
 }

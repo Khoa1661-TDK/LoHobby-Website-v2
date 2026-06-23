@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export type NewsletterResult = { ok: true } | { ok: false; error: string };
 
@@ -20,7 +21,7 @@ export async function subscribeNewsletterAction(email: string): Promise<Newslett
       update: {},
     });
   } catch (error) {
-    console.error('[newsletter.subscribeNewsletterAction] failed:', error);
+    logger.error({ err: error }, '[newsletter.subscribeNewsletterAction] failed');
     return { ok: false, error: 'Không thể đăng ký. Vui lòng thử lại.' };
   }
 

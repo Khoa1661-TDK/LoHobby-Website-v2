@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export type ContactResult = { ok: true } | { ok: false; error: string };
 
@@ -26,7 +27,7 @@ export async function submitContactAction(formData: FormData): Promise<ContactRe
       data: { name, email, orderCode: orderCode || null, message },
     });
   } catch (error) {
-    console.error('[contact.submitContactAction] failed:', error);
+    logger.error({ err: error }, '[contact.submitContactAction] failed');
     return { ok: false, error: 'Không thể gửi tin nhắn. Vui lòng thử lại.' };
   }
 

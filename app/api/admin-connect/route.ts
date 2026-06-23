@@ -3,6 +3,7 @@ import config from '@payload-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { getPayload } from 'payload';
 import { getAdminUser } from '@/lib/admin';
+import { logger } from '@/lib/logger';
 import {
   createPayloadAdminSessionCookie,
   getPayloadTokenCookieNameForConfig,
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // or password provided is incorrect" misleads the admin into thinking
     // their storefront credentials are wrong when the real failure is an
     // internal SSO issue (stale password hash, secret rotation, etc.).
-    console.error('[api/admin-connect] SSO failed:', error);
+    logger.error({ err: error }, '[api/admin-connect] SSO failed');
     return NextResponse.redirect(
       new URL('/admin-connect?error=stale-session', req.url),
     );

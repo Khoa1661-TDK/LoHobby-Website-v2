@@ -2,6 +2,7 @@
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,7 +44,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
     await prisma.verificationToken.deleteMany({ where: { identifier: record.identifier } });
   } catch (error) {
-    console.error('[api/auth/reset-password] failed:', error);
+    logger.error({ err: error }, '[api/auth/reset-password] failed');
     return NextResponse.json({ error: 'Không thể đặt lại mật khẩu.' }, { status: 500 });
   }
 

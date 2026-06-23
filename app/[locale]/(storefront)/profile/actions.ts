@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import { addToCart } from '@/lib/cart';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -59,7 +60,7 @@ export async function updateProfileAction(formData: FormData): Promise<ActionRes
       data: { name, image },
     });
   } catch (error) {
-    console.error('[profile.updateProfileAction] failed:', error);
+    logger.error({ err: error }, '[profile.updateProfileAction] failed');
     return { ok: false, error: 'Không thể cập nhật hồ sơ.' };
   }
 
@@ -120,7 +121,7 @@ export async function createAddressAction(formData: FormData): Promise<ActionRes
       });
     });
   } catch (error) {
-    console.error('[profile.createAddressAction] failed:', error);
+    logger.error({ err: error }, '[profile.createAddressAction] failed');
     return { ok: false, error: 'Không thể lưu địa chỉ.' };
   }
 
@@ -147,7 +148,7 @@ export async function deleteAddressAction(addressId: string): Promise<ActionResu
       return { ok: false, error: 'Không tìm thấy địa chỉ.' };
     }
   } catch (error) {
-    console.error('[profile.deleteAddressAction] failed:', error);
+    logger.error({ err: error }, '[profile.deleteAddressAction] failed');
     return { ok: false, error: 'Không thể xóa địa chỉ.' };
   }
 
@@ -238,7 +239,7 @@ export async function setDefaultAddressAction(addressId: string): Promise<Action
       });
     });
   } catch (error) {
-    console.error('[profile.setDefaultAddressAction] failed:', error);
+    logger.error({ err: error }, '[profile.setDefaultAddressAction] failed');
     const message = error instanceof Error ? error.message : 'Không thể cập nhật địa chỉ mặc định.';
     return { ok: false, error: message };
   }
