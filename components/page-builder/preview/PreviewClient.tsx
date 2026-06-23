@@ -1,26 +1,30 @@
 // components/page-builder/preview/PreviewClient.tsx — client root inside the preview
 // iframe. Replaces the server PreviewCanvas + PreviewBridge. Seeds block state from the
-// initial server render, announces readiness to the parent, and re-renders blocks from
-// the layout state the editor pushes over postMessage (setLayout) — presentational
-// blocks repaint instantly; data blocks delegate to DataBlockSlot (server re-render).
+// initial server render, announces readiness to the parent, and re-renders from the
+// layout state the editor pushes over postMessage (setLayout). Every block is rendered
+// through BlockSlot, which paints a server-rendered seed and re-fetches a single-block
+// server render when that block changes — the storefront block components can't run in
+// the client bundle (server-only transitive imports), so the iframe never imports them.
 'use client';
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import type { PageBlock } from '@/lib/page-builder';
 import { ready, isParentToPreview } from '@/lib/page-builder/preview-messages';
 import PreviewBlockFrame from './PreviewBlockFrame';
-import DataBlockSlot from './DataBlockSlot';
-import { DATA_BLOCK_TYPES, renderClientBlock } from './clientBlockMap';
+import BlockSlot from './BlockSlot';
 
 type Props = {
   initialBlocks: PageBlock[];
-  initialBlockHtml: Record<number, string>;
+  // Server-rendered RSC nodes for each block's first paint, keyed by layout index.
+  initialNodes: Record<number, ReactNode>;
   locale: string;
+  slug: string;
 };
 
 export default function PreviewClient({
   initialBlocks,
-  initialBlockHtml,
+  initialNodes,
   locale,
+  slug,
 }: Props): ReactElement {
   const [blocks, setBlocks] = useState<PageBlock[]>(initialBlocks);
 
@@ -52,16 +56,13 @@ export default function PreviewClient({
     <>
       {blocks.map((block, index) => (
         <PreviewBlockFrame key={index} index={index}>
-          {DATA_BLOCK_TYPES.has(block.blockType) ? (
-            <DataBlockSlot
-              block={block}
-              index={index}
-              locale={locale}
-              initialHtml={initialBlockHtml[index] ?? ''}
-            />
-          ) : (
-            renderClientBlock(block)
-          )}
+          <BlockSlot
+            block={block}
+            index={index}
+            locale={locale}
+            slug={slug}
+            initialNode={initialNodes[index]}
+          />
         </PreviewBlockFrame>
       ))}
     </>

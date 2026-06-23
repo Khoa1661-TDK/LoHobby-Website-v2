@@ -2,22 +2,11 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-
-// PreviewClient statically pulls in clientBlockMap → all 14 block components, whose
-// transitive imports (next-intl navigation, lib/prisma) can't load in the vitest
-// environment. This suite exercises PreviewClient's message/state wiring, not real block
-// rendering, so stub the block map with a trivial presentational renderer.
-vi.mock('../clientBlockMap', () => ({
-  DATA_BLOCK_TYPES: new Set(['featuredCollection', 'featuredProducts', 'recommendations', 'recentlyViewed']),
-  renderClientBlock: (block: { heading?: string }) => <div>{block.heading}</div>,
-}));
-
 import PreviewClient from '../PreviewClient';
 import type { PageBlock } from '@/lib/page-builder';
 
-// Presentational text block (no `url`, so it doesn't render the intl <Link>).
-const textBlock = (heading: string): PageBlock =>
-  ({ blockType: 'text', heading } as unknown as PageBlock);
+const heroBlock = (title: string): PageBlock =>
+  ({ blockType: 'hero', title } as unknown as PageBlock);
 
 function dispatchSetLayout(blocks: PageBlock[]): void {
   const event = new MessageEvent('message', {
@@ -29,41 +18,70 @@ function dispatchSetLayout(blocks: PageBlock[]): void {
 
 describe('PreviewClient', () => {
   beforeEach(() => {
-    global.fetch = vi.fn(() => Promise.resolve(new Response(''))) as unknown as typeof fetch;
+    vi.useFakeTimers();
+    global.fetch = vi.fn(() =>
+      Promise.resolve(new Response('<div id="pb-block-root"></div>')),
+    ) as unknown as typeof fetch;
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  it('should render the initial presentational block content', () => {
+  it('should render the initial seed node for each block', () => {
     const { container } = render(
-      <PreviewClient initialBlocks={[textBlock('Hello')]} initialBlockHtml={{}} locale="en" />,
+      <PreviewClient
+        initialBlocks={[heroBlock('Hello')]}
+        initialNodes={{ 0: <div>Hello</div> }}
+        locale="en"
+        slug="home"
+      />,
     );
     expect(container.textContent).toContain('Hello');
-  });
-
-  it('should re-render when the parent posts a setLayout message', () => {
-    const { container } = render(
-      <PreviewClient initialBlocks={[textBlock('Hello')]} initialBlockHtml={{}} locale="en" />,
-    );
-
-    act(() => {
-      dispatchSetLayout([textBlock('Updated')]);
-    });
-
-    expect(container.textContent).toContain('Updated');
-    expect(container.textContent).not.toContain('Hello');
   });
 
   it('should post a ready message to the parent on mount', () => {
     const spy = vi.spyOn(window.parent, 'postMessage');
     render(
-      <PreviewClient initialBlocks={[textBlock('Hello')]} initialBlockHtml={{}} locale="en" />,
+      <PreviewClient
+        initialBlocks={[heroBlock('Hello')]}
+        initialNodes={{ 0: <div>Hello</div> }}
+        locale="en"
+        slug="home"
+      />,
     );
-    expect(spy).toHaveBeenCalledWith(
-      { source: 'pb', type: 'ready' },
-      window.location.origin,
+    expect(spy).toHaveBeenCalledWith({ source: 'pb', type: 'ready' }, window.location.origin);
+  });
+
+  it('should re-fetch the changed block when the parent posts setLayout', async () => {
+    const fetchMock = vi.fn((_url: string) =>
+      Promise.resolve(new Response('<div id="pb-block-root"></div>')),
     );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <PreviewClient
+        initialBlocks={[heroBlock('Hello')]}
+        initialNodes={{ 0: <div>Hello</div> }}
+        locale="en"
+        slug="home"
+      />,
+    );
+
+    // Seeded block: no fetch yet.
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    act(() => {
+      dispatchSetLayout([heroBlock('Updated')]);
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(200);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const url = fetchMock.mock.calls[0]![0] as string;
+    expect(url).toContain(encodeURIComponent(JSON.stringify(heroBlock('Updated'))));
   });
 });
