@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { absoluteUrl } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,12 +36,24 @@ export async function POST(req: Request): Promise<NextResponse> {
       await prisma.verificationToken.create({ data: { identifier: email, token, expires } });
 
       const resetUrl = absoluteUrl(`/reset-password?token=${token}`);
-      // No email provider is wired yet; log the link so it can be delivered
-      // manually or by a future Resend/Nodemailer integration.
-      console.info(`[forgot-password] reset link for ${email}: ${resetUrl}`);
+      // No email provider is wired yet. The reset URL contains a live token, so
+      // it must NEVER hit production logs. In development we print it so the flow
+      // is testable; in production we record only that a reset was requested
+      // (no email, no token) — delivery is a known gap until email is wired.
+      if (process.env.NODE_ENV === 'production') {
+        logger.warn(
+          { route: '/api/auth/forgot-password' },
+          'password reset requested but no email provider is configured; token not delivered',
+        );
+      } else {
+        logger.debug(
+          { route: '/api/auth/forgot-password', resetUrl },
+          'password reset link (dev only)',
+        );
+      }
     }
   } catch (error) {
-    console.error('[api/auth/forgot-password] failed:', error);
+    logger.error({ route: '/api/auth/forgot-password', err: error }, 'password reset failed');
   }
 
   return NextResponse.json({ ok: true });
