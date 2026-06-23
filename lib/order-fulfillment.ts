@@ -22,6 +22,7 @@ import {
   markPayloadOrderPaidByIdSql,
 } from '@/lib/payload-order-db';
 import { getPayloadOrderById } from '@/lib/payload-orders';
+import { logger } from '@/lib/logger';
 import type { Order } from '@/src/payload/payload-types';
 import type { ShipmentCarrierKey } from '@/lib/shipment/carriers';
 
@@ -77,7 +78,10 @@ export async function markOrderAsPaid(docId: string | number): Promise<Fulfillme
   if (existing.inventory_adjusted !== true) {
     queueMicrotask(() => {
       void commitOrderInventory(docId).catch((err: unknown) => {
-        console.warn('[markOrderAsPaid] inventory commit failed', err);
+        logger.warn(
+          { fn: 'markOrderAsPaid', order_id: docId, err },
+          'inventory commit failed',
+        );
       });
     });
   }

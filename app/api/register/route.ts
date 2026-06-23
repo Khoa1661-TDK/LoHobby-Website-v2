@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { isAdminEmail } from '@/lib/admin';
 import { ensurePayloadAdminUser } from '@/lib/payload-admin-sync';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,7 +59,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {
-    console.error('[api/register] failed:', error);
+    // Do not log the submitted email/password — only the error.
+    logger.error({ route: '/api/register', err: error }, 'registration failed');
     return NextResponse.json({ error: 'Lỗi máy chủ nội bộ' }, { status: 500 });
   }
 }

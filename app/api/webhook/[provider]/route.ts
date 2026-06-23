@@ -10,6 +10,7 @@ import {
 } from '@/lib/payment-providers';
 import { applyVerifiedWebhookPayment } from '@/lib/payment-webhook-handler';
 import { getPayloadOrderByCode } from '@/lib/payload-orders';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -103,7 +104,11 @@ async function handleWebhook(
       const result = await applyVerifiedWebhookPayment(data);
       return NextResponse.json({ received: true, matched: result.matched });
     } catch (error) {
-      console.error('[stripe webhook]', error);
+      // Do not log the raw webhook body — it carries payment data.
+      logger.error(
+        { route: '/api/webhook/stripe', provider: 'stripe', err: error },
+        'stripe webhook verification failed',
+      );
       return NextResponse.json({ error: 'Chữ ký không hợp lệ' }, { status: 401 });
     }
   }
@@ -138,7 +143,11 @@ async function handleWebhook(
     if (error instanceof WebhookError) {
       return NextResponse.json({ error: 'Chữ ký không hợp lệ' }, { status: 401 });
     }
-    console.error(`[${provider} webhook]`, error);
+    // Do not log the raw webhook body — it carries payment data.
+    logger.error(
+      { route: '/api/webhook', provider, order_code: orderCode, err: error },
+      'webhook processing failed',
+    );
     return NextResponse.json({ error: 'Xử lý webhook thất bại' }, { status: 500 });
   }
 }

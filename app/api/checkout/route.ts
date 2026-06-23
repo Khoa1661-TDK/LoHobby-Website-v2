@@ -23,6 +23,7 @@ import { syncStoreCustomerForUser } from '@/lib/store-customer-sync';
 import { getStoreSettings } from '@/lib/store-settings';
 import { computeTaxAmount, resolveTaxSettings } from '@/lib/tax';
 import { isGiftCardsEnabled } from '@/lib/feature-flags';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -368,7 +369,12 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
               quantity: line.quantity,
             })),
             shippingAddress,
-          }).catch((err: unknown) => console.warn('[checkout] dropship stub failed', err));
+          }).catch((err: unknown) =>
+            logger.warn(
+              { route: '/api/checkout', order_code: orderCode, err },
+              'dropship stub failed',
+            ),
+          );
         }
       }
     } catch (error) {
@@ -456,7 +462,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
         gatewayError instanceof Error
           ? gatewayError.message
           : 'Không thể tạo liên kết thanh toán.';
-      console.error('[checkout] gateway error', gatewayError);
+      logger.error(
+        { route: '/api/checkout', order_code: orderCode, err: gatewayError },
+        'payment gateway error',
+      );
       return NextResponse.json({ error: message }, { status: 502 });
     }
   }
