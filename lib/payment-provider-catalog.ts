@@ -10,6 +10,7 @@ export const PAYMENT_PROVIDER_IDS = [
   'zalopay',
   'vnpay',
   'shopeepay',
+  'demo',
 ] as const;
 
 export type PaymentProviderId = (typeof PAYMENT_PROVIDER_IDS)[number];
@@ -76,6 +77,10 @@ export const PAYMENT_PROVIDER_CATALOG: Record<PaymentProviderId, ProviderDefinit
     label: 'ShopeePay',
     requiredFields: ['partnerCode', 'partnerKey', 'merchantExtId'],
     envFallback: ['SHOPEEPAY_PARTNER_CODE', 'SHOPEEPAY_PARTNER_KEY', 'SHOPEEPAY_MERCHANT_EXT_ID'],
+  },
+  demo: {
+    label: 'Demo / Test (no real payment)',
+    requiredFields: [],
   },
 };
 

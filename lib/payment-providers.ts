@@ -2,6 +2,7 @@
 import type { PaymentProviderId } from '@/lib/payment-provider-catalog';
 import { isPaymentProviderId } from '@/lib/payment-provider-catalog';
 import type { GatewayCredentials, PaymentProvider } from '@/lib/payment-provider-types';
+import { demoProvider } from '@/lib/providers/demo';
 import { momoProvider } from '@/lib/providers/momo';
 import { payosProvider } from '@/lib/providers/payos';
 import { shopeepayProvider } from '@/lib/providers/shopeepay';
@@ -34,6 +35,7 @@ const REGISTRY: Record<PaymentProviderId, PaymentProvider> = {
   zalopay: zalopayProvider,
   vnpay: vnpayProvider,
   shopeepay: shopeepayProvider,
+  demo: demoProvider,
 };
 
 export function getPaymentProvider(id: string): PaymentProvider | null {

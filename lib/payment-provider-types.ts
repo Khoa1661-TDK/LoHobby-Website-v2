@@ -70,13 +70,18 @@ export type ShopeePayCredentials = {
   merchantExtId: string;
 };
 
+export type DemoCredentials = {
+  provider: 'demo';
+};
+
 export type GatewayCredentials =
   | PayOSCredentials
   | StripeCredentials
   | MoMoCredentials
   | ZaloPayCredentials
   | VNPayCredentials
-  | ShopeePayCredentials;
+  | ShopeePayCredentials
+  | DemoCredentials;
 
 export type PaymentProvider = {
   id: PaymentProviderId;
