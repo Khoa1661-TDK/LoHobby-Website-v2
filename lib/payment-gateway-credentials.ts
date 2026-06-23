@@ -95,6 +95,12 @@ export async function getGatewayConfigForMethod(
 
   const providerRaw = doc?.provider;
   const provider = isPaymentProviderId(providerRaw) ? providerRaw : null;
+
+  // Demo/test provider charges nothing and needs no credentials.
+  if (provider === 'demo') {
+    return { credentials: { provider: 'demo' }, sandboxMode: true };
+  }
+
   const sandboxMode = doc?.gatewayCredentials?.sandboxMode !== false;
   const credentialsEnc = doc?.gatewayCredentials?.credentialsEnc;
 
