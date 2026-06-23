@@ -43,23 +43,18 @@ docker compose build
 docker compose up -d        # recreates app/caddy; migrations re-run on boot
 ```
 
-## Backups
+## Backups & Restore
+
+Automated daily backups, offsite copies, the monthly **restore drill**, and
+disaster recovery are documented in their own runbook:
+**[backups.md](./backups.md)**. Set this up before going live — an untested
+backup is not a backup.
+
+Quick one-off dump (full procedure is in the runbook):
 
 ```bash
-# Database
-docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" \
-  | gzip > backup-db-$(date +%F).sql.gz
-
-# Media (volume name is <project>_media; check `docker volume ls`)
-docker run --rm -v "$(basename "$PWD")_media:/m" -v "$PWD:/out" alpine \
-  tar czf /out/backup-media-$(date +%F).tgz -C /m .
-```
-
-## Restore
-
-```bash
-gunzip -c backup-db-YYYY-MM-DD.sql.gz \
-  | docker compose exec -T postgres psql -U "$POSTGRES_USER" "$POSTGRES_DB"
+docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" --format=custom \
+  --no-owner "$POSTGRES_DB" > db-$(date +%F).dump
 ```
 
 ## Rollback
