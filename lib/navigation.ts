@@ -2,6 +2,7 @@
 import config from '@payload-config';
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload } from 'payload';
+import { logger } from '@/lib/logger';
 
 const NAVIGATION_TAG = 'navigation';
 
@@ -130,7 +131,7 @@ async function fetchNavigationData(): Promise<NavigationData> {
     raw = (result as RawNavigationGlobal) ?? null;
   } catch (error) {
     // Most likely the global hasn't been saved yet (or schema not pushed).
-    console.warn('[navigation] findGlobal failed; falling back to defaults.', error);
+    logger.warn({ err: error }, '[navigation] findGlobal failed; falling back to defaults.');
   }
 
   const footerMenu = resolveColumns(raw?.footerMenu);

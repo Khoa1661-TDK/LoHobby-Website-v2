@@ -3,6 +3,7 @@ import config from '@payload-config';
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload } from 'payload';
 import { BRAND_CONTACT, BRAND_TAGLINE, getSiteName } from '@/lib/brand';
+import { logger } from '@/lib/logger';
 
 const STORE_SETTINGS_TAG = 'store-settings';
 
@@ -172,7 +173,7 @@ async function fetchStoreSettings(): Promise<ResolvedStoreSettings> {
     const result = await payload.findGlobal({ slug: 'store-settings' });
     return resolve((result as RawStoreSettings) ?? null);
   } catch (error) {
-    console.warn('[store-settings] findGlobal failed; using defaults.', error);
+    logger.warn({ err: error }, '[store-settings] findGlobal failed; using defaults.');
     return DEFAULTS;
   }
 }

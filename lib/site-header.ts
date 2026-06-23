@@ -3,6 +3,7 @@ import config from '@payload-config';
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload } from 'payload';
 import { getPayloadCollections } from '@/lib/payload-products';
+import { logger } from '@/lib/logger';
 
 const SITE_HEADER_TAG = 'site-header';
 
@@ -230,7 +231,7 @@ async function fetchSiteHeaderData(): Promise<SiteHeaderData> {
     raw = (result as RawHeaderGlobal) ?? null;
   } catch (error) {
     // Most likely the global hasn't been saved yet (or schema not pushed).
-    console.warn('[site-header] findGlobal failed; falling back to defaults.', error);
+    logger.warn({ err: error }, '[site-header] findGlobal failed; falling back to defaults.');
   }
 
   const announcement = resolveAnnouncement(raw?.announcement);

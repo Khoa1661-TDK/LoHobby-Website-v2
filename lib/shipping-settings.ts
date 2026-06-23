@@ -6,6 +6,8 @@ import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 
 import { getPayload } from 'payload';
 
+import { logger } from '@/lib/logger';
+
 import {
 
   computeShippingQuote,
@@ -222,7 +224,7 @@ async function fetchShippingSettings(): Promise<ResolvedShippingSettings> {
 
   } catch (error) {
 
-    console.warn('[shipping-settings] findGlobal failed; using defaults.', error);
+    logger.warn({ err: error }, '[shipping-settings] findGlobal failed; using defaults.');
 
     return DEFAULTS;
 

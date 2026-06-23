@@ -5,6 +5,7 @@
 import config from '@payload-config';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload } from 'payload';
+import { logger } from '@/lib/logger';
 
 const PAYMENT_METHODS_TAG = 'payment-methods';
 const PAYMENT_METHODS_REVALIDATE = 60;
@@ -130,7 +131,7 @@ async function fetchPaymentMethods(): Promise<ResolvedPaymentMethod[]> {
     docs = (result.docs as RawPaymentMethod[]) ?? [];
   } catch (error) {
     // Most likely the collection schema hasn't been pushed yet.
-    console.warn('[payment-methods] find failed; returning empty list.', error);
+    logger.warn({ err: error }, '[payment-methods] find failed; returning empty list.');
     return [];
   }
 
