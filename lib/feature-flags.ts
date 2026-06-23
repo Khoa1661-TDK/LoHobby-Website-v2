@@ -50,3 +50,13 @@ export function isRateLimitingEnabled(): boolean {
 export function isGiftCardsEnabled(): boolean {
   return envFlag('ENABLE_GIFT_CARDS', true);
 }
+
+/**
+ * Demo/test payment provider: a no-charge gateway for verifying checkout.
+ * Always available outside production; in production only when explicitly
+ * enabled via ALLOW_DEMO_PAYMENTS (so a forgotten demo method cannot hand out
+ * free orders to real customers).
+ */
+export function isDemoPaymentAllowed(): boolean {
+  return process.env.NODE_ENV !== 'production' || envFlag('ALLOW_DEMO_PAYMENTS', false);
+}
