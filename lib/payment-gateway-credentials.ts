@@ -8,6 +8,7 @@ import {
 } from '@/lib/payment-provider-catalog';
 import type { GatewayCredentials } from '@/lib/payment-provider-types';
 import { decryptCredentials } from '@/lib/payment-secrets';
+import { logger } from '@/lib/logger';
 
 type StoredCredentialBlob = Record<string, unknown> & { provider?: string };
 
@@ -89,7 +90,7 @@ export async function getGatewayConfigForMethod(
     });
     doc = result.docs[0] as MethodDoc | undefined;
   } catch (error) {
-    console.warn('[payment-gateway-credentials] lookup failed; trying env fallback.', error);
+    logger.warn({ err: error }, '[payment-gateway-credentials] lookup failed; trying env fallback.');
   }
 
   const providerRaw = doc?.provider;
@@ -103,7 +104,7 @@ export async function getGatewayConfigForMethod(
     if (fromBlob) {
       return { credentials: fromBlob, sandboxMode };
     }
-    console.error('[payment-gateway-credentials] stored credentials could not be decrypted.');
+    logger.error('[payment-gateway-credentials] stored credentials could not be decrypted.');
   }
 
   if (provider) {

@@ -3,6 +3,7 @@ import config from '@payload-config';
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload, type Where } from 'payload';
+import { logger } from '@/lib/logger';
 import { toStoreCategory, type StoreCategory } from '@/lib/categories';
 import {
   canonicalCategorySlug,
@@ -492,7 +493,10 @@ export function revalidateCatalogCache(): void {
   } catch (error) {
     // Safe outside a Next.js request (seed scripts) and during Payload admin saves
     // where the static-generation store may be unavailable.
-    console.warn('[catalog] revalidate skipped:', error instanceof Error ? error.message : error);
+    logger.warn(
+      { err: error instanceof Error ? error.message : error },
+      '[catalog] revalidate skipped',
+    );
   }
 }
 

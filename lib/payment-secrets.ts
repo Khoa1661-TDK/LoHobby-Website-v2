@@ -11,6 +11,7 @@ import {
   randomBytes,
   scryptSync,
 } from 'node:crypto';
+import { logger } from '@/lib/logger';
 
 const IV_LENGTH = 12; // 96-bit nonce, recommended for GCM
 const AUTH_TAG_LENGTH = 16;
@@ -48,7 +49,7 @@ function getMasterKey(): Buffer {
   }
 
   if (!warnedAboutFallback) {
-    console.warn(
+    logger.warn(
       '[payment-secrets] PAYMENT_SECRETS_KEY is not set; deriving key from AUTH_SECRET. Set PAYMENT_SECRETS_KEY in production.',
     );
     warnedAboutFallback = true;
@@ -92,7 +93,7 @@ export function decryptCredentials<T>(blob: string): T | null {
     const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
     return JSON.parse(plaintext.toString('utf8')) as T;
   } catch (error) {
-    console.error('[payment-secrets] failed to decrypt credentials blob:', error);
+    logger.error({ err: error }, '[payment-secrets] failed to decrypt credentials blob');
     return null;
   }
 }

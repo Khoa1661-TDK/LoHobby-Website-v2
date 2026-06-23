@@ -4,6 +4,7 @@ import { submitDropshipOrder } from '@/lib/dropshipping';
 import { getDropshipSettings } from '@/lib/dropshipping/settings';
 import { commitOrderInventory } from '@/lib/order-inventory';
 import { markPayloadOrderPaid } from '@/lib/payload-orders';
+import { logger } from '@/lib/logger';
 
 export async function applyVerifiedWebhookPayment(
   data: VerifiedWebhook,
@@ -43,7 +44,7 @@ export async function applyVerifiedWebhookPayment(
       orderCode: data.orderCode,
       items,
       shippingAddress: typeof doc.shippingAddress === 'string' ? doc.shippingAddress : '',
-    }).catch((err: unknown) => console.warn('[webhook] dropship stub failed', err));
+    }).catch((err: unknown) => logger.warn({ err }, '[webhook] dropship stub failed'));
   }
 
   return { matched: true };

@@ -5,6 +5,7 @@ import config from '@payload-config';
 import { generatePayloadCookie, getPayload } from 'payload';
 import type { AdminSessionUser } from '@/lib/admin';
 import { isAdminEmail } from '@/lib/admin-emails';
+import { logger } from '@/lib/logger';
 
 export type PayloadSessionCookie = {
   name: string;
@@ -285,6 +286,6 @@ export async function seedPayloadAdminUsers(): Promise<void> {
 
   for (const email of emails) {
     await ensurePayloadAdminUser({ email, name: email });
-    console.log(`[payload] synced CMS admin: ${email}`);
+    logger.info({ email }, '[payload] synced CMS admin');
   }
 }

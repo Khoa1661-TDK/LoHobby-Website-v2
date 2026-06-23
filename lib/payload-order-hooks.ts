@@ -4,6 +4,7 @@ import type { Order } from '@/src/payload/payload-types';
 import { isOrderInventorySync, isSkipOrderInventoryHook } from '@/lib/payload-hooks';
 import { syncOrderInventoryForStatusChange } from '@/lib/order-inventory';
 import { notifyNewOrder } from '@/lib/discord/order-notification';
+import { logger } from '@/lib/logger';
 
 /** Auto-set paidAt / processing when admin marks an order paid in CMS. */
 export const normalizeOrderPaymentOnChange: CollectionBeforeChangeHook = ({ data, originalDoc }) => {
@@ -52,7 +53,7 @@ export const syncOrderInventoryOnStatusChange: CollectionAfterChangeHook = async
     nextOrderStatus: doc.orderStatus,
     inventoryAdjusted: doc.inventoryAdjusted,
   }).catch((err: unknown) => {
-    console.warn('[orders.afterChange] inventory sync failed', err);
+    logger.warn({ err }, '[orders.afterChange] inventory sync failed');
   });
 
   return doc;
@@ -63,7 +64,7 @@ export const notifySellerOnNewOrder: CollectionAfterChangeHook = ({ doc, operati
   if (operation !== 'create') return doc;
 
   void notifyNewOrder({ payload: req.payload, order: doc as Order }).catch((err: unknown) => {
-    console.warn('[orders.afterChange] discord notify failed', { orderId: doc?.id, err });
+    logger.warn({ orderId: doc?.id, err }, '[orders.afterChange] discord notify failed');
   });
 
   return doc;
