@@ -26,6 +26,7 @@
     "payload:cleanup-categories": "tsx scripts/cleanup-payload-categories.ts",
     "payload:backfill-images": "tsx scripts/backfill-product-images.ts",
     "payload:attach-f22-images": "tsx scripts/attach-product-images.ts",
+    "payload:backfill-block-keys": "tsx scripts/backfill-block-keys.ts",
     "payload:cleanup-order-snapshots": "tsx scripts/cleanup-order-snapshots-schema.ts",
     "payload:db-push": "tsx scripts/payload-db-push.ts",
     "payload:migrate-variants": "tsx scripts/migrate-inline-product-variants.ts",
