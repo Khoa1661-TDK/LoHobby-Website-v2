@@ -23,4 +23,19 @@ describe('buildHomeSeedLayout', () => {
     const types = buildHomeSeedLayout().map((b) => b.blockType);
     expect(types).toContain('newsletter');
   });
+
+  it('should point the promo banner at the sale page', () => {
+    const promo = buildHomeSeedLayout().find((b) => b.blockType === 'promoBanner') as
+      | Record<string, unknown>
+      | undefined;
+    expect(promo?.ctaHref).toBe('/pages/sale');
+  });
+
+  it('should author FAQ answers as valid lexical state', () => {
+    const faq = buildHomeSeedLayout().find((b) => b.blockType === 'faq') as
+      | { items?: Array<{ answer?: { root?: { type?: string } } }> }
+      | undefined;
+    const firstAnswer = faq?.items?.[0]?.answer;
+    expect(firstAnswer?.root?.type).toBe('root');
+  });
 });
