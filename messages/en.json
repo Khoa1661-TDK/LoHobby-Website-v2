@@ -311,7 +311,20 @@
     "unsave": "Unsave",
     "reorderSuccess": "Items added to cart.",
     "reorderAdding": "Adding…",
-    "reorder": "Reorder"
+    "reorder": "Reorder",
+    "cancelOrder": "Cancel order",
+    "cancelOrderTitle": "Cancel this order?",
+    "cancelOrderBody": "Please choose a reason. For paid orders, the shop will process your refund.",
+    "cancelReasonChanged_mind": "Changed my mind",
+    "cancelReasonOrdered_by_mistake": "Ordered by mistake",
+    "cancelReasonFound_better_price": "Found a better price",
+    "cancelReasonDelivery_too_slow": "Delivery too slow",
+    "cancelReasonOther": "Other reason",
+    "cancelNotePlaceholder": "Additional note (optional)",
+    "cancelConfirm": "Confirm cancellation",
+    "cancelDismiss": "Keep order",
+    "cancelSuccess": "Order canceled.",
+    "cancelPending": "Canceling..."
   },
   "search": {
     "metaTitle": "Search",

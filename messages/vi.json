@@ -311,7 +311,20 @@
     "unsave": "Bỏ lưu",
     "reorderSuccess": "Đã thêm sản phẩm vào giỏ hàng.",
     "reorderAdding": "Đang thêm…",
-    "reorder": "Mua lại"
+    "reorder": "Mua lại",
+    "cancelOrder": "Hủy đơn hàng",
+    "cancelOrderTitle": "Hủy đơn hàng này?",
+    "cancelOrderBody": "Vui lòng chọn lý do hủy. Với đơn đã thanh toán, shop sẽ xử lý hoàn tiền cho bạn.",
+    "cancelReasonChanged_mind": "Đổi ý / không muốn mua nữa",
+    "cancelReasonOrdered_by_mistake": "Đặt nhầm",
+    "cancelReasonFound_better_price": "Tìm được giá tốt hơn",
+    "cancelReasonDelivery_too_slow": "Giao hàng quá chậm",
+    "cancelReasonOther": "Lý do khác",
+    "cancelNotePlaceholder": "Ghi chú thêm (không bắt buộc)",
+    "cancelConfirm": "Xác nhận hủy",
+    "cancelDismiss": "Giữ đơn hàng",
+    "cancelSuccess": "Đã hủy đơn hàng.",
+    "cancelPending": "Đang hủy..."
   },
   "search": {
     "metaTitle": "Tìm kiếm",

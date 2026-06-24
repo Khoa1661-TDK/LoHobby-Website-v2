@@ -8,6 +8,7 @@ import ShipmentTracker from '@/components/orders/shipment-tracker';
 import { getPublicShipmentInfo } from '@/lib/order-fulfillment';
 import { getPayloadOrderByCode } from '@/lib/payload-orders';
 import { SHIPMENT_STATUS_LABELS, type ShipmentStatus } from '@/lib/shipment/types';
+import CancelOrderButton from './cancel-order-button';
 import ReorderButton from './reorder-button';
 
 export const dynamic = 'force-dynamic';
@@ -206,8 +207,11 @@ export default async function OrderDetailPage(props: { params: Params }): Promis
         </div>
       ) : null}
 
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap gap-3">
         <ReorderButton orderId={String(order.id)} />
+        {order.orderStatus === 'pending' || order.orderStatus === 'processing' ? (
+          <CancelOrderButton orderId={String(order.id)} />
+        ) : null}
       </div>
     </section>
   );
