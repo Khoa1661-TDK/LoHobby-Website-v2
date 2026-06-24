@@ -1,4 +1,10 @@
-import 'server-only';
+// NOTE: deliberately NOT `import 'server-only'`. This logger is a cross-cutting
+// server primitive imported by config-path modules (Payload collection/global
+// hooks and resolvers under src/payload + lib/*). Payload's `generate:importmap`
+// loads payload.config.ts under tsx — plain Node without the `react-server`
+// export condition — where the `server-only` guard throws for ANY import,
+// breaking the build. pino is Node-only and a real client bundle would fail on
+// its node built-ins regardless, so the guard adds no protection here.
 import pino, { type DestinationStream, type Logger } from 'pino';
 
 /**
