@@ -30,7 +30,7 @@ We introduce a separate stable identifier:
 - Hidden in the editor: `admin.hidden: true`, and excluded from the visible fields in `FieldRenderer`.
 - Also added to the `PageBlock` TypeScript union / block interfaces so types stay accurate.
 
-**Legacy / admin-created blocks** lacking a `blockKey` are treated as "new" on the first structural sync after this ships: they get mirrored + translated to the other locale. This is a one-time, bounded over-translation risk (see Trade-offs).
+**Legacy / admin-created blocks** lacking a `blockKey` are **skipped** by the reconcile step (not mirrored, not translated) — `reconcileLayout` can only track blocks that carry a key. Run the one-time backfill script (`scripts/backfill-block-keys.ts`) to assign keys to legacy blocks in both locales; once keyed, they participate in mirroring normally. This is safer than auto-mirroring unkeyed blocks (no accidental duplication or over-translation), at the cost of needing the backfill pass. See Trade-offs.
 
 ### The reconcile hook (`afterChange` on `Pages`)
 
@@ -111,7 +111,7 @@ Out of scope for v1. Lexical rich text is stored as structured JSON nodes; trans
   - remove → gone in other locale, other-locale-only blocks preserved.
   - reorder → order follows, text preserved.
   - edit (same key, changed fields) → other locale untouched.
-  - legacy block without `blockKey` → treated as added on first sync.
+  - legacy block without `blockKey` → skipped (not mirrored); preserved if it lives in the other locale.
 - **`translatable-fields.ts`** — unit: denylist fields excluded; array fields recursed; rich text returned as a single path (verbatim copy, not translated in v1).
 - **`translate-blocks.ts`** — unit with mocked OpenRouter client: batching shape, target locale, best-effort fallback on rejection returns source map unchanged.
 - **Hook** — integration-style test with a mocked Payload + mocked translator: full add→mirror→translate flow, recursion guard respected, `skipMirror` short-circuits.
@@ -122,7 +122,7 @@ Tests follow the project Vitest setup and naming convention (`should ... when ..
 
 1. **Structural sync can be destructive to independent other-locale work.** A block deleted in `vi` is deleted in `en` — by design. This assumes the two locales are meant to be parallel in structure. Hand-added `en`-only blocks are preserved (not wiped), but `en` cannot structurally diverge from `vi` for shared keys without being pulled back into sync on the next `vi` save. If true locale independence is later wanted, this is the trade-off to revisit.
 2. **Translation quality on a free model.** Llama 3.3 70B (free) is good for vi↔en but not DeepL-grade; marketing tone may need a manual pass. Configurable via `OPENROUTER_MODEL` to upgrade later.
-3. **One over-translation window for legacy data.** Pre-`blockKey` blocks mirror+translate on first sync as if new. Bounded and one-time, but editors should be aware on first deploy.
+3. **Legacy blocks need a backfill pass.** Pre-`blockKey` blocks are skipped by the reconcile step (not mirrored) until `scripts/backfill-block-keys.ts` assigns them keys in both locales. The backfill is idempotent and safe to run any time, but without it those blocks never mirror; editors would have to delete and re-add them to trigger mirroring. This trades a one-time operational step for the safety of never auto-mirroring unkeyed (possibly-duplicate) blocks.
 4. **Rich text not translated in v1.** Copied verbatim; follow-up spec needed.
 
 ## Out of Scope

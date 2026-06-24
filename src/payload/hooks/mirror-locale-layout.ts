@@ -21,9 +21,8 @@ const LOCALES = ['vi', 'en'] as const;
 type Locale = (typeof LOCALES)[number];
 
 function otherOf(locale: string): Locale | undefined {
-  if (locale === 'vi') return 'en';
-  if (locale === 'en') return 'vi';
-  return undefined;
+  if (!LOCALES.includes(locale as Locale)) return undefined;
+  return LOCALES.find((code) => code !== locale) as Locale;
 }
 
 type MirrorReq = PayloadRequest & {
