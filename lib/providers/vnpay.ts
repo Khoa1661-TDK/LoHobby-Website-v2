@@ -36,7 +36,11 @@ export const vnpayProvider: PaymentProvider = {
     const creds = assertVNPay(credentials);
     const createDate = new Date()
       .toISOString()
-      .replace(/[-:TZ.]/g, '')
+      // Alternation, not a character class, on purpose: the Tailwind source scanner
+      // (lib is in its content globs) reads a bracketed regex of these chars as an
+      // arbitrary-property class candidate and emits invalid CSS that breaks the whole
+      // stylesheet. Same effect — strips the ISO separators to leave yyyymmddHHMMSS.
+      .replace(/-|:|T|Z|\./g, '')
       .slice(0, 14);
 
     const params: Record<string, string> = {
