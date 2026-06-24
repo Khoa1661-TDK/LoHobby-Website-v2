@@ -12,7 +12,8 @@ export interface DiscordEmbedField {
 
 export interface DiscordEmbed {
   title: string;
-  url: string;
+  description?: string;
+  url?: string;
   color: number;
   fields: DiscordEmbedField[];
 }
@@ -29,7 +30,7 @@ export interface DiscordActionRow {
   components: DiscordButton[];
 }
 
-function formatVnd(value: number): string {
+export function formatVnd(value: number): string {
   return `${Math.round(value).toLocaleString('vi-VN')}₫`;
 }
 
