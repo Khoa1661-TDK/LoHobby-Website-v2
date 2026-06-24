@@ -40,3 +40,10 @@ describe('relationship defaults', () => {
     expect(defaultForField({ name: 'collection', type: 'relationship', relationTo: 'categories', hasMany: false })).toBeNull();
   });
 });
+
+describe('defaultForField richText', () => {
+  it('should return null for a richText field', () => {
+    const field = { name: 'answer', type: 'richText' } as const;
+    expect(defaultForField(field)).toBeNull();
+  });
+});

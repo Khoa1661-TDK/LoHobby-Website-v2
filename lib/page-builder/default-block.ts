@@ -13,6 +13,7 @@ export function defaultForField(field: FieldDescriptor): unknown {
     return [];
   }
   if (field.type === 'text' || field.type === 'textarea') return '';
+  if (field.type === 'richText') return null;
   if (field.type === 'relationship') return field.hasMany ? [] : null;
   return null;
 }
