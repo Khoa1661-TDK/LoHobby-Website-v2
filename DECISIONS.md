@@ -5,6 +5,17 @@ See `rules/common/decisions.md` for the logging format and rules.
 
 ---
 
+---
+
+## 2026-06-24 — Mirror-on-create with LLM auto-translation across locales
+**Chosen:** Add a stable per-block `blockKey` (UUID) to every block, persisted across saves (unlike Payload's `id`, which is stripped by `stripBlockIds`). An `afterChange` hook on `Pages` diffs the active locale's `layout` against its prior state by `blockKey` and mirrors structural changes (add/delete/reorder) to the other locale — translating the text fields of newly-added blocks via OpenRouter (Llama 3.3 70B free, OpenAI-compatible SDK). Field-level edits do not propagate. Theme colors come along automatically because they are paired sibling fields inside each block.
+**Alternatives:** (1) Mirror at the editor/client layer by issuing two PATCHes on add. (2) An explicit "Mirror to <locale>" button instead of automatic. (3) Treat theme as a separate Payload locale dimension (vi-light/vi-dark/en-light/en-dark). (4) A dedicated translation API (DeepL/Google) instead of an LLM.
+**Why:** A Payload `afterChange` hook is the only layer that covers both the visual editor and raw admin edits, and is the natural place to run a structural diff + translation. The client-mirror (alt 1) would miss direct admin edits; the manual button (alt 2) is easy to forget and leaves locales out of sync. Theme-as-locale (alt 3) was already rejected in the 2026-06-22 spec — it explodes locale count and conflates language with appearance. The existing `stripBlockIds` behavior (which removes `id` to avoid cross-locale PK collisions) makes Payload's `id` unusable for stable diffing, hence the separate `blockKey`. LLM translation over DeepL because the user has an OpenRouter account and wants a free option; Llama 3.3 70B free is good quality for vi↔en. Best-effort contract (API failure → mirror structure anyway with source text + logged warning) keeps saves from ever blocking on a translation outage.
+**Trade-offs:** Structural sync assumes the two locales are meant to be parallel — a block deleted in `vi` is deleted in `en` (by design), though `en`-only blocks are preserved. Free-model translation quality is below DeepL-grade; marketing tone may need a manual pass. Pre-`blockKey` legacy blocks mirror+translate on first sync (one-time, bounded). Rich text (Lexical) is copied verbatim in v1, not translated — flagged for a follow-up spec.
+**Revisit if:** True locale independence (letting structures diverge) becomes needed, or translation quality demands a paid model / dedicated MT API, or rich-text translation becomes a priority.
+
+---
+
 ## 2026-06-23 — Render the page-builder preview via a per-block server route (not client-side)
 **Chosen:** The visual-editor preview renders every block through a single-block RSC route (`/[locale]/build/[slug]/preview/block?block=<json>`), seeded by server-rendered nodes for the initial paint. On edit, only the changed block re-fetches its own server render (~200ms debounce); the editor pushes layout state into the iframe over `postMessage`, decoupled from autosave.
 **Alternatives:** (1) The originally-specced design: render the 14 "presentational" blocks in the iframe's client bundle for instant, zero-round-trip updates, with only the 4 data blocks server-rendered. (2) Keep the old `save → router.refresh()` full-page re-render. (3) Make every block component client-safe (split server-only deps out of each block) so client-side rendering becomes viable.
