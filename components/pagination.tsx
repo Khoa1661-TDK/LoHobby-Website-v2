@@ -1,8 +1,11 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
-import { usePathname, useSearchParams } from 'next/navigation';
+// usePathname from the i18n navigation returns a locale-less path; the i18n `Link`
+// re-adds the locale once. Using next/navigation's usePathname here would double the
+// prefix (/vi/vi/search?page=2) and break pagination links.
+import { Link, usePathname } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { PAGE_SIZE } from '@/lib/constants';
 

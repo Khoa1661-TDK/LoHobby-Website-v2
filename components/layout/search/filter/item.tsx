@@ -2,8 +2,12 @@
 'use client';
 
 import clsx from 'clsx';
-import { Link } from '@/i18n/navigation';
-import { usePathname, useSearchParams } from 'next/navigation';
+// usePathname MUST come from the locale-aware i18n navigation: it returns the path
+// without the active locale prefix, which the i18n `Link` then re-adds exactly once.
+// next/navigation's usePathname yields a locale-prefixed path that `Link` prefixes
+// again — producing /vi/vi/search/... and breaking every sort/filter link.
+import { Link, usePathname } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
 import type { ReactElement } from 'react';
 import type { SortFilterItem } from '@/lib/constants';
 import { createUrl } from '@/lib/utils';
