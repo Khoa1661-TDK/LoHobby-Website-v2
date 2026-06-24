@@ -40,6 +40,7 @@ import {
   Banner,
   Steps,
 } from '@/src/payload/blocks';
+import { blockKeyField } from '@/src/payload/blocks/_identity';
 
 // Payload `blocks` fields have no field-level RowLabel slot; per-section labels are
 // driven by each block's `admin.components.Label`. Inject a shared dynamic label
@@ -76,6 +77,7 @@ const layoutBlocks = [
   Steps,
 ].map((block) => ({
   ...block,
+  fields: [...(block.fields ?? []), blockKeyField],
   admin: {
     ...block.admin,
     components: {

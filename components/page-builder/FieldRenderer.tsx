@@ -27,9 +27,15 @@ const APPEARANCE_FIELDS = new Set([
   'paddingY',
 ]);
 
+// Fields that exist for internal bookkeeping (cross-locale mirroring) and must never be
+// shown or edited in the panel.
+const HIDDEN_FIELDS = new Set(['blockKey']);
+
 export default function FieldRenderer({ schema, values, onChange, themeMode = 'light' }: Props): ReactElement {
   const visible = (f: FieldDescriptor) => isFieldVisible(f, values);
-  const sectionFields = schema.fields.filter((f) => !APPEARANCE_FIELDS.has(f.name) && visible(f));
+  const sectionFields = schema.fields.filter(
+    (f) => !APPEARANCE_FIELDS.has(f.name) && !HIDDEN_FIELDS.has(f.name) && visible(f),
+  );
   const appearanceFields = schema.fields.filter(
     (f) => APPEARANCE_FIELDS.has(f.name) && !THEMED_DARK_SLOTS.has(f.name) && visible(f),
   );

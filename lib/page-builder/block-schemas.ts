@@ -30,6 +30,7 @@ import {
   Banner,
   Steps,
 } from '@/src/payload/blocks';
+import { blockKeyField } from '@/src/payload/blocks/_identity';
 
 export type FieldCondition = { field: string; equals: unknown };
 
@@ -168,8 +169,13 @@ function describeBlock(block: Block): BlockSchema {
 
 let cached: BlockSchema[] | null = null;
 
+const SCHEMA_BLOCKS = REGISTERED_BLOCKS.map((block) => ({
+  ...block,
+  fields: [...(block.fields ?? []), blockKeyField],
+}));
+
 export function getBlockSchemas(): BlockSchema[] {
-  if (!cached) cached = REGISTERED_BLOCKS.map(describeBlock);
+  if (!cached) cached = SCHEMA_BLOCKS.map(describeBlock);
   return cached;
 }
 

@@ -2,6 +2,13 @@
 import { getBlockSchema, type FieldDescriptor } from '@/lib/page-builder/block-schemas';
 import type { PageBlock } from '@/lib/page-builder';
 
+function newBlockKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `bk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function defaultForField(field: FieldDescriptor): unknown {
   if (field.defaultValue !== undefined) return field.defaultValue;
   if (field.type === 'array') {
@@ -29,7 +36,7 @@ export function createDefaultBlock(slug: string): PageBlock | null {
   if (!schema) return null;
   const block: Record<string, unknown> = { blockType: slug };
   for (const field of schema.fields) {
-    block[field.name] = defaultForField(field);
+    block[field.name] = field.name === 'blockKey' ? newBlockKey() : defaultForField(field);
   }
   return block as unknown as PageBlock;
 }
