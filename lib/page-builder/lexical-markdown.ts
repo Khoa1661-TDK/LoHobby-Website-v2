@@ -29,7 +29,7 @@ function parseInline(line: string): LexicalNode[] {
 
   const pushText = (ch: string, format: number) => {
     const last = segments[segments.length - 1];
-    if (last.kind === 'text' && last.format === format) {
+    if (last && last.kind === 'text' && last.format === format) {
       last.text += ch;
     } else {
       segments.push({ kind: 'text', text: ch, format });
