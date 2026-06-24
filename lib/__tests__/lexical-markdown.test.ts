@@ -1,6 +1,10 @@
 /// <reference types="vitest" />
 import { describe, expect, it } from 'vitest';
-import { markdownToLexical, type LexicalDoc } from '@/lib/page-builder/lexical-markdown';
+import {
+  markdownToLexical,
+  lexicalToMarkdown,
+  type LexicalDoc,
+} from '@/lib/page-builder/lexical-markdown';
 
 function children(doc: LexicalDoc) {
   return doc.root.children as { type: string; [k: string]: unknown }[];
@@ -96,4 +100,61 @@ describe('markdownToLexical', () => {
 
   // Nested lists do NOT round-trip to the exact original indent (depth is
   // reconstructed, not the original spacing) — only assert flat-list round-trip.
+});
+
+describe('lexicalToMarkdown', () => {
+  it('should return empty string for null/undefined', () => {
+    expect(lexicalToMarkdown(null)).toBe('');
+    expect(lexicalToMarkdown(undefined)).toBe('');
+  });
+
+  it('should return empty string for a non-object value', () => {
+    expect(lexicalToMarkdown('hello' as unknown as LexicalDoc)).toBe('');
+  });
+
+  it('should render a paragraph as plain text', () => {
+    const doc = markdownToLexical('Hello world');
+    expect(lexicalToMarkdown(doc)).toBe('Hello world');
+  });
+
+  it('should render bold/italic/code back to markdown', () => {
+    expect(lexicalToMarkdown(markdownToLexical('**b** *i* `c`'))).toBe('**b** *i* `c`');
+  });
+
+  it('should render a link back to markdown', () => {
+    expect(lexicalToMarkdown(markdownToLexical('[go](https://example.com)'))).toBe(
+      '[go](https://example.com)',
+    );
+  });
+
+  it('should render headings back to markdown', () => {
+    expect(lexicalToMarkdown(markdownToLexical('# T'))).toBe('# T');
+    expect(lexicalToMarkdown(markdownToLexical('## T'))).toBe('## T');
+  });
+
+  it('should render lists back to markdown', () => {
+    expect(lexicalToMarkdown(markdownToLexical('- a\n- b'))).toBe('- a\n- b');
+    expect(lexicalToMarkdown(markdownToLexical('1. a\n2. b'))).toBe('1. a\n2. b');
+  });
+
+  it('should fall back to text for unknown node types', () => {
+    const doc: LexicalDoc = {
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'unknown-type',
+            children: [{ type: 'text', text: 'fallback', format: 0, version: 1 }],
+          } as unknown as LexicalDoc['root']['children'][number],
+        ],
+      },
+    };
+    // Must not throw; produces some text containing 'fallback'.
+    expect(lexicalToMarkdown(doc)).toContain('fallback');
+  });
+
+  it('should round-trip a multi-paragraph markdown doc', () => {
+    const md = '# Title\n\nFirst paragraph.\n\n- one\n- two';
+    expect(lexicalToMarkdown(markdownToLexical(md))).toBe(md);
+  });
 });

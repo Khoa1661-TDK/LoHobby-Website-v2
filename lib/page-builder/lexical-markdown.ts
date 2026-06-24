@@ -245,3 +245,84 @@ export function markdownToLexical(md: string): LexicalDoc {
 
   return { root: { type: 'root', children } };
 }
+
+// --- Reverse: Lexical JSON -> Markdown -----------------------------------
+
+type LexicalNodeLike = { type: string; [k: string]: unknown };
+
+function asNodes(value: unknown): LexicalNodeLike[] {
+  return Array.isArray(value) ? (value as LexicalNodeLike[]) : [];
+}
+
+function inlineNodeToMarkdown(node: LexicalNodeLike): string {
+  if (node.type === 'text') {
+    const format = typeof node.format === 'number' ? node.format : 0;
+    let text = typeof node.text === 'string' ? node.text : '';
+    if (format & IS_BOLD) text = `**${text}**`;
+    if (format & IS_ITALIC) text = `*${text}*`;
+    if (format & IS_CODE) text = `\`${text}\``;
+    return text;
+  }
+  if (node.type === 'link') {
+    const fields = (node.fields ?? {}) as { url?: string };
+    const url = typeof fields.url === 'string' ? fields.url : '';
+    const inner = asNodes(node.children).map(inlineNodeToMarkdown).join('');
+    return `[${inner}](${url})`;
+  }
+  // Unknown inline: best-effort text extraction.
+  return asNodes(node.children).map(inlineNodeToMarkdown).join('');
+}
+
+function inlineToMarkdown(children: unknown): string {
+  return asNodes(children).map(inlineNodeToMarkdown).join('');
+}
+
+function listItemToMarkdown(item: LexicalNodeLike, ordered: boolean, depth: number, index: number): string[] {
+  const indent = '  '.repeat(depth);
+  const prefix = ordered ? `${index}. ` : '- ';
+  const value = inlineToMarkdown(item.value);
+  const lines = [`${indent}${prefix}${value}`];
+  for (const child of asNodes(item.children)) {
+    if (child.type === 'list') {
+      const childOrdered = child.tag === 'ol';
+      let n = 1;
+      for (const sub of asNodes(child.list)) {
+        lines.push(...listItemToMarkdown(sub, childOrdered, depth + 1, n));
+        n += 1;
+      }
+    }
+  }
+  return lines;
+}
+
+export function lexicalToMarkdown(doc: LexicalDoc | null | undefined): string {
+  if (!doc || typeof doc !== 'object') return '';
+  const root = (doc as { root?: { children?: unknown } }).root;
+  if (!root || typeof root !== 'object') return '';
+  const blocks = asNodes((root as { children?: unknown }).children);
+
+  const out: string[] = [];
+  for (const block of blocks) {
+    if (block.type === 'paragraph') {
+      out.push(inlineToMarkdown(block.children));
+    } else if (block.type === 'heading') {
+      const tag = typeof block.tag === 'string' ? block.tag : 'h1';
+      const hashes = '#'.repeat(Number(tag.slice(1)) || 1);
+      out.push(`${hashes} ${inlineToMarkdown(block.children)}`);
+    } else if (block.type === 'list') {
+      const ordered = block.tag === 'ol';
+      let n = 1;
+      const lines: string[] = [];
+      for (const item of asNodes(block.list)) {
+        lines.push(...listItemToMarkdown(item, ordered, 0, n));
+        n += 1;
+      }
+      out.push(lines.join('\n'));
+    } else {
+      // Unknown block: best-effort text extraction, never throw.
+      out.push(inlineToMarkdown(block.children));
+    }
+  }
+
+  return out.join('\n\n');
+}
