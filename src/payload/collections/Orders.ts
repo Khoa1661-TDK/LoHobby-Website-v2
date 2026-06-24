@@ -157,6 +157,23 @@ export const Orders: CollectionConfig = {
       ],
     },
     {
+      name: 'cancellationReason',
+      type: 'select',
+      admin: { readOnly: true, position: 'sidebar' },
+      options: [
+        { label: 'Đổi ý / không muốn mua nữa', value: 'changed_mind' },
+        { label: 'Đặt nhầm', value: 'ordered_by_mistake' },
+        { label: 'Tìm được giá tốt hơn', value: 'found_better_price' },
+        { label: 'Giao hàng quá chậm', value: 'delivery_too_slow' },
+        { label: 'Lý do khác', value: 'other' },
+      ],
+    },
+    {
+      name: 'cancellationNote',
+      type: 'textarea',
+      admin: { readOnly: true, position: 'sidebar' },
+    },
+    {
       name: 'deliveryMethod',
       type: 'select',
       options: [

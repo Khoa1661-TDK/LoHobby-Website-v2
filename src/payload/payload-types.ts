@@ -436,7 +436,7 @@ export interface PaymentMethod {
   /**
    * Gateway provider used to process this method.
    */
-  provider?: ('payos' | 'stripe' | 'momo' | 'zalopay' | 'vnpay' | 'shopeepay') | null;
+  provider?: ('payos' | 'stripe' | 'momo' | 'zalopay' | 'vnpay' | 'shopeepay' | 'demo') | null;
   /**
    * API credentials for this gateway. Encrypted before saving — leave credential fields blank when editing to keep existing keys. Register the webhook URL shown in the provider dashboard (see README).
    */
@@ -567,6 +567,10 @@ export interface Order {
   cart?: (number | null) | Cart;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   orderStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'canceled';
+  cancellationReason?:
+    | ('changed_mind' | 'ordered_by_mistake' | 'found_better_price' | 'delivery_too_slow' | 'other')
+    | null;
+  cancellationNote?: string | null;
   deliveryMethod?: ('SHIPMENT' | 'PICKUP') | null;
   paymentMethodKey?: string | null;
   paymentKind?: string | null;
@@ -2285,6 +2289,8 @@ export interface OrdersSelect<T extends boolean = true> {
   cart?: T;
   paymentStatus?: T;
   orderStatus?: T;
+  cancellationReason?: T;
+  cancellationNote?: T;
   deliveryMethod?: T;
   paymentMethodKey?: T;
   paymentKind?: T;

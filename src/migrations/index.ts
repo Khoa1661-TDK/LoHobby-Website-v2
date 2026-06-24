@@ -9,6 +9,7 @@ import * as migration_20260621_155341_localize_pages from './20260621_155341_loc
 import * as migration_20260622_131922_page_builder_link_text_button_social from './20260622_131922_page_builder_link_text_button_social';
 import * as migration_20260622_141438_page_builder_dark_custom_bg from './20260622_141438_page_builder_dark_custom_bg';
 import * as migration_20260623_045912_page_builder_section_library from './20260623_045912_page_builder_section_library';
+import * as migration_20260624_061944_cancellation_fields from './20260624_061944_cancellation_fields';
 
 export const migrations = [
   {
@@ -64,6 +65,11 @@ export const migrations = [
   {
     up: migration_20260623_045912_page_builder_section_library.up,
     down: migration_20260623_045912_page_builder_section_library.down,
-    name: '20260623_045912_page_builder_section_library'
+    name: '20260623_045912_page_builder_section_library',
+  },
+  {
+    up: migration_20260624_061944_cancellation_fields.up,
+    down: migration_20260624_061944_cancellation_fields.down,
+    name: '20260624_061944_cancellation_fields'
   },
 ];
