@@ -7,6 +7,8 @@ dist
 /generated/prisma
 .env.local
 .env.*.local
+# Real deploy compose — contains live secrets as literals. Template is docker-compose.example.yml.
+docker-compose.yml
 *.tsbuildinfo
 next-env.d.ts
 prisma/migrations/**/migration_lock.toml
