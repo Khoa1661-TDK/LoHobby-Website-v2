@@ -486,7 +486,7 @@ function Field({
           <RichTextField value={value} disabled={disabled} onChange={set} />
         );
       default:
-        // richText handled in a later phase; show a placeholder badge.
+        // Unsupported field type; show a placeholder badge.
         return (
           <span className="text-xs italic text-warm-400">
             {field.type} field — editable in a later phase

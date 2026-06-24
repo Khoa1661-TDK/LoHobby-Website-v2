@@ -88,7 +88,6 @@ function parseInline(line: string): LexicalNode[] {
     } else {
       nodes.push({
         type: 'link',
-        value: { text: seg.text },
         fields: { url: seg.url },
         children: [{ type: 'text', text: seg.text, format: 0, version: 1 }],
         direction: 'ltr',

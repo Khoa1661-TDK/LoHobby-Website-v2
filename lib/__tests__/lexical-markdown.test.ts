@@ -63,13 +63,14 @@ describe('markdownToLexical', () => {
 
   it('should parse [text](url) into a link node', () => {
     const doc = markdownToLexical('[go](https://example.com)');
-    const para = children(doc)[0] as unknown as {
-      children: { type: string; fields?: { url: string }; value?: { text: string } }[];
+    const para = children(doc)[0]! as unknown as {
+      children: { type: string; fields?: { url: string }; children?: { text: string }[] }[];
     };
     const link = para.children[0]!;
     expect(link.type).toBe('link');
     expect(link.fields?.url).toBe('https://example.com');
-    expect(link.value?.text).toBe('go');
+    const textChild = link.children?.[0];
+    expect(textChild?.text).toBe('go');
   });
 
   it('should parse - and * bullets into an unordered list', () => {

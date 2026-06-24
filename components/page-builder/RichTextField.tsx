@@ -15,6 +15,10 @@ type Props = {
 };
 
 export default function RichTextField({ value, disabled, onChange }: Props): ReactElement {
+  // CAUTION: seeded is never reset. The textarea is the source of truth while
+  // editing, exactly like the plain text/textarea fields. If the parent ever
+  // needs to force-reseed from a stored value (e.g. a "revert to saved"
+  // action), increment a `key` on this component to remount it.
   // Seed the textarea once from the stored Lexical JSON. Ref so we don't re-seed
   // on every external value change (the textarea is the source of truth while
   // editing, exactly like the plain text/textarea fields above).
