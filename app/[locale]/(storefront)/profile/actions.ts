@@ -6,6 +6,7 @@ import { auth } from '@/auth';
 import { addToCart } from '@/lib/cart';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { cancelOrder } from '@/lib/order-fulfillment';
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -14,6 +15,20 @@ const MAX_URL = 2048;
 const MAX_PHONE = 32;
 const MAX_TITLE = 60;
 const MAX_TEXT = 200;
+
+type CancelReason = 'changed_mind' | 'ordered_by_mistake' | 'found_better_price' | 'delivery_too_slow' | 'other';
+
+const CANCEL_REASONS = new Set<CancelReason>([
+  'changed_mind',
+  'ordered_by_mistake',
+  'found_better_price',
+  'delivery_too_slow',
+  'other',
+]);
+
+function isCancelReason(value: string): value is CancelReason {
+  return CANCEL_REASONS.has(value as CancelReason);
+}
 
 function trimString(value: unknown, max: number): string {
   if (typeof value !== 'string') return '';
@@ -246,5 +261,69 @@ export async function setDefaultAddressAction(addressId: string): Promise<Action
 
   revalidatePath('/profile');
   revalidatePath('/checkout');
+  return { ok: true };
+}
+
+export async function cancelOrderAction(
+  orderId: string,
+  reason: string,
+  note?: string,
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ok: false, error: 'Bạn cần đăng nhập.' };
+  }
+  if (typeof orderId !== 'string' || orderId.length === 0) {
+    return { ok: false, error: 'Đơn hàng không hợp lệ.' };
+  }
+  if (!isCancelReason(reason)) {
+    return { ok: false, error: 'Vui lòng chọn lý do hủy hợp lệ.' };
+  }
+
+  const config = await import('@payload-config');
+  const { getPayload } = await import('payload');
+  const payload = await getPayload({ config: config.default });
+
+  let doc;
+  try {
+    doc = await payload.findByID({ collection: 'orders', id: orderId, depth: 0 });
+  } catch {
+    return { ok: false, error: 'Không tìm thấy đơn hàng.' };
+  }
+
+  const meta = doc.metadata as { prismaUserId?: string } | null | undefined;
+  const ownsOrder =
+    meta?.prismaUserId === session.user.id ||
+    (typeof doc.buyerEmail === 'string' &&
+      doc.buyerEmail.toLowerCase() === session.user.email?.toLowerCase());
+  if (!ownsOrder) {
+    return { ok: false, error: 'Không tìm thấy đơn hàng.' };
+  }
+
+  if (doc.orderStatus !== 'pending' && doc.orderStatus !== 'processing') {
+    return { ok: false, error: 'Đơn hàng này không thể hủy (đã giao cho đơn vị vận chuyển hoặc đã hoàn tất).' };
+  }
+
+  try {
+    await payload.update({
+      collection: 'orders',
+      id: doc.id,
+      data: {
+        cancellationReason: reason,
+        cancellationNote: typeof note === 'string' && note.trim().length > 0 ? note.trim().slice(0, 500) : null,
+      },
+    });
+  } catch (error) {
+    logger.error({ err: error, orderId: doc.id }, '[profile.cancelOrderAction] reason save failed');
+    return { ok: false, error: 'Không thể hủy đơn hàng.' };
+  }
+
+  const result = await cancelOrder(doc.id);
+  if (!result.ok) {
+    return { ok: false, error: result.message };
+  }
+
+  revalidatePath('/profile');
+  revalidatePath('/', 'layout');
   return { ok: true };
 }
