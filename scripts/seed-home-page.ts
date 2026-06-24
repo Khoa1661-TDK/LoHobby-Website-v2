@@ -31,11 +31,23 @@ export async function ensureHomePage(
   // them makes the `products` relationship field fail validation.
   const featuredProductIds = products.docs.map((d) => d.id);
 
+  // Resolve category ids so the FeaturedCollection blocks bind to real categories
+  // (otherwise they render the "configure this block" placeholder).
+  const categories = await payload.find({
+    collection: 'categories',
+    limit: 100,
+    pagination: false,
+  });
+  const categoryIdBySlug: Record<string, string | number> = {};
+  for (const cat of categories.docs) {
+    if (typeof cat.slug === 'string') categoryIdBySlug[cat.slug] = cat.id;
+  }
+
   const data = {
     title: 'Home',
     slug: 'home',
     status: 'published',
-    layout: buildHomeSeedLayout({ featuredProductIds }) as never,
+    layout: buildHomeSeedLayout({ featuredProductIds, categoryIdBySlug }) as never,
   };
 
   const current = existing.docs[0];

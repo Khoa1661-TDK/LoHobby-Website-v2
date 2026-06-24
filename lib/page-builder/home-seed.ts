@@ -9,11 +9,27 @@ export type HomeSeedOptions = {
   // Relationship IDs for the `products` collection. Payload's default ID type here is
   // numeric, so these are usually numbers; strings are accepted for test fixtures.
   featuredProductIds?: Array<string | number>;
+  // Map of category slug -> category id, used to bind FeaturedCollection blocks to a real
+  // category so they render products instead of the "configure this block" placeholder.
+  categoryIdBySlug?: Record<string, string | number>;
 };
 
 function block(slug: string, overrides: Record<string, unknown> = {}): PageBlock | null {
   const base = createDefaultBlock(slug);
   return base ? ({ ...base, ...overrides } as unknown as PageBlock) : null;
+}
+
+// A FeaturedCollection bound to a category when its id is known. Without an id it still
+// renders (as the unconfigured placeholder), which keeps the builder usable in tests.
+function featuredCollection(
+  title: string,
+  slug: string,
+  idBySlug: Record<string, string | number>,
+): PageBlock | null {
+  const overrides: Record<string, unknown> = { title };
+  const id = idBySlug[slug];
+  if (id !== undefined) overrides.collection = id;
+  return block('featuredCollection', overrides);
 }
 
 // A small FAQ item with a plain-text answer mapped into the minimal Lexical state the
@@ -24,6 +40,7 @@ function faqItem(question: string, answer: string): Record<string, unknown> {
 
 export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
   const ids = opts.featuredProductIds ?? [];
+  const idBySlug = opts.categoryIdBySlug ?? {};
 
   const blocks: (PageBlock | null)[] = [
     block('hero', {
@@ -37,8 +54,9 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
       ctaLabel: 'See deals',
       ctaHref: '/pages/sale',
     }),
-    block('featuredCollection', { title: 'Off the plate' }),
+    featuredCollection('Aircraft & models', 'mo-hinh', idBySlug),
     ids.length > 0 ? block('featuredProducts', { title: 'New drops', products: ids }) : null,
+    featuredCollection('Keychains off the plate', 'moc-khoa', idBySlug),
     block('steps', {
       heading: 'How we print',
       steps: [
@@ -57,7 +75,6 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
         { value: '48h', label: 'typical turnaround' },
       ],
     }),
-    block('gallery', { title: 'Straight off the plate' }),
     block('faq', {
       title: 'Good to know',
       items: [

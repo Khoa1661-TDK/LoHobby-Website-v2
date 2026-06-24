@@ -31,6 +31,22 @@ describe('buildHomeSeedLayout', () => {
     expect(promo?.ctaHref).toBe('/pages/sale');
   });
 
+  it('should bind featured collections to category ids when provided', () => {
+    const layout = buildHomeSeedLayout({ categoryIdBySlug: { 'mo-hinh': 3, 'moc-khoa': 5 } });
+    const bound = layout
+      .filter((b) => b.blockType === 'featuredCollection')
+      .map((b) => (b as Record<string, unknown>).collection);
+    expect(bound).toContain(3);
+    expect(bound).toContain(5);
+  });
+
+  it('should leave featured collections unbound when no category ids are given', () => {
+    const fc = buildHomeSeedLayout().find((b) => b.blockType === 'featuredCollection') as
+      | Record<string, unknown>
+      | undefined;
+    expect(fc?.collection ?? null).toBeNull();
+  });
+
   it('should author FAQ answers as valid lexical state', () => {
     const faq = buildHomeSeedLayout().find((b) => b.blockType === 'faq') as
       | { items?: Array<{ answer?: { root?: { type?: string } } }> }
