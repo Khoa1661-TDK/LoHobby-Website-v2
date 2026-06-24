@@ -7,6 +7,7 @@ import { defaultRowFor } from '@/lib/page-builder/default-block';
 import { addRow, removeRow, moveRow, updateRowField } from '@/lib/page-builder/array-reducer';
 import MediaPicker from './MediaPicker';
 import RelationshipPicker, { type RelationItem } from './RelationshipPicker';
+import RichTextField from './RichTextField';
 import { activeColorSlot, THEMED_COLOR_BASES, THEMED_DARK_SLOTS, type ThemeMode } from '@/lib/page-builder/themed-color';
 
 type Props = {
@@ -480,6 +481,10 @@ function Field({
         );
       case 'relationship':
         return <RelationshipField field={field} value={value} disabled={disabled} onChange={set} />;
+      case 'richText':
+        return (
+          <RichTextField value={value} disabled={disabled} onChange={set} />
+        );
       default:
         // richText handled in a later phase; show a placeholder badge.
         return (
