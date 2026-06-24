@@ -272,3 +272,48 @@ export async function listPurchasedProductIdsForUser(input: {
   }
   return [...ids];
 }
+
+export function summarizeOrders(
+  orders: Array<Pick<Order, 'totalAmount' | 'orderStatus'>>,
+): { count: number; total: number } {
+  const active = orders.filter((o) => o.orderStatus !== 'canceled');
+  return {
+    count: active.length,
+    total: active.reduce((sum, o) => sum + (o.totalAmount ?? 0), 0),
+  };
+}
+
+export async function listRecentOrders(input: {
+  status?: PayloadOrderStatus | 'all';
+  limit: number;
+}): Promise<Order[]> {
+  const payload = await getPayload({ config });
+  const where =
+    input.status && input.status !== 'all'
+      ? { orderStatus: { equals: input.status } }
+      : undefined;
+  const found = await payload.find({
+    collection: 'orders',
+    where,
+    sort: '-createdAt',
+    limit: Math.min(Math.max(input.limit, 1), 25),
+    pagination: false,
+    depth: 0,
+  });
+  return found.docs as Order[];
+}
+
+export async function getSalesSummary(input: {
+  since: Date;
+}): Promise<{ count: number; total: number }> {
+  const payload = await getPayload({ config });
+  const found = await payload.find({
+    collection: 'orders',
+    where: { createdAt: { greater_than_equal: input.since.toISOString() } },
+    sort: '-createdAt',
+    limit: 1000,
+    pagination: false,
+    depth: 0,
+  });
+  return summarizeOrders(found.docs as Order[]);
+}
