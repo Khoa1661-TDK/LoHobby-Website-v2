@@ -16,6 +16,12 @@ vi.mock('@/lib/discord/client', () => ({
 vi.mock('@payload-config', () => ({ default: {} }));
 vi.mock('payload', () => ({ getPayload: vi.fn().mockResolvedValue({}) }));
 
+const handleSlashCommandMock = vi.fn();
+vi.mock('@/lib/discord/commands', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/discord/commands')>('@/lib/discord/commands');
+  return { ...actual, handleSlashCommand: (...args: unknown[]) => handleSlashCommandMock(...args) };
+});
+
 import { POST } from '@/app/api/discord/interactions/route';
 
 function req(body: unknown): Request {
@@ -30,6 +36,7 @@ beforeEach(() => {
   verifyMock.mockReset();
   confirmOrderMock.mockReset();
   getConfigMock.mockReset();
+  handleSlashCommandMock.mockReset();
   getConfigMock.mockResolvedValue({ publicKey: 'pk', allowedUserIds: ['1'] });
 });
 
@@ -92,5 +99,16 @@ describe('POST /api/discord/interactions', () => {
     const json = await res.json();
     expect(json.type).toBe(7);
     expect(JSON.stringify(json.data)).toContain('Đơn hàng đã bị hủy.');
+  });
+
+  it('should delegate slash commands (type 2) to handleSlashCommand', async () => {
+    verifyMock.mockReturnValue(true);
+    handleSlashCommandMock.mockResolvedValue({ type: 4, data: { content: 'ok', flags: 64 } });
+    const res = await POST(
+      req({ type: 2, data: { name: 'orders', options: [] }, member: { user: { id: '1' } } }),
+    );
+    const json = await res.json();
+    expect(handleSlashCommandMock).toHaveBeenCalledTimes(1);
+    expect(json.type).toBe(4);
   });
 });

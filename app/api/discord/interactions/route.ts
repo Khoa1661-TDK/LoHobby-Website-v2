@@ -4,7 +4,12 @@ import { getPayload } from 'payload';
 import config from '@payload-config';
 import { verifyDiscordSignature } from '@/lib/discord/verify';
 import { getDiscordConfig } from '@/lib/discord/client';
-import { confirmOrder } from '@/lib/order-fulfillment';
+import {
+  handleSlashCommand,
+  parseOrderAction,
+  applyOrderActionByKey,
+  successMessage,
+} from '@/lib/discord/commands';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -40,7 +45,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const interaction = JSON.parse(rawBody) as {
     type: number;
-    data?: { custom_id?: string };
+    data?: { name?: string; custom_id?: string; options?: Array<{ name: string; value: unknown }> };
     member?: { user?: { id?: string } };
   };
 
@@ -48,23 +53,32 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json(PONG);
   }
 
+  // Slash commands.
+  if (interaction.type === 2) {
+    const result = await handleSlashCommand(interaction, {
+      allowedUserIds: discord.allowedUserIds,
+    });
+    return NextResponse.json(result);
+  }
+
+  // Message component (buttons).
   if (interaction.type === 3) {
     const customId = interaction.data?.custom_id ?? '';
-    if (!customId.startsWith('confirm_order:')) {
+    const parsed = parseOrderAction(customId);
+    if (!parsed) {
       return ephemeral('Hành động không hợp lệ.');
     }
 
     const userId = interaction.member?.user?.id ?? '';
     if (!discord.allowedUserIds.includes(userId)) {
-      return ephemeral('Bạn không có quyền xác nhận đơn này.');
+      return ephemeral('Bạn không có quyền thực hiện hành động này.');
     }
 
-    const docId = customId.slice('confirm_order:'.length);
-    const result = await confirmOrder(docId);
+    const result = await applyOrderActionByKey(parsed.action, parsed.docId);
     if (!result.ok) {
       return updateMessage(`⚠️ ${result.message}`);
     }
-    return updateMessage(`✅ Đã xác nhận đơn #${result.order.orderCode}.`);
+    return updateMessage(successMessage(parsed.action, result.order.orderCode));
   }
 
   return NextResponse.json({ error: 'unsupported interaction type' }, { status: 400 });
