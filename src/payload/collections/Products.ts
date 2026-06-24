@@ -276,19 +276,29 @@ const validateProductImage: Validate = (value, args) => {
   return 'Please select a product image.';
 };
 
+// Cache revalidation is scheduled to run after the HTTP response via next/server
+// `after()`. When a product is written outside a request scope (CLI seed scripts, e.g.
+// scripts/seed-payload-products.ts), `after()` throws — and there is no live server
+// cache to revalidate anyway, so the revalidation is safely skipped.
+function scheduleCatalogRevalidate(): void {
+  try {
+    after(() => {
+      revalidateCatalogCache();
+    });
+  } catch {
+    // Not in a request scope (e.g. a seed/CLI script) — nothing to revalidate.
+  }
+}
+
 /** Flush storefront catalog caches after the admin response returns. */
 const invalidateCatalogOnChange: CollectionAfterChangeHook = ({ doc, req }) => {
   if (isMediaResync(req) || isSnapshotBackfill(req)) return doc;
-  after(() => {
-    revalidateCatalogCache();
-  });
+  scheduleCatalogRevalidate();
   return doc;
 };
 
 const invalidateCatalogOnDelete: CollectionAfterDeleteHook = ({ doc }) => {
-  after(() => {
-    revalidateCatalogCache();
-  });
+  scheduleCatalogRevalidate();
   return doc;
 };
 

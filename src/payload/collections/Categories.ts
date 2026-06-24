@@ -28,17 +28,26 @@ const autoSlugFromTitle: CollectionBeforeChangeHook = async ({ data, operation, 
   return data;
 };
 
+// Cache revalidation is scheduled via next/server `after()`, which throws when a
+// category is written outside a request scope (CLI seed scripts). There is no live
+// server cache to revalidate there, so the revalidation is safely skipped.
+function scheduleCatalogRevalidate(): void {
+  try {
+    after(() => {
+      revalidateCatalogCache();
+    });
+  } catch {
+    // Not in a request scope (e.g. a seed/CLI script) — nothing to revalidate.
+  }
+}
+
 const invalidateCatalogOnChange: CollectionAfterChangeHook = ({ doc }) => {
-  after(() => {
-    revalidateCatalogCache();
-  });
+  scheduleCatalogRevalidate();
   return doc;
 };
 
 const invalidateCatalogOnDelete: CollectionAfterDeleteHook = ({ doc }) => {
-  after(() => {
-    revalidateCatalogCache();
-  });
+  scheduleCatalogRevalidate();
   return doc;
 };
 

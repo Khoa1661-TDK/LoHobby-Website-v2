@@ -18,10 +18,17 @@ export function scheduleDebouncedProductSnapshotBackfill(
   const deadline = Date.now() + DEBOUNCE_MS;
   scheduledDeadlines.set(productId, deadline);
 
-  after(async () => {
-    await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_MS));
-    if (scheduledDeadlines.get(productId) !== deadline) return;
+  try {
+    after(async () => {
+      await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_MS));
+      if (scheduledDeadlines.get(productId) !== deadline) return;
+      scheduledDeadlines.delete(productId);
+      await run();
+    });
+  } catch {
+    // Not in a request scope (e.g. a CLI seed script). `after()` is unavailable, so the
+    // snapshot backfill is skipped — it is a denormalization that can be regenerated from
+    // the admin later, and must not break the underlying write.
     scheduledDeadlines.delete(productId);
-    await run();
-  });
+  }
 }
