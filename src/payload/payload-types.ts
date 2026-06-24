@@ -3396,6 +3396,14 @@ export interface NotificationSetting {
    * Comma-separated Discord user IDs permitted to confirm orders.
    */
   discordAllowedUserIds?: string | null;
+  /**
+   * From General Information. Required to register slash commands.
+   */
+  discordApplicationId?: string | null;
+  /**
+   * The staff server where slash commands are registered.
+   */
+  discordGuildId?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -3579,6 +3587,8 @@ export interface NotificationSettingsSelect<T extends boolean = true> {
   discordChannelId?: T;
   discordPublicKey?: T;
   discordAllowedUserIds?: T;
+  discordApplicationId?: T;
+  discordGuildId?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

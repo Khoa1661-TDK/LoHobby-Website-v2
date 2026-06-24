@@ -10,6 +10,7 @@ import * as migration_20260622_131922_page_builder_link_text_button_social from 
 import * as migration_20260622_141438_page_builder_dark_custom_bg from './20260622_141438_page_builder_dark_custom_bg';
 import * as migration_20260623_045912_page_builder_section_library from './20260623_045912_page_builder_section_library';
 import * as migration_20260624_061944_cancellation_fields from './20260624_061944_cancellation_fields';
+import * as migration_20260624_114553_discord_command_registration from './20260624_114553_discord_command_registration';
 
 export const migrations = [
   {
@@ -70,6 +71,11 @@ export const migrations = [
   {
     up: migration_20260624_061944_cancellation_fields.up,
     down: migration_20260624_061944_cancellation_fields.down,
-    name: '20260624_061944_cancellation_fields'
+    name: '20260624_061944_cancellation_fields',
+  },
+  {
+    up: migration_20260624_114553_discord_command_registration.up,
+    down: migration_20260624_114553_discord_command_registration.down,
+    name: '20260624_114553_discord_command_registration'
   },
 ];

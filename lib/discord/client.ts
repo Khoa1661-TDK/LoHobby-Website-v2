@@ -10,6 +10,8 @@ export interface DiscordConfig {
   channelId: string;
   publicKey: string;
   allowedUserIds: string[];
+  applicationId: string;
+  guildId: string;
 }
 
 interface NotificationGlobalShape {
@@ -18,6 +20,8 @@ interface NotificationGlobalShape {
   discordChannelId?: string | null;
   discordPublicKey?: string | null;
   discordAllowedUserIds?: string | null;
+  discordApplicationId?: string | null;
+  discordGuildId?: string | null;
 }
 
 function parseIds(raw: string | null | undefined): string[] {
@@ -37,6 +41,8 @@ export async function getDiscordConfig(payload: Payload): Promise<DiscordConfig>
     channelId: g.discordChannelId ?? '',
     publicKey: g.discordPublicKey ?? '',
     allowedUserIds: parseIds(g.discordAllowedUserIds),
+    applicationId: g.discordApplicationId ?? '',
+    guildId: g.discordGuildId ?? '',
   };
 }
 

@@ -49,5 +49,17 @@ export const NotificationSettings: GlobalConfig = {
         description: 'Comma-separated Discord user IDs permitted to confirm orders.',
       },
     },
+    {
+      name: 'discordApplicationId',
+      type: 'text',
+      label: 'Discord application (client) ID',
+      admin: { description: 'From General Information. Required to register slash commands.' },
+    },
+    {
+      name: 'discordGuildId',
+      type: 'text',
+      label: 'Discord server (guild) ID',
+      admin: { description: 'The staff server where slash commands are registered.' },
+    },
   ],
 };
