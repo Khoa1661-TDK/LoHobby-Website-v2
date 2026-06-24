@@ -12,6 +12,7 @@ import { resolveCollectionSlug } from '@/lib/slugify';
 import { revalidatePageCache } from '@/lib/page-builder';
 import { shouldPreserveSlug } from '@/lib/page-builder/slug';
 import { groups } from '@/src/payload/groups';
+import { capturePriorLayoutKeys, mirrorLocaleLayout } from '@/src/payload/hooks/mirror-locale-layout';
 import {
   Hero,
   FeaturedCollection,
@@ -159,8 +160,8 @@ export const Pages: CollectionConfig = {
   },
   access: payloadPublicReadAdminWrite,
   hooks: {
-    beforeChange: [autoSlugFromTitle],
-    afterChange: [afterChangeHook],
+    beforeChange: [autoSlugFromTitle, capturePriorLayoutKeys],
+    afterChange: [afterChangeHook, mirrorLocaleLayout],
     afterDelete: [afterDeleteHook],
   },
   fields: [
