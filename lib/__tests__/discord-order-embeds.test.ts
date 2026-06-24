@@ -74,6 +74,32 @@ describe('buildOrderActionComponents', () => {
     const rows = buildOrderActionComponents(order({ orderStatus: 'canceled' }));
     expect(rows.flatMap((r) => r.components)).toHaveLength(0);
   });
+
+  it('should render the ship link button (not confirm) for a confirmed, paid, non-pickup order', () => {
+    // Regression: buildOrderActionComponents must pass the FULL order (including
+    // confirmedAt) to availableActions. deriveOrderStage branches on confirmedAt to
+    // distinguish 'to_confirm' from 'packing' — omitting it collapses this order back
+    // to 'to_confirm', producing confirm/cancel buttons instead of ship/cancel.
+    const o = order({
+      paymentStatus: 'paid',
+      orderStatus: 'processing',
+      deliveryMethod: 'SHIPMENT',
+      confirmedAt: '2026-06-24T01:00:00.000Z',
+    });
+    const actions = availableActions(o);
+    expect(actions).toEqual(['ship', 'cancel']);
+
+    const rows = buildOrderActionComponents(o);
+    const buttons = rows.flatMap((r) => r.components);
+
+    const shipButton = buttons.find(
+      (b) => b.style === 5 && (b.url ?? '').includes('/admin/collections/orders/'),
+    );
+    expect(shipButton, 'expected a ship link button (style 5) pointing at the admin order page').toBeTruthy();
+
+    const confirmButton = buttons.find((b) => (b.custom_id ?? '').startsWith('order_action:confirm:'));
+    expect(confirmButton, 'confirm button should NOT appear once the order is confirmed').toBeUndefined();
+  });
 });
 
 describe('buildSalesEmbed', () => {

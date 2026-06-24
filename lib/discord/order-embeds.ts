@@ -80,12 +80,7 @@ export function buildOrderDetailEmbed(order: Order): DiscordEmbed {
 }
 
 export function buildOrderActionComponents(order: Order): OrderActionRow[] {
-  const actions = availableActions({
-    paymentStatus: order.paymentStatus,
-    orderStatus: order.orderStatus,
-    paymentKind: order.paymentKind,
-    deliveryMethod: order.deliveryMethod,
-  } as Parameters<typeof availableActions>[0]);
+  const actions = availableActions(order);
 
   const buttons: OrderActionButton[] = actions.slice(0, 5).map((action: OrderAction) => {
     if (action === 'ship') {
