@@ -136,15 +136,22 @@ async function read(userId?: string | null): Promise<Stored> {
 
 async function write(c: Stored, userId?: string | null): Promise<void> {
   const jar = await cookies();
+  if (userId && isPersistedCartEnabled()) {
+    // Persisted rows are the source of truth for logged-in users (see read()).
+    // Do NOT mirror them into the guest `cart` cookie: the cookie is the guest
+    // vehicle that merge-on-login folds into the persisted cart, so leaving the
+    // merged items there would let the next merge re-add them and multiply the
+    // quantities on every page load.
+    await savePersistedCartItems(userId, c.items);
+    jar.delete(COOKIE);
+    return;
+  }
   jar.set(COOKIE, JSON.stringify(c), {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
     maxAge: MAX_AGE,
   });
-  if (userId && isPersistedCartEnabled()) {
-    await savePersistedCartItems(userId, c.items);
-  }
 }
 
 async function hydrate(stored: Stored): Promise<Cart> {
