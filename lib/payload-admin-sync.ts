@@ -30,7 +30,15 @@ function getSsoSecret(): string {
 }
 
 function isLocalHttpDev(): boolean {
-  const serverUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  // `APP_URL` (runtime) first: this decides whether the admin SSO cookie gets the
+  // `Secure` flag. A baked `NEXT_PUBLIC_*` value would freeze this to the build
+  // host — marking the cookie non-secure on a real HTTPS deploy and breaking
+  // admin login. Reading the runtime var keeps it correct per-deployment.
+  const serverUrl =
+    process.env.APP_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    'http://localhost:3000';
   return serverUrl.startsWith('http://');
 }
 

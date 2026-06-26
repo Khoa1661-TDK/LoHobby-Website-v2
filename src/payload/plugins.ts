@@ -8,7 +8,10 @@ import { seoPlugin } from '@payloadcms/plugin-seo';
 import type { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types';
 
 const storeName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Lô Hobby';
+// `APP_URL` (runtime, non-`NEXT_PUBLIC_`) first so SEO canonical/OG URLs follow
+// the deployment domain without a rebuild (NEXT_PUBLIC_* are baked at build).
 const appBaseUrl =
+  process.env.APP_URL ??
   process.env.NEXT_PUBLIC_APP_URL ??
   process.env.NEXT_PUBLIC_SITE_URL ??
   'http://localhost:3000';

@@ -27,6 +27,13 @@ export const envSchema = z
       .string()
       .min(32, 'AUTH_SECRET must be at least 32 characters when set')
       .optional(),
+    // Canonical runtime base URL. Optional and NOT prefixed `NEXT_PUBLIC_` on
+    // purpose: Next.js inlines `NEXT_PUBLIC_*` at build time, so a single
+    // prebuilt image cannot be re-pointed at a new domain. `APP_URL` is read by
+    // Node at server start (see lib/utils resolveBaseUrl + payload.config
+    // serverURL), so setting it per-deployment (e.g. in Portainer) re-targets
+    // the whole app with no rebuild. When unset, the NEXT_PUBLIC_* vars apply.
+    APP_URL: z.string().url('APP_URL must be a valid URL').optional(),
     NEXT_PUBLIC_APP_URL: z
       .string()
       .url('NEXT_PUBLIC_APP_URL must be a valid URL'),

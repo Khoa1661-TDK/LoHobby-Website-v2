@@ -35,6 +35,19 @@ describe('envSchema', () => {
     expect(result.success).toBe(false);
   });
 
+  it('should accept a valid runtime APP_URL override', () => {
+    const result = envSchema.safeParse({
+      ...validEnv,
+      APP_URL: 'https://yourshop.example',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject a non-URL APP_URL', () => {
+    const result = envSchema.safeParse({ ...validEnv, APP_URL: 'not-a-url' });
+    expect(result.success).toBe(false);
+  });
+
   it('should reject a short AUTH_SECRET when it is provided', () => {
     const result = envSchema.safeParse({ ...validEnv, AUTH_SECRET: 'short' });
     expect(result.success).toBe(false);

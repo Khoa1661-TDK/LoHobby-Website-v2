@@ -41,7 +41,11 @@ if (!payloadSecret) {
 }
 
 export default buildConfig({
+  // `APP_URL` (runtime, non-`NEXT_PUBLIC_`) is read first so one prebuilt image
+  // can serve any domain — Next.js inlines `NEXT_PUBLIC_*` at build time, which
+  // would freeze the admin/serverURL to the build-time host (e.g. localhost).
   serverURL:
+    process.env.APP_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.NEXT_PUBLIC_SITE_URL ??
     'http://localhost:3000',

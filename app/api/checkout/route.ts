@@ -24,6 +24,7 @@ import { getStoreSettings } from '@/lib/store-settings';
 import { computeTaxAmount, resolveTaxSettings } from '@/lib/tax';
 import { isGiftCardsEnabled } from '@/lib/feature-flags';
 import { logger } from '@/lib/logger';
+import { resolveBaseUrl } from '@/lib/utils';
 import { prisma } from '@/lib/prisma';
 import { boundedString, requestHasConsent } from '@/lib/analytics/track-server';
 
@@ -431,7 +432,12 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
       );
     }
 
-    const origin = req.nextUrl.origin;
+    // Payment return/cancel URLs must point at the public origin. Prefer the
+    // runtime-configured APP_URL (settable in Portainer with no rebuild) so the
+    // gateway redirects stay correct behind a reverse proxy, where the request
+    // origin can resolve to the internal container host. Fall back to the
+    // request origin for local dev / when APP_URL is unset.
+    const origin = process.env.APP_URL ? resolveBaseUrl() : req.nextUrl.origin;
     const gatewayItems = itemRows.map((line) => ({
       name: (titleMap.get(line.productId) ?? 'Sản phẩm').slice(0, 25),
       quantity: line.quantity,

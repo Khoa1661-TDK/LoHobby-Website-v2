@@ -1,14 +1,24 @@
 // lib/utils.ts
-function resolveBaseUrl(): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
+
+// `APP_URL` is read FIRST and is intentionally NOT prefixed `NEXT_PUBLIC_`:
+// Next.js inlines `NEXT_PUBLIC_*` as literals at build time (even in server
+// bundles), so a baked value cannot be changed per-deployment. A plain runtime
+// var is read by Node at server start, letting one prebuilt image serve any
+// domain via `APP_URL=https://yourshop.com` (e.g. set in Portainer). The
+// `NEXT_PUBLIC_*` fallbacks remain for Vercel/legacy build-time configuration.
+export function resolveBaseUrl(
+  env: Record<string, string | undefined> = process.env,
+): string {
+  const appUrl =
+    env.APP_URL ?? env.NEXT_PUBLIC_APP_URL ?? env.NEXT_PUBLIC_SITE_URL;
   if (appUrl) {
     return appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
   }
-  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
-    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+  if (env.NEXT_PUBLIC_VERCEL_URL) {
+    return `https://${env.NEXT_PUBLIC_VERCEL_URL}`;
   }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+  if (env.VERCEL_URL) {
+    return `https://${env.VERCEL_URL}`;
   }
   return 'http://localhost:3000';
 }
