@@ -734,14 +734,11 @@ export async function getPayloadProductRecommendations(
     .slice(0, 3);
 }
 
-export async function loadPayloadProductDoc(slug: string): Promise<PayloadProductDoc | null> {
-  const trimmed = slug?.trim();
-  if (!trimmed) return null;
-
+async function fetchPayloadProductDoc(trimmedSlug: string): Promise<PayloadProductDoc | null> {
   const payload = await getPayloadClient();
   const result = await payload.find({
     collection: 'products',
-    where: { slug: { equals: trimmed } },
+    where: { slug: { equals: trimmedSlug } },
     depth: 2,
     limit: 1,
     pagination: false,
@@ -752,6 +749,24 @@ export async function loadPayloadProductDoc(slug: string): Promise<PayloadProduc
 
   await hydrateVariantImages(doc, payload);
   return doc;
+}
+
+/**
+ * Cached single-product read keyed by slug. The product page calls this twice
+ * per request (once in `generateMetadata`, once in the body) — caching collapses
+ * those into one DB round trip and serves repeat renders from cache instead of
+ * re-querying Postgres (depth:2 + variant-image hydration). Flushed by
+ * `revalidateCatalogCache()` on Payload writes via the shared 'products' tag.
+ */
+export async function loadPayloadProductDoc(slug: string): Promise<PayloadProductDoc | null> {
+  const trimmed = slug?.trim();
+  if (!trimmed) return null;
+
+  return unstable_cache(
+    () => fetchPayloadProductDoc(trimmed),
+    ['payload-product-doc', trimmed],
+    { revalidate: CATALOG_REVALIDATE, tags: ['catalog', 'products'] },
+  )();
 }
 
 async function fetchPayloadCollections(): Promise<Collection[]> {
