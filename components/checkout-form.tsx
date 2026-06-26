@@ -14,6 +14,8 @@ import {
   type ShippingQuoteSettings,
 } from '@/lib/shipping-quote';
 import { computeTaxAmount, type TaxSettings } from '@/lib/tax';
+import { getAnonId } from '@/lib/analytics/track-client';
+import { hasAnalyticsConsent } from '@/components/cookie-consent';
 
 type DeliveryMethod = 'SHIPMENT' | 'PICKUP';
 
@@ -212,6 +214,10 @@ export default function CheckoutForm({
     }
 
     setSubmitting(true);
+    // Attach the pseudonymous analytics id so the cart→purchase funnel can
+    // attribute this conversion (guests included). Suppressed if the visitor
+    // opted out of analytics.
+    const anonId = hasAnalyticsConsent() ? getAnonId() : null;
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
@@ -229,6 +235,7 @@ export default function CheckoutForm({
           paymentMethodKey,
           couponCode: couponCode.trim() || null,
           giftCardCode: giftCardCode.trim() || null,
+          anonId,
         }),
       });
 

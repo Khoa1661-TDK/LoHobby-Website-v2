@@ -24,6 +24,8 @@ import { getStoreSettings } from '@/lib/store-settings';
 import { computeTaxAmount, resolveTaxSettings } from '@/lib/tax';
 import { isGiftCardsEnabled } from '@/lib/feature-flags';
 import { logger } from '@/lib/logger';
+import { prisma } from '@/lib/prisma';
+import { boundedString, requestHasConsent } from '@/lib/analytics/track-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -53,6 +55,8 @@ type CheckoutBody = {
   paymentMethodKey: string;
   couponCode?: string | null;
   giftCardCode?: string | null;
+  /** Pseudonymous analytics id, used only to attribute the cart→purchase funnel. */
+  anonId?: string | null;
 };
 
 type CheckoutSuccess = {
@@ -138,6 +142,7 @@ function parseBody(value: unknown): CheckoutBody | null {
     paymentMethodKey: paymentKey.trim(),
     couponCode,
     giftCardCode,
+    anonId: boundedString(record.anonId, 64),
     customerInfo: {
       name: info.name.trim(),
       phone: info.phone.trim(),
@@ -349,6 +354,19 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
         lineItems: itemRows,
       });
       createdDocId = created.id;
+
+      // Stamp the cart→purchase funnel with the visitor's analytics identity so
+      // BOTH guests (anonId) and logged-in shoppers (customerId) can be attributed
+      // as conversions. Best-effort + consent-gated; never blocks checkout.
+      if (requestHasConsent(req) && (body.anonId || userId)) {
+        try {
+          await prisma.purchaseEvent.create({
+            data: { anonId: body.anonId ?? null, customerId: userId, orderCode },
+          });
+        } catch {
+          /* dropped analytics write — not a client-facing failure */
+        }
+      }
 
       if (couponId) {
         await recordCouponRedemption(couponId);

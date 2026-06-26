@@ -347,6 +347,25 @@ model AddToCartEvent {
 }
 
 /**
+ * A completed checkout, stamped with the visitor's pseudonymous `anonId` so the
+ * add-to-cart → purchase funnel can attribute conversions to BOTH guests and
+ * logged-in shoppers (orders have no link back to the analytics identity on
+ * their own). Written best-effort at order creation, consent-gated like the rest.
+ * `anonId` joins to AddToCartEvent.anonId; `customerId` covers cross-device
+ * logged-in purchases. `orderCode` is kept for traceability only.
+ */
+model PurchaseEvent {
+  id         String   @id @default(cuid())
+  anonId     String?
+  customerId String?
+  orderCode  Int
+  createdAt  DateTime @default(now())
+
+  @@index([anonId])
+  @@index([createdAt])
+}
+
+/**
  * Daily rollup of product-card impressions and clicks. NOT per-event:
  * impressions are far higher volume than page views, so endpoints
  * upsert-and-increment one row per (product, day). CTR = clicks / impressions.

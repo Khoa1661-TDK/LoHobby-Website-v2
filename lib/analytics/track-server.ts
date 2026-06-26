@@ -5,10 +5,14 @@ import 'server-only';
 // importing a 'use client' module into a server route).
 const CONSENT_COOKIE = 'cookie-consent';
 
-/** Defence-in-depth: the client beacon is already consent-gated, but verify the cookie too. */
+/**
+ * Default-on consent: record unless the visitor explicitly opted out. The client
+ * beacon is already consent-aware; this is the server-side counterpart so direct
+ * POSTs honour an opt-out too.
+ */
 export function requestHasConsent(req: Request): boolean {
   const cookie = req.headers.get('cookie');
-  return cookie?.includes(`${CONSENT_COOKIE}=accepted`) ?? false;
+  return !(cookie?.includes(`${CONSENT_COOKIE}=rejected`) ?? false);
 }
 
 /** Coerce to a trimmed, length-bounded string, or null when invalid/empty. */

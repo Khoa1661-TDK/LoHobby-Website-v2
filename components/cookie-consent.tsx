@@ -6,9 +6,14 @@ import { useEffect, useState, type ReactElement } from 'react';
 export const CONSENT_COOKIE = 'cookie-consent';
 export const CONSENT_EVENT = 'cookie-consent-change';
 
+/**
+ * First-party, pseudonymous analytics is recorded by default; a visitor is only
+ * excluded once they explicitly opt out ("Chỉ cookie cần thiết" → `rejected`).
+ * SSR returns false so we never emit a beacon before the client confirms intent.
+ */
 export function hasAnalyticsConsent(): boolean {
   if (typeof document === 'undefined') return false;
-  return document.cookie.includes(`${CONSENT_COOKIE}=accepted`);
+  return !document.cookie.includes(`${CONSENT_COOKIE}=rejected`);
 }
 
 function persist(value: 'accepted' | 'rejected'): void {

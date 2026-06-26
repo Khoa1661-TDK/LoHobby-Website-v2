@@ -3,6 +3,29 @@
 This file tracks all non-trivial technical decisions made during this project.
 See `rules/common/decisions.md` for the logging format and rules.
 
+## 2026-06-24 — Cart abandonment metric sourced from events, not the Payload `carts` collection
+**Chosen:** Compute cart abandonment + the ATC funnel from Prisma `AddToCartEvent` (the cart universe) joined to a new `PurchaseEvent` table (conversions), matching on `anonId` OR `customerId`.
+**Alternatives:** (1) Keep reading the Payload `carts` collection; (2) start persisting every storefront cart into that collection on the add-to-cart hot path.
+**Why:** The metric read the Payload `carts` collection, but the storefront never writes there (live carts live in an httpOnly cookie + Prisma `PersistedCart`). So the collection is always empty and the metric always read zero. The event tables are already populated, event-sourced (ranged by `createdAt`), and cover guests.
+**Trade-offs:** Conversion now means "completed checkout" (order created), not "payment captured" — so a created-then-canceled order counts as converted. COD/gateway-pending orders correctly count as converted (they would wrongly read as abandoned under a paid-only definition). Requires a client→server `anonId` handoff at checkout and a DB migration.
+**Revisit if:** We need payment-captured conversion specifically, or gateway-stage abandonment as its own funnel step.
+
+## 2026-06-24 — Guest carts attributed via an `anonId` stamp at checkout
+**Chosen:** Add a `PurchaseEvent { anonId, customerId, orderCode }` row at order creation, with `anonId` sent from the checkout client. Abandonment matches an ATC session to a checkout by `anonId` (guests + same-device) or `customerId` (cross-device logged-in).
+**Alternatives:** Restrict the metric to logged-in shoppers only (guests have no join key between cart and order); or add `anonId` as a column on the order instead of a dedicated event table.
+**Why:** Guest checkout exists, and guests are the majority. Without a join key every guest cart reads as abandoned. The stable `anonId` (localStorage) is the only id shared between a guest's add-to-cart events and their checkout. A dedicated Prisma table mirrors the existing `AddToCartEvent` pattern and keeps an additive, low-risk migration.
+**Trade-offs:** Relies on the client sending `anonId` (lost if JS/localStorage blocked); the write is best-effort (swallowed on failure) so a dropped write undercounts conversions slightly.
+**Revisit if:** We move order storage fully to Prisma (could fold `anonId` onto the order) or need server-authoritative attribution.
+
+## 2026-06-24 — Analytics consent is default-on with explicit opt-out
+**Chosen:** Record first-party, pseudonymous analytics by default; suppress only when the visitor explicitly opts out (`cookie-consent=rejected`).
+**Alternatives:** Keep the hard opt-in gate (record only after "accept"); or remove the consent mechanism entirely.
+**Why:** User decision (2026-06-24). The opt-in gate undercounted the majority of visitors, making cart/funnel metrics partial. The data is first-party and pseudonymous (random localStorage ids, own DB, no third-party trackers, no PII beyond a logged-in user id) — the lowest-risk category for default-on.
+**Trade-offs:** Default-on without explicit consent carries ePrivacy/GDPR risk if selling to EU/UK buyers; mitigated by keeping a working opt-out + privacy-policy link. Lower risk than removing consent entirely (which was rejected).
+**Revisit if:** The store targets EU/UK customers or adds any third-party/PII tracking — move back to opt-in.
+
+---
+
 ---
 
 ---
