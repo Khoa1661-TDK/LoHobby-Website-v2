@@ -1,0 +1,88 @@
+# syntax=docker/dockerfile:1
+#
+# TEMPLATE for a FULLY SELF-CONTAINED image (no .env, no compose env, no -e).
+# Copy to `Dockerfile.private`, fill in real values, then:
+#     docker build -f Dockerfile.private -t myshop:private .
+#     docker run -p 3000:3000 myshop:private
+#
+# ███ The filled-in `Dockerfile.private` bakes LIVE SECRETS into image layers. ███
+# It is gitignored AND dockerignored. NEVER commit it, and NEVER push the built
+# image to a PUBLIC registry (khoa16612/app or any public Docker Hub repo) — that
+# leaks every credential. Push only to a PRIVATE registry, or transfer with
+# `docker save | ssh host docker load`. If it ever leaks, rotate every secret.
+#
+# For a PUBLIC-safe image (secrets injected at runtime instead), use the main
+# `Dockerfile` + `docker-compose.example.yml` — that is the default path.
+#
+# URL caveat: NEXT_PUBLIC_* and DOMAIN are FROZEN at build time. APP_URL and
+# AUTH_URL are RUNTIME vars — override with `-e` per host, no rebuild needed.
+
+# --- base: Node 22 + pnpm via corepack -------------------------------------
+FROM node:22-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates wget openssl \
+ && rm -rf /var/lib/apt/lists/* \
+ && corepack enable \
+ && corepack prepare pnpm@11.5.0 --activate
+WORKDIR /app
+
+# --- deps ------------------------------------------------------------------
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# --- build: compile Next.js + Payload --------------------------------------
+FROM base AS build
+# Build-time-only FAKE placeholders — never connect to the DB at build.
+ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
+ENV PAYLOAD_SECRET="build-only-placeholder-not-used-at-runtime"
+ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* are inlined now and FROZEN — change here + rebuild to alter them.
+ENV NEXT_PUBLIC_APP_URL="https://your-domain.example" \
+    NEXT_PUBLIC_SITE_URL="https://your-domain.example" \
+    NEXT_PUBLIC_SITE_NAME="Your Store" \
+    NEXT_PUBLIC_BRAND_TAGLINE="" \
+    NEXT_PUBLIC_CONTACT_EMAIL="" \
+    NEXT_PUBLIC_CONTACT_PHONE="" \
+    NEXT_PUBLIC_CONTACT_ADDRESS=""
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN node_modules/.bin/prisma generate \
+ && node_modules/.bin/next build \
+ && node_modules/.bin/payload generate:importmap
+
+# --- runtime: self-contained, all values baked -----------------------------
+FROM base AS runtime
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+
+# ─── Baked runtime config + SECRETS (fill in real values) ──────────────────
+# APP_URL / AUTH_URL are runtime — override with `-e` per host without rebuild.
+ENV APP_URL="https://your-domain.example"
+ENV AUTH_URL="https://your-domain.example/"
+ENV DOMAIN="your-domain.example"
+ENV DATABASE_URL="postgres://<token>:<key>@db.prisma.io:5432/postgres?sslmode=require"
+ENV PAYLOAD_SECRET="CHANGE_ME"
+ENV AUTH_SECRET="CHANGE_ME"
+ENV AUTH_GOOGLE_ID=""
+ENV AUTH_GOOGLE_SECRET=""
+ENV PAYMENT_SECRETS_KEY="CHANGE_ME"
+ENV ADMIN_EMAILS="you@example.com"
+ENV PAYOS_CLIENT_ID=""
+ENV PAYOS_API_KEY=""
+ENV PAYOS_CHECKSUM_KEY=""
+ENV PREVIEW_SECRET="CHANGE_ME"
+ENV OPENROUTER_API_KEY=""
+ENV OPENROUTER_MODEL="meta-llama/llama-3.3-70b-instruct:free"
+
+COPY --from=build /app ./
+RUN mkdir -p /app/public/media /app/.next/cache \
+ && chown -R node:node /app/public/media /app/.next \
+ && chmod +x docker/entrypoint.sh
+USER node
+EXPOSE 3000
+ENTRYPOINT ["docker/entrypoint.sh"]

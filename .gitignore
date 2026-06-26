@@ -9,6 +9,8 @@ dist
 .env.*.local
 # Real deploy compose — contains live secrets as literals. Template is docker-compose.example.yml.
 docker-compose.yml
+# Fully self-contained image with secrets baked into layers. Template is Dockerfile.example.
+Dockerfile.private
 *.tsbuildinfo
 next-env.d.ts
 prisma/migrations/**/migration_lock.toml

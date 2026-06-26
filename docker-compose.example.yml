@@ -6,6 +6,14 @@
 # NEXT_PUBLIC_* are inlined by Next.js at BUILD time, so changing them needs a
 # rebuild. Never commit your filled-in docker-compose.yml; if it is ever
 # committed, rotate EVERY secret in it.
+#
+# DEPLOY A PREBUILT IMAGE ON ANOTHER HOST (e.g. Portainer):
+#   You do NOT need to rebuild per domain. Remove the `build:` block, point
+#   `image:` at your published image, and set the RUNTIME `APP_URL` below to your
+#   real https domain. `APP_URL` is read at start (not inlined), so it re-points
+#   the admin panel, SEO/canonical URLs, and admin session cookies to your
+#   domain with no rebuild. Also set AUTH_URL + DOMAIN and authorize the Google
+#   redirect URI for that domain.
 # =============================================================================
 services:
   app:
@@ -27,6 +35,10 @@ services:
     # (db.prisma.io), so the app connects straight to the hosted Postgres and
     # runs its migrations there. No healthcheck gate is needed.
     environment:
+      # Runtime canonical URL — read by Node at start (NOT inlined like
+      # NEXT_PUBLIC_*). Set to your real https domain to re-point admin/SEO/
+      # cookies on any host with no rebuild.
+      APP_URL: "https://your-domain.example"
       DATABASE_URL: "postgres://<token>:<key>@db.prisma.io:5432/postgres?sslmode=require"
       PAYLOAD_SECRET: "CHANGE_ME"
       AUTH_SECRET: "CHANGE_ME"

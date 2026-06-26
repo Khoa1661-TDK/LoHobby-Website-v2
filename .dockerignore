@@ -9,6 +9,14 @@ build
 .env
 .env.*
 !.env.example
+# docker-compose.yml is gitignored and holds baked-in runtime secrets; it must
+# never enter the build context. The example variant carries no secrets.
+docker-compose.yml
+!docker-compose.example.yml
+# Dockerfile.private bakes live secrets; keep it out of the build context so
+# `COPY . .` cannot copy the file into a layer (`-f Dockerfile.private` still
+# works — the build file is read outside the context). Example variant is safe.
+Dockerfile.private
 
 # Local data that must not enter the image
 public/media
@@ -21,6 +29,7 @@ public/media
 .gitignore
 docs
 .claude
+.superpowers
 .vscode
 .idea
 *.log

@@ -11,7 +11,11 @@
 #
 # What NEVER enters any layer (runtime-only, supplied via env_file / -e at start):
 #   DATABASE_URL, PAYLOAD_SECRET, AUTH_SECRET, AUTH_GOOGLE_SECRET, PAYOS_*,
-#   PAYMENT_SECRETS_KEY, OPENROUTER_API_KEY, PREVIEW_SECRET.
+#   PAYMENT_SECRETS_KEY, OPENROUTER_API_KEY, PREVIEW_SECRET, APP_URL.
+#   APP_URL is the canonical base URL read at runtime (deliberately NOT a
+#   NEXT_PUBLIC_* var, which Next.js would inline at build time). Setting it at
+#   start re-points the admin panel, SEO URLs, and admin cookies to any domain,
+#   so a SINGLE prebuilt image runs on any host (e.g. Portainer) without rebuild.
 #   The build stage uses FAKE placeholders for the two vars that must merely
 #   RESOLVE during `prisma generate` / Payload config init / `next build` — they
 #   never connect to anything, and the runtime stage copies files, not ENV.
