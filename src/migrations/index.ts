@@ -11,6 +11,8 @@ import * as migration_20260622_141438_page_builder_dark_custom_bg from './202606
 import * as migration_20260623_045912_page_builder_section_library from './20260623_045912_page_builder_section_library';
 import * as migration_20260624_061944_cancellation_fields from './20260624_061944_cancellation_fields';
 import * as migration_20260624_114553_discord_command_registration from './20260624_114553_discord_command_registration';
+import * as migration_20260624_173519_add_block_key from './20260624_173519_add_block_key';
+import * as migration_20260624_173719_promo_banner_background_image from './20260624_173719_promo_banner_background_image';
 
 export const migrations = [
   {
@@ -76,6 +78,16 @@ export const migrations = [
   {
     up: migration_20260624_114553_discord_command_registration.up,
     down: migration_20260624_114553_discord_command_registration.down,
-    name: '20260624_114553_discord_command_registration'
+    name: '20260624_114553_discord_command_registration',
+  },
+  {
+    up: migration_20260624_173519_add_block_key.up,
+    down: migration_20260624_173519_add_block_key.down,
+    name: '20260624_173519_add_block_key',
+  },
+  {
+    up: migration_20260624_173719_promo_banner_background_image.up,
+    down: migration_20260624_173719_promo_banner_background_image.down,
+    name: '20260624_173719_promo_banner_background_image'
   },
 ];

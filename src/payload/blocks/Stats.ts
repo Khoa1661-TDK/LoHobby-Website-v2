@@ -6,6 +6,8 @@ export const Stats: Block = {
   slug: 'stats',
   labels: { singular: 'Stats', plural: 'Stats' },
   interfaceName: 'StatsBlock',
+  imageURL: '/admin/block-previews/stats.svg',
+  imageAltText: 'Stats preview',
   fields: [
     { name: 'heading', type: 'text' },
     {

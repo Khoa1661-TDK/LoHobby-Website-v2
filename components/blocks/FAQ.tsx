@@ -2,6 +2,7 @@
 import type { ReactElement } from 'react';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
+import { renderLexical } from './_primitives';
 
 type FAQItem = {
   question: string;
@@ -30,21 +31,13 @@ export default function FAQBlock(props: Props): ReactElement {
     );
   }
 
-  // Extract plain text from rich text answer
-  const answerText = (answer: FAQItem['answer']): string => {
+  // Render Lexical rich text answer with full formatting
+  const answerNode = (answer: FAQItem['answer']): React.ReactNode => {
     if (typeof answer === 'string') return answer;
-    if (
-      typeof answer === 'object' &&
-      answer !== null &&
-      'root' in answer
-    ) {
-      try {
-        return extractTextFromLexical(answer);
-      } catch {
-        return 'See details above.';
-      }
+    if (answer && typeof answer === 'object') {
+      return renderLexical(answer as Record<string, unknown>);
     }
-    return '';
+    return null;
   };
 
   return (
@@ -85,7 +78,7 @@ export default function FAQBlock(props: Props): ReactElement {
                 </svg>
               </summary>
               <div className="px-5 pb-4 text-sm text-ink/60">
-                {answerText(item.answer)}
+                {answerNode(item.answer)}
               </div>
             </details>
           ))}
@@ -93,19 +86,4 @@ export default function FAQBlock(props: Props): ReactElement {
       </div>
     </section>
   );
-}
-
-function extractTextFromLexical(node: unknown): string {
-  if (!node || typeof node !== 'object') return '';
-  const n = node as Record<string, unknown>;
-
-  if (n.type === 'text' && typeof n.text === 'string') {
-    return n.text;
-  }
-
-  if (Array.isArray(n.children)) {
-    return n.children.map(extractTextFromLexical).join(' ');
-  }
-
-  return '';
 }

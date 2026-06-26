@@ -7,6 +7,8 @@ export const Button: Block = {
   slug: 'button',
   labels: { singular: 'Button', plural: 'Buttons' },
   interfaceName: 'ButtonBlock',
+  imageURL: '/admin/block-previews/button.svg',
+  imageAltText: 'Button preview',
   fields: [
     {
       name: 'label',

@@ -37,6 +37,14 @@ export const PromoBanner: Block = {
         description: 'Optional expiry date for countdown display.',
       },
     },
+    {
+      name: 'backgroundImage',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Optional background image. Overrides the background color when set.',
+      },
+    },
     ...appearanceFields,
   ],
 };

@@ -7,6 +7,8 @@ export const SocialBar: Block = {
   slug: 'socialBar',
   labels: { singular: 'Social Bar', plural: 'Social Bars' },
   interfaceName: 'SocialBarBlock',
+  imageURL: '/admin/block-previews/social-bar.svg',
+  imageAltText: 'Social bar preview',
   fields: [
     {
       name: 'title',
@@ -27,9 +29,9 @@ export const SocialBar: Block = {
         {
           name: 'url',
           type: 'text',
-          required: true,
           admin: {
             placeholder: 'https://… (or mailto: for email)',
+            description: 'Required for the icon to render. Items without a URL are hidden.',
           },
         },
       ],

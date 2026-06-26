@@ -6,6 +6,8 @@ export const Steps: Block = {
   slug: 'steps',
   labels: { singular: 'Steps', plural: 'Steps' },
   interfaceName: 'StepsBlock',
+  imageURL: '/admin/block-previews/steps.svg',
+  imageAltText: 'Steps preview',
   fields: [
     { name: 'heading', type: 'text' },
     {

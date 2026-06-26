@@ -6,6 +6,8 @@ export const Spacer: Block = {
   slug: 'spacer',
   labels: { singular: 'Spacer', plural: 'Spacers' },
   interfaceName: 'SpacerBlock',
+  imageURL: '/admin/block-previews/spacer.svg',
+  imageAltText: 'Spacer preview',
   fields: [
     {
       name: 'height',

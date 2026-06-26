@@ -8,6 +8,8 @@ export const Text: Block = {
   slug: 'text',
   labels: { singular: 'Text', plural: 'Text blocks' },
   interfaceName: 'TextBlock',
+  imageURL: '/admin/block-previews/text.svg',
+  imageAltText: 'Text preview',
   fields: [
     {
       name: 'heading',

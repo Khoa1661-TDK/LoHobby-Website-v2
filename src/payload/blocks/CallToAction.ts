@@ -6,6 +6,8 @@ export const CallToAction: Block = {
   slug: 'callToAction',
   labels: { singular: 'Call to Action', plural: 'Calls to Action' },
   interfaceName: 'CallToActionBlock',
+  imageURL: '/admin/block-previews/call-to-action.svg',
+  imageAltText: 'Call to action preview',
   fields: [
     { name: 'heading', type: 'text' },
     { name: 'subheading', type: 'textarea' },

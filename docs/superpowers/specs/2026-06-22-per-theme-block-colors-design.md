@@ -1,4 +1,4 @@
-# Per-Theme Block Colors — Design
+`# Per-Theme Block Colors — Design
 
 Date: 2026-06-22
 Branch context: `feature/page-builder-link-text-button-social`

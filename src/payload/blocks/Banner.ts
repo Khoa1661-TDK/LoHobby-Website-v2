@@ -6,6 +6,8 @@ export const Banner: Block = {
   slug: 'banner',
   labels: { singular: 'Banner', plural: 'Banners' },
   interfaceName: 'BannerBlock',
+  imageURL: '/admin/block-previews/banner.svg',
+  imageAltText: 'Banner preview',
   fields: [
     { name: 'text', type: 'text', required: true },
     { name: 'linkLabel', type: 'text' },

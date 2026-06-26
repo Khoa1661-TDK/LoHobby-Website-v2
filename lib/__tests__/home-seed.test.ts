@@ -47,6 +47,31 @@ describe('buildHomeSeedLayout', () => {
     expect(fc?.collection ?? null).toBeNull();
   });
 
+  it('should include testimonials, quote, and call-to-action blocks', () => {
+    const types = buildHomeSeedLayout().map((b) => b.blockType);
+    expect(types).toContain('testimonials');
+    expect(types).toContain('quote');
+    expect(types).toContain('callToAction');
+  });
+
+  it('should give every testimonial entry a quote and author', () => {
+    const block = buildHomeSeedLayout().find((b) => b.blockType === 'testimonials') as
+      | { entries?: Array<{ quote?: string; author?: string }> }
+      | undefined;
+    expect(block?.entries?.length).toBeGreaterThan(0);
+    for (const entry of block?.entries ?? []) {
+      expect(entry.quote).toBeTruthy();
+      expect(entry.author).toBeTruthy();
+    }
+  });
+
+  it('should give the quote block a non-empty quote (schema requires it)', () => {
+    const quote = buildHomeSeedLayout().find((b) => b.blockType === 'quote') as
+      | { quote?: string }
+      | undefined;
+    expect(quote?.quote).toBeTruthy();
+  });
+
   it('should author FAQ answers as valid lexical state', () => {
     const faq = buildHomeSeedLayout().find((b) => b.blockType === 'faq') as
       | { items?: Array<{ answer?: { root?: { type?: string } } }> }

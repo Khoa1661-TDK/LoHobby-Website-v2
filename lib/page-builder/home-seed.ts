@@ -55,10 +55,36 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
       ctaHref: '/pages/sale',
     }),
     featuredCollection('Aircraft & models', 'mo-hinh', idBySlug),
-    ids.length > 0 ? block('featuredProducts', { title: 'New drops', products: ids }) : null,
-    featuredCollection('Keychains off the plate', 'moc-khoa', idBySlug),
+    ids.length > 0
+      ? block('featuredProducts', { title: 'New drops', products: ids, background: 'light' })
+      : null,
+    block('testimonials', {
+      title: 'Off the plate, into the wild',
+      layout: 'grid',
+      entries: [
+        {
+          quote: 'The layer lines on my fighter jet are so clean it looks injection-moulded. Shipped in two days.',
+          author: 'Minh T.',
+          role: 'Aircraft collector',
+          rating: 5,
+        },
+        {
+          quote: 'Sent them my own STL and the quote came back same day. Print quality was spot on.',
+          author: 'Linh P.',
+          role: 'Custom order',
+          rating: 5,
+        },
+        {
+          quote: 'Ordered a stack of keychains for a meetup — the filament colors are way punchier in person.',
+          author: 'Đức N.',
+          role: 'Repeat buyer',
+          rating: 5,
+        },
+      ],
+    }),
     block('steps', {
       heading: 'How we print',
+      background: 'light',
       steps: [
         { title: 'Design', body: 'Pick a model or send us your own STL.' },
         { title: 'Slice', body: 'We dial in layer height, infill, and supports.' },
@@ -66,8 +92,16 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
         { title: 'Ship', body: 'Cleaned up, packed, and out the door.' },
       ],
     }),
+    featuredCollection('Keychains off the plate', 'moc-khoa', idBySlug),
+    block('quote', {
+      quote: 'We do not keep a warehouse. Every order starts as raw filament and a clean build plate.',
+      author: 'The bench',
+      role: 'Print to order, every time',
+      background: 'dark',
+    }),
     block('stats', {
       heading: 'Made on the bench',
+      background: 'light',
       items: [
         { value: '12k', label: 'layers laid down daily' },
         { value: '40+', label: 'filament colors in stock' },
@@ -75,8 +109,18 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
         { value: '48h', label: 'typical turnaround' },
       ],
     }),
+    block('callToAction', {
+      heading: 'Got a model in mind?',
+      subheading: 'Send us an STL or STEP file and we will quote it — no minimums, no setup fees.',
+      primaryLabel: 'Send your STL',
+      primaryUrl: '/contact',
+      secondaryLabel: 'Browse the shop',
+      secondaryUrl: '/search',
+      align: 'center',
+    }),
     block('faq', {
       title: 'Good to know',
+      background: 'light',
       items: [
         faqItem(
           'What are prints made of?',

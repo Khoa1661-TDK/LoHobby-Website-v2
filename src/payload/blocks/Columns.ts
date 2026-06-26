@@ -6,6 +6,8 @@ export const Columns: Block = {
   slug: 'columns',
   labels: { singular: 'Columns', plural: 'Columns' },
   interfaceName: 'ColumnsBlock',
+  imageURL: '/admin/block-previews/columns.svg',
+  imageAltText: 'Columns preview',
   fields: [
     {
       name: 'columnCount',

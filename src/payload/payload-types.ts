@@ -821,6 +821,7 @@ export interface HeroBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'hero';
@@ -857,6 +858,7 @@ export interface FeaturedCollectionBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'featuredCollection';
@@ -889,6 +891,7 @@ export interface FeaturedProductsBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'featuredProducts';
@@ -934,6 +937,7 @@ export interface RichTextBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'richText';
@@ -989,6 +993,7 @@ export interface ImageWithTextBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'imageWithText';
@@ -1031,6 +1036,7 @@ export interface GalleryBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'gallery';
@@ -1072,6 +1078,7 @@ export interface TestimonialsBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'testimonials';
@@ -1111,6 +1118,7 @@ export interface LogoCloudBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'logoCloud';
@@ -1145,6 +1153,7 @@ export interface NewsletterBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'newsletter';
@@ -1197,6 +1206,7 @@ export interface FAQBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'faq';
@@ -1220,6 +1230,10 @@ export interface PromoBannerBlock {
    */
   countdown?: string | null;
   /**
+   * Optional background image. Overrides the background color when set.
+   */
+  backgroundImage?: (number | null) | Media;
+  /**
    * Background mode for this section.
    */
   background?: ('theme' | 'light' | 'dark' | 'custom') | null;
@@ -1239,6 +1253,7 @@ export interface PromoBannerBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'promoBanner';
@@ -1278,6 +1293,7 @@ export interface VideoEmbedBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'videoEmbed';
@@ -1309,6 +1325,7 @@ export interface DividerBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'divider';
@@ -1341,6 +1358,7 @@ export interface RecommendationsBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'recommendations';
@@ -1373,6 +1391,7 @@ export interface RecentlyViewedBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'recentlyViewed';
@@ -1410,6 +1429,7 @@ export interface ButtonBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'button';
@@ -1448,6 +1468,7 @@ export interface TextBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'text';
@@ -1474,7 +1495,10 @@ export interface SocialBarBlock {
           | 'whatsapp'
           | 'github'
           | 'email';
-        url: string;
+        /**
+         * Required for the icon to render. Items without a URL are hidden.
+         */
+        url?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1501,6 +1525,7 @@ export interface SocialBarBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'socialBar';
@@ -1531,6 +1556,7 @@ export interface SpacerBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'spacer';
@@ -1571,6 +1597,7 @@ export interface ColumnsBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'columns';
@@ -1609,6 +1636,7 @@ export interface CallToActionBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'callToAction';
@@ -1646,6 +1674,7 @@ export interface StatsBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'stats';
@@ -1679,6 +1708,7 @@ export interface QuoteBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'quote';
@@ -1720,6 +1750,7 @@ export interface CardGridBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'cardGrid';
@@ -1753,6 +1784,7 @@ export interface BannerBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'banner';
@@ -1790,6 +1822,7 @@ export interface StepsBlock {
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'steps';
@@ -2461,6 +2494,7 @@ export interface HeroBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2478,6 +2512,7 @@ export interface FeaturedCollectionBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2494,6 +2529,7 @@ export interface FeaturedProductsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2509,6 +2545,7 @@ export interface RichTextBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2531,6 +2568,7 @@ export interface ImageWithTextBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2554,6 +2592,7 @@ export interface GalleryBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2579,6 +2618,7 @@ export interface TestimonialsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2602,6 +2642,7 @@ export interface LogoCloudBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2620,6 +2661,7 @@ export interface NewsletterBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2642,6 +2684,7 @@ export interface FAQBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2657,11 +2700,13 @@ export interface PromoBannerBlockSelect<T extends boolean = true> {
   openInNewTab?: T;
   dismissible?: T;
   countdown?: T;
+  backgroundImage?: T;
   background?: T;
   backgroundCustom?: T;
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2679,6 +2724,7 @@ export interface VideoEmbedBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2694,6 +2740,7 @@ export interface DividerBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2710,6 +2757,7 @@ export interface RecommendationsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2726,6 +2774,7 @@ export interface RecentlyViewedBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2744,6 +2793,7 @@ export interface ButtonBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2763,6 +2813,7 @@ export interface TextBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2787,6 +2838,7 @@ export interface SocialBarBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2801,6 +2853,7 @@ export interface SpacerBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2825,6 +2878,7 @@ export interface ColumnsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2847,6 +2901,7 @@ export interface CallToActionBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2868,6 +2923,7 @@ export interface StatsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2885,6 +2941,7 @@ export interface QuoteBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2910,6 +2967,7 @@ export interface CardGridBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2927,6 +2985,7 @@ export interface BannerBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }
@@ -2948,6 +3007,7 @@ export interface StepsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  blockKey?: T;
   id?: T;
   blockName?: T;
 }

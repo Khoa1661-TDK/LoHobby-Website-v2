@@ -2,6 +2,7 @@
 import type { ReactElement } from 'react';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
+import { renderLexical } from './_primitives';
 
 type Props = {
   content?: { root?: { children?: unknown } } | string | null;
@@ -14,8 +15,6 @@ export default function RichTextBlock(props: Props): ReactElement {
 
   const alignClass = textAlign === 'center' ? 'text-center' : 'text-left';
 
-  // Render Lexical richText as raw HTML for now — Payload provides the rendered HTML
-  // via the REST API. Server components receive the structured JSON.
   const rawContent = props.content;
 
   if (!rawContent) {
@@ -30,54 +29,36 @@ export default function RichTextBlock(props: Props): ReactElement {
     );
   }
 
-  // Handle lexical rich text JSON — render a simple text extraction
-  // For full rich text rendering, leverage Payload's serializeLexical or convert to HTML
-  let htmlContent: string | null = null;
+  // Render Lexical rich text as React nodes via Payload's RichText component
+  let content: React.ReactNode = null;
 
   if (typeof rawContent === 'string') {
-    htmlContent = rawContent;
+    content = rawContent;
   } else if (
     typeof rawContent === 'object' &&
     rawContent !== null &&
     'root' in rawContent
   ) {
-    // Extract text from Lexical JSON as a fallback
-    try {
-      htmlContent = extractTextFromLexical(rawContent);
-    } catch {
-      htmlContent = null;
-    }
+    content = renderLexical(rawContent as Record<string, unknown>);
+  }
+
+  if (!content) {
+    return (
+      <section className={section} style={style}>
+        <div className={container}>
+          <p className="text-sm text-ink/60">Unsupported content format.</p>
+        </div>
+      </section>
+    );
   }
 
   return (
     <section className={section} style={style}>
       <div className={container}>
-        <div
-          className={`prose dark:prose-invert max-w-none ${alignClass}`}
-          {...(htmlContent
-            ? { dangerouslySetInnerHTML: { __html: htmlContent } }
-            : {})}
-        >
-          {!htmlContent ? (
-            <p className="text-sm text-ink/60">Unsupported content format.</p>
-          ) : null}
+        <div className={`prose dark:prose-invert max-w-none ${alignClass}`}>
+          {content}
         </div>
       </div>
     </section>
   );
-}
-
-function extractTextFromLexical(node: unknown): string {
-  if (!node || typeof node !== 'object') return '';
-  const n = node as Record<string, unknown>;
-
-  if (n.type === 'text' && typeof n.text === 'string') {
-    return n.text;
-  }
-
-  if (Array.isArray(n.children)) {
-    return n.children.map(extractTextFromLexical).join(' ');
-  }
-
-  return '';
 }

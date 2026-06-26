@@ -6,6 +6,8 @@ export const CardGrid: Block = {
   slug: 'cardGrid',
   labels: { singular: 'Card Grid', plural: 'Card Grids' },
   interfaceName: 'CardGridBlock',
+  imageURL: '/admin/block-previews/card-grid.svg',
+  imageAltText: 'Card grid preview',
   fields: [
     { name: 'heading', type: 'text' },
     {

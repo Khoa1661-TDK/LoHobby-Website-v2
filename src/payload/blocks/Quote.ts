@@ -6,6 +6,8 @@ export const Quote: Block = {
   slug: 'quote',
   labels: { singular: 'Quote', plural: 'Quotes' },
   interfaceName: 'QuoteBlock',
+  imageURL: '/admin/block-previews/quote.svg',
+  imageAltText: 'Quote preview',
   fields: [
     { name: 'quote', type: 'textarea', required: true },
     { name: 'author', type: 'text' },
