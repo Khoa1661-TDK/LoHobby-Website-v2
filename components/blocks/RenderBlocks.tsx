@@ -31,6 +31,7 @@ import BannerBlock from './Banner';
 import StepsBlock from './Steps';
 import PricingTableBlock from './PricingTable';
 import CountdownBlock from './Countdown';
+import TabsBlock from './Tabs';
 
 type Props = {
   blocks: PageBlock[];
@@ -137,6 +138,8 @@ function renderInner(block: PageBlock): ReactElement | null {
       return <PricingTableBlock {...asProps<ComponentProps<typeof PricingTableBlock>>(block)} />;
     case 'countdown':
       return <CountdownBlock {...asProps<ComponentProps<typeof CountdownBlock>>(block)} />;
+    case 'tabs':
+      return <TabsBlock {...asProps<ComponentProps<typeof TabsBlock>>(block)} />;
     default:
       return null;
   }

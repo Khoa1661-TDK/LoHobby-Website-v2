@@ -148,7 +148,8 @@ export type PageBlock =
   | { blockType: 'banner' } & Record<string, unknown>
   | { blockType: 'steps' } & Record<string, unknown>
   | ({ blockType: 'pricingTable' } & Record<string, unknown>)
-  | ({ blockType: 'countdown' } & Record<string, unknown>);
+  | ({ blockType: 'countdown' } & Record<string, unknown>)
+  | ({ blockType: 'tabs' } & Record<string, unknown>);
 
 export type PageDoc = {
   id: string | number;
