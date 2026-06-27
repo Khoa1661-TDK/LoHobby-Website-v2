@@ -31,4 +31,16 @@ describe('POST /api/page-builder/assistant', () => {
     const res = await POST(req({ layout: [], locale: 'en' }));
     expect(res.status).toBe(400);
   });
+
+  it('should 500 when the assistant LLM key is not configured', async () => {
+    (isAuthorizedAdmin as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    const prev = process.env.ASSISTANT_LLM_API_KEY;
+    delete process.env.ASSISTANT_LLM_API_KEY;
+    try {
+      const res = await POST(req({ prompt: 'hi', layout: [], locale: 'en' }));
+      expect(res.status).toBe(500);
+    } finally {
+      if (prev !== undefined) process.env.ASSISTANT_LLM_API_KEY = prev;
+    }
+  });
 });

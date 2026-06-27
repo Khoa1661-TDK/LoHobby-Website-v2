@@ -1,5 +1,11 @@
 // app/api/page-builder/assistant/route.ts — admin-guarded streaming tool-use loop.
-import Anthropic from '@anthropic-ai/sdk';
+// Talks to any OpenAI-compatible chat-completions endpoint. Defaults to Google
+// Gemini Flash (free AI Studio tier); point it at DeepSeek/OpenRouter/etc by
+// setting ASSISTANT_LLM_BASE_URL + ASSISTANT_LLM_MODEL with no code change.
+import OpenAI from 'openai';
+import type {
+  ChatCompletionMessageParam,
+} from 'openai/resources/chat/completions';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import type { PageBlock } from '@/lib/page-builder';
@@ -11,8 +17,12 @@ import { validateToolCall, validateUpdateFields, type Mutation } from '@/lib/pag
 import { applyMutation } from '@/lib/page-builder/assistant/apply';
 
 export const runtime = 'nodejs';
-const MODEL: Anthropic.Model = 'claude-opus-4-8';
+
+// Gemini's OpenAI-compatible endpoint + a cheap, tool-calling-capable default.
+const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/';
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 const MAX_TURNS = 8;
+const MAX_TOKENS = 8192;
 
 type Body = { prompt?: unknown; layout?: unknown; locale?: unknown };
 
@@ -39,9 +49,11 @@ export async function POST(request: Request): Promise<Response> {
   const layout = Array.isArray(body.layout) ? (body.layout as PageBlock[]) : [];
   const locale = typeof body.locale === 'string' && body.locale ? body.locale : 'en';
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.ASSISTANT_LLM_API_KEY;
   if (!apiKey) return bad(500, 'Assistant is not configured.');
-  const client = new Anthropic({ apiKey });
+  const baseURL = process.env.ASSISTANT_LLM_BASE_URL?.trim() || DEFAULT_BASE_URL;
+  const model = process.env.ASSISTANT_LLM_MODEL?.trim() || DEFAULT_MODEL;
+  const client = new OpenAI({ apiKey, baseURL });
 
   const schemas = getBlockSchemas();
   const system = buildSystemPrompt(schemas);
@@ -61,7 +73,8 @@ export async function POST(request: Request): Promise<Response> {
       // Server-side working copy keeps indices correct across the loop.
       let working: PageBlock[] = [...layout];
 
-      const messages: Anthropic.MessageParam[] = [
+      const messages: ChatCompletionMessageParam[] = [
+        { role: 'system', content: system },
         {
           role: 'user',
           content: `Target locale: ${locale}. Write all user-facing copy in this locale.\nCurrent layout (index, blockType, key fields):\n${JSON.stringify(
@@ -70,50 +83,50 @@ export async function POST(request: Request): Promise<Response> {
         },
       ];
 
-      const systemBlocks: Anthropic.TextBlockParam[] = [
-        { type: 'text', text: system, cache_control: { type: 'ephemeral' } },
-      ];
-
       try {
         for (let turn = 0; turn < MAX_TURNS; turn++) {
-          const response = await client.messages.create({
-            model: MODEL,
-            max_tokens: 16000,
-            thinking: { type: 'adaptive' },
-            system: systemBlocks,
+          const response = await client.chat.completions.create({
+            model,
+            max_tokens: MAX_TOKENS,
             tools: ASSISTANT_TOOLS,
+            tool_choice: 'auto',
             messages,
           });
 
-          messages.push({ role: 'assistant', content: response.content });
+          const choice = response.choices[0];
+          if (!choice) break;
+          const message = choice.message;
+          messages.push(message);
 
-          const toolUses = response.content.filter(
-            (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
-          );
-          const text = response.content
-            .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-            .map((b) => b.text)
-            .join(' ')
-            .trim();
+          const toolCalls = message.tool_calls ?? [];
+          const text = (message.content ?? '').trim();
 
-          if (toolUses.length === 0) {
+          if (toolCalls.length === 0) {
             if (text) send({ type: 'summary', text });
             break;
           }
 
-          const results: Anthropic.ToolResultBlockParam[] = [];
-          for (const call of toolUses) {
-            const result = validateToolCall(call.name, call.input);
-            if (!result.ok) {
-              send({ type: 'error', error: result.error });
-              results.push({
-                type: 'tool_result',
-                tool_use_id: call.id,
-                is_error: true,
-                content: result.error,
-              });
+          for (const call of toolCalls) {
+            // Only function tool-calls drive layout mutations.
+            if (call.type !== 'function') {
+              messages.push({ role: 'tool', tool_call_id: call.id, content: 'Unsupported tool call.' });
               continue;
             }
+
+            let input: unknown = {};
+            try {
+              input = JSON.parse(call.function.arguments || '{}');
+            } catch {
+              input = {};
+            }
+
+            const result = validateToolCall(call.function.name, input);
+            if (!result.ok) {
+              send({ type: 'error', error: result.error });
+              messages.push({ role: 'tool', tool_call_id: call.id, content: `ERROR: ${result.error}` });
+              continue;
+            }
+
             const mutation: Mutation = result.mutation;
             if (mutation.kind === 'update') {
               const target = working[mutation.index];
@@ -122,19 +135,15 @@ export async function POST(request: Request): Promise<Response> {
                 : validateUpdateFields(target.blockType, mutation.fields);
               if (updateErr) {
                 send({ type: 'error', error: updateErr });
-                results.push({ type: 'tool_result', tool_use_id: call.id, is_error: true, content: updateErr });
+                messages.push({ role: 'tool', tool_call_id: call.id, content: `ERROR: ${updateErr}` });
                 continue;
               }
             }
+
             working = applyMutation(working, mutation);
             send({ type: 'mutation', mutation });
-            results.push({
-              type: 'tool_result',
-              tool_use_id: call.id,
-              content: 'applied',
-            });
+            messages.push({ role: 'tool', tool_call_id: call.id, content: 'applied' });
           }
-          messages.push({ role: 'user', content: results });
         }
       } catch (err) {
         send({
