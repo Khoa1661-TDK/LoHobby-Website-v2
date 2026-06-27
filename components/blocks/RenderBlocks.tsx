@@ -32,6 +32,7 @@ import StepsBlock from './Steps';
 import PricingTableBlock from './PricingTable';
 import CountdownBlock from './Countdown';
 import TabsBlock from './Tabs';
+import FeatureGridBlock from './FeatureGrid';
 
 type Props = {
   blocks: PageBlock[];
@@ -140,6 +141,8 @@ function renderInner(block: PageBlock): ReactElement | null {
       return <CountdownBlock {...asProps<ComponentProps<typeof CountdownBlock>>(block)} />;
     case 'tabs':
       return <TabsBlock {...asProps<ComponentProps<typeof TabsBlock>>(block)} />;
+    case 'featureGrid':
+      return <FeatureGridBlock {...asProps<ComponentProps<typeof FeatureGridBlock>>(block)} />;
     default:
       return null;
   }

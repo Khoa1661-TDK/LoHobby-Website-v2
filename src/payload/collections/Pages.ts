@@ -43,6 +43,7 @@ import {
   PricingTable,
   Countdown,
   Tabs,
+  FeatureGrid,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -82,6 +83,7 @@ const layoutBlocks = [
   PricingTable,
   Countdown,
   Tabs,
+  FeatureGrid,
 ].map((block) => ({
   ...block,
   fields: [...(block.fields ?? []), blockKeyField],

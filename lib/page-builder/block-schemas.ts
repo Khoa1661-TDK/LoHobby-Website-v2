@@ -32,6 +32,7 @@ import {
   PricingTable,
   Countdown,
   Tabs,
+  FeatureGrid,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -90,6 +91,7 @@ const REGISTERED_BLOCKS: Block[] = [
   PricingTable,
   Countdown,
   Tabs,
+  FeatureGrid,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the
