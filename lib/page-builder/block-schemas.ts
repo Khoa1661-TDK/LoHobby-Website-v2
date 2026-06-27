@@ -104,7 +104,8 @@ function describeCondition(field: Field): FieldCondition | undefined {
   // Find which sibling field name + value flips the condition true.
   // We can only recover simple equality conditions; complex ones fall back to always-visible.
   const fn = condition as (data: unknown, sibling: Record<string, unknown>) => unknown;
-  // Heuristic: appearance's only condition is background === 'custom'.
+  // Heuristic: conditions use a single sibling field equal to 'custom'
+  // (background -> backgroundCustom; containerWidth -> maxWidthCustom).
   for (const candidate of ['background', 'containerWidth'] as const) {
     for (const value of ['custom']) {
       try {

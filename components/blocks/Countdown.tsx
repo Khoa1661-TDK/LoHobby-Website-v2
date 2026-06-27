@@ -61,7 +61,7 @@ export default function CountdownBlock(props: Props): ReactElement | null {
 
   return (
     <section className={section} style={style}>
-      <div className={`${container} text-center`}>
+      <div className={container}>
         {heading ? (
           <h2 className="mb-8 font-display text-2xl font-bold tracking-tight md:text-3xl">{heading}</h2>
         ) : null}
