@@ -7,7 +7,7 @@ import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
 import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 import { serializeLayout } from '@/lib/page-builder/assistant/snapshot';
 import { ASSISTANT_TOOLS, buildSystemPrompt } from '@/lib/page-builder/assistant/tools';
-import { validateToolCall, type Mutation } from '@/lib/page-builder/assistant/validate';
+import { validateToolCall, validateUpdateFields, type Mutation } from '@/lib/page-builder/assistant/validate';
 import { applyMutation } from '@/lib/page-builder/assistant/apply';
 
 export const runtime = 'nodejs';
@@ -115,6 +115,17 @@ export async function POST(request: Request): Promise<Response> {
               continue;
             }
             const mutation: Mutation = result.mutation;
+            if (mutation.kind === 'update') {
+              const target = working[mutation.index];
+              const updateErr = !target
+                ? `No block at index ${mutation.index} to update.`
+                : validateUpdateFields(target.blockType, mutation.fields);
+              if (updateErr) {
+                send({ type: 'error', error: updateErr });
+                results.push({ type: 'tool_result', tool_use_id: call.id, is_error: true, content: updateErr });
+                continue;
+              }
+            }
             working = applyMutation(working, mutation);
             send({ type: 'mutation', mutation });
             results.push({

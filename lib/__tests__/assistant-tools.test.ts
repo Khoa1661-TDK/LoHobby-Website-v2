@@ -14,6 +14,8 @@ describe('assistant tools', () => {
     expect((add as { strict?: boolean }).strict).toBe(true);
     expect(add.input_schema.properties).toHaveProperty('blockType');
     expect(add.input_schema.properties).toHaveProperty('fields');
+    const update = ASSISTANT_TOOLS.find((t) => t.name === 'update_block')!;
+    expect((update as { strict?: boolean }).strict).toBe(true);
   });
 });
 

@@ -53,9 +53,11 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
       const index = asInt(args.index);
       const fields = asRecord(args.fields);
       if (index === null) return { ok: false, error: 'update_block requires an integer index.' };
-      // The target block's type is unknown server-side (we only have the snapshot),
-      // so validate field NAMES against any block that declares them. If no block
-      // declares a field, it is invalid. Per-block re-check happens client-side too.
+      // First pass: validate field NAMES against the union of all blocks. If no block
+      // declares a field at all, it is definitely invalid. This is a cheap early-out only —
+      // the authoritative per-target-block check (field existence + enum range) runs in the
+      // route handler via validateUpdateFields() once the real block type is known from
+      // the server-side working layout.
       for (const key of Object.keys(fields)) {
         const known = anyBlockHasField(key);
         if (!known) return { ok: false, error: `No block defines a field named "${key}".` };
@@ -81,6 +83,14 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
     default:
       return { ok: false, error: `Unknown tool "${name}".` };
   }
+}
+
+/** Authoritative per-target-block field + enum check, run by the route once the
+ * real block type is known from the working layout. Returns an error string or null. */
+export function validateUpdateFields(blockType: string, fields: Record<string, unknown>): string | null {
+  const schema = getBlockSchema(blockType);
+  if (!schema) return `Unknown block type "${blockType}".`;
+  return checkFields(schema, fields);
 }
 
 // Cache the union of all field names across all blocks for update_block validation.

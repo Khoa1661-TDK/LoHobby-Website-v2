@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateToolCall } from '@/lib/page-builder/assistant/validate';
+import { validateToolCall, validateUpdateFields } from '@/lib/page-builder/assistant/validate';
 
 describe('validateToolCall', () => {
   it('should accept a valid add_block and produce an add mutation with blockType set', () => {
@@ -49,5 +49,32 @@ describe('validateToolCall', () => {
 
   it('should reject an unknown tool name', () => {
     expect(validateToolCall('frobnicate', {}).ok).toBe(false);
+  });
+});
+
+describe('validateUpdateFields', () => {
+  it('accepts a valid field on a block that declares it — returns null', () => {
+    // hero declares 'headline'
+    expect(validateUpdateFields('hero', { headline: 'Hello world' })).toBeNull();
+  });
+
+  it('rejects a field that exists on hero but not on spacer — returns error mentioning the field', () => {
+    // 'ctaLabel' is declared by hero but NOT by spacer (which only has height + appearance fields)
+    const err = validateUpdateFields('spacer', { ctaLabel: 'Buy now' });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/ctaLabel/);
+  });
+
+  it('rejects an out-of-range enum value on a block with an enum field — returns error', () => {
+    // hero has ctaStyle with options: primary | outline | minimal
+    const err = validateUpdateFields('hero', { ctaStyle: 'garbage_value' });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/ctaStyle/);
+  });
+
+  it('rejects an unknown blockType — returns error', () => {
+    const err = validateUpdateFields('nonexistent_block_xyz', { headline: 'Hi' });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/unknown block/i);
   });
 });
