@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { ASSISTANT_TOOLS, buildSystemPrompt } from '@/lib/page-builder/assistant/tools';
 import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
 

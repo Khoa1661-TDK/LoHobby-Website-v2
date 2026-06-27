@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { validateToolCall } from '@/lib/page-builder/assistant/validate';
 
 describe('validateToolCall', () => {

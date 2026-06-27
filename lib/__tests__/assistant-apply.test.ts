@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { applyMutation } from '@/lib/page-builder/assistant/apply';
 import type { PageBlock } from '@/lib/page-builder';
 

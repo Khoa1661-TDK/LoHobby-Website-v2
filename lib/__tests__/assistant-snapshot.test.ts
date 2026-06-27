@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { serializeLayout } from '@/lib/page-builder/assistant/snapshot';
 import type { PageBlock } from '@/lib/page-builder';
 
@@ -20,6 +21,6 @@ describe('serializeLayout', () => {
     const layout = [
       { blockType: 'stats', items: [{ n: 1 }], count: 5, label: 'x' },
     ] as unknown as PageBlock[];
-    expect(serializeLayout(layout)[0].summary).toEqual({ label: 'x' });
+    expect(serializeLayout(layout)[0]?.summary).toEqual({ label: 'x' });
   });
 });
