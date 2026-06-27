@@ -121,6 +121,11 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
       if (limited) return limited;
     }
 
+    if (pathname.startsWith('/api/page-builder/assistant')) {
+      const limited = rateLimitResponse(req, 'assistant', RATE_LIMIT_PRESETS.assistant);
+      if (limited) return limited;
+    }
+
     // Analytics beacons use a separate, looser bucket so they don't consume the
     // functional /api budget (and get dropped silently if abused).
     if (pathname.startsWith('/api/track')) {
