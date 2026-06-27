@@ -13,6 +13,7 @@ import AddSectionPicker from './AddSectionPicker';
 import { updateBlockField, insertBlock, moveBlock, duplicateBlock, deleteBlock } from '@/lib/page-builder/layout-reducer';
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import { useAutosave } from './use-autosave';
+import AssistantPanel from './AssistantPanel';
 import { highlight, setLayout as setLayoutMsg, setTheme, isPreviewToParent } from '@/lib/page-builder/preview-messages';
 import { routing } from '@/i18n/routing';
 
@@ -24,6 +25,7 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
+  const [undoSnapshot, setUndoSnapshot] = useState<PageBlock[] | null>(null);
   const { status, publish } = useAutosave(page.id, layout, title, locale, schemas);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -173,7 +175,7 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
           />
         </main>
 
-        <aside className="w-80 overflow-auto border-l border-warm-200 bg-white">
+        <aside className="flex w-80 flex-col overflow-auto border-l border-warm-200 bg-white">
           {selectedBlock && selectedSchema ? (
             <FieldRenderer
               schema={selectedSchema}
@@ -184,6 +186,21 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
           ) : (
             <p className="p-4 text-sm text-warm-400">Select a section to edit its fields.</p>
           )}
+          {undoSnapshot && (
+            <button
+              type="button"
+              onClick={() => { setLayout(undoSnapshot); setUndoSnapshot(null); }}
+              className="m-3 rounded border border-warm-300 px-2 py-1 text-xs text-warm-600"
+            >
+              Undo last AI change
+            </button>
+          )}
+          <AssistantPanel
+            layout={layout}
+            locale={locale}
+            onApply={setLayout}
+            onBeforeRun={() => setUndoSnapshot(layout)}
+          />
         </aside>
       </div>
 
