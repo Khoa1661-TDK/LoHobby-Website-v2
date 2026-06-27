@@ -10,7 +10,7 @@ export type BlockAppearance = {
   contentAlign?: 'left' | 'center' | 'right' | null;
   rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | null;
   border?: boolean | null;
-  animate?: 'none' | 'reveal-up' | 'reveal-right' | 'scale-in' | null;
+  scrollAnimation?: 'none' | 'reveal-up' | 'reveal-right' | 'scale-in' | null;
 };
 
 /** Map Payload appearance fields to Tailwind classes. */

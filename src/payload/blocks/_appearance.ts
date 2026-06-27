@@ -103,7 +103,9 @@ export const appearanceFields: Field[] = [
     admin: { description: 'Show a thin border around the section.' },
   },
   {
-    name: 'animate',
+    // Named scrollAnimation (not `animate`) to avoid colliding with LogoCloud's
+    // pre-existing `animate` marquee checkbox, since every block spreads these fields.
+    name: 'scrollAnimation',
     type: 'select',
     defaultValue: 'none',
     options: [

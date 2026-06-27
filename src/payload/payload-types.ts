@@ -775,6 +775,10 @@ export interface Page {
         | CardGridBlock
         | BannerBlock
         | StepsBlock
+        | PricingTableBlock
+        | CountdownBlock
+        | TabsBlock
+        | FeatureGridBlock
       )[]
     | null;
   meta?: {
@@ -816,11 +820,31 @@ export interface HeroBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -853,11 +877,31 @@ export interface FeaturedCollectionBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -886,11 +930,31 @@ export interface FeaturedProductsBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -932,11 +996,31 @@ export interface RichTextBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -988,11 +1072,31 @@ export interface ImageWithTextBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1031,11 +1135,31 @@ export interface GalleryBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1073,11 +1197,31 @@ export interface TestimonialsBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1113,11 +1257,31 @@ export interface LogoCloudBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1148,11 +1312,31 @@ export interface NewsletterBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1201,11 +1385,31 @@ export interface FAQBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1248,11 +1452,31 @@ export interface PromoBannerBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1288,11 +1512,31 @@ export interface VideoEmbedBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1320,11 +1564,31 @@ export interface DividerBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1353,11 +1617,31 @@ export interface RecommendationsBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1386,11 +1670,31 @@ export interface RecentlyViewedBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1424,11 +1728,31 @@ export interface ButtonBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1463,11 +1787,31 @@ export interface TextBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1520,11 +1864,31 @@ export interface SocialBarBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1551,11 +1915,31 @@ export interface SpacerBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1592,11 +1976,31 @@ export interface ColumnsBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1631,11 +2035,31 @@ export interface CallToActionBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1669,11 +2093,31 @@ export interface StatsBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1703,11 +2147,31 @@ export interface QuoteBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1745,11 +2209,31 @@ export interface CardGridBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1779,11 +2263,31 @@ export interface BannerBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1817,15 +2321,316 @@ export interface StepsBlock {
   /**
    * Max content width for this section.
    */
-  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
   /**
    * Vertical padding for the section.
    */
   paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'steps';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PricingTableBlock".
+ */
+export interface PricingTableBlock {
+  heading?: string | null;
+  subheading?: string | null;
+  tiers?:
+    | {
+        name: string;
+        price: string;
+        period?: string | null;
+        description?: string | null;
+        features?:
+          | {
+              text: string;
+              id?: string | null;
+            }[]
+          | null;
+        ctaLabel?: string | null;
+        ctaHref?: string | null;
+        highlighted?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'pricingTable';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CountdownBlock".
+ */
+export interface CountdownBlock {
+  heading?: string | null;
+  /**
+   * Target date/time in ISO 8601, e.g. 2026-12-31T23:59:59Z
+   */
+  targetDate: string;
+  expiredText?: string | null;
+  ctaLabel?: string | null;
+  ctaHref?: string | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'countdown';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TabsBlock".
+ */
+export interface TabsBlock {
+  variant?: ('tabs' | 'accordion') | null;
+  heading?: string | null;
+  items?:
+    | {
+        label: string;
+        content?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tabs';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeatureGridBlock".
+ */
+export interface FeatureGridBlock {
+  heading?: string | null;
+  subheading?: string | null;
+  columns?: ('2' | '3' | '4') | null;
+  items?:
+    | {
+        icon?:
+          | (
+              | 'zap'
+              | 'truck'
+              | 'shield'
+              | 'star'
+              | 'box'
+              | 'layers'
+              | 'printer'
+              | 'sparkles'
+              | 'heart'
+              | 'clock'
+              | 'award'
+              | 'package'
+              | 'wrench'
+              | 'ruler'
+              | 'palette'
+              | 'thumbsUp'
+            )
+          | null;
+        title: string;
+        text?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view.
+   */
+  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'featureGrid';
 }
 /**
  * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
@@ -2465,6 +3270,10 @@ export interface PagesSelect<T extends boolean = true> {
         cardGrid?: T | CardGridBlockSelect<T>;
         banner?: T | BannerBlockSelect<T>;
         steps?: T | StepsBlockSelect<T>;
+        pricingTable?: T | PricingTableBlockSelect<T>;
+        countdown?: T | CountdownBlockSelect<T>;
+        tabs?: T | TabsBlockSelect<T>;
+        featureGrid?: T | FeatureGridBlockSelect<T>;
       };
   meta?:
     | T
@@ -2494,6 +3303,11 @@ export interface HeroBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2512,6 +3326,11 @@ export interface FeaturedCollectionBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2529,6 +3348,11 @@ export interface FeaturedProductsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2545,6 +3369,11 @@ export interface RichTextBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2568,6 +3397,11 @@ export interface ImageWithTextBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2592,6 +3426,11 @@ export interface GalleryBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2618,6 +3457,11 @@ export interface TestimonialsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2642,6 +3486,11 @@ export interface LogoCloudBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2661,6 +3510,11 @@ export interface NewsletterBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2684,6 +3538,11 @@ export interface FAQBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2706,6 +3565,11 @@ export interface PromoBannerBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2724,6 +3588,11 @@ export interface VideoEmbedBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2740,6 +3609,11 @@ export interface DividerBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2757,6 +3631,11 @@ export interface RecommendationsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2774,6 +3653,11 @@ export interface RecentlyViewedBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2793,6 +3677,11 @@ export interface ButtonBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2813,6 +3702,11 @@ export interface TextBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2838,6 +3732,11 @@ export interface SocialBarBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2853,6 +3752,11 @@ export interface SpacerBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2878,6 +3782,11 @@ export interface ColumnsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2901,6 +3810,11 @@ export interface CallToActionBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2923,6 +3837,11 @@ export interface StatsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2941,6 +3860,11 @@ export interface QuoteBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2967,6 +3891,11 @@ export interface CardGridBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -2985,6 +3914,11 @@ export interface BannerBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;
@@ -3007,6 +3941,132 @@ export interface StepsBlockSelect<T extends boolean = true> {
   backgroundCustomDark?: T;
   containerWidth?: T;
   paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PricingTableBlock_select".
+ */
+export interface PricingTableBlockSelect<T extends boolean = true> {
+  heading?: T;
+  subheading?: T;
+  tiers?:
+    | T
+    | {
+        name?: T;
+        price?: T;
+        period?: T;
+        description?: T;
+        features?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        ctaLabel?: T;
+        ctaHref?: T;
+        highlighted?: T;
+        id?: T;
+      };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CountdownBlock_select".
+ */
+export interface CountdownBlockSelect<T extends boolean = true> {
+  heading?: T;
+  targetDate?: T;
+  expiredText?: T;
+  ctaLabel?: T;
+  ctaHref?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TabsBlock_select".
+ */
+export interface TabsBlockSelect<T extends boolean = true> {
+  variant?: T;
+  heading?: T;
+  items?:
+    | T
+    | {
+        label?: T;
+        content?: T;
+        id?: T;
+      };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeatureGridBlock_select".
+ */
+export interface FeatureGridBlockSelect<T extends boolean = true> {
+  heading?: T;
+  subheading?: T;
+  columns?: T;
+  items?:
+    | T
+    | {
+        icon?: T;
+        title?: T;
+        text?: T;
+        id?: T;
+      };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
   blockKey?: T;
   id?: T;
   blockName?: T;

@@ -62,9 +62,9 @@ function asProps<T>(block: PageBlock): T {
 function BlockRenderer({ block }: { block: PageBlock }): ReactElement | null {
   const inner = renderInner(block);
   if (!inner) return null;
-  const animate = (block as { animate?: string | null }).animate;
-  if (animate && animate !== 'none') {
-    return <RevealOnScroll animate={animate}>{inner}</RevealOnScroll>;
+  const scrollAnimation = (block as { scrollAnimation?: string | null }).scrollAnimation;
+  if (scrollAnimation && scrollAnimation !== 'none') {
+    return <RevealOnScroll animate={scrollAnimation}>{inner}</RevealOnScroll>;
   }
   return inner;
 }

@@ -29,7 +29,11 @@ describe('getBlockSchemas', () => {
         'steps',
       ]),
     );
-    expect(slugs).toHaveLength(26);
+    // The block-expansion library added pricingTable, countdown, tabs, featureGrid.
+    expect(slugs).toEqual(
+      expect.arrayContaining(['pricingTable', 'countdown', 'tabs', 'featureGrid']),
+    );
+    expect(slugs).toHaveLength(30);
   });
 
   it('should describe hero text and select fields with options', () => {

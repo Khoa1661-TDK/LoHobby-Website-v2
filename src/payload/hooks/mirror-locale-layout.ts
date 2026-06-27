@@ -6,7 +6,6 @@ import type {
   CollectionBeforeChangeHook,
   PayloadRequest,
 } from 'payload';
-import type { Page } from '@/src/payload/payload-types';
 import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
 import { stripBlockIds } from '@/lib/page-builder/strip-block-ids';
 import type { PageBlock } from '@/lib/page-builder';
@@ -121,9 +120,7 @@ export const mirrorLocaleLayout: CollectionAfterChangeHook = async ({ doc, req }
       collection: 'pages',
       id: pageId,
       locale: otherLocale,
-      // Cast required until `payload generate:types` syncs the generated union;
-      // `pricingTable` is registered in the schema but not yet in payload-types.ts.
-      data: { layout: stripBlockIds(finalLayout, schemas) as unknown as NonNullable<Page['layout']> },
+      data: { layout: stripBlockIds(finalLayout, schemas) },
       req,
     });
   } catch (err) {
