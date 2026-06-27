@@ -43,6 +43,7 @@ export const appearanceFields: Field[] = [
       { label: 'Normal (max-w-screen-xl)', value: 'normal' },
       { label: 'Wide (max-w-screen-2xl)', value: 'wide' },
       { label: 'Full width', value: 'full' },
+      { label: 'Custom (px)', value: 'custom' },
     ],
     admin: {
       description: 'Max content width for this section.',
@@ -61,5 +62,44 @@ export const appearanceFields: Field[] = [
     admin: {
       description: 'Vertical padding for the section.',
     },
+  },
+  {
+    name: 'maxWidthCustom',
+    type: 'text',
+    admin: {
+      condition: (_, siblingData) => siblingData?.containerWidth === 'custom',
+      description: 'Custom max content width in pixels, e.g. 720.',
+      placeholder: '720',
+    },
+  },
+  {
+    name: 'contentAlign',
+    type: 'select',
+    defaultValue: 'left',
+    options: [
+      { label: 'Left', value: 'left' },
+      { label: 'Center', value: 'center' },
+      { label: 'Right', value: 'right' },
+    ],
+    admin: { description: 'Horizontal alignment of the section content.' },
+  },
+  {
+    name: 'rounded',
+    type: 'select',
+    defaultValue: 'none',
+    options: [
+      { label: 'None', value: 'none' },
+      { label: 'Small', value: 'sm' },
+      { label: 'Medium', value: 'md' },
+      { label: 'Large', value: 'lg' },
+      { label: 'Extra large', value: 'xl' },
+    ],
+    admin: { description: 'Corner radius for the section.' },
+  },
+  {
+    name: 'border',
+    type: 'checkbox',
+    defaultValue: false,
+    admin: { description: 'Show a thin border around the section.' },
   },
 ];

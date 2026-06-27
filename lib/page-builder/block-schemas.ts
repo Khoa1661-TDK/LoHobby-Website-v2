@@ -97,7 +97,7 @@ function describeCondition(field: Field): FieldCondition | undefined {
   // We can only recover simple equality conditions; complex ones fall back to always-visible.
   const fn = condition as (data: unknown, sibling: Record<string, unknown>) => unknown;
   // Heuristic: appearance's only condition is background === 'custom'.
-  for (const candidate of ['background'] as const) {
+  for (const candidate of ['background', 'containerWidth'] as const) {
     for (const value of ['custom']) {
       try {
         if (fn({}, { [candidate]: value }) && !fn({}, {})) {

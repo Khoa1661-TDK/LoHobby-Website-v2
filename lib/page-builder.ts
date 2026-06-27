@@ -4,8 +4,13 @@ export type BlockAppearance = {
   background?: 'theme' | 'light' | 'dark' | 'custom' | null;
   backgroundCustom?: string | null;
   backgroundCustomDark?: string | null;
-  containerWidth?: 'narrow' | 'normal' | 'wide' | 'full' | null;
+  containerWidth?: 'narrow' | 'normal' | 'wide' | 'full' | 'custom' | null;
+  maxWidthCustom?: string | null;
   paddingY?: 'compact' | 'base' | 'spacious' | 'none' | null;
+  contentAlign?: 'left' | 'center' | 'right' | null;
+  rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | null;
+  border?: boolean | null;
+  animate?: 'none' | 'reveal-up' | 'reveal-right' | 'scale-in' | null;
 };
 
 /** Map Payload appearance fields to Tailwind classes. */
@@ -29,6 +34,8 @@ export function blockAppearanceClasses(appearance: BlockAppearance): {
         return 'mx-auto max-w-screen-2xl';
       case 'full':
         return '';
+      case 'custom':
+        return 'mx-auto blk-maxw';
       default:
         return 'mx-auto max-w-screen-xl';
     }
@@ -47,16 +54,50 @@ export function blockAppearanceClasses(appearance: BlockAppearance): {
     }
   })();
 
+  const alignClass = (() => {
+    switch (appearance.contentAlign) {
+      case 'center':
+        return 'text-center';
+      case 'right':
+        return 'text-right';
+      default:
+        return '';
+    }
+  })();
+
+  const roundedClass = (() => {
+    switch (appearance.rounded) {
+      case 'sm':
+        return 'rounded-sm overflow-hidden';
+      case 'md':
+        return 'rounded-md overflow-hidden';
+      case 'lg':
+        return 'rounded-lg overflow-hidden';
+      case 'xl':
+        return 'rounded-xl overflow-hidden';
+      default:
+        return '';
+    }
+  })();
+
+  const borderClass = appearance.border ? 'border border-line' : '';
+
   const customStyle: Record<string, string> = {};
   if (appearance.background === 'custom' && appearance.backgroundCustom) {
     const light = appearance.backgroundCustom;
     customStyle['--blk-bg'] = light;
     customStyle['--blk-bg-dark'] = appearance.backgroundCustomDark || light;
   }
+  if (appearance.containerWidth === 'custom' && appearance.maxWidthCustom) {
+    const px = Number.parseInt(String(appearance.maxWidthCustom), 10);
+    if (Number.isFinite(px) && px > 0) {
+      customStyle['--blk-maxw'] = `${px}px`;
+    }
+  }
 
   return {
-    section: [bgClass, pyClass].filter(Boolean).join(' '),
-    container: `${widthClass} px-4`,
+    section: [bgClass, pyClass, roundedClass, borderClass].filter(Boolean).join(' '),
+    container: [widthClass, 'px-4', alignClass].filter(Boolean).join(' '),
     style: customStyle,
   };
 }

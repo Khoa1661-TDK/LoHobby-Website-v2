@@ -166,6 +166,13 @@
   .dark .blk-custom-bg {
     background-color: var(--blk-bg-dark) !important;
   }
+
+  /* Custom max-width emitted as --blk-maxw by blockAppearanceClasses() when
+     containerWidth === 'custom'. The var is set on the section; the container
+     child reads it via this class. */
+  .blk-maxw {
+    max-width: var(--blk-maxw);
+  }
 }
 
 @layer base {
