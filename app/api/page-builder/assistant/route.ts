@@ -37,6 +37,7 @@ export async function POST(request: Request): Promise<Response> {
   const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
   if (!prompt) return bad(400, 'A non-empty prompt is required.');
   const layout = Array.isArray(body.layout) ? (body.layout as PageBlock[]) : [];
+  const locale = typeof body.locale === 'string' && body.locale ? body.locale : 'en';
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return bad(500, 'Assistant is not configured.');
@@ -46,9 +47,15 @@ export async function POST(request: Request): Promise<Response> {
   const system = buildSystemPrompt(schemas);
 
   const encoder = new TextEncoder();
+  type StreamEvent =
+    | { type: 'mutation'; mutation: Mutation }
+    | { type: 'summary'; text: string }
+    | { type: 'error'; error: string }
+    | { type: 'done' };
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (obj: unknown) =>
+      const send = (obj: StreamEvent) =>
         controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'));
 
       // Server-side working copy keeps indices correct across the loop.
@@ -57,7 +64,7 @@ export async function POST(request: Request): Promise<Response> {
       const messages: Anthropic.MessageParam[] = [
         {
           role: 'user',
-          content: `Current layout (index, blockType, key fields):\n${JSON.stringify(
+          content: `Target locale: ${locale}. Write all user-facing copy in this locale.\nCurrent layout (index, blockType, key fields):\n${JSON.stringify(
             serializeLayout(working),
           )}\n\nRequest: ${prompt}`,
         },
