@@ -40,6 +40,7 @@ import {
   CardGrid,
   Banner,
   Steps,
+  PricingTable,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -76,6 +77,7 @@ const layoutBlocks = [
   CardGrid,
   Banner,
   Steps,
+  PricingTable,
 ].map((block) => ({
   ...block,
   fields: [...(block.fields ?? []), blockKeyField],

@@ -25,3 +25,4 @@ export { Quote } from './Quote';
 export { CardGrid } from './CardGrid';
 export { Banner } from './Banner';
 export { Steps } from './Steps';
+export { PricingTable } from './PricingTable';

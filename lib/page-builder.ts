@@ -146,7 +146,8 @@ export type PageBlock =
   | { blockType: 'quote' } & Record<string, unknown>
   | { blockType: 'cardGrid' } & Record<string, unknown>
   | { blockType: 'banner' } & Record<string, unknown>
-  | { blockType: 'steps' } & Record<string, unknown>;
+  | { blockType: 'steps' } & Record<string, unknown>
+  | ({ blockType: 'pricingTable' } & Record<string, unknown>);
 
 export type PageDoc = {
   id: string | number;

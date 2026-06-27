@@ -29,6 +29,7 @@ import {
   CardGrid,
   Banner,
   Steps,
+  PricingTable,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -84,6 +85,7 @@ const REGISTERED_BLOCKS: Block[] = [
   CardGrid,
   Banner,
   Steps,
+  PricingTable,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the

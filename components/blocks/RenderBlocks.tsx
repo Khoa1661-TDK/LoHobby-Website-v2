@@ -29,6 +29,7 @@ import QuoteBlock from './Quote';
 import CardGridBlock from './CardGrid';
 import BannerBlock from './Banner';
 import StepsBlock from './Steps';
+import PricingTableBlock from './PricingTable';
 
 type Props = {
   blocks: PageBlock[];
@@ -131,6 +132,8 @@ function renderInner(block: PageBlock): ReactElement | null {
       return <BannerBlock {...asProps<ComponentProps<typeof BannerBlock>>(block)} />;
     case 'steps':
       return <StepsBlock {...asProps<ComponentProps<typeof StepsBlock>>(block)} />;
+    case 'pricingTable':
+      return <PricingTableBlock {...asProps<ComponentProps<typeof PricingTableBlock>>(block)} />;
     default:
       return null;
   }
