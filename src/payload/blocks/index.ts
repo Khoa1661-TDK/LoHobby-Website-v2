@@ -26,3 +26,4 @@ export { CardGrid } from './CardGrid';
 export { Banner } from './Banner';
 export { Steps } from './Steps';
 export { PricingTable } from './PricingTable';
+export { Countdown } from './Countdown';

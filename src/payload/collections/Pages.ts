@@ -41,6 +41,7 @@ import {
   Banner,
   Steps,
   PricingTable,
+  Countdown,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -78,6 +79,7 @@ const layoutBlocks = [
   Banner,
   Steps,
   PricingTable,
+  Countdown,
 ].map((block) => ({
   ...block,
   fields: [...(block.fields ?? []), blockKeyField],

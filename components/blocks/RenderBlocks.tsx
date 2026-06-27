@@ -30,6 +30,7 @@ import CardGridBlock from './CardGrid';
 import BannerBlock from './Banner';
 import StepsBlock from './Steps';
 import PricingTableBlock from './PricingTable';
+import CountdownBlock from './Countdown';
 
 type Props = {
   blocks: PageBlock[];
@@ -134,6 +135,8 @@ function renderInner(block: PageBlock): ReactElement | null {
       return <StepsBlock {...asProps<ComponentProps<typeof StepsBlock>>(block)} />;
     case 'pricingTable':
       return <PricingTableBlock {...asProps<ComponentProps<typeof PricingTableBlock>>(block)} />;
+    case 'countdown':
+      return <CountdownBlock {...asProps<ComponentProps<typeof CountdownBlock>>(block)} />;
     default:
       return null;
   }

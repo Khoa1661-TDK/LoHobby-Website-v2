@@ -30,6 +30,7 @@ import {
   Banner,
   Steps,
   PricingTable,
+  Countdown,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -86,6 +87,7 @@ const REGISTERED_BLOCKS: Block[] = [
   Banner,
   Steps,
   PricingTable,
+  Countdown,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the
