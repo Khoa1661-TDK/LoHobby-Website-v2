@@ -1,6 +1,7 @@
 // components/blocks/RenderBlocks.tsx
 import type { ComponentProps, ReactElement } from 'react';
 import type { PageBlock } from '@/lib/page-builder';
+import RevealOnScroll from './RevealOnScroll';
 
 import HeroBlock from './Hero';
 import FeaturedCollectionBlock from './FeaturedCollection';
@@ -55,6 +56,16 @@ function asProps<T>(block: PageBlock): T {
 }
 
 function BlockRenderer({ block }: { block: PageBlock }): ReactElement | null {
+  const inner = renderInner(block);
+  if (!inner) return null;
+  const animate = (block as { animate?: string | null }).animate;
+  if (animate && animate !== 'none') {
+    return <RevealOnScroll animate={animate}>{inner}</RevealOnScroll>;
+  }
+  return inner;
+}
+
+function renderInner(block: PageBlock): ReactElement | null {
   switch (block.blockType) {
     case 'hero':
       return <HeroBlock {...asProps<ComponentProps<typeof HeroBlock>>(block)} />;

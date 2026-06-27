@@ -102,4 +102,16 @@ export const appearanceFields: Field[] = [
     defaultValue: false,
     admin: { description: 'Show a thin border around the section.' },
   },
+  {
+    name: 'animate',
+    type: 'select',
+    defaultValue: 'none',
+    options: [
+      { label: 'None', value: 'none' },
+      { label: 'Reveal up', value: 'reveal-up' },
+      { label: 'Reveal from left', value: 'reveal-right' },
+      { label: 'Scale in', value: 'scale-in' },
+    ],
+    admin: { description: 'Animation when the section scrolls into view.' },
+  },
 ];
