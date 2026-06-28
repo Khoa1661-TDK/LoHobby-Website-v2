@@ -30,17 +30,27 @@ const assignParentProduct: CollectionBeforeChangeHook = ({ data, operation, req 
   return data;
 };
 
+// Schedule cache revalidation after the HTTP response. When a variant is written
+// outside a request scope (CLI seed scripts), `after()` throws — and there is no
+// live server cache to revalidate anyway, so it is safely skipped. Mirrors the
+// same guard in the Products collection (`scheduleCatalogRevalidate`).
+function scheduleCatalogRevalidate(): void {
+  try {
+    after(() => {
+      revalidateCatalogCache();
+    });
+  } catch {
+    // Not in a request scope (e.g. a seed/CLI script) — nothing to revalidate.
+  }
+}
+
 const invalidateCatalogOnChange: CollectionAfterChangeHook = ({ doc }) => {
-  after(() => {
-    revalidateCatalogCache();
-  });
+  scheduleCatalogRevalidate();
   return doc;
 };
 
 const invalidateCatalogOnDelete: CollectionAfterDeleteHook = ({ doc }) => {
-  after(() => {
-    revalidateCatalogCache();
-  });
+  scheduleCatalogRevalidate();
   return doc;
 };
 
