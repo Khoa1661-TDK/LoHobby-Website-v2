@@ -2,8 +2,10 @@
 'use client';
 import { useState } from 'react';
 import type { ReactElement } from 'react';
-import type { BlockAppearance } from '@/lib/page-builder';
-import { blockAppearanceClasses } from '@/lib/page-builder';
+import {
+  type BlockAppearance,
+  blockAppearanceClasses,
+} from '@/lib/page-builder-appearance';
 import { renderLexical } from './_primitives';
 
 type Item = { label?: string | null; content?: Record<string, unknown> | null };
