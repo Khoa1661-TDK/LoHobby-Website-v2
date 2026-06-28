@@ -26,6 +26,7 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
   const [addAt, setAddAt] = useState<number | null>(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [undoSnapshot, setUndoSnapshot] = useState<PageBlock[] | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const { status, publish } = useAutosave(page.id, layout, title, locale, schemas);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -186,23 +187,49 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
           ) : (
             <p className="p-4 text-sm text-warm-400">Select a section to edit its fields.</p>
           )}
-          {undoSnapshot && (
+        </aside>
+      </div>
+
+      {/* AI helper: toggleable floating window, decoupled from the fixed sidebar. */}
+      {assistantOpen && (
+        <div className="fixed bottom-20 right-4 z-40 flex h-[32rem] w-96 flex-col overflow-hidden rounded-lg border border-warm-200 bg-white shadow-xl">
+          <div className="flex items-center gap-2 border-b border-warm-200 px-3 py-2">
+            <span className="text-sm font-semibold text-warm-800">AI helper</span>
+            {undoSnapshot && (
+              <button
+                type="button"
+                onClick={() => { setLayout(undoSnapshot); setUndoSnapshot(null); }}
+                className="rounded border border-warm-300 px-2 py-0.5 text-xs text-warm-600"
+              >
+                Undo last AI change
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => { setLayout(undoSnapshot); setUndoSnapshot(null); }}
-              className="m-3 rounded border border-warm-300 px-2 py-1 text-xs text-warm-600"
+              aria-label="Close AI helper"
+              onClick={() => setAssistantOpen(false)}
+              className="ml-auto rounded p-1 text-warm-500 hover:bg-warm-100"
             >
-              Undo last AI change
+              ✕
             </button>
-          )}
+          </div>
           <AssistantPanel
             layout={layout}
             locale={locale}
             onApply={setLayout}
             onBeforeRun={() => setUndoSnapshot(layout)}
           />
-        </aside>
-      </div>
+        </div>
+      )}
+      <button
+        type="button"
+        aria-label={assistantOpen ? 'Close AI helper' : 'Open AI helper'}
+        aria-pressed={assistantOpen}
+        onClick={() => setAssistantOpen((v) => !v)}
+        className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-warm-900 text-lg text-white shadow-lg hover:bg-warm-800"
+      >
+        {assistantOpen ? '✕' : '🤖'}
+      </button>
 
       {addAt !== null && (
         <AddSectionPicker schemas={schemas} onPick={handlePick} onClose={() => setAddAt(null)} />

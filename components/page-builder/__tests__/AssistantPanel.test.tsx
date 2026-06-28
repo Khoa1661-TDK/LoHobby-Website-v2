@@ -44,4 +44,46 @@ describe('AssistantPanel', () => {
     expect(applied.map((b) => b.blockType)).toEqual(['hero', 'faq']);
     await screen.findByText('Added an FAQ.');
   });
+
+  it('should show the user prompt and assistant reply in the conversation log', async () => {
+    const layout = [{ blockType: 'hero', heading: 'A' }] as unknown as PageBlock[];
+
+    global.fetch = vi.fn(async () =>
+      new Response(
+        ndjsonStream([
+          '{"type":"summary","text":"Added an FAQ."}',
+          '{"type":"done"}',
+        ]),
+        { headers: { 'Content-Type': 'application/x-ndjson' } },
+      ),
+    ) as unknown as typeof fetch;
+
+    render(<AssistantPanel layout={layout} locale="en" onApply={vi.fn()} onBeforeRun={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText(/describe/i), { target: { value: 'add an faq' } });
+    fireEvent.click(screen.getByRole('button', { name: /send/i }));
+
+    // The user's prompt persists in the transcript alongside the assistant reply.
+    await screen.findByText('add an faq');
+    await screen.findByText('Added an FAQ.');
+  });
+
+  it('should render a streamed error as an assistant message', async () => {
+    const layout = [{ blockType: 'hero', heading: 'A' }] as unknown as PageBlock[];
+
+    global.fetch = vi.fn(async () =>
+      new Response(
+        ndjsonStream([
+          '{"type":"error","error":"Model refused."}',
+          '{"type":"done"}',
+        ]),
+        { headers: { 'Content-Type': 'application/x-ndjson' } },
+      ),
+    ) as unknown as typeof fetch;
+
+    render(<AssistantPanel layout={layout} locale="en" onApply={vi.fn()} onBeforeRun={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText(/describe/i), { target: { value: 'do a thing' } });
+    fireEvent.click(screen.getByRole('button', { name: /send/i }));
+
+    await screen.findByText('Model refused.');
+  });
 });
