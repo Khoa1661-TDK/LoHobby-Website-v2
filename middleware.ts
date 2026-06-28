@@ -143,8 +143,31 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // --- Admin panel + non-localized root routes: pass through ----------------
-  if (isAdmin || isNonLocalizedRoot(pathname)) {
+  // --- Admin panel: promote the session cookie to an Authorization header ----
+  // Payload's server-rendered admin (`RootLayout`) re-authenticates the raw SSR
+  // request using its cookie strategy, which applies a CSRF gate that REJECTS the
+  // `payload-token` cookie when the request carries neither `Origin` nor
+  // `Sec-Fetch-Site` — the case for top-level SSR navigations to /admin. That
+  // bounces a logged-in admin straight to /admin/login. Promoting the existing
+  // cookie to `Authorization: JWT <token>` makes Payload authenticate via its JWT
+  // strategy (signature + session lookup, no CSRF gate), so the SSR render sees
+  // the real user. This does NOT weaken CSRF protection: under `SameSite=Lax` the
+  // cookie is only ever present on same-site requests and top-level navigations —
+  // never on cross-site fetches or mutations — and the JWT strategy still fully
+  // validates the token. Cookie name is the Payload default prefix (`payload`);
+  // edge middleware cannot import the Payload config to read a custom prefix.
+  if (isAdmin) {
+    const token = req.cookies.get('payload-token')?.value;
+    if (token && !req.headers.get('authorization')) {
+      const headers = new Headers(req.headers);
+      headers.set('authorization', `JWT ${token}`);
+      return NextResponse.next({ request: { headers } });
+    }
+    return NextResponse.next();
+  }
+
+  // --- Non-localized root routes: pass through ------------------------------
+  if (isNonLocalizedRoot(pathname)) {
     return NextResponse.next();
   }
 

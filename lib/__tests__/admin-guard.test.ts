@@ -26,4 +26,30 @@ describe('isAuthorizedAdmin', () => {
     const result = await isAuthorizedAdmin(payload as never, new Headers(), () => true);
     expect(result).toBe(false);
   });
+
+  it('should authorize via the JWT fallback when the cookie path is CSRF-gated but a payload-token cookie is present', async () => {
+    // First call (cookie strategy) is CSRF-gated and yields no user; the retry
+    // with an Authorization: JWT header resolves the same user.
+    const auth = vi
+      .fn()
+      .mockResolvedValueOnce({ user: null })
+      .mockResolvedValueOnce({ user: { email: 'admin@shop.test' } });
+    const payload = { auth };
+    const headers = new Headers({ cookie: 'payload-token=signed.jwt.value' });
+
+    const result = await isAuthorizedAdmin(payload as never, headers, () => true);
+
+    expect(result).toBe(true);
+    expect(auth).toHaveBeenCalledTimes(2);
+    const retryHeaders = auth.mock.calls[1]![0].headers as Headers;
+    expect(retryHeaders.get('authorization')).toBe('JWT signed.jwt.value');
+  });
+
+  it('should not retry the JWT fallback when no payload-token cookie is present', async () => {
+    const auth = vi.fn().mockResolvedValue({ user: null });
+    const payload = { auth };
+    const result = await isAuthorizedAdmin(payload as never, new Headers(), () => true);
+    expect(result).toBe(false);
+    expect(auth).toHaveBeenCalledTimes(1);
+  });
 });

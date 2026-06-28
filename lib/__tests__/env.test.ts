@@ -58,6 +58,23 @@ describe('envSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('should accept env without NEXT_PUBLIC_* vars when APP_URL is set', () => {
+    const result = envSchema.safeParse({
+      DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
+      PAYLOAD_SECRET: SECRET,
+      APP_URL: 'https://runtime-domain.com',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should accept env without any URL vars (falls back to localhost)', () => {
+    const result = envSchema.safeParse({
+      DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
+      PAYLOAD_SECRET: SECRET,
+    });
+    expect(result.success).toBe(true);
+  });
+
   it('should reject an incomplete PayOS env fallback', () => {
     const result = envSchema.safeParse({
       ...validEnv,

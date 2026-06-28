@@ -34,12 +34,19 @@ export const envSchema = z
     // serverURL), so setting it per-deployment (e.g. in Portainer) re-targets
     // the whole app with no rebuild. When unset, the NEXT_PUBLIC_* vars apply.
     APP_URL: z.string().url('APP_URL must be a valid URL').optional(),
+    // Optional because NEXT_PUBLIC_* vars are inlined at build time — making them
+    // optional lets a Docker image build without baking in any domain (the runtime
+    // APP_URL above takes precedence in all consumers). When provided they are
+    // still validated as proper URLs. Omit them for Docker builds; set them for
+    // Vercel / local dev where a rebuild is acceptable.
     NEXT_PUBLIC_APP_URL: z
       .string()
-      .url('NEXT_PUBLIC_APP_URL must be a valid URL'),
+      .url('NEXT_PUBLIC_APP_URL must be a valid URL')
+      .optional(),
     NEXT_PUBLIC_SITE_URL: z
       .string()
-      .url('NEXT_PUBLIC_SITE_URL must be a valid URL'),
+      .url('NEXT_PUBLIC_SITE_URL must be a valid URL')
+      .optional(),
     // Optional payment fallbacks (canonical source is the CMS payment method).
     PAYOS_CLIENT_ID: z.string().optional(),
     PAYOS_API_KEY: z.string().optional(),

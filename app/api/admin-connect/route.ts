@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPayload } from 'payload';
 import { getAdminUser } from '@/lib/admin';
 import { logger } from '@/lib/logger';
+import { resolveBaseUrl } from '@/lib/utils';
 import {
   createPayloadAdminSessionCookie,
   getPayloadTokenCookieNameForConfig,
@@ -31,9 +32,17 @@ function applySessionCookie(response: NextResponse, sessionCookie: PayloadSessio
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  // Build redirect targets from the runtime canonical base (`APP_URL`), NOT
+  // `req.url`: in a Next.js route handler `req.url` reports the internal origin
+  // (`http://localhost:3000`), so absolute redirects would jump to localhost
+  // regardless of the host the admin actually visited. `resolveBaseUrl()` reads
+  // `APP_URL` first, so one prebuilt image follows whatever domain is set at
+  // runtime (LAN IP, real domain) with no rebuild.
+  const baseUrl = resolveBaseUrl();
+
   const admin = await getAdminUser();
   if (!admin) {
-    return NextResponse.redirect(new URL('/login?callbackUrl=/admin', req.url));
+    return NextResponse.redirect(new URL('/login?callbackUrl=/admin', baseUrl));
   }
 
   const returnPath = safeReturnPath(req.nextUrl.searchParams.get('return'));
@@ -45,12 +54,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const ssoRetried = readCookieRaw(cookieHeader, 'payload-sso-retry') === '1';
 
   if (hadStaleToken && ssoRetried) {
-    return NextResponse.redirect(new URL('/admin-connect?error=stale-session', req.url));
+    return NextResponse.redirect(new URL('/login?error=stale-session', baseUrl));
   }
 
   try {
     const sessionCookie = await createPayloadAdminSessionCookie(admin);
-    const response = NextResponse.redirect(new URL(returnPath, req.url));
+    const response = NextResponse.redirect(new URL(returnPath, baseUrl));
 
     response.cookies.delete(tokenCookieName);
     applySessionCookie(response, sessionCookie);
@@ -75,7 +84,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // internal SSO issue (stale password hash, secret rotation, etc.).
     logger.error({ err: error }, '[api/admin-connect] SSO failed');
     return NextResponse.redirect(
-      new URL('/admin-connect?error=stale-session', req.url),
+      new URL('/login?error=stale-session', baseUrl),
     );
   }
 }

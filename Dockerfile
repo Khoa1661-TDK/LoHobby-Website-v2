@@ -3,11 +3,13 @@
 # Reusable-template Dockerfile — safe to publish to a PUBLIC registry.
 #
 # What crosses the build boundary (and is therefore IN the image):
-#   * NEXT_PUBLIC_* vars — inlined into the client JS bundle by Next.js at BUILD
-#     time. They are public by definition, so baking them in is fine. They arrive
-#     as build-args with GENERIC defaults, so `docker build .` works with no .env.
-#     A consumer overrides them with --build-arg to set their own domain/branding,
-#     then REBUILDS (Next.js cannot re-inline these at runtime).
+#   * NEXT_PUBLIC_* branding/SITE_NAME vars — inlined into the client JS bundle
+#     by Next.js at BUILD time. They are public by definition, so baking them in
+#     is fine. They arrive as build-args with generic defaults, so `docker build .`
+#     works with no .env. Override with --build-arg to brand the image.
+#   * NEXT_PUBLIC_APP_URL and NEXT_PUBLIC_SITE_URL are NOT set at build time —
+#     they would freeze the domain into the client bundle. Instead, use the
+#     runtime APP_URL env var (see below) so a single image works on any host.
 #
 # What NEVER enters any layer (runtime-only, supplied via env_file / -e at start):
 #   DATABASE_URL, PAYLOAD_SECRET, AUTH_SECRET, AUTH_GOOGLE_SECRET, PAYOS_*,
@@ -15,7 +17,8 @@
 #   APP_URL is the canonical base URL read at runtime (deliberately NOT a
 #   NEXT_PUBLIC_* var, which Next.js would inline at build time). Setting it at
 #   start re-points the admin panel, SEO URLs, and admin cookies to any domain,
-#   so a SINGLE prebuilt image runs on any host (e.g. Portainer) without rebuild.
+#   so a SINGLE prebuilt image runs on any host (localhost, LAN IP, real domain)
+#   without rebuild.
 #   The build stage uses FAKE placeholders for the two vars that must merely
 #   RESOLVE during `prisma generate` / Payload config init / `next build` — they
 #   never connect to anything, and the runtime stage copies files, not ENV.
@@ -52,26 +55,19 @@ FROM base AS build
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 ENV PAYLOAD_SECRET="build-only-placeholder-not-used-at-runtime"
 ENV NEXT_TELEMETRY_DISABLED=1
-# NEXT_PUBLIC_* vars are inlined by Next.js at BUILD time, not runtime — passing
-# them via env_file at start does NOT override already-baked values. So they must
-# be present during `next build`. They arrive as build-args with GENERIC defaults
-# so `docker build .` succeeds with no host .env; a consumer overrides with
-# --build-arg NEXT_PUBLIC_APP_URL=https://theirshop.com (etc.) and rebuilds.
-# Only PUBLIC vars cross the build boundary; secrets stay runtime-only via
-# env_file and never enter the image. To add a new public var: add it to .env,
-# an ARG here, an ENV line here, and a build-arg in docker-compose.yml. The
-# runtime stage does not re-declare them — they are already inlined into the
-# compiled client bundle.
-ARG NEXT_PUBLIC_APP_URL=https://example.com
-ARG NEXT_PUBLIC_SITE_URL=https://example.com
+# NEXT_PUBLIC_* URL vars (APP_URL, SITE_URL) are deliberately NOT set here — they
+# would be inlined by Next.js at build time, freezing one domain into the image.
+# A single prebuilt image should serve any host (localhost, LAN IP, real domain)
+# by setting the runtime `APP_URL` at container start. The branding vars below
+# (SITE_NAME, etc.) are safe to bake: they describe the store, not the domain,
+# so they stay generic. Override any with --build-arg; the ENV lines export them
+# to `next build`.
 ARG NEXT_PUBLIC_SITE_NAME=Shop
 ARG NEXT_PUBLIC_BRAND_TAGLINE=""
 ARG NEXT_PUBLIC_CONTACT_EMAIL=""
 ARG NEXT_PUBLIC_CONTACT_PHONE=""
 ARG NEXT_PUBLIC_CONTACT_ADDRESS=""
-ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
-    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
-    NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME \
+ENV NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME \
     NEXT_PUBLIC_BRAND_TAGLINE=$NEXT_PUBLIC_BRAND_TAGLINE \
     NEXT_PUBLIC_CONTACT_EMAIL=$NEXT_PUBLIC_CONTACT_EMAIL \
     NEXT_PUBLIC_CONTACT_PHONE=$NEXT_PUBLIC_CONTACT_PHONE \

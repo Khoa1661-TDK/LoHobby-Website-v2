@@ -58,7 +58,7 @@ export default function AssistantPanel({ layout, locale, onApply, onBeforeRun }:
   return (
     <div className="flex flex-col gap-2 border-t border-warm-200 p-3">
       <textarea
-        className="min-h-16 w-full resize-none rounded border border-warm-200 p-2 text-sm"
+        className="min-h-16 w-full resize-none rounded border border-warm-300 bg-white p-2 text-sm text-warm-950 placeholder:text-warm-500"
         placeholder="Describe the page or change you want…"
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
@@ -72,7 +72,7 @@ export default function AssistantPanel({ layout, locale, onApply, onBeforeRun }:
       >
         {busy ? 'Working…' : 'Send'}
       </button>
-      {summary && <p className="text-xs text-warm-600">{summary}</p>}
+      {summary && <p className="text-xs text-warm-700">{summary}</p>}
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );

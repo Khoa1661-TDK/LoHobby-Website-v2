@@ -2,6 +2,7 @@
 import { draftMode } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { isValidPreviewToken } from '@/lib/preview';
+import { resolveBaseUrl } from '@/lib/utils';
 
 export async function GET(req: NextRequest): Promise<Response> {
   const { searchParams } = new URL(req.url);
@@ -20,5 +21,8 @@ export async function GET(req: NextRequest): Promise<Response> {
   const draft = await draftMode();
   draft.enable();
 
-  return NextResponse.redirect(new URL(path, req.url));
+  // Build the redirect from the runtime base (`APP_URL`), not `req.url`: in a
+  // route handler `req.url` reports the internal `localhost:3000`, which would
+  // bounce the preview to localhost on any non-local host.
+  return NextResponse.redirect(new URL(path, resolveBaseUrl()));
 }

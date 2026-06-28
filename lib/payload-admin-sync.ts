@@ -260,7 +260,28 @@ export async function hasValidPayloadAdminSession(): Promise<boolean> {
 export async function getPayloadAdminUser(): Promise<{ id: string | number; email?: string | null } | null> {
   const headerStore = await headers();
   const payload = await getPayload({ config });
-  const { user } = await payload.auth({ headers: headerStore });
+  let { user } = await payload.auth({ headers: headerStore });
+
+  // SSR top-level navigations to /admin can arrive without `Origin` or
+  // `Sec-Fetch-Site` headers (notably when /admin is reached via a server
+  // redirect, as our SSO bridge does). Payload's cookie auth applies a CSRF gate
+  // that rejects the session cookie when both are absent, which would bounce the
+  // admin into an endless SSO retry (`stale-session`). For this READ-ONLY
+  // identity check we re-validate the cookie's own token through the JWT strategy
+  // (signature + session lookup, no CSRF gate). This is safe: it only decides
+  // what to render — state-changing admin requests still originate from the
+  // Payload admin client, which sends an allowlisted `Origin` and stays
+  // CSRF-protected.
+  if (!user) {
+    const cookieHeader = headerStore.get('cookie') ?? '';
+    const cookiePrefix = payload.config.cookiePrefix ?? 'payload';
+    const token = readCookieRaw(cookieHeader, getPayloadTokenCookieName(cookiePrefix));
+    if (token) {
+      const jwtHeaders = new Headers();
+      jwtHeaders.set('authorization', `JWT ${token}`);
+      ({ user } = await payload.auth({ headers: jwtHeaders }));
+    }
+  }
 
   if (!user || typeof user !== 'object' || !('id' in user)) {
     return null;
