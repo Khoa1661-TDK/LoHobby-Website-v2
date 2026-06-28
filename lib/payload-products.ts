@@ -24,6 +24,11 @@ import type { Collection, Image, Money, Product, SortKey } from '@/lib/shopify/t
 
 const PLACEHOLDER = '/images/placeholder.svg';
 const CATALOG_REVALIDATE = 60;
+// Storefront catalog reads load the whole catalog and paginate client-side, so
+// the fetch must return every product. With `pagination: false`, Payload treats
+// `limit: 0` as "no limit". A bare default of 100 silently dropped any product
+// past the 100th from the homepage and /search.
+const CATALOG_NO_LIMIT = 0;
 
 type MediaDoc = {
   url?: string | null;
@@ -579,7 +584,7 @@ async function fetchPayloadProducts(opts?: {
     collection: 'products',
     where,
     depth: 2,
-    limit: opts?.limit ?? 100,
+    limit: opts?.limit ?? CATALOG_NO_LIMIT,
     sort: opts?.sortKey === 'PRICE' ? 'price' : '-updatedAt',
     pagination: false,
   });
@@ -601,7 +606,7 @@ function catalogProductsCacheKey(opts?: {
     query: opts?.query ?? '',
     reverse: opts?.reverse ?? false,
     sortKey: opts?.sortKey ?? 'CREATED_AT',
-    limit: opts?.limit ?? 100,
+    limit: opts?.limit ?? CATALOG_NO_LIMIT,
   });
 }
 
