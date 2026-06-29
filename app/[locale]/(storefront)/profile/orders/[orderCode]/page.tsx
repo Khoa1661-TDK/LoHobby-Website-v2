@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { auth } from '@/auth';
 import Price from '@/components/price';
+import OrderTimeline from '@/components/animations/OrderTimeline';
 import ShipmentTracker from '@/components/orders/shipment-tracker';
 import { getPublicShipmentInfo } from '@/lib/order-fulfillment';
 import { getPayloadOrderByCode } from '@/lib/payload-orders';
@@ -133,27 +134,20 @@ export default async function OrderDetailPage(props: { params: Params }): Promis
       </header>
 
       {!isCancelled ? (
-        <ol className="mt-8 flex flex-wrap gap-4">
-          {TIMELINE.map((step, index) => {
-            const done = currentStep >= index;
-            return (
-              <li key={step} className="flex items-center gap-2 text-sm">
-                <span
-                  className={`h-2.5 w-2.5 rounded-full ${done ? 'bg-emerald-500' : 'bg-neutral-300'}`}
-                />
-                <span className={done ? 'font-medium' : 'text-neutral-500'}>
-                  {step === 'pending'
-                    ? 'Đặt hàng'
-                    : step === 'paid'
-                      ? 'Thanh toán'
-                      : step === 'shipped'
-                        ? 'Giao hàng'
-                        : 'Hoàn tất'}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        <OrderTimeline
+          currentStep={currentStep}
+          steps={TIMELINE.map((step) => ({
+            key: step,
+            label:
+              step === 'pending'
+                ? 'Đặt hàng'
+                : step === 'paid'
+                  ? 'Thanh toán'
+                  : step === 'shipped'
+                    ? 'Giao hàng'
+                    : 'Hoàn tất',
+          }))}
+        />
       ) : null}
 
       <div className="mt-8 rounded-2xl border border-neutral-200 dark:border-neutral-800">

@@ -3,6 +3,7 @@
 
 import { SessionProvider } from 'next-auth/react';
 import type { ReactElement, ReactNode } from 'react';
+import CartFlyIn from '@/components/animations/CartFlyIn';
 import MergeCartOnLogin from '@/components/cart/merge-on-login';
 import { StoreBrandingProvider } from '@/components/store-branding-context';
 import { WishlistProvider } from '@/components/wishlist/wishlist-provider';
@@ -20,6 +21,7 @@ export default function Providers({
       <StoreBrandingProvider branding={branding}>
         <MergeCartOnLogin />
         <WishlistProvider>{children}</WishlistProvider>
+        <CartFlyIn />
       </StoreBrandingProvider>
     </SessionProvider>
   );

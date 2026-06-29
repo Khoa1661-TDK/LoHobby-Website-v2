@@ -5,6 +5,7 @@ import { useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
 import { toggleWishlistAction } from '@/app/[locale]/(storefront)/wishlist-actions';
 import { useWishlist } from '@/components/wishlist/wishlist-provider';
+import { useWishlistPop } from '@/lib/animations/hooks/useWishlistPop';
 
 type Props = {
   productId: string;
@@ -23,6 +24,7 @@ export default function WishlistButton({
   const { has, setSaved } = useWishlist();
   const [pending, startTransition] = useTransition();
   const saved = has(productId);
+  const heartRef = useWishlistPop<SVGSVGElement>(saved);
 
   const onClick = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -56,9 +58,10 @@ export default function WishlistButton({
       className={`${base} ${className ?? ''} disabled:opacity-60`}
     >
       <svg
+        ref={heartRef}
         viewBox="0 0 24 24"
         aria-hidden
-        className={`h-5 w-5 transition-colors duration-200 ${saved ? 'text-rose-500 scale-110' : 'text-warm-400 hover:text-rose-400 dark:text-warm-500'}`}
+        className={`h-5 w-5 transition-colors duration-200 ${saved ? 'text-rose-500' : 'text-warm-400 hover:text-rose-400 dark:text-warm-500'}`}
         fill={saved ? 'currentColor' : 'none'}
         stroke="currentColor"
         strokeWidth={1.8}

@@ -14,6 +14,7 @@ import * as migration_20260624_114553_discord_command_registration from './20260
 import * as migration_20260624_173519_add_block_key from './20260624_173519_add_block_key';
 import * as migration_20260624_173719_promo_banner_background_image from './20260624_173719_promo_banner_background_image';
 import * as migration_20260627_132058_block_expansion from './20260627_132058_block_expansion';
+import * as migration_20260629_152734_scroll_animation_presets from './20260629_152734_scroll_animation_presets';
 
 export const migrations = [
   {
@@ -94,6 +95,11 @@ export const migrations = [
   {
     up: migration_20260627_132058_block_expansion.up,
     down: migration_20260627_132058_block_expansion.down,
-    name: '20260627_132058_block_expansion'
+    name: '20260627_132058_block_expansion',
+  },
+  {
+    up: migration_20260629_152734_scroll_animation_presets.up,
+    down: migration_20260629_152734_scroll_animation_presets.down,
+    name: '20260629_152734_scroll_animation_presets'
   },
 ];

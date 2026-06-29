@@ -4,10 +4,12 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState, type FormEvent, type ReactElement } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactElement } from 'react';
+import { animate } from 'motion';
 import Price from '@/components/price';
 import type { SearchSuggestion } from '@/app/api/search/suggest/route';
 import { toNextImageSrc } from '@/lib/product-image-snapshot';
+import { prefersReducedMotion } from '@/lib/animations/config';
 
 export default function Search(): ReactElement {
   const router = useRouter();
@@ -16,6 +18,33 @@ export default function Search(): ReactElement {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLUListElement>(null);
+
+  const overlayVisible = open && suggestions.length > 0;
+
+  // Scale + fade the suggestion overlay in from the search icon origin (top
+  // right), 200ms (spec §3). Reduced motion: appear instantly.
+  useLayoutEffect(() => {
+    const el = overlayRef.current;
+    if (!el || !overlayVisible) return;
+    if (prefersReducedMotion()) {
+      el.style.removeProperty('opacity');
+      el.style.removeProperty('transform');
+      return;
+    }
+    const controls = animate(
+      el,
+      { opacity: [0, 1], transform: ['scale(0.9)', 'scale(1)'] },
+      { duration: 0.2, ease: 'easeOut' },
+    );
+    controls.finished
+      .then(() => {
+        el.style.removeProperty('opacity');
+        el.style.removeProperty('transform');
+      })
+      .catch(() => undefined);
+    return () => controls.stop();
+  }, [overlayVisible]);
 
   useEffect(() => {
     setValue(searchParams.get('q') ?? '');
@@ -84,8 +113,12 @@ export default function Search(): ReactElement {
         </button>
       </form>
 
-      {open && suggestions.length > 0 ? (
-        <ul className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-warm-200/80 bg-white shadow-soft-lg backdrop-blur-xl dark:border-warm-800/60 dark:bg-warm-900">
+      {overlayVisible ? (
+        <ul
+          ref={overlayRef}
+          style={{ transformOrigin: 'top right' }}
+          className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-warm-200/80 bg-white shadow-soft-lg backdrop-blur-xl dark:border-warm-800/60 dark:bg-warm-900"
+        >
           {suggestions.map((item, idx) => (
             <li key={item.handle}>
               <button

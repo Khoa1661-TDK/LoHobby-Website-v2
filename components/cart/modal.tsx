@@ -17,6 +17,7 @@ import {
 } from 'react';
 import CartCrossSell from '@/components/cart/cross-sell';
 import Price from '@/components/price';
+import { useBumpPulse } from '@/lib/animations/hooks/useBumpPulse';
 import { toNextImageSrc } from '@/lib/product-image-snapshot';
 import {
   removeItemAction,
@@ -136,7 +137,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                                     refresh();
                                   })
                                 }
-                                className="ease flex h-[18px] w-[18px] items-center justify-center rounded-full bg-warm-300 transition-all duration-200 hover:bg-terracotta-500 hover:scale-110 disabled:opacity-50 dark:bg-warm-700 dark:hover:bg-terracotta-600"
+                                className="ease relative flex h-[18px] w-[18px] items-center justify-center rounded-full bg-warm-300 transition-all duration-200 before:absolute before:-inset-3.5 before:content-[''] hover:bg-terracotta-500 hover:scale-110 disabled:opacity-50 dark:bg-warm-700 dark:hover:bg-terracotta-600"
                               >
                                 <CloseIcon className="h-3.5 w-3.5 text-white" />
                               </button>
@@ -275,13 +276,20 @@ function OpenCart({
   className?: string;
   quantity?: number;
 }): ReactElement {
+  const badgeRef = useBumpPulse<HTMLDivElement>(quantity ?? 0);
   return (
-    <div className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-600 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200">
+    <div
+      data-cart-icon
+      className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-600 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200"
+    >
       <ShoppingCartIcon
         className={`h-4 w-4 transition-all ease-spring hover:scale-110 ${className ?? ''}`}
       />
       {quantity ? (
-        <div className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-terracotta-500 px-1 text-[10px] font-bold text-white shadow-sm dark:bg-terracotta-400 dark:text-warm-950">
+        <div
+          ref={badgeRef}
+          className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-terracotta-500 px-1 text-[10px] font-bold text-white shadow-sm dark:bg-terracotta-400 dark:text-warm-950"
+        >
           {quantity}
         </div>
       ) : null}
@@ -332,6 +340,7 @@ function QtyInput({
 }): ReactElement {
   const t = useTranslations('cart');
   const [value, setValue] = useState(String(quantity));
+  const inputRef = useBumpPulse<HTMLInputElement>(quantity);
 
   // Re-sync the field with the canonical quantity after a server refresh
   // (e.g. the value was clamped, or +/- buttons changed it).
@@ -350,6 +359,7 @@ function QtyInput({
 
   return (
     <input
+      ref={inputRef}
       type="text"
       inputMode="numeric"
       pattern="[0-9]*"
@@ -385,7 +395,7 @@ function QtyButton({
       aria-label={type === 'plus' ? t('increaseQtyAria') : t('decreaseQtyAria')}
       disabled={disabled}
       onClick={onClick}
-      className="flex h-8 w-8 items-center justify-center rounded-lg text-warm-500 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-800 disabled:opacity-40 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200"
+      className="flex h-10 w-10 items-center justify-center rounded-lg text-warm-500 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-800 disabled:opacity-40 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200"
     >
       {type === 'plus' ? <PlusIcon /> : <MinusIcon />}
     </button>

@@ -1,15 +1,24 @@
 // components/layout/navbar/mobile-menu.tsx
 'use client';
 
-import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
+import { Dialog, DialogPanel } from '@headlessui/react';
 import { Bars3Icon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Fragment, Suspense, useEffect, useState, type ReactElement } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactElement,
+} from 'react';
+import { animate } from 'motion';
 import LanguageSwitcher from '@/components/layout/navbar/language-switcher';
 import Search, { SearchSkeleton } from '@/components/layout/navbar/search';
+import { prefersReducedMotion } from '@/lib/animations/config';
 import type { NavColumn } from '@/lib/navigation';
 
 export default function MobileMenu({
@@ -21,9 +30,18 @@ export default function MobileMenu({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
+  // `mounted` keeps the Dialog in the DOM through the close animation; it flips
+  // off only once the panel has finished sliding out.
+  const [mounted, setMounted] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
 
-  const openMobileMenu = (): void => setIsOpen(true);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const backdropRef = useRef<HTMLDivElement | null>(null);
+
+  const openMobileMenu = (): void => {
+    setMounted(true);
+    setIsOpen(true);
+  };
   const closeMobileMenu = (): void => {
     setIsOpen(false);
     setOpenSection(null);
@@ -34,6 +52,47 @@ export default function MobileMenu({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams]);
 
+  // Drive the panel + backdrop with Motion One. Open → spring slide-in from the
+  // left edge (x: -100%→0); close → ease the panel back out, then unmount.
+  // Reduced motion: instant show/hide, no spring (spec §3).
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    const backdrop = backdropRef.current;
+    if (!panel || !backdrop) return;
+
+    const reduced = prefersReducedMotion();
+
+    if (isOpen) {
+      if (reduced) {
+        panel.style.transform = 'translateX(0)';
+        backdrop.style.opacity = '1';
+        return;
+      }
+      animate(backdrop, { opacity: [0, 1] }, { duration: 0.25, ease: 'easeOut' });
+      animate(
+        panel,
+        { transform: ['translateX(-100%)', 'translateX(0)'] },
+        { type: 'spring', stiffness: 260, damping: 30 },
+      );
+      return;
+    }
+
+    // Closing — skip the very first render (menu was never open).
+    if (!mounted) return;
+    if (reduced) {
+      setMounted(false);
+      return;
+    }
+    animate(backdrop, { opacity: [1, 0] }, { duration: 0.2, ease: 'easeIn' });
+    const controls = animate(
+      panel,
+      { transform: ['translateX(0)', 'translateX(-100%)'] },
+      { duration: 0.25, ease: [0.4, 0, 1, 1] },
+    );
+    controls.finished.then(() => setMounted(false)).catch(() => setMounted(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   return (
     <>
       <button
@@ -43,29 +102,19 @@ export default function MobileMenu({
       >
         <Bars3Icon className="h-5 w-5" />
       </button>
-      <Transition show={isOpen} as={Fragment}>
-        <Dialog onClose={closeMobileMenu} className="relative z-50">
-          <TransitionChild
-            as={Fragment}
-            enter="transition-all ease-in-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="transition-all ease-in-out duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
+      {mounted ? (
+        <Dialog open onClose={closeMobileMenu} className="relative z-50">
+          <div
+            ref={backdropRef}
+            className="fixed inset-0 bg-warm-950/40 backdrop-blur-sm"
+            style={{ opacity: 0 }}
+            aria-hidden="true"
+          />
+          <DialogPanel
+            ref={panelRef}
+            style={{ transform: 'translateX(-100%)' }}
+            className="fixed bottom-0 left-0 top-0 flex h-full w-full max-w-sm flex-col bg-warm-50 shadow-soft-xl dark:bg-warm-950"
           >
-            <div className="fixed inset-0 bg-warm-950/40 backdrop-blur-sm" aria-hidden="true" />
-          </TransitionChild>
-          <TransitionChild
-            as={Fragment}
-            enter="transition-all ease-smooth duration-400"
-            enterFrom="-translate-x-full"
-            enterTo="translate-x-0"
-            leave="transition-all ease-smooth duration-250"
-            leaveFrom="translate-x-0"
-            leaveTo="-translate-x-full"
-          >
-            <DialogPanel className="fixed bottom-0 left-0 top-0 flex h-full w-full max-w-sm flex-col bg-warm-50 shadow-soft-xl dark:bg-warm-950">
               <div className="flex items-center justify-between border-b border-warm-200/60 p-4 dark:border-warm-800/40">
                 <p className="text-sm font-semibold uppercase tracking-widest text-warm-400">{t('menu')}</p>
                 <button
@@ -159,9 +208,8 @@ export default function MobileMenu({
                 </ul>
               </div>
             </DialogPanel>
-          </TransitionChild>
         </Dialog>
-      </Transition>
+      ) : null}
     </>
   );
 }

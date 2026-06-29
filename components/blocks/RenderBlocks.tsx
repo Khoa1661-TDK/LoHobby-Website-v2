@@ -1,7 +1,7 @@
 // components/blocks/RenderBlocks.tsx
 import type { ComponentProps, ReactElement } from 'react';
 import type { PageBlock } from '@/lib/page-builder';
-import RevealOnScroll from './RevealOnScroll';
+import RevealOnScroll from '@/components/animations/RevealOnScroll';
 
 import HeroBlock from './Hero';
 import FeaturedCollectionBlock from './FeaturedCollection';
@@ -63,10 +63,17 @@ function BlockRenderer({ block }: { block: PageBlock }): ReactElement | null {
   const inner = renderInner(block);
   if (!inner) return null;
   const scrollAnimation = (block as { scrollAnimation?: string | null }).scrollAnimation;
-  if (scrollAnimation && scrollAnimation !== 'none') {
-    return <RevealOnScroll animate={scrollAnimation}>{inner}</RevealOnScroll>;
+  // 'none' → render instantly, no wrapper. Everything else (incl. 'default',
+  // null, and legacy values) flows through RevealOnScroll, which resolves the
+  // effective preset from the block type + stored value.
+  if (scrollAnimation === 'none') {
+    return inner;
   }
-  return inner;
+  return (
+    <RevealOnScroll animate={scrollAnimation} blockType={block.blockType}>
+      {inner}
+    </RevealOnScroll>
+  );
 }
 
 function renderInner(block: PageBlock): ReactElement | null {

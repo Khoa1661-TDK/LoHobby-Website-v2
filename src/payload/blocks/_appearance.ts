@@ -105,15 +105,25 @@ export const appearanceFields: Field[] = [
   {
     // Named scrollAnimation (not `animate`) to avoid colliding with LogoCloud's
     // pre-existing `animate` marquee checkbox, since every block spreads these fields.
+    // Values map to Motion One presets in lib/animations/config.ts; 'default'
+    // follows the per-block-type baseline in lib/animations/block-defaults.ts.
     name: 'scrollAnimation',
     type: 'select',
-    defaultValue: 'none',
+    defaultValue: 'default',
     options: [
-      { label: 'None', value: 'none' },
-      { label: 'Reveal up', value: 'reveal-up' },
-      { label: 'Reveal from left', value: 'reveal-right' },
-      { label: 'Scale in', value: 'scale-in' },
+      { label: 'Default (follow block type)', value: 'default' },
+      { label: 'None (disable animation)', value: 'none' },
+      { label: 'Fade Up', value: 'fade-up' },
+      { label: 'Fade In', value: 'fade-in' },
+      { label: 'Slide Right', value: 'slide-right' },
+      { label: 'Scale In', value: 'scale-in' },
+      { label: 'Stagger Cards', value: 'stagger-cards' },
+      { label: 'Stagger List', value: 'stagger-list' },
+      { label: 'Hero Entrance', value: 'hero-entrance' },
     ],
-    admin: { description: 'Animation when the section scrolls into view.' },
+    admin: {
+      description:
+        'Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.',
+    },
   },
 ];

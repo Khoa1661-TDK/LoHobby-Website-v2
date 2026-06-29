@@ -842,9 +842,21 @@ export interface HeroBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -899,9 +911,21 @@ export interface FeaturedCollectionBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -952,9 +976,21 @@ export interface FeaturedProductsBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1018,9 +1054,21 @@ export interface RichTextBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1094,9 +1142,21 @@ export interface ImageWithTextBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1157,9 +1217,21 @@ export interface GalleryBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1219,9 +1291,21 @@ export interface TestimonialsBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1279,9 +1363,21 @@ export interface LogoCloudBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1334,9 +1430,21 @@ export interface NewsletterBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1407,9 +1515,21 @@ export interface FAQBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1474,9 +1594,21 @@ export interface PromoBannerBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1534,9 +1666,21 @@ export interface VideoEmbedBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1586,9 +1730,21 @@ export interface DividerBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1639,9 +1795,21 @@ export interface RecommendationsBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1692,9 +1860,21 @@ export interface RecentlyViewedBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1750,9 +1930,21 @@ export interface ButtonBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1809,9 +2001,21 @@ export interface TextBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1886,9 +2090,21 @@ export interface SocialBarBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1937,9 +2153,21 @@ export interface SpacerBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -1998,9 +2226,21 @@ export interface ColumnsBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2057,9 +2297,21 @@ export interface CallToActionBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2115,9 +2367,21 @@ export interface StatsBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2169,9 +2433,21 @@ export interface QuoteBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2231,9 +2507,21 @@ export interface CardGridBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2285,9 +2573,21 @@ export interface BannerBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2343,9 +2643,21 @@ export interface StepsBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2413,9 +2725,21 @@ export interface PricingTableBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2471,9 +2795,21 @@ export interface CountdownBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2544,9 +2880,21 @@ export interface TabsBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -2624,9 +2972,21 @@ export interface FeatureGridBlock {
    */
   border?: boolean | null;
   /**
-   * Animation when the section scrolls into view.
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
    */
-  scrollAnimation?: ('none' | 'reveal-up' | 'reveal-right' | 'scale-in') | null;
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
   blockKey?: string | null;
   id?: string | null;
   blockName?: string | null;

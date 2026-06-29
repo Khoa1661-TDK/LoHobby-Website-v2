@@ -200,3 +200,30 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** The app is deployed to >1 instance or a serverless/edge platform — then move counters to Redis/Postgres before relying on the limit.
 
 ---
+
+## 2026-06-29 — Animation System: Motion One via `motion` v12, with legacy preset aliases
+**Chosen:** Build the scroll-reveal animation layer (Phase 01 of the animation spec) on the `motion` package (v12.42.0), using its imperative WAAPI API (`animate`, `stagger`, `inView`). Renamed presets per spec (fade-up/fade-in/slide-right/scale-in/stagger-cards/stagger-list/hero-entrance) but added backward-compat aliases mapping the pre-existing stored CMS values (`reveal-up`→`fade-up`, `reveal-right`→`slide-right`) so no data migration is needed. `scrollAnimation` field default flipped `none`→`default`; CMS field expanded 4→9 options. Field lives in `src/payload/blocks/_appearance.ts` (spread into all 30 blocks).
+**Alternatives:** (a) Framer Motion — heavier (~50kb), React-coupled, rejected per spec. (b) Pure CSS classes (the prior `RevealOnScroll`) — no JS stagger / imperative micro-interaction control. (c) Hard rename presets with a data migration over stored CMS values — more risk, no upside vs aliasing.
+**Why:** `motion` v12 unifies Motion One + Framer Motion; importing only the imperative WAAPI primitives keeps the ~18kb WAAPI footprint the spec wanted without React coupling. Aliasing is non-destructive and keeps already-published pages animating. prefers-reduced-motion enforced once in `config.ts` (`reduceMotion`) rather than per component.
+**Trade-offs:** `motion` ships more than Motion One alone; tree-shaking must keep the bundle lean. Legacy aliases are permanent surface area until stored values are migrated. `defaultValue` change only affects new blocks (Payload semantics) — existing blocks keep stored values, which is the safe behaviour but means old pages won't pick up the new per-block-type defaults without an edit.
+**Revisit if:** Bundle size regresses materially, or we decide to migrate stored `reveal-*` values and drop the aliases. Spec file references (`groups.ts`, `lib/page-builder-appearance.ts` for the field) were inaccurate — actual field is in `_appearance.ts`.
+
+---
+
+## 2026-06-29 — Animation Phase 3: "Checkout Step Progress" retargeted to order timeline
+**Chosen:** Apply the spec §4 "Checkout Step Progress" micro-interaction (inactive→active scale+fill, active→complete SVG checkmark morph, sequential) to the order-status timeline at `profile/orders/[orderCode]` via a new `components/animations/OrderTimeline.tsx`, instead of the checkout flow.
+**Alternatives:** (a) Refactor the single-page `checkout-form.tsx` into a multi-step wizard (contact→delivery→payment) and animate its progress bar. (b) Defer the task until a stepped checkout exists.
+**Why:** The spec assumed a multi-step checkout wizard, but the checkout is a single-page form with stacked sections — there is no step navigation to animate. The order timeline (pending→paid→shipped→delivered) is the only genuine step-progress UI in the app, so it's the faithful home for this interaction. Building a wizard would mix a feature refactor into an animation phase (violates existing-code.md §3); deferring would drop a spec item. User decision after being presented all three options.
+**Trade-offs:** The interaction now lives on order detail rather than checkout, so it's seen post-purchase, not during. If a stepped checkout is built later, the same OrderTimeline pattern can be reused there.
+**Revisit if:** Checkout is reworked into a multi-step flow — wire the same animated step component into it.
+
+---
+
+## 2026-06-29 — Scroll-animation enum migration remaps legacy values to their alias targets
+**Chosen:** In `20260629_152734_scroll_animation_presets`, before dropping `reveal-up`/`reveal-right` from the per-block `scroll_animation` enums, remap stored rows to the SAME targets the runtime alias layer uses — `reveal-up`→`fade-up`, `reveal-right`→`slide-right` (`lib/animations/config.ts` `LEGACY_ALIASES`). Both targets exist in the new enum, so no data is lost and the DB matches what the code would have rendered.
+**Alternatives:** (1) The migration's original remap of both values to `scale-in` (justified as "the only preset in both enums" — incorrect; `fade-up`/`slide-right` are also in the new enum). (2) Keep the alias values in the enum and skip the remap entirely (rejected: the spec rename drops them from the enum, so stored rows must move or the `USING ::enum` cast fails).
+**Why:** A `reveal-up` block renders as `fade-up` at runtime via the alias map; remapping the stored value to `scale-in` would silently change the animation and leave data inconsistent with code. Matching the alias targets makes the persisted value and the rendered animation agree, and is non-lossy.
+**Trade-offs:** The dev DB was migrated once under the original `scale-in` remap before this fix (1 affected row, now `scale-in`); that original value is unrecoverable and would be re-picked in admin if it matters. `down()` remains lossy by design — it maps any value the old enum lacks back to `none`, since the new presets have no old-enum equivalent.
+**Revisit if:** We migrate stored `reveal-*` values out entirely and drop the alias layer, or the alias targets in `lib/animations/config.ts` change (keep this remap in sync).
+
+---

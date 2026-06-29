@@ -9,6 +9,7 @@ import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server
 import { Toaster } from 'sonner';
 import { routing } from '@/i18n/routing';
 import AnnouncementBanner from '@/components/layout/announcement-banner';
+import PageTransition from '@/components/animations/PageTransition';
 import { Navbar } from '@/components/layout/navbar';
 import Analytics from '@/components/analytics';
 import SessionTracker from '@/components/analytics/session-tracker';
@@ -211,7 +212,7 @@ export default async function StorefrontLayout({
             <Navbar />
             <AnnouncementBanner />
             <main id="main-content">
-              {children}
+              <PageTransition>{children}</PageTransition>
               <Toaster closeButton richColors />
               <WelcomeToast />
             </main>

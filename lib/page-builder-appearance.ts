@@ -18,7 +18,23 @@ export type BlockAppearance = {
   contentAlign?: 'left' | 'center' | 'right' | null;
   rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | null;
   border?: boolean | null;
-  scrollAnimation?: 'none' | 'reveal-up' | 'reveal-right' | 'scale-in' | null;
+  // Motion One preset name, the 'default' sentinel (follow block-type default),
+  // 'none', or a legacy CSS-era value (reveal-up/reveal-right) kept for back-compat
+  // with already-stored CMS data. Resolved in lib/animations/block-defaults.ts.
+  scrollAnimation?:
+    | 'default'
+    | 'none'
+    | 'fade-up'
+    | 'fade-in'
+    | 'slide-right'
+    | 'scale-in'
+    | 'stagger-cards'
+    | 'stagger-list'
+    | 'hero-entrance'
+    // legacy stored values
+    | 'reveal-up'
+    | 'reveal-right'
+    | null;
 };
 
 /** Map Payload appearance fields to Tailwind classes. */
