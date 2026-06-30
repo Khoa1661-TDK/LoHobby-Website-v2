@@ -280,7 +280,10 @@ Plugins
 * @shopnex/import-export-plugin — CSV import/export for products & orders
 
 ## Current Phase
-See `.claude/phases/` — always check the active phase file before starting work.
+Lô Hobby retheme (LOHOBBY phases 01–04) complete — monochrome editorial theme,
+rethemed chrome, ProductShowcase + Reels blocks, and the assembled home seed are
+all landed. No phase is currently active. See `.claude/phases/` — always check the
+active phase file before starting work.
 
 ## Rules
 

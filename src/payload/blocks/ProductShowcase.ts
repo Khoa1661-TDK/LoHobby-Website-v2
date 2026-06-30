@@ -21,7 +21,7 @@ export const ProductShowcase: Block = {
       maxRows: 24,
     },
     {
-      name: 'showFilters',
+      name: 'showTabs',
       type: 'checkbox',
       defaultValue: true,
       admin: {

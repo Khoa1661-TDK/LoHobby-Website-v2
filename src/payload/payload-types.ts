@@ -3051,7 +3051,7 @@ export interface ProductShowcaseBlock {
   /**
    * Show category tabs built from the selected products.
    */
-  showFilters?: boolean | null;
+  showTabs?: boolean | null;
   /**
    * Show the price sort dropdown.
    */
@@ -4663,7 +4663,7 @@ export interface ProductShowcaseBlockSelect<T extends boolean = true> {
   heading?: T;
   subheading?: T;
   products?: T;
-  showFilters?: T;
+  showTabs?: T;
   showSort?: T;
   background?: T;
   backgroundCustom?: T;

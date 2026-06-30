@@ -1,8 +1,13 @@
 // lib/page-builder/home-seed.ts — designed home layout, authored as page-builder blocks.
 // This seed IS the home page: the storefront renders the CMS `home` page's `layout`
 // via RenderBlocks when it exists, falling back to the hardcoded homepage otherwise.
+//
+// Layout follows the "Lô Hobby" editorial monochrome mockup: a stat-backed hero,
+// a category card grid, a filterable product showcase, a reels strip, a trust
+// feature list, and the newsletter. Media-dependent fields (hero collage, reel
+// posters) are intentionally left for the store owner to fill in the admin — the
+// blocks degrade gracefully until then.
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
-import { plainTextToLexical } from '@/lib/content-pages-migration';
 import type { PageBlock } from '@/lib/page-builder';
 
 export type HomeSeedOptions = {
@@ -19,121 +24,71 @@ function block(slug: string, overrides: Record<string, unknown> = {}): PageBlock
   return base ? ({ ...base, ...overrides } as unknown as PageBlock) : null;
 }
 
-// A FeaturedCollection bound to a category when its id is known. Without an id it still
-// renders (as the unconfigured placeholder), which keeps the builder usable in tests.
-function featuredCollection(
-  title: string,
-  slug: string,
-  idBySlug: Record<string, string | number>,
-): PageBlock | null {
-  const overrides: Record<string, unknown> = { title };
-  const id = idBySlug[slug];
-  if (id !== undefined) overrides.collection = id;
-  return block('featuredCollection', overrides);
-}
-
-// A small FAQ item with a plain-text answer mapped into the minimal Lexical state the
-// richText field requires.
-function faqItem(question: string, answer: string): Record<string, unknown> {
-  return { question, answer: plainTextToLexical(answer) };
-}
-
 export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
   const ids = opts.featuredProductIds ?? [];
-  const idBySlug = opts.categoryIdBySlug ?? {};
 
   const blocks: (PageBlock | null)[] = [
     block('hero', {
-      headline: 'Printed to order.',
-      subheadline: 'Keychains, aircraft models, and brainrot figures — straight off the plate.',
-      ctaLabel: 'Shop all',
+      eyebrow: 'Lô Hobby',
+      headline: 'Collectibles, models & keychains — curated.',
+      subheadline:
+        'A small shop with a sharp eye. Models, figures, and everyday carry, chosen one piece at a time.',
+      ctaLabel: 'Shop the collection',
       ctaHref: '/search',
+      secondaryCtaLabel: 'Our story',
+      secondaryCtaHref: '/about',
+      textAlign: 'left',
+      imagePosition: 'none',
+      stats: [
+        { value: '500+', label: 'pieces in the catalog' },
+        { value: '48h', label: 'typical dispatch' },
+        { value: '4.9★', label: 'average review' },
+      ],
+      collage: [],
     }),
-    block('promoBanner', {
-      text: 'Fresh markdowns on the build plate — limited runs, while filament lasts.',
-      ctaLabel: 'See deals',
-      ctaHref: '/pages/sale',
-    }),
-    featuredCollection('Aircraft & models', 'mo-hinh', idBySlug),
-    ids.length > 0
-      ? block('featuredProducts', { title: 'New drops', products: ids, background: 'light' })
-      : null,
-    block('testimonials', {
-      title: 'Off the plate, into the wild',
-      layout: 'grid',
-      entries: [
-        {
-          quote: 'The layer lines on my fighter jet are so clean it looks injection-moulded. Shipped in two days.',
-          author: 'Minh T.',
-          role: 'Aircraft collector',
-          rating: 5,
-        },
-        {
-          quote: 'Sent them my own STL and the quote came back same day. Print quality was spot on.',
-          author: 'Linh P.',
-          role: 'Custom order',
-          rating: 5,
-        },
-        {
-          quote: 'Ordered a stack of keychains for a meetup — the filament colors are way punchier in person.',
-          author: 'Đức N.',
-          role: 'Repeat buyer',
-          rating: 5,
-        },
+    block('featureGrid', {
+      heading: 'Shop by category',
+      subheading: 'Four corners of the shop — pick a lane.',
+      variant: 'cards',
+      columns: '4',
+      items: [
+        { title: 'Models', caption: 'Aircraft & kits', href: '/search/mo-hinh' },
+        { title: 'Figures', caption: 'Display pieces', href: '/search/figure' },
+        { title: 'Keychains', caption: 'Everyday carry', href: '/search/moc-khoa' },
+        { title: 'New in', caption: 'Fresh arrivals', href: '/search' },
       ],
     }),
-    block('steps', {
-      heading: 'How we print',
-      background: 'light',
-      steps: [
-        { title: 'Design', body: 'Pick a model or send us your own STL.' },
-        { title: 'Slice', body: 'We dial in layer height, infill, and supports.' },
-        { title: 'Print', body: 'Laid down layer by layer in your chosen filament.' },
-        { title: 'Ship', body: 'Cleaned up, packed, and out the door.' },
+    block('productShowcase', {
+      eyebrow: 'Picks',
+      heading: 'Featured this week',
+      subheading: 'Filter by category or sort by price — no page reload.',
+      products: ids,
+      showTabs: true,
+      showSort: true,
+    }),
+    block('reels', {
+      eyebrow: 'On the feed',
+      heading: 'Lô Hobby in motion',
+      followLabel: 'Follow us',
+      followHref: 'https://www.tiktok.com',
+      tiles: [
+        { tag: 'Unbox', caption: 'New model kit, start to finish', views: '12.4k views', embedUrl: '' },
+        { tag: 'Build', caption: 'Panel-lining a 1/144 fighter', views: '8.1k views', embedUrl: '' },
+        { tag: 'Shelf', caption: 'This month’s display refresh', views: '5.7k views', embedUrl: '' },
+        { tag: 'Haul', caption: 'Keychain restock just landed', views: '9.3k views', embedUrl: '' },
+        { tag: 'Studio', caption: 'How we pack your order', views: '3.2k views', embedUrl: '' },
       ],
     }),
-    featuredCollection('Keychains off the plate', 'moc-khoa', idBySlug),
-    block('quote', {
-      quote: 'We do not keep a warehouse. Every order starts as raw filament and a clean build plate.',
-      author: 'The bench',
-      role: 'Print to order, every time',
-      background: 'dark',
-    }),
-    block('stats', {
-      heading: 'Made on the bench',
+    block('featureGrid', {
+      heading: 'Why shop with us',
+      variant: 'list',
+      columns: '4',
       background: 'light',
       items: [
-        { value: '12k', label: 'layers laid down daily' },
-        { value: '40+', label: 'filament colors in stock' },
-        { value: '0.1mm', label: 'finest layer height' },
-        { value: '48h', label: 'typical turnaround' },
-      ],
-    }),
-    block('callToAction', {
-      heading: 'Got a model in mind?',
-      subheading: 'Send us an STL or STEP file and we will quote it — no minimums, no setup fees.',
-      primaryLabel: 'Send your STL',
-      primaryUrl: '/contact',
-      secondaryLabel: 'Browse the shop',
-      secondaryUrl: '/search',
-      align: 'center',
-    }),
-    block('faq', {
-      title: 'Good to know',
-      background: 'light',
-      items: [
-        faqItem(
-          'What are prints made of?',
-          'Mostly PLA and PETG. Tougher pieces can be printed in ABS or resin on request.',
-        ),
-        faqItem(
-          'How long until it ships?',
-          'In-stock items ship within 48 hours. Custom prints depend on size and queue.',
-        ),
-        faqItem(
-          'Can I send my own model?',
-          'Yes — send an STL or STEP file and we will quote it for you.',
-        ),
+        { icon: 'truck', title: 'Fast dispatch', text: 'In-stock orders ship within 48 hours.' },
+        { icon: 'shield', title: 'Secure checkout', text: 'PayOS and cash on delivery, both protected.' },
+        { icon: 'sparkles', title: 'Hand-picked', text: 'Every piece is chosen, not drop-shipped at random.' },
+        { icon: 'heart', title: 'Real support', text: 'Talk to the people who actually run the shop.' },
       ],
     }),
     block('newsletter'),
