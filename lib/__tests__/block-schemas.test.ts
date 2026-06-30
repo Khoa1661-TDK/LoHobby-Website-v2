@@ -33,7 +33,11 @@ describe('getBlockSchemas', () => {
     expect(slugs).toEqual(
       expect.arrayContaining(['pricingTable', 'countdown', 'tabs', 'featureGrid']),
     );
-    expect(slugs).toHaveLength(30);
+    // The Lô Hobby retheme added productShowcase and reels.
+    expect(slugs).toEqual(
+      expect.arrayContaining(['productShowcase', 'reels']),
+    );
+    expect(slugs).toHaveLength(32);
   });
 
   it('should describe hero text and select fields with options', () => {

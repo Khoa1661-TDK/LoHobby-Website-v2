@@ -33,6 +33,8 @@ import PricingTableBlock from './PricingTable';
 import CountdownBlock from './Countdown';
 import TabsBlock from './Tabs';
 import FeatureGridBlock from './FeatureGrid';
+import ProductShowcaseBlock from './ProductShowcase';
+import ReelsBlock from './Reels';
 
 type Props = {
   blocks: PageBlock[];
@@ -150,6 +152,10 @@ function renderInner(block: PageBlock): ReactElement | null {
       return <TabsBlock {...asProps<ComponentProps<typeof TabsBlock>>(block)} />;
     case 'featureGrid':
       return <FeatureGridBlock {...asProps<ComponentProps<typeof FeatureGridBlock>>(block)} />;
+    case 'productShowcase':
+      return <ProductShowcaseBlock {...asProps<ComponentProps<typeof ProductShowcaseBlock>>(block)} />;
+    case 'reels':
+      return <ReelsBlock {...asProps<ComponentProps<typeof ReelsBlock>>(block)} />;
     default:
       return null;
   }

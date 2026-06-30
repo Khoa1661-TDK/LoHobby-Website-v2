@@ -44,6 +44,8 @@ import {
   Countdown,
   Tabs,
   FeatureGrid,
+  ProductShowcase,
+  Reels,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -84,6 +86,8 @@ const layoutBlocks = [
   Countdown,
   Tabs,
   FeatureGrid,
+  ProductShowcase,
+  Reels,
 ].map((block) => ({
   ...block,
   fields: [...(block.fields ?? []), blockKeyField],

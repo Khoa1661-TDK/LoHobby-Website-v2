@@ -119,7 +119,15 @@
     "breadcrumbStore": "Cửa hàng",
     "breadcrumbNavAria": "Đường dẫn",
     "relatedHeading": "Sản phẩm liên quan",
-    "relatedAria": "Sản phẩm liên quan"
+    "relatedAria": "Sản phẩm liên quan",
+    "showcaseAll": "Tất cả",
+    "showcaseSortLabel": "Sắp xếp",
+    "showcaseSortFeatured": "Nổi bật",
+    "showcaseSortPriceAsc": "Giá: thấp đến cao",
+    "showcaseSortPriceDesc": "Giá: cao đến thấp",
+    "showcaseEmpty": "Không có sản phẩm nào trong mục này.",
+    "reelPlay": "Phát video",
+    "reelClose": "Đóng"
   },
   "checkout": {
     "metaTitle": "Thanh toán",

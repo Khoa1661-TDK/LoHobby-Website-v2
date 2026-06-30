@@ -11,6 +11,16 @@ export const FeatureGrid: Block = {
     { name: 'heading', type: 'text' },
     { name: 'subheading', type: 'textarea' },
     {
+      name: 'variant',
+      type: 'select',
+      defaultValue: 'list',
+      options: [
+        { label: 'List (icon + text)', value: 'list' },
+        { label: 'Cards (image tiles)', value: 'cards' },
+      ],
+      admin: { description: '"Cards" renders linked image tiles for a category grid look.' },
+    },
+    {
       name: 'columns',
       type: 'select',
       defaultValue: '3',
@@ -25,8 +35,11 @@ export const FeatureGrid: Block = {
       type: 'array',
       fields: [
         { name: 'icon', type: 'select', options: FEATURE_ICON_OPTIONS },
+        { name: 'image', type: 'upload', relationTo: 'media', admin: { description: 'Used by the "Cards" variant.' } },
         { name: 'title', type: 'text', required: true },
         { name: 'text', type: 'textarea' },
+        { name: 'caption', type: 'text', admin: { description: 'Small line under the title (e.g. item count).' } },
+        { name: 'href', type: 'text', admin: { description: 'Optional link target for the item.' } },
       ],
     },
     ...appearanceFields,

@@ -10,6 +10,11 @@ export const Hero: Block = {
   imageAltText: 'Hero section preview',
   fields: [
     {
+      name: 'eyebrow',
+      type: 'text',
+      admin: { description: 'Small uppercase label above the headline.' },
+    },
+    {
       name: 'headline',
       type: 'text',
     },
@@ -33,6 +38,38 @@ export const Hero: Block = {
         { label: 'Primary', value: 'primary' },
         { label: 'Outline', value: 'outline' },
         { label: 'Minimal', value: 'minimal' },
+      ],
+    },
+    {
+      name: 'secondaryCtaLabel',
+      type: 'text',
+      admin: { description: 'Optional second (ghost) call-to-action.' },
+    },
+    {
+      name: 'secondaryCtaHref',
+      type: 'text',
+    },
+    {
+      name: 'stats',
+      type: 'array',
+      labels: { singular: 'Stat', plural: 'Stats' },
+      admin: { description: 'Small value + label pairs shown beneath the CTAs.' },
+      fields: [
+        { name: 'value', type: 'text', required: true },
+        { name: 'label', type: 'text', required: true },
+      ],
+    },
+    {
+      name: 'collage',
+      type: 'array',
+      labels: { singular: 'Collage image', plural: 'Collage images' },
+      admin: {
+        description:
+          'Floating images shown on the media side (gently bob). Replaces the single image when provided.',
+      },
+      fields: [
+        { name: 'image', type: 'upload', relationTo: 'media' },
+        { name: 'alt', type: 'text' },
       ],
     },
     {

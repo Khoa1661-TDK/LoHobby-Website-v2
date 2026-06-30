@@ -40,6 +40,8 @@ export const BLOCK_DEFAULTS: Record<string, PresetName> = {
   countdown: 'scale-in',
   tabs: 'fade-in',
   featureGrid: 'stagger-cards',
+  productShowcase: 'stagger-cards',
+  reels: 'stagger-cards',
 };
 
 /** Resolve the effective preset for a block.

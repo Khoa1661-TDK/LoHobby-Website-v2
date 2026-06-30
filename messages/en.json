@@ -119,7 +119,15 @@
     "breadcrumbStore": "Store",
     "breadcrumbNavAria": "Breadcrumb",
     "relatedHeading": "Related products",
-    "relatedAria": "Related products"
+    "relatedAria": "Related products",
+    "showcaseAll": "All",
+    "showcaseSortLabel": "Sort",
+    "showcaseSortFeatured": "Featured",
+    "showcaseSortPriceAsc": "Price: low to high",
+    "showcaseSortPriceDesc": "Price: high to low",
+    "showcaseEmpty": "No products in this category yet.",
+    "reelPlay": "Play",
+    "reelClose": "Close"
   },
   "checkout": {
     "metaTitle": "Checkout",

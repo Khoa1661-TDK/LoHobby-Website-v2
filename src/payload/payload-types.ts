@@ -779,6 +779,8 @@ export interface Page {
         | CountdownBlock
         | TabsBlock
         | FeatureGridBlock
+        | ProductShowcaseBlock
+        | ReelsBlock
       )[]
     | null;
   meta?: {
@@ -797,11 +799,40 @@ export interface Page {
  * via the `definition` "HeroBlock".
  */
 export interface HeroBlock {
+  /**
+   * Small uppercase label above the headline.
+   */
+  eyebrow?: string | null;
   headline?: string | null;
   subheadline?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
   ctaStyle?: ('primary' | 'outline' | 'minimal') | null;
+  /**
+   * Optional second (ghost) call-to-action.
+   */
+  secondaryCtaLabel?: string | null;
+  secondaryCtaHref?: string | null;
+  /**
+   * Small value + label pairs shown beneath the CTAs.
+   */
+  stats?:
+    | {
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Floating images shown on the media side (gently bob). Replaces the single image when provided.
+   */
+  collage?:
+    | {
+        image?: (number | null) | Media;
+        alt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   image?: (number | null) | Media;
   imagePosition?: ('left' | 'right' | 'background' | 'none') | null;
   textAlign?: ('left' | 'center') | null;
@@ -2907,6 +2938,10 @@ export interface TabsBlock {
 export interface FeatureGridBlock {
   heading?: string | null;
   subheading?: string | null;
+  /**
+   * "Cards" renders linked image tiles for a category grid look.
+   */
+  variant?: ('list' | 'cards') | null;
   columns?: ('2' | '3' | '4') | null;
   items?:
     | {
@@ -2930,8 +2965,20 @@ export interface FeatureGridBlock {
               | 'thumbsUp'
             )
           | null;
+        /**
+         * Used by the "Cards" variant.
+         */
+        image?: (number | null) | Media;
         title: string;
         text?: string | null;
+        /**
+         * Small line under the title (e.g. item count).
+         */
+        caption?: string | null;
+        /**
+         * Optional link target for the item.
+         */
+        href?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -2991,6 +3038,159 @@ export interface FeatureGridBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'featureGrid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductShowcaseBlock".
+ */
+export interface ProductShowcaseBlock {
+  eyebrow?: string | null;
+  heading?: string | null;
+  subheading?: string | null;
+  products?: (number | Product)[] | null;
+  /**
+   * Show category tabs built from the selected products.
+   */
+  showFilters?: boolean | null;
+  /**
+   * Show the price sort dropdown.
+   */
+  showSort?: boolean | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
+   */
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'productShowcase';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ReelsBlock".
+ */
+export interface ReelsBlock {
+  eyebrow?: string | null;
+  heading?: string | null;
+  followLabel?: string | null;
+  followHref?: string | null;
+  tiles?:
+    | {
+        poster?: (number | null) | Media;
+        tag?: string | null;
+        caption?: string | null;
+        views?: string | null;
+        /**
+         * Optional video URL (YouTube/TikTok/MP4). Leave blank to show the poster only.
+         */
+        embedUrl?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
+   */
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'reels';
 }
 /**
  * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
@@ -3634,6 +3834,8 @@ export interface PagesSelect<T extends boolean = true> {
         countdown?: T | CountdownBlockSelect<T>;
         tabs?: T | TabsBlockSelect<T>;
         featureGrid?: T | FeatureGridBlockSelect<T>;
+        productShowcase?: T | ProductShowcaseBlockSelect<T>;
+        reels?: T | ReelsBlockSelect<T>;
       };
   meta?:
     | T
@@ -3650,11 +3852,28 @@ export interface PagesSelect<T extends boolean = true> {
  * via the `definition` "HeroBlock_select".
  */
 export interface HeroBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
   headline?: T;
   subheadline?: T;
   ctaLabel?: T;
   ctaHref?: T;
   ctaStyle?: T;
+  secondaryCtaLabel?: T;
+  secondaryCtaHref?: T;
+  stats?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  collage?:
+    | T
+    | {
+        image?: T;
+        alt?: T;
+        id?: T;
+      };
   image?: T;
   imagePosition?: T;
   textAlign?: T;
@@ -4408,13 +4627,75 @@ export interface TabsBlockSelect<T extends boolean = true> {
 export interface FeatureGridBlockSelect<T extends boolean = true> {
   heading?: T;
   subheading?: T;
+  variant?: T;
   columns?: T;
   items?:
     | T
     | {
         icon?: T;
+        image?: T;
         title?: T;
         text?: T;
+        caption?: T;
+        href?: T;
+        id?: T;
+      };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductShowcaseBlock_select".
+ */
+export interface ProductShowcaseBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  subheading?: T;
+  products?: T;
+  showFilters?: T;
+  showSort?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ReelsBlock_select".
+ */
+export interface ReelsBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  followLabel?: T;
+  followHref?: T;
+  tiles?:
+    | T
+    | {
+        poster?: T;
+        tag?: T;
+        caption?: T;
+        views?: T;
+        embedUrl?: T;
         id?: T;
       };
   background?: T;
@@ -4719,7 +5000,7 @@ export interface StoreSetting {
   /**
    * Controls body and heading fonts across the storefront.
    */
-  fontPreset?: ('jakarta' | 'inter' | 'roboto' | 'system') | null;
+  fontPreset?: ('inter' | 'jakarta' | 'roboto' | 'system') | null;
   heroEnabled?: boolean | null;
   /**
    * Small label above the hero title (e.g. "New collection · Free shipping").

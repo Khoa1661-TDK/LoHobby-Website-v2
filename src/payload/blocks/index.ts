@@ -29,3 +29,5 @@ export { PricingTable } from './PricingTable';
 export { Countdown } from './Countdown';
 export { Tabs } from './Tabs';
 export { FeatureGrid } from './FeatureGrid';
+export { ProductShowcase } from './ProductShowcase';
+export { Reels } from './Reels';

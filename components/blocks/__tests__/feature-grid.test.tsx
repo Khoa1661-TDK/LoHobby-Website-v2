@@ -1,5 +1,17 @@
+import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// FeatureGrid now wraps linked items in next-intl's Link, which needs routing
+// context; stub it so the block renders as a plain anchor under jsdom.
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
 import FeatureGridBlock from '@/components/blocks/FeatureGrid';
 
 describe('FeatureGridBlock', () => {

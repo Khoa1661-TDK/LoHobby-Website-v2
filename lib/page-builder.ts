@@ -58,7 +58,9 @@ export type PageBlock =
   | ({ blockType: 'pricingTable' } & Record<string, unknown>)
   | ({ blockType: 'countdown' } & Record<string, unknown>)
   | ({ blockType: 'tabs' } & Record<string, unknown>)
-  | ({ blockType: 'featureGrid' } & Record<string, unknown>);
+  | ({ blockType: 'featureGrid' } & Record<string, unknown>)
+  | ({ blockType: 'productShowcase' } & Record<string, unknown>)
+  | ({ blockType: 'reels' } & Record<string, unknown>);
 
 export type PageDoc = {
   id: string | number;
