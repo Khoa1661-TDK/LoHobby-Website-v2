@@ -60,7 +60,12 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
-      { protocol: 'http', hostname: 'localhost' },
+      // Payload builds media URLs from the request host, so browsing the store
+      // over http via a LAN IP (e.g. http://192.168.1.3:3000 from a phone) or any
+      // non-localhost dev host yields http image sources. Without this the image
+      // optimizer returns 400 and every Payload-hosted image fails to load. This
+      // mirrors the wide-open https rule above.
+      { protocol: 'http', hostname: '**' },
     ],
   },
   async headers() {
