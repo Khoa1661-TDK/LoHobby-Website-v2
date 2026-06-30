@@ -166,7 +166,7 @@ export default function ProductHeroCarousel({
                     {slide.title}
                   </p>
                 </div>
-                <div className="hidden sm:flex shrink-0 items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm opacity-0 transition-all duration-300 group-hover/slide:opacity-100">
+                <div className="hidden sm:flex shrink-0 items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm opacity-0 transition-all duration-300 group-hover/slide:opacity-100 [@media(hover:none)]:opacity-100">
                   Xem chi tiết
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -186,7 +186,7 @@ export default function ProductHeroCarousel({
               event.preventDefault();
               handleManualNav(goPrev);
             }}
-            className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all duration-300 hover:bg-white/25 hover:scale-105 sm:left-5 sm:h-12 sm:w-12 sm:opacity-0 sm:group-hover/carousel:opacity-100 motion-reduce:transition-none motion-reduce:hover:scale-100"
+            className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all duration-300 hover:bg-white/25 hover:scale-105 sm:left-5 sm:h-12 sm:w-12 sm:opacity-0 sm:group-hover/carousel:opacity-100 [@media(hover:none)]:sm:opacity-100 motion-reduce:transition-none motion-reduce:hover:scale-100"
             aria-label="Slide trước"
           >
             <ChevronLeftIcon className="h-5 w-5" strokeWidth={2} />
@@ -197,7 +197,7 @@ export default function ProductHeroCarousel({
               event.preventDefault();
               handleManualNav(goNext);
             }}
-            className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all duration-300 hover:bg-white/25 hover:scale-105 sm:right-5 sm:h-12 sm:w-12 sm:opacity-0 sm:group-hover/carousel:opacity-100 motion-reduce:transition-none motion-reduce:hover:scale-100"
+            className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all duration-300 hover:bg-white/25 hover:scale-105 sm:right-5 sm:h-12 sm:w-12 sm:opacity-0 sm:group-hover/carousel:opacity-100 [@media(hover:none)]:sm:opacity-100 motion-reduce:transition-none motion-reduce:hover:scale-100"
             aria-label="Slide sau"
           >
             <ChevronRightIcon className="h-5 w-5" strokeWidth={2} />

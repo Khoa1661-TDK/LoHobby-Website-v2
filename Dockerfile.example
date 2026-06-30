@@ -65,7 +65,7 @@ ENV PORT=3000
 ENV APP_URL="https://your-domain.example"
 ENV AUTH_URL="https://your-domain.example/"
 ENV DOMAIN="your-domain.example"
-ENV DATABASE_URL="postgres://<token>:<key>@db.prisma.io:5432/postgres?sslmode=require"
+ENV DATABASE_URL="postgres://shopnex:shopnex@db:5432/shopnex"
 ENV PAYLOAD_SECRET="CHANGE_ME"
 ENV AUTH_SECRET="CHANGE_ME"
 ENV AUTH_GOOGLE_ID=""

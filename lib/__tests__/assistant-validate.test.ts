@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateToolCall, validateUpdateFields } from '@/lib/page-builder/assistant/validate';
+import { validateToolCall, validateUpdateFields, coerceFieldsForBlock } from '@/lib/page-builder/assistant/validate';
 
 describe('validateToolCall', () => {
   it('should accept a valid add_block and produce an add mutation with blockType set', () => {
@@ -50,6 +50,114 @@ describe('validateToolCall', () => {
   it('should reject an unknown tool name', () => {
     expect(validateToolCall('frobnicate', {}).ok).toBe(false);
   });
+
+  it('should reject a fabricated string id on a relationship field', () => {
+    // The LLM has no real category ids, so it invents "placeholder-collection-id-3".
+    // That must be rejected before it reaches Payload (which 400s on invalid relationships).
+    const r = validateToolCall('add_block', {
+      blockType: 'featuredCollection',
+      index: 0,
+      fields: { collection: 'placeholder-collection-id-3' },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/collection/);
+  });
+
+  it('should accept a numeric id on a relationship field', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'featuredCollection',
+      index: 0,
+      fields: { collection: 2 },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('should accept an omitted/unbound relationship field', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'featuredCollection',
+      index: 0,
+      fields: { collection: null, title: 'Aircraft' },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('should reject a number below the field min on add_block', () => {
+    // featuredCollection.limit has min: 2 — a negative value 400s the whole page save
+    // in Payload, so it must be rejected here first.
+    const r = validateToolCall('add_block', {
+      blockType: 'featuredCollection',
+      index: 0,
+      fields: { limit: -8 },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/limit.*at least 2/i);
+  });
+
+  it('should reject a number above the field max on add_block', () => {
+    // featuredCollection.limit has max: 24
+    const r = validateToolCall('add_block', {
+      blockType: 'featuredCollection',
+      index: 0,
+      fields: { limit: 99 },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/limit.*at most 24/i);
+  });
+
+  it('should accept a number within the field min/max bounds on add_block', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'featuredCollection',
+      index: 0,
+      fields: { limit: 12 },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('should convert a richText Markdown string to Lexical JSON on add_block', () => {
+    // The LLM emits a plain string for richText; Payload requires Lexical editor-state
+    // JSON, so a bare string 400s the whole page save. The mutation must carry the
+    // converted shape, not the raw string.
+    const r = validateToolCall('add_block', {
+      blockType: 'richText',
+      index: 0,
+      fields: { content: '# Hello\n\nWorld' },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok && r.mutation.kind === 'add') {
+      const content = (r.mutation.block as { content?: unknown }).content;
+      expect(content).not.toBe('# Hello\n\nWorld');
+      expect((content as { root?: unknown }).root).toBeTypeOf('object');
+    }
+  });
+
+  it('should convert richText inside array rows (faq.items[].answer) to Lexical JSON', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'faq',
+      index: 0,
+      fields: { items: [{ question: 'Q?', answer: 'A plain answer.' }] },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok && r.mutation.kind === 'add') {
+      const items = (r.mutation.block as { items?: Array<{ answer?: unknown }> }).items ?? [];
+      expect((items[0]?.answer as { root?: unknown }).root).toBeTypeOf('object');
+    }
+  });
+});
+
+describe('coerceFieldsForBlock', () => {
+  it('converts a richText Markdown string to Lexical JSON in place', () => {
+    const fields: Record<string, unknown> = { content: '**bold**' };
+    coerceFieldsForBlock('richText', fields);
+    expect(typeof fields.content).toBe('object');
+    expect((fields.content as { root?: unknown }).root).toBeTypeOf('object');
+  });
+
+  it('leaves an already-Lexical richText value untouched', () => {
+    const doc = { root: { type: 'root', children: [] } };
+    const fields: Record<string, unknown> = { content: doc };
+    coerceFieldsForBlock('richText', fields);
+    expect(fields.content).toBe(doc);
+  });
 });
 
 describe('validateUpdateFields', () => {
@@ -76,5 +184,41 @@ describe('validateUpdateFields', () => {
     const err = validateUpdateFields('nonexistent_block_xyz', { headline: 'Hi' });
     expect(err).not.toBeNull();
     expect(err).toMatch(/unknown block/i);
+  });
+
+  it('rejects a fabricated string id on featuredCollection.collection — returns error', () => {
+    const err = validateUpdateFields('featuredCollection', {
+      collection: 'placeholder-collection-id-3',
+    });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/collection/);
+  });
+
+  it('accepts a numeric id on featuredCollection.collection — returns null', () => {
+    expect(validateUpdateFields('featuredCollection', { collection: 2 })).toBeNull();
+  });
+
+  it('rejects a non-numeric id inside a hasMany relationship — returns error', () => {
+    // featuredProducts.products is a hasMany relationship; every element must be numeric.
+    const err = validateUpdateFields('featuredProducts', { products: [1, 'nope'] });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/products/);
+  });
+
+  it('rejects a number below the field min — returns error', () => {
+    // featuredCollection.limit has min: 2 — matches the reported -8/-15 page-save 400s.
+    const err = validateUpdateFields('featuredCollection', { limit: -15 });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/limit.*at least 2/i);
+  });
+
+  it('rejects a number above the field max — returns error', () => {
+    const err = validateUpdateFields('featuredCollection', { limit: 50 });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/limit.*at most 24/i);
+  });
+
+  it('accepts a number within the field min/max bounds — returns null', () => {
+    expect(validateUpdateFields('featuredCollection', { limit: 8 })).toBeNull();
   });
 });

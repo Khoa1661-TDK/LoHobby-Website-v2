@@ -190,45 +190,51 @@ export default function EditorShell({ locale, page, schemas }: Props): ReactElem
         </aside>
       </div>
 
-      {/* AI helper: toggleable floating window, decoupled from the fixed sidebar. */}
-      {assistantOpen && (
-        <div className="fixed bottom-20 right-4 z-40 flex h-[32rem] w-96 flex-col overflow-hidden rounded-lg border border-warm-200 bg-white shadow-xl">
-          <div className="flex items-center gap-2 border-b border-warm-200 px-3 py-2">
-            <span className="text-sm font-semibold text-warm-800">AI helper</span>
-            {undoSnapshot && (
-              <button
-                type="button"
-                onClick={() => { setLayout(undoSnapshot); setUndoSnapshot(null); }}
-                className="rounded border border-warm-300 px-2 py-0.5 text-xs text-warm-600"
-              >
-                Undo last AI change
-              </button>
-            )}
+      {/* AI helper: toggleable floating window, decoupled from the fixed sidebar. Kept
+          mounted so the conversation and any attachments survive open/close; visibility
+          and the slide/scale animation are driven by the .assistant-panel CSS class. */}
+      <div
+        className="assistant-panel fixed bottom-20 right-4 z-40 flex h-[32rem] w-96 flex-col overflow-hidden rounded-lg border border-warm-200 bg-white shadow-xl"
+        data-open={assistantOpen}
+        aria-hidden={!assistantOpen}
+      >
+        <div className="flex items-center gap-2 border-b border-warm-200 px-3 py-2">
+          <span className="text-sm font-semibold text-warm-800">AI helper</span>
+          {undoSnapshot && (
             <button
               type="button"
-              aria-label="Close AI helper"
-              onClick={() => setAssistantOpen(false)}
-              className="ml-auto rounded p-1 text-warm-500 hover:bg-warm-100"
+              onClick={() => { setLayout(undoSnapshot); setUndoSnapshot(null); }}
+              className="rounded border border-warm-300 px-2 py-0.5 text-xs text-warm-600 transition-colors hover:bg-warm-100"
             >
-              ✕
+              Undo last AI change
             </button>
-          </div>
-          <AssistantPanel
-            layout={layout}
-            locale={locale}
-            onApply={setLayout}
-            onBeforeRun={() => setUndoSnapshot(layout)}
-          />
+          )}
+          <button
+            type="button"
+            aria-label="Close AI helper"
+            onClick={() => setAssistantOpen(false)}
+            className="ml-auto rounded p-1 text-warm-500 transition-colors hover:bg-warm-100"
+          >
+            ✕
+          </button>
         </div>
-      )}
+        <AssistantPanel
+          layout={layout}
+          locale={locale}
+          onApply={setLayout}
+          onBeforeRun={() => setUndoSnapshot(layout)}
+        />
+      </div>
       <button
         type="button"
         aria-label={assistantOpen ? 'Close AI helper' : 'Open AI helper'}
         aria-pressed={assistantOpen}
         onClick={() => setAssistantOpen((v) => !v)}
-        className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-warm-900 text-lg text-white shadow-lg hover:bg-warm-800"
+        className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-warm-900 text-lg text-white shadow-lg transition-all duration-200 hover:bg-warm-800 hover:scale-105 active:scale-95"
       >
-        {assistantOpen ? '✕' : '🤖'}
+        <span className={`transition-transform duration-300 ${assistantOpen ? 'rotate-90' : 'rotate-0'}`}>
+          {assistantOpen ? '✕' : '🤖'}
+        </span>
       </button>
 
       {addAt !== null && (

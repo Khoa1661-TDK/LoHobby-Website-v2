@@ -201,6 +201,15 @@ See `rules/common/decisions.md` for the logging format and rules.
 
 ---
 
+## 2026-06-29 — Default to inline work; subagents only when they save credits
+**Chosen:** Work in main context by default. Reserve subagents for cases that genuinely save tokens/context — broad multi-file searches reducible to a compact summary, or genuinely independent parallel fan-out. Stay credit-frugal inline (targeted search, batched parallel tool calls, no re-reads) and autonomous for low-risk reversible work.
+**Alternatives:** Keep the prior "always prefer subagents" default (rejected: each subagent re-establishes context and duplicates token usage, costly for the moderately-simple tasks it was being applied to).
+**Why:** User decision — optimize for credit efficiency and autonomy. The blanket subagent-first rule spent tokens spinning up isolated contexts even for single-file edits and directed lookups that fit fine in main context.
+**Trade-offs:** Large outputs handled inline can consume main context faster than offloading to a subagent; mitigated by the "spawn only when reducible to a summary" rule. Less parallelism on borderline-independent tasks.
+**Revisit if:** Main context routinely fills on routine tasks, or parallel throughput becomes the bottleneck — then loosen the subagent threshold.
+
+---
+
 ## 2026-06-29 — Animation System: Motion One via `motion` v12, with legacy preset aliases
 **Chosen:** Build the scroll-reveal animation layer (Phase 01 of the animation spec) on the `motion` package (v12.42.0), using its imperative WAAPI API (`animate`, `stagger`, `inView`). Renamed presets per spec (fade-up/fade-in/slide-right/scale-in/stagger-cards/stagger-list/hero-entrance) but added backward-compat aliases mapping the pre-existing stored CMS values (`reveal-up`→`fade-up`, `reveal-right`→`slide-right`) so no data migration is needed. `scrollAnimation` field default flipped `none`→`default`; CMS field expanded 4→9 options. Field lives in `src/payload/blocks/_appearance.ts` (spread into all 30 blocks).
 **Alternatives:** (a) Framer Motion — heavier (~50kb), React-coupled, rejected per spec. (b) Pure CSS classes (the prior `RevealOnScroll`) — no JS stagger / imperative micro-interaction control. (c) Hard rename presets with a data migration over stored CMS values — more risk, no upside vs aliasing.

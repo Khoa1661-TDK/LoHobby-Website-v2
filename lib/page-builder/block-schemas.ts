@@ -48,6 +48,10 @@ export type FieldDescriptor = {
   relationTo?: string;
   /** Present for `relationship` fields. */
   hasMany?: boolean;
+  /** Present for `number` fields with a configured lower bound. */
+  min?: number;
+  /** Present for `number` fields with a configured upper bound. */
+  max?: number;
   /** Present for `array` fields. */
   fields?: FieldDescriptor[];
   /** Simplified, serializable condition (only the common siblingData equality form). */
@@ -151,6 +155,10 @@ function describeField(field: Field): FieldDescriptor | null {
   }
   if (field.type === 'relationship') {
     base.hasMany = 'hasMany' in field && field.hasMany === true;
+  }
+  if (field.type === 'number') {
+    if ('min' in field && typeof field.min === 'number') base.min = field.min;
+    if ('max' in field && typeof field.max === 'number') base.max = field.max;
   }
   if (field.type === 'array' && 'fields' in field && Array.isArray(field.fields)) {
     base.fields = field.fields

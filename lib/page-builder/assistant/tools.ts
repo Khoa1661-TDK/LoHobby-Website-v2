@@ -88,25 +88,54 @@ export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
   },
 ];
 
-function describeBlock(schema: BlockSchema): string {
-  const fields = schema.fields
-    .map((f) => {
-      const opts = f.options ? ` (one of: ${f.options.map((o) => o.value).join(', ')})` : '';
-      const req = f.required ? ' [required]' : '';
-      return `    - ${f.name}: ${f.type}${opts}${req}`;
-    })
-    .join('\n');
+// Real relationship targets, keyed by the collection slug a field relates to (e.g.
+// `categories`). Injected into the contract so the model picks an existing numeric id
+// instead of fabricating one — a fabricated id makes Payload 400 the whole page save.
+export type RelationshipOptions = Record<string, Array<{ id: number | string; label: string }>>;
+
+function describeFieldLine(f: BlockSchema['fields'][number], rels: RelationshipOptions): string {
+  const req = f.required ? ' [required]' : '';
+  if (f.type === 'relationship') {
+    const target = f.relationTo ?? 'a collection';
+    const choices = (f.relationTo && rels[f.relationTo]) || [];
+    if (choices.length > 0) {
+      const list = choices.map((o) => `${o.id}=${o.label}`).join(', ');
+      const many = f.hasMany ? ' (array of numeric ids)' : '';
+      return `    - ${f.name}: numeric id of a ${target}${many} — valid ids: ${list}${req}`;
+    }
+    return `    - ${f.name}: numeric id of an existing ${target} (omit if unknown — never invent one)${req}`;
+  }
+  const opts = f.options ? ` (one of: ${f.options.map((o) => o.value).join(', ')})` : '';
+  if (f.type === 'richText') {
+    return `    - ${f.name}: richText — provide a Markdown string (paragraphs, # headings, **bold**, *italic*, [text](url), - lists)${req}`;
+  }
+  let range = '';
+  if (f.type === 'number' && (typeof f.min === 'number' || typeof f.max === 'number')) {
+    if (typeof f.min === 'number' && typeof f.max === 'number') range = ` (${f.min}–${f.max})`;
+    else if (typeof f.min === 'number') range = ` (min ${f.min})`;
+    else range = ` (max ${f.max})`;
+  }
+  return `    - ${f.name}: ${f.type}${opts}${range}${req}`;
+}
+
+function describeBlock(schema: BlockSchema, rels: RelationshipOptions): string {
+  const fields = schema.fields.map((f) => describeFieldLine(f, rels)).join('\n');
   return `  ${schema.slug} — ${schema.label}\n${fields}`;
 }
 
-export function buildSystemPrompt(schemas: BlockSchema[]): string {
-  const contract = schemas.map(describeBlock).join('\n');
+export function buildSystemPrompt(
+  schemas: BlockSchema[],
+  relationshipOptions: RelationshipOptions = {},
+): string {
+  const contract = schemas.map((s) => describeBlock(s, relationshipOptions)).join('\n');
   return [
     'You are a page-building assistant for an e-commerce storefront CMS.',
     'You construct and edit a page by calling the provided tools to mutate a block layout.',
     'You can ONLY use the block types and fields listed in the contract below — never invent a blockType or field name.',
+    'Relationship fields must be set to a real numeric id from the contract. Never invent an id; if no suitable id exists, omit the field and leave the block unbound.',
     'Indices refer to the current layout the user message provides. After each tool call the layout changes, so reason about positions in order.',
     'Prefer sensible defaults and concise, on-brand copy. When the user asks to "build a page", add a coherent sequence of blocks (e.g. a hero, then feature/product sections, then an FAQ or newsletter).',
+    'If the user attaches an image, treat it as a design reference: reproduce its layout, sections, copy, and visual order as closely as the available blocks and fields allow.',
     'When finished, end your turn with a one-sentence summary of what you changed.',
     '',
     'BLOCK CONTRACT (available blocks and their fields):',

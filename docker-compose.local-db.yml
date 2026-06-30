@@ -1,5 +1,5 @@
-# Local development Postgres for migrating/seeding the store off the remote
-# db.prisma.io database. Start with:
+# Standalone local development Postgres for host-based dev (`pnpm dev`) when you
+# are not running the full docker-compose.yml stack. Start with:
 #   sudo docker compose -f docker-compose.local-db.yml up -d
 # Then point .env DATABASE_URL at:
 #   postgresql://shopnex:shopnex@localhost:5432/shopnex

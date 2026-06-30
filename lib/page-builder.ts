@@ -144,5 +144,28 @@ export async function getPageBySlug(slug: string, locale: Locale): Promise<PageD
 }
 
 export async function getHomePage(locale: Locale): Promise<PageDoc | null> {
-  return getPageBySlug('home', locale);
+  const page = await getPageBySlug('home', locale);
+  if (page) return page;
+
+  // No published "home" page was found. Distinguish a genuine absence (normal —
+  // the storefront renders its built-in default homepage) from a home page that
+  // exists but is unpublished. The latter is a silent footgun: re-saving in the
+  // admin or a migration can reset `status` to its "draft" default, which makes
+  // the page-builder home disappear with no error. Only that case is worth a log.
+  try {
+    const existing = await fetchPageBySlugDraft('home', locale);
+    if (existing && existing.status !== 'published') {
+      console.warn(
+        `[pages] home page exists (id=${existing.id}, locale=${locale}) but status is ` +
+          `"${existing.status}" — storefront is falling back to the default homepage. ` +
+          `Publish it in the admin to render the page-builder layout.`,
+      );
+    }
+  } catch (error) {
+    console.warn(
+      '[pages] home page status check skipped:',
+      error instanceof Error ? error.message : error,
+    );
+  }
+  return null;
 }

@@ -4,7 +4,7 @@
 import { MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import AddToCart from '@/components/cart/add-to-cart';
 import { GalleryMediaThumb, GalleryMediaViewer } from '@/components/product/gallery-media';
 import Price from '@/components/price';
@@ -32,6 +32,21 @@ export default function VariantSelector({
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [hoverGalleryIndex, setHoverGalleryIndex] = useState<number | null>(null);
   const [heroFromGallery, setHeroFromGallery] = useState(false);
+  const buyBoxRef = useRef<HTMLDivElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  // Show the mobile sticky bar only once the main buy box has scrolled out of
+  // view, so it doesn't duplicate the primary add-to-cart while it's visible.
+  useEffect(() => {
+    const node = buyBoxRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(Boolean(entry && !entry.isIntersecting)),
+      { rootMargin: '0px 0px -80px 0px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const selectedVariant = useMemo(
     () => variants.find((v) => v.sku === selectedSku) ?? null,
@@ -76,6 +91,7 @@ export default function VariantSelector({
   const showThumbs = product.images.length > 1;
 
   return (
+    <>
     <article
       itemScope
       itemType="https://schema.org/Product"
@@ -86,7 +102,7 @@ export default function VariantSelector({
       <meta itemProp="description" content={product.description} />
 
       <div className="h-full w-full basis-full p-4 sm:p-6 lg:basis-4/6 lg:p-8">
-        <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden rounded-xl bg-warm-100/50 dark:bg-warm-950">
+        <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden rounded-xl bg-warm-100/50 dark:bg-warm-950" data-cart-fly-source>
           {displayedImage ? (
             <GalleryMediaViewer
               key={displayedImage.url}
@@ -230,11 +246,11 @@ export default function VariantSelector({
               aria-label={t('decreaseQtyAria')}
               disabled={quantity <= 1}
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="flex h-10 w-10 items-center justify-center text-warm-700 transition-colors hover:text-terracotta-600 disabled:cursor-not-allowed disabled:opacity-30 dark:text-warm-300 dark:hover:text-terracotta-400"
+              className="flex h-11 w-11 items-center justify-center text-warm-700 transition-colors hover:text-terracotta-600 disabled:cursor-not-allowed disabled:opacity-30 dark:text-warm-300 dark:hover:text-terracotta-400"
             >
               <MinusIcon className="h-4 w-4" />
             </button>
-            <span className="flex w-10 items-center justify-center text-sm font-medium tabular-nums text-warm-900 dark:text-warm-100">
+            <span className="flex w-11 items-center justify-center text-sm font-medium tabular-nums text-warm-900 dark:text-warm-100">
               {quantity}
             </span>
             <button
@@ -242,14 +258,14 @@ export default function VariantSelector({
               aria-label={t('increaseQtyAria')}
               disabled={quantity >= maxQuantity}
               onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
-              className="flex h-10 w-10 items-center justify-center text-warm-700 transition-colors hover:text-terracotta-600 disabled:cursor-not-allowed disabled:opacity-30 dark:text-warm-300 dark:hover:text-terracotta-400"
+              className="flex h-11 w-11 items-center justify-center text-warm-700 transition-colors hover:text-terracotta-600 disabled:cursor-not-allowed disabled:opacity-30 dark:text-warm-300 dark:hover:text-terracotta-400"
             >
               <PlusIcon className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div ref={buyBoxRef} className="flex items-center gap-3">
           <div className="flex-1">
             <AddToCart
               product={product}
@@ -274,6 +290,38 @@ export default function VariantSelector({
         />
       </div>
     </article>
+
+      {/* Mobile sticky add-to-cart bar — appears once the buy box scrolls away */}
+      <div
+        aria-hidden={!showStickyBar}
+        className={clsx(
+          'fixed inset-x-0 bottom-0 z-30 border-t border-warm-200/80 bg-warm-50/95 px-4 py-3 backdrop-blur-xl transition-transform duration-300 lg:hidden dark:border-warm-800/50 dark:bg-warm-950/95',
+          'pb-[max(0.75rem,env(safe-area-inset-bottom))]',
+          showStickyBar ? 'translate-y-0' : 'translate-y-full',
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-xs text-warm-500 dark:text-warm-400">{product.title}</span>
+            <span className="text-base font-bold text-warm-900 dark:text-warm-100">
+              <Price amount={displayedPrice} currencyCode="VND" />
+            </span>
+          </div>
+          <div className="ml-auto w-40 shrink-0">
+            <AddToCart
+              product={product}
+              variantSku={variants.length > 0 ? selectedSku : null}
+              quantity={quantity}
+              canAdd={
+                variants.length === 0
+                  ? product.availableForSale
+                  : Boolean(selectedVariant?.inStock)
+              }
+            />
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

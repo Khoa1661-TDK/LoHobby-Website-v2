@@ -32,15 +32,18 @@ services:
         NEXT_PUBLIC_CONTACT_ADDRESS: ""
     image: shopnex-app:latest
     restart: unless-stopped
-    # No local database service: DATABASE_URL points at the Prisma Data Proxy
-    # (db.prisma.io), so the app connects straight to the hosted Postgres and
-    # runs its migrations there. No healthcheck gate is needed.
+    # Local database: the app talks to the bundled `db` service (Postgres in
+    # this same compose project) and runs its migrations there on start. Wait
+    # for the DB healthcheck so migrations don't race the DB.
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       # Runtime canonical URL — read by Node at start (NOT inlined like
       # NEXT_PUBLIC_*). Set to your real domain to re-point admin/SEO/
       # cookies on any host with no rebuild.
       APP_URL: "https://your-domain.example"
-      DATABASE_URL: "postgres://<token>:<key>@db.prisma.io:5432/postgres?sslmode=require"
+      DATABASE_URL: "postgres://shopnex:shopnex@db:5432/shopnex"
       PAYLOAD_SECRET: "CHANGE_ME"
       AUTH_SECRET: "CHANGE_ME"
       AUTH_URL: "https://your-domain.example/"
@@ -72,6 +75,29 @@ services:
       retries: 3
       start_period: 60s
 
+  # Local Postgres — the store's primary database (Prisma + Payload share it).
+  # Bound to the internal `appnet`; the app reaches it at `db:5432`. The host
+  # port lets host-based dev (`pnpm dev` reading .env's localhost:5432) hit the
+  # same DB. Never expose Postgres to the network.
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shopnex
+      POSTGRES_PASSWORD: shopnex
+      POSTGRES_DB: shopnex
+    volumes:
+      - shopnex_pgdata:/var/lib/postgresql/data
+    ports:
+      - '127.0.0.1:5432:5432'
+    networks:
+      - appnet
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U shopnex -d shopnex']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   caddy:
     image: caddy:2
     restart: unless-stopped
@@ -97,3 +123,4 @@ volumes:
   media:
   caddy_data:
   caddy_config:
+  shopnex_pgdata:

@@ -52,4 +52,33 @@ describe('getHomePage', () => {
     expect(arg?.locale).toBe('vi');
     expect(JSON.stringify(arg?.where)).toContain('home');
   });
+
+  it('should warn when an unpublished home page exists and falls back', async () => {
+    // Published query returns nothing; the status-agnostic draft check finds a draft.
+    mockFind
+      .mockResolvedValueOnce({ docs: [] })
+      .mockResolvedValueOnce({
+        docs: [{ id: 5, title: 'Trang chủ', slug: 'home', status: 'draft', layout: [] }],
+      });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const result = await getHomePage('vi');
+
+    expect(result).toBeNull();
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn.mock.calls[0]?.[0]).toContain('"draft"');
+    warn.mockRestore();
+  });
+
+  it('should not warn when no home page exists at all', async () => {
+    // Both the published query and the draft check come back empty.
+    mockFind.mockResolvedValue({ docs: [] });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const result = await getHomePage('vi');
+
+    expect(result).toBeNull();
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
 });

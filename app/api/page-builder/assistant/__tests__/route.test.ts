@@ -32,6 +32,28 @@ describe('POST /api/page-builder/assistant', () => {
     expect(res.status).toBe(400);
   });
 
+  it('should 400 when neither prompt nor a valid image is provided', async () => {
+    (isAuthorizedAdmin as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    // An empty prompt plus a non-image data URL leaves nothing to act on.
+    const res = await POST(req({ prompt: '   ', layout: [], locale: 'en', images: ['not-a-data-url'] }));
+    expect(res.status).toBe(400);
+  });
+
+  it('should accept an image-only request (no prompt) past the 400 gate', async () => {
+    (isAuthorizedAdmin as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    const prev = process.env.ASSISTANT_LLM_API_KEY;
+    // Force the next gate (missing key → 500) so we prove the image-only request cleared
+    // the 400 prompt/image check without needing a live LLM.
+    delete process.env.ASSISTANT_LLM_API_KEY;
+    try {
+      const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+      const res = await POST(req({ prompt: '', layout: [], locale: 'en', images: [tinyPng] }));
+      expect(res.status).toBe(500);
+    } finally {
+      if (prev !== undefined) process.env.ASSISTANT_LLM_API_KEY = prev;
+    }
+  });
+
   it('should 500 when the assistant LLM key is not configured', async () => {
     (isAuthorizedAdmin as ReturnType<typeof vi.fn>).mockResolvedValue(true);
     const prev = process.env.ASSISTANT_LLM_API_KEY;

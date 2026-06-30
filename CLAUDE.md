@@ -315,6 +315,38 @@ See `.claude/phases/` — always check the active phase file before starting wor
 ## Project-Specific Constraints
 <!-- Things Claude must not do in this project. Add as you discover them. -->
 
+### Execution strategy — credit-efficient & autonomous (overrides default subagent preference)
+Work directly in the main context by default. Subagents are no longer the primary
+method — each one re-establishes context and duplicates token usage, so they are a
+cost to justify, not a default. (User decision, 2026-06-29, supersedes the prior
+2026-06-29 subagent-preference decision.)
+
+**Default: act inline.** Read the specific files you need, make the change, verify it.
+Do not spawn a subagent for single-file edits, directed lookups (a known file,
+function, or symbol), or any task that fits comfortably in main context.
+
+**Spawn a subagent only when it actually saves credits or context**, i.e. when ALL hold:
+- The work would otherwise flood main context with output you won't need afterward
+  (broad multi-file searches, reading many files to extract one conclusion), AND
+- The result can be reduced to a compact summary, AND
+- For parallel work: the subtasks are genuinely independent and run concurrently.
+Use `subagent_type: "Explore"` for wide codebase searches; the general type for
+isolated multi-file implementation; parallel Agent calls only for independent fan-out.
+When unsure, do it inline.
+
+**Be credit-frugal in main context too:**
+- Prefer targeted search/grep and partial reads over reading whole trees.
+- Batch independent tool calls into one message so they run in parallel.
+- Don't re-read files already in context; don't re-derive established facts.
+- Keep narration minimal — act, then report the outcome briefly.
+
+**Be autonomous:** for low-risk, reversible work, decide and proceed without asking —
+pick reasonable defaults for naming/formatting/equivalent approaches and note them
+rather than pausing. This does NOT relax the existing gates: still stop and ask on the
+core.md §3 approval triggers (scope/approach changes, destructive actions, "make it
+work for now" simplifications) and the debug.md §1 two-attempt rule. Autonomy means
+fewer trivial confirmations, not skipping the MUST-ask cases.
+
 ### Git workflow (overrides global git rules)
 This is a personal/solo project. Commit directly to `main` and push to `origin/main` —
 no feature branches or pull requests required. This overrides the team-branching and

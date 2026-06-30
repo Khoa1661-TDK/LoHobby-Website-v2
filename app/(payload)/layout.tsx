@@ -8,6 +8,12 @@ import type { ReactElement, ReactNode } from 'react';
 import { getAdminUser } from '@/lib/admin';
 import { getPayloadAdminUser } from '@/lib/payload-admin-sync';
 import { importMap } from './admin/importMap.js';
+// globals.css (Tailwind) MUST load before Payload's own CSS so the custom admin
+// pages (coupons, gift-cards, campaigns, orders, reviews) get their utility
+// classes back, while Payload chrome still wins on the `.table` collision via
+// cascade order. Restores the global Tailwind the root layout provided before
+// the (payload) route group took ownership of its own <html>/<body>.
+import '../globals.css';
 import '@payloadcms/next/css';
 import './custom.scss';
 

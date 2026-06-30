@@ -78,9 +78,9 @@ export default function ProductCard({ product, priority, index = 0 }: Props): Re
           </span>
         ) : null}
 
-        {/* Quick-view overlay on hover */}
-        <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-warm-900/60 via-transparent to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          <span className="rounded-lg bg-white/90 px-4 py-2 text-xs font-semibold text-warm-900 backdrop-blur-sm transition-all duration-300 group-hover:translate-y-0 translate-y-2 dark:bg-warm-950/90 dark:text-warm-100">
+        {/* Quick-view overlay on hover; always shown on touch devices */}
+        <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-warm-900/60 via-transparent to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+          <span className="rounded-lg bg-white/90 px-4 py-2 text-xs font-semibold text-warm-900 backdrop-blur-sm transition-all duration-300 group-hover:translate-y-0 translate-y-2 dark:bg-warm-950/90 dark:text-warm-100 [@media(hover:none)]:translate-y-0">
             {t('viewDetails')}
           </span>
         </div>
