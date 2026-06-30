@@ -15,6 +15,7 @@ import * as migration_20260624_173519_add_block_key from './20260624_173519_add_
 import * as migration_20260624_173719_promo_banner_background_image from './20260624_173719_promo_banner_background_image';
 import * as migration_20260627_132058_block_expansion from './20260627_132058_block_expansion';
 import * as migration_20260629_152734_scroll_animation_presets from './20260629_152734_scroll_animation_presets';
+import * as migration_20260630_140550_lohobby_blocks from './20260630_140550_lohobby_blocks';
 
 export const migrations = [
   {
@@ -100,6 +101,11 @@ export const migrations = [
   {
     up: migration_20260629_152734_scroll_animation_presets.up,
     down: migration_20260629_152734_scroll_animation_presets.down,
-    name: '20260629_152734_scroll_animation_presets'
+    name: '20260629_152734_scroll_animation_presets',
+  },
+  {
+    up: migration_20260630_140550_lohobby_blocks.up,
+    down: migration_20260630_140550_lohobby_blocks.down,
+    name: '20260630_140550_lohobby_blocks'
   },
 ];
