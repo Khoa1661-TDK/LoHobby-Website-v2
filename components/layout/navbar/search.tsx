@@ -102,7 +102,7 @@ export default function Search(): ReactElement {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
-          className="w-full rounded-xl border border-warm-200/80 bg-warm-100/50 py-2 pl-4 pr-10 text-sm text-warm-900 placeholder:text-warm-400 transition-all duration-300 focus:border-warm-300 focus:bg-warm-50 focus:shadow-soft-sm focus:outline-none dark:border-warm-800/60 dark:bg-warm-900/50 dark:text-warm-100 dark:placeholder:text-warm-500 dark:focus:border-warm-700 dark:focus:bg-warm-900/80"
+          className="w-full rounded-pill border border-warm-200/80 bg-warm-100/50 py-2 pl-4 pr-10 text-sm text-warm-900 placeholder:text-warm-400 transition-all duration-300 focus:border-warm-300 focus:bg-warm-50 focus:shadow-soft-sm focus:outline-none dark:border-warm-800/60 dark:bg-warm-900/50 dark:text-warm-100 dark:placeholder:text-warm-500 dark:focus:border-warm-700 dark:focus:bg-warm-900/80"
         />
         <button
           type="submit"
@@ -146,7 +146,7 @@ export default function Search(): ReactElement {
                   <Price
                     amount={item.price}
                     currencyCode={item.currencyCode}
-                    className="text-xs font-semibold text-terracotta-600 dark:text-terracotta-400"
+                    className="text-xs font-semibold text-warm-900 dark:text-warm-100"
                   />
                 </span>
               </button>
@@ -163,7 +163,7 @@ export function SearchSkeleton(): ReactElement {
     <form className="relative w-full">
       <input
         placeholder="Tìm móc khóa, mô hình, figure…"
-        className="w-full rounded-xl border border-warm-200/80 bg-warm-100/50 py-2 pl-4 pr-10 text-sm text-warm-900 placeholder:text-warm-400 dark:border-warm-800/60 dark:bg-warm-900/50 dark:text-warm-100 dark:placeholder:text-warm-500"
+        className="w-full rounded-pill border border-warm-200/80 bg-warm-100/50 py-2 pl-4 pr-10 text-sm text-warm-900 placeholder:text-warm-400 dark:border-warm-800/60 dark:bg-warm-900/50 dark:text-warm-100 dark:placeholder:text-warm-500"
       />
       <div className="absolute right-0 top-0 mr-3 flex h-full items-center text-warm-400">
         <MagnifyingGlassIcon className="h-4 w-4" />

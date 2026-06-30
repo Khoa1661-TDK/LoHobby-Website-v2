@@ -23,7 +23,7 @@ type Props = {
 
 const BADGE_CLASSES: Record<string, string> = {
   'new-arrival': 'bg-warm-900 text-warm-50 dark:bg-warm-100 dark:text-warm-900',
-  'best-seller': 'bg-terracotta-500 text-white dark:bg-terracotta-400 dark:text-warm-950',
+  'best-seller': 'bg-warm-900 text-warm-50 dark:bg-warm-100 dark:text-warm-900',
   'limited-edition': 'bg-warm-800 text-warm-100 dark:bg-warm-200 dark:text-warm-900',
   'pre-order': 'bg-warm-600 text-white dark:bg-warm-300 dark:text-warm-900',
   'sold-out': 'bg-warm-400 text-white dark:bg-warm-700 dark:text-warm-300',
@@ -41,7 +41,7 @@ export default function ProductCard({ product, priority, index = 0 }: Props): Re
     <Link
       href={href}
       prefetch
-      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-warm-200/80 bg-white shadow-soft-sm transition-all duration-300 hover:-translate-y-1 hover:border-warm-300/80 hover:shadow-soft-md dark:border-warm-800/40 dark:bg-warm-900 dark:hover:border-warm-700/60 dark:hover:shadow-soft-lg ${
+      className={`group flex h-full flex-col overflow-hidden rounded-card border border-warm-200/80 bg-white shadow-soft-sm transition-all duration-300 hover:-translate-y-1 hover:border-warm-300/80 hover:shadow-soft-md dark:border-warm-800/40 dark:bg-warm-900 dark:hover:border-warm-700/60 dark:hover:shadow-soft-lg ${
         soldOut ? 'opacity-75' : ''
       }`}
       aria-label={product.title}
@@ -62,7 +62,7 @@ export default function ProductCard({ product, priority, index = 0 }: Props): Re
 
         {/* Discount badge */}
         {discountPercent ? (
-          <span className="absolute left-3 top-3 z-10 rounded-lg bg-terracotta-500 px-2 py-1 text-[11px] font-bold text-white shadow-sm dark:bg-terracotta-400 dark:text-warm-950">
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-warm-900 px-2.5 py-1 text-[11px] font-bold text-warm-50 shadow-sm dark:bg-warm-100 dark:text-warm-900">
             -{discountPercent}%
           </span>
         ) : null}
@@ -70,7 +70,7 @@ export default function ProductCard({ product, priority, index = 0 }: Props): Re
         {/* Product badge */}
         {badge && !discountPercent ? (
           <span
-            className={`absolute left-3 top-3 z-10 rounded-lg px-2 py-1 text-[10px] font-semibold uppercase tracking-wider shadow-sm ${
+            className={`absolute left-3 top-3 z-10 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider shadow-sm ${
               BADGE_CLASSES[badge] ?? 'bg-warm-200 text-warm-700'
             }`}
           >
@@ -80,7 +80,7 @@ export default function ProductCard({ product, priority, index = 0 }: Props): Re
 
         {/* Quick-view overlay on hover; always shown on touch devices */}
         <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-warm-900/60 via-transparent to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
-          <span className="rounded-lg bg-white/90 px-4 py-2 text-xs font-semibold text-warm-900 backdrop-blur-sm transition-all duration-300 group-hover:translate-y-0 translate-y-2 dark:bg-warm-950/90 dark:text-warm-100 [@media(hover:none)]:translate-y-0">
+          <span className="rounded-full bg-white/95 px-5 py-2 text-xs font-semibold uppercase tracking-wide text-warm-900 shadow-soft-sm backdrop-blur-sm transition-all duration-300 group-hover:translate-y-0 translate-y-2 dark:bg-warm-50 dark:text-warm-900 [@media(hover:none)]:translate-y-0">
             {t('viewDetails')}
           </span>
         </div>
@@ -97,7 +97,7 @@ export default function ProductCard({ product, priority, index = 0 }: Props): Re
             amount={price.amount}
             currencyCode={price.currencyCode}
             currencyCodeClassName="text-[10px] sm:text-xs"
-            className="text-sm font-bold text-terracotta-600 sm:text-base dark:text-terracotta-400"
+            className="text-sm font-bold text-warm-900 sm:text-base dark:text-warm-100"
           />
           {price.compareAtAmount ? (
             <Price

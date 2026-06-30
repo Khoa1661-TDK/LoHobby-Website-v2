@@ -44,7 +44,14 @@ export default function BrandLogo({
   className,
 }: Props): ReactElement {
   const alt = branding.storeName;
-  const { logoUrl, logoDarkUrl, tagline, origin, storeSubtitle } = branding;
+  const { logoUrl, logoDarkUrl, tagline, origin, storeSubtitle, hasCustomLogo } =
+    branding;
+
+  // Lô Hobby default identity: a Playfair Display italic wordmark with an
+  // uppercase tag. Used whenever no real logo image has been provided.
+  if (!hasCustomLogo) {
+    return <BrandWordmark branding={branding} variant={variant} className={className} />;
+  }
 
   if (variant === 'mark' || variant === 'navbar') {
     const height = variant === 'mark' ? 44 : 52;
@@ -176,6 +183,63 @@ export default function BrandLogo({
         </span>
       ) : null}
       <p className="mt-3 max-w-xs text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        {tagline}
+      </p>
+      {origin ? (
+        <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.35em] text-neutral-400">
+          {origin}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Text-only brand identity for the Lô Hobby system: a Playfair Display italic
+ * wordmark (`font-logo`) paired with an uppercase "tag" line. Rendered whenever
+ * no logo image has been uploaded so the storefront still has a distinctive,
+ * on-brand mark instead of a generic placeholder.
+ */
+function BrandWordmark({
+  branding,
+  variant,
+  className,
+}: {
+  branding: StoreBranding;
+  variant: NonNullable<Props['variant']>;
+  className?: string;
+}): ReactElement {
+  const { storeName, storeSubtitle, tagline, origin } = branding;
+  const tag = storeSubtitle ?? origin;
+
+  if (variant === 'navbar' || variant === 'mark') {
+    return (
+      <span className={clsx('inline-flex shrink-0 flex-col items-start leading-none', className)}>
+        <span className="font-logo text-2xl font-semibold italic tracking-tight text-ink lg:text-[1.7rem]">
+          {storeName}
+        </span>
+        {tag ? (
+          <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.32em] text-accent-2">
+            {tag}
+          </span>
+        ) : null}
+      </span>
+    );
+  }
+
+  const wordmarkSize = variant === 'hero' ? 'text-5xl lg:text-6xl' : 'text-4xl';
+
+  return (
+    <div className={clsx('flex flex-col items-start', className)}>
+      <span className={clsx('font-logo font-semibold italic tracking-tight text-ink', wordmarkSize)}>
+        {storeName}
+      </span>
+      {storeSubtitle ? (
+        <span className="mt-2 text-sm font-semibold uppercase tracking-[0.32em] text-accent-2">
+          {storeSubtitle}
+        </span>
+      ) : null}
+      <p className="mt-3 max-w-md text-sm font-medium text-neutral-700 dark:text-neutral-300">
         {tagline}
       </p>
       {origin ? (

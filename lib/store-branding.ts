@@ -47,6 +47,10 @@ export type StoreBranding = {
   descriptionShort: string;
   logoUrl: string;
   logoDarkUrl: string | null;
+  /** True when a logo image was uploaded in the CMS; false when falling back
+   *  to the default. The navbar/footer render the Playfair wordmark instead of
+   *  the fallback image when this is false. */
+  hasCustomLogo: boolean;
   faviconUrl: string | null;
   primaryColor: string;
   primaryColorHover: string;
@@ -161,10 +165,14 @@ export function resolveStoreBranding(
       ? raw.storeDescriptionShort.trim()
       : BRAND_DESCRIPTION_SHORT;
 
-  const logoUrl =
-    resolveMediaUrl(raw?.logo) ??
-    (process.env.NEXT_PUBLIC_DEFAULT_LOGO?.trim() || DEFAULT_LOGO_URL);
+  const customLogo = resolveMediaUrl(raw?.logo);
+  const envLogo = process.env.NEXT_PUBLIC_DEFAULT_LOGO?.trim() || null;
+  const logoUrl = customLogo ?? envLogo ?? DEFAULT_LOGO_URL;
   const logoDarkUrl = resolveMediaUrl(raw?.logoDark);
+  // True when a real logo image exists (CMS upload or explicit env default).
+  // When only the bundled placeholder remains, the navbar renders the Lô Hobby
+  // Playfair wordmark instead.
+  const hasCustomLogo = customLogo !== null || envLogo !== null;
   const faviconUrl = resolveMediaUrl(raw?.favicon);
 
   const primaryColor = normalizeHexColor(
@@ -201,6 +209,7 @@ export function resolveStoreBranding(
     descriptionShort,
     logoUrl,
     logoDarkUrl,
+    hasCustomLogo,
     faviconUrl,
     primaryColor,
     primaryColorHover: darkenHex(primaryColor, 12),

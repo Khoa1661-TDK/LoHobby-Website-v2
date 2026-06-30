@@ -15,7 +15,7 @@ import { getStoreBranding } from '@/lib/store-branding';
 function FooterLinkList({ column }: { column: NavColumn }): ReactElement {
   return (
     <div>
-      <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-warm-400">
+      <h3 className="font-display text-xs font-bold uppercase tracking-[0.2em] text-warm-400">
         {column.heading}
       </h3>
       <ul className="mt-5 space-y-3">
@@ -85,7 +85,7 @@ export default async function Footer(): Promise<ReactElement> {
         {/* Brand + contact */}
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div className="lg:max-w-xs">
-            <p className="font-display text-xl font-bold text-warm-50">
+            <p className="font-logo text-2xl font-semibold italic tracking-tight text-warm-50">
               {branding.storeName}
             </p>
             <p className="mt-3 text-sm leading-relaxed text-warm-400">
@@ -145,7 +145,7 @@ export default async function Footer(): Promise<ReactElement> {
 
           {branding.footer.showNewsletter ? (
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-warm-400">
+              <h3 className="font-display text-xs font-bold uppercase tracking-[0.2em] text-warm-400">
                 {t('newsletterHeading')}
               </h3>
               <div className="mt-5">

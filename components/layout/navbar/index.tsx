@@ -64,7 +64,7 @@ export async function Navbar(): Promise<ReactElement> {
                       prefetch={!tab.external}
                       target={tab.external ? '_blank' : undefined}
                       rel={tab.external ? 'noreferrer noopener' : undefined}
-                      className="inline-flex rounded-lg px-3 py-2 text-sm font-medium text-warm-600 transition-colors duration-200 hover:bg-warm-100/80 hover:text-warm-900 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-100"
+                      className="inline-flex rounded-pill px-3.5 py-2 text-sm font-medium text-warm-600 transition-colors duration-200 hover:bg-warm-100 hover:text-warm-900 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-100"
                     >
                       {tab.label}
                     </Link>

@@ -46,12 +46,12 @@ export default function FooterNewsletter(): ReactElement {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder={t('emailPlaceholder')}
-            className="min-w-0 flex-1 rounded-lg border border-warm-800 bg-warm-950 px-3 py-2.5 text-sm text-warm-100 placeholder:text-warm-600 transition-colors duration-200 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+            className="min-w-0 flex-1 rounded-full border border-warm-800 bg-warm-950 px-4 py-2.5 text-sm text-warm-100 placeholder:text-warm-600 transition-colors duration-200 focus:border-warm-500 focus:outline-none focus:ring-1 focus:ring-warm-500"
           />
           <button
             type="submit"
             disabled={isPending}
-            className="shrink-0 rounded-lg bg-warm-100 px-5 py-2.5 text-sm font-semibold text-warm-900 transition-all duration-200 hover:bg-warm-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            className="shrink-0 rounded-full bg-warm-100 px-6 py-2.5 text-sm font-semibold uppercase tracking-wide text-warm-900 transition-all duration-200 hover:bg-warm-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? t('subscribing') : t('subscribe')}
           </button>

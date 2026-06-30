@@ -108,7 +108,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                   <Link
                     href="/search"
                     onClick={closeCart}
-                    className="mt-6 inline-flex rounded-xl bg-warm-900 px-5 py-2.5 text-sm font-medium text-warm-50 transition-all duration-200 hover:bg-warm-800 dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
+                    className="mt-6 inline-flex rounded-full bg-warm-900 px-6 py-2.5 text-sm font-semibold uppercase tracking-wide text-warm-50 transition-all duration-200 hover:bg-warm-800 dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
                   >
                     {t('exploreNow')}
                   </Link>
@@ -137,7 +137,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                                     refresh();
                                   })
                                 }
-                                className="ease relative flex h-[18px] w-[18px] items-center justify-center rounded-full bg-warm-300 transition-all duration-200 before:absolute before:-inset-3.5 before:content-[''] hover:bg-terracotta-500 hover:scale-110 disabled:opacity-50 dark:bg-warm-700 dark:hover:bg-terracotta-600"
+                                className="ease relative flex h-[18px] w-[18px] items-center justify-center rounded-full bg-warm-300 transition-all duration-200 before:absolute before:-inset-3.5 before:content-[''] hover:bg-warm-900 hover:scale-110 disabled:opacity-50 dark:bg-warm-700 dark:hover:bg-warm-100 dark:hover:text-warm-900"
                               >
                                 <CloseIcon className="h-3.5 w-3.5 text-white" />
                               </button>
@@ -255,7 +255,7 @@ export default function CartModal({ cart }: Props): ReactElement {
                   <Link
                     href="/checkout"
                     onClick={closeCart}
-                    className="block w-full rounded-xl bg-warm-900 py-3 text-center text-sm font-semibold text-warm-50 shadow-soft-md transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
+                    className="block w-full rounded-full bg-warm-900 py-3.5 text-center text-sm font-semibold uppercase tracking-wide text-warm-50 shadow-soft-md transition-all duration-200 hover:bg-warm-800 hover:shadow-soft-lg active:scale-[0.98] dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
                   >
                     {t('checkout')}
                   </Link>
@@ -280,7 +280,7 @@ function OpenCart({
   return (
     <div
       data-cart-icon
-      className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-600 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200"
+      className="relative flex h-10 w-10 items-center justify-center rounded-full border border-warm-200/80 text-warm-600 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-900 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200"
     >
       <ShoppingCartIcon
         className={`h-4 w-4 transition-all ease-spring hover:scale-110 ${className ?? ''}`}
@@ -288,7 +288,7 @@ function OpenCart({
       {quantity ? (
         <div
           ref={badgeRef}
-          className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-terracotta-500 px-1 text-[10px] font-bold text-white shadow-sm dark:bg-terracotta-400 dark:text-warm-950"
+          className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-warm-900 px-1 text-[10px] font-bold text-warm-50 shadow-sm dark:bg-warm-100 dark:text-warm-900"
         >
           {quantity}
         </div>
@@ -299,7 +299,7 @@ function OpenCart({
 
 function CloseCart({ className }: { className?: string }): ReactElement {
   return (
-    <div className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-warm-200/80 text-warm-500 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-800 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200">
+    <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-warm-200/80 text-warm-500 transition-all duration-200 hover:bg-warm-100/60 hover:text-warm-800 dark:border-warm-800/60 dark:text-warm-400 dark:hover:bg-warm-800/50 dark:hover:text-warm-200">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
