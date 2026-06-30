@@ -1,4 +1,4 @@
-# DESIGN.md — ShopNex Maker Store
+# DESIGN.md — Lô Hobby Store
 
 > Machine-readable design system for AI coding agents (Google Labs DESIGN.md format, Apache 2.0).
 > Agents reading this file MUST follow every rule here when generating or editing UI code.
@@ -7,331 +7,194 @@
 
 ## Identity
 
-**Name:** ShopNex Maker Store
-**Concept:** Technical maker-workbench frame with vivid filament-color pops.
-**Personality:** Precise and slicer/CAD-flavored for the serious side (mil-models, technical prints); saturated filament accents for the playful side (brainrot figures, keychains).
-**Anti-pattern:** Do NOT default to cream backgrounds, serif display fonts, or terracotta accents — that is the generic AI template look this identity deliberately avoids.
+**Name:** Lô Hobby Store
+**Concept:** Editorial monochrome storefront — gallery-white surfaces, near-black ink, a single serif wordmark as the only ornament.
+**Personality:** Calm, premium, print-magazine restraint. Confidence through whitespace and typography, not color.
+**Anti-pattern:** Do NOT add colored accents, warm/cream backgrounds, terracotta, or technical/CAD motifs. Do NOT use a serif font for body or display — serif is reserved exclusively for the logo wordmark.
 
 ---
 
 ## Color
 
 ### Design philosophy
-60-30-10 rule: 60% surface / 30% ink / 10% accent. Complementary blue↔yellow accent pair — blue = precise/technical (CAD, blueprints), yellow = playful (brainrot, keychains). Coral is a reserved third pop used sparingly.
+Monochrome. The palette is white → ink with neutral grays between. There is no chromatic accent — emphasis comes from weight, scale, and a near-black "ink" fill (black pill buttons on white). Light theme is "paper"; dark theme is "carbon" (inverted).
 
-### Light theme — "Build Plate"
+### Light theme — "Paper"
 
 | Token | CSS Variable | Hex | Role |
 |-------|-------------|-----|------|
-| Surface | `--surface` | `#ECEFF3` | Cool slicer-gray base (60%) |
-| Surface raised | `--surface-raised` | `#FFFFFF` | Cards, panels, modals |
-| Ink | `--ink` | `#1B2027` | Graphite — body text, frames (30%) |
-| Line | `--line` | `#C9D2DC` | Layer-line borders, hairlines, dividers |
-| Accent | `--accent` | `#1F6FEB` | CAD blue — primary action, links (10%) |
-| Accent 2 | `--accent-2` | `#FFC21A` | Filament yellow — playful badges, "new" flags |
-| Accent 3 | `--accent-3` | `#FF4D6D` | Filament coral — sparing playful flag only |
+| Surface | `--surface` | `#ffffff` | Page base (60%) |
+| Surface raised | `--surface-raised` | `#f5f5f5` | Cards, panels, raised chips |
+| Ink | `--ink` | `#111111` | Body text, headings, primary fills (30%) |
+| Line | `--line` | `#e5e5e5` | Hairline borders, dividers |
+| Accent | `--accent` | `#111111` | Primary action (black pill) (10%) |
+| Accent 2 | `--accent-2` | `#525252` | Muted/secondary text + ghost states |
+| Accent 3 | `--accent-3` | `#111111` | Reserved — same ink (no color pop) |
 
 ### Dark theme — "Carbon"
 
 | Token | CSS Variable | Hex | Role |
 |-------|-------------|-----|------|
-| Surface | `--surface` | `#14181D` | Carbon base (60%) |
-| Surface raised | `--surface-raised` | `#1C222A` | Cards, panels, modals |
-| Ink | `--ink` | `#E7ECF1` | Light graphite — body text, frames (30%) |
-| Line | `--line` | `#2C353F` | Layer-line borders, hairlines, dividers |
-| Accent | `--accent` | `#4D90FF` | CAD blue brightened for dark (10%) |
-| Accent 2 | `--accent-2` | `#FFCE3A` | Filament yellow brightened for dark |
-| Accent 3 | `--accent-3` | `#FF6B85` | Filament coral brightened for dark |
+| Surface | `--surface` | `#0b0b0b` | Page base (60%) |
+| Surface raised | `--surface-raised` | `#181818` | Cards, panels, raised chips |
+| Ink | `--ink` | `#f5f5f5` | Body text, headings, primary fills (30%) |
+| Line | `--line` | `#2a2a2a` | Hairline borders, dividers |
+| Accent | `--accent` | `#f5f5f5` | Primary action (white pill on dark) |
+| Accent 2 | `--accent-2` | `#a3a3a3` | Muted/secondary text |
+| Accent 3 | `--accent-3` | `#f5f5f5` | Reserved |
 
 ### Token architecture
 
-CSS custom properties on `:root` (light) and `.dark` (dark). Exposed to Tailwind 4 as named colors:
+CSS custom properties on `:root` (light) and `.dark` (dark) in `app/globals.css`:
 ```css
 :root {
-  --surface: #ECEFF3;
-  --surface-raised: #FFFFFF;
-  --ink: #1B2027;
-  --line: #C9D2DC;
-  --accent: #1F6FEB;
-  --accent-2: #FFC21A;
-  --accent-3: #FF4D6D;
+  --surface: #ffffff;
+  --surface-raised: #f5f5f5;
+  --ink: #111111;
+  --line: #e5e5e5;
+  --accent: #111111;
+  --accent-2: #525252;
+  --accent-3: #111111;
+  --r: 14px;        /* card radius */
+  --r-sm: 10px;
+  --r-pill: 9999px;
+  --sh-1: 0 1px 2px rgba(17,17,17,0.05);
+  --sh-2: 0 6px 20px rgba(17,17,17,0.08);
+  --sh-3: 0 18px 48px rgba(17,17,17,0.12);
 }
 .dark {
-  --surface: #14181D;
-  --surface-raised: #1C222A;
-  --ink: #E7ECF1;
-  --line: #2C353F;
-  --accent: #4D90FF;
-  --accent-2: #FFCE3A;
-  --accent-3: #FF6B85;
+  --surface: #0b0b0b;
+  --surface-raised: #181818;
+  --ink: #f5f5f5;
+  --line: #2a2a2a;
+  --accent: #f5f5f5;
+  --accent-2: #a3a3a3;
+  --accent-3: #f5f5f5;
 }
 ```
-Reference tokens as `bg-[var(--surface)]`, `text-[var(--ink)]`, `border-[var(--line)]` in Tailwind 4.
+
+Two ways to reference tokens:
+- **Tailwind named tokens** (preferred): `bg-surface`, `bg-surface-raised`, `text-ink`, `border-line`, `bg-accent`, `shadow-sh-2`, `rounded-card`, `rounded-pill`.
+- The neutral `warm-*` ramp (`warm-50`=white … `warm-950`=near-black) and `cream-*` are retuned to monochrome and remain valid for the storefront backbone (`bg-warm-50 text-warm-900`).
+
+Never hardcode hex. Never reintroduce a chromatic value into these scales.
 
 ---
 
 ## Typography
 
-| Role | Font | Weight | Usage |
-|------|------|--------|-------|
-| Display | Space Grotesk | 600–700 | Hero headlines, section titles, product names |
-| Body | Plus Jakarta Sans | 400–500 | Body copy, descriptions, UI labels |
-| Mono | Space Mono | 400 | Spec tags, SKUs, dimensions, price labels, code |
+| Role | Font | CSS var | Weight | Usage |
+|------|------|---------|--------|-------|
+| Logo | Playfair Display | `--font-playfair` / `font-logo` | 600–700 italic | The wordmark ONLY |
+| Display | Archivo | `--font-archivo` / `font-display` | 600–800 | Hero headlines, section titles, product names |
+| Body / UI | Inter | `--font-inter` / `font-sans` | 400–600 | Body copy, labels, nav, buttons |
+| Mono | Space Mono | `--font-space-mono` / `font-mono` | 400 | Prices, eyebrow tags, SKUs (optional) |
 
 ### Rules
-- Body base: 16px / line-height 1.6
-- Mono labels: small (0.75rem–0.875rem), letter-spacing 0.08em–0.12em, uppercase
-- Display headings: tight tracking (−0.02em to −0.03em) at large sizes
-- Never use a serif font anywhere in the UI
-- Space Mono is the **brand voice** for anything spec/technical — dimensions, layer counts, filament weights, prices in product cards
-- Plus Jakarta Sans is already loaded in the Next.js font config — do NOT import additional body fonts
+- **Serif (Playfair) is the logo only.** Never use serif for headings, body, or any other text.
+- Display headings use Archivo with tight tracking (−0.02em to −0.03em) at large sizes; often UPPERCASE for section eyebrows.
+- Body base: 16px / line-height 1.6, Inter.
+- The active body font is admin-selectable via `lib/store-fonts.ts` (`inter` default, `jakarta`/`roboto`/`system` alternates). Display + logo fonts are fixed brand identity and do NOT change with the preset.
+- `font-display` → `--font-display-active` (Archivo), `font-logo`/`font-serif` → `--font-logo-active` (Playfair), `font-sans` → `--font-sans-active` (Inter).
 
 ---
 
 ## Spacing
 
-Base unit: 4px (0.25rem). All spacing values are multiples of 4.
+Base unit: 4px (0.25rem). All spacing values are multiples of 4. Use the standard Tailwind scale — `p-4`, `gap-6`, `py-16`. This is an editorial layout: be generous with whitespace. Section vertical padding `py-16` to `py-24`; major section breaks use the larger end.
 
-| Token | Value | Use |
-|-------|-------|-----|
-| `space-1` | 4px | Icon padding, micro gaps |
-| `space-2` | 8px | Tight component internal padding |
-| `space-3` | 12px | Badge padding, small gaps |
-| `space-4` | 16px | Default component padding |
-| `space-6` | 24px | Card internal padding |
-| `space-8` | 32px | Section internal gaps |
-| `space-12` | 48px | Between components in a section |
-| `space-16` | 64px | Section vertical padding |
-| `space-24` | 96px | Major section breaks |
+---
 
-Use standard Tailwind spacing scale — `p-4`, `gap-6`, `py-16`, etc.
+## Geometry & Elevation
+
+### Radius grammar
+- Cards, panels, media frames: `rounded-card` (`--r`, 14px) or `rounded-card-sm` (`--r-sm`, 10px)
+- Buttons, nav links, search, badges, chips: `rounded-pill` (fully round)
+- Never mix radii within the same component.
+
+### Shadows
+Token-driven so they invert with the theme: `shadow-sh-1` (hairline rest), `shadow-sh-2` (hover lift / dropdowns), `shadow-sh-3` (modals / drawers). Prefer `border-line` hairlines over shadows at rest; reserve `sh-2`/`sh-3` for elevation.
 
 ---
 
 ## Layout Patterns
 
 ### Signature devices
-
-**BuildPlateGrid** — faint orthographic grid on hero and feature sections. Subtle, low-contrast, evokes a CAD build plate. Never on product cards or content text areas.
-```css
-background-image: linear-gradient(var(--line) 1px, transparent 1px),
-                  linear-gradient(90deg, var(--line) 1px, transparent 1px);
-background-size: 24px 24px;
-opacity: 0.4;
-```
-
-**LayerLineDivider** — horizontal 1–2px rule between major sections, styled as an FDM layer line. Replaces generic `<hr>` everywhere.
-```tsx
-<div className="w-full h-px bg-[var(--line)] my-16" aria-hidden />
-```
-
-**SpecTag** — monospace eyebrow label above headings and on product specs. `Space Mono`, `text-xs tracking-widest uppercase text-[var(--accent)]`.
-```tsx
-<span className="font-mono text-xs tracking-widest uppercase text-[var(--accent)]">
-  {children}
-</span>
-```
-
-### Radius grammar
-- Structural containers (cards, panels, modals, grid cells): `rounded-md` (6px) or `rounded-lg` (8px)
-- Playful chips, badges, tags: `rounded-full`
-- Buttons: `rounded-md`
-- Inputs: `rounded-md`
-- Never mix radii within the same component
+- **Serif wordmark** — the ONLY ornament. Playfair Display italic, paired with an UPPERCASE Inter tag/eyebrow beneath or beside it.
+- **Pill everything** — nav links, search field, CTAs, filter tabs, and badges are all fully rounded. The black (ink) pill on white is the signature primary action.
+- **Hairline dividers** — 1px `border-line` rules between major sections. No heavy rules, no decorative separators.
+- **Uppercase eyebrow** — small Inter, `text-xs tracking-widest uppercase text-accent-2`, above section headings.
 
 ### Grid
 - Product grids: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4`, `gap-4 sm:gap-6`
 - Content sections: max-width `1280px`, horizontal padding `px-4 sm:px-6 lg:px-8`
-- Hero: full-bleed with BuildPlateGrid overlay, content max-width `960px` centered
+- Hero: generous whitespace, content max-width ~`960px`
 
 ---
 
 ## Component Rules
 
 ### Buttons
-- Primary: `bg-[var(--accent)] text-white rounded-md px-5 py-2.5 font-medium hover:opacity-90`
-- Secondary: `border border-[var(--line)] text-[var(--ink)] rounded-md px-5 py-2.5 hover:bg-[var(--surface-raised)]`
-- Destructive: use `--accent-3` (coral) sparingly — only for irreversible actions
-- Never use ghost buttons with zero border — always visible affordance
+- Primary: `bg-accent text-surface rounded-pill px-5 py-2.5 font-medium hover:opacity-90` — black pill on light, white pill on dark.
+- Ghost / secondary: `border border-line text-ink rounded-pill px-5 py-2.5 bg-transparent hover:bg-surface-raised`.
+- No chromatic/destructive color — destructive actions use ink + clear labeling.
 
 ### Product cards
-- Background: `bg-[var(--surface-raised)]`, border: `border border-[var(--line)]`, radius: `rounded-lg`
-- Price: Space Mono, `font-mono text-sm text-[var(--ink)]`
-- Badge (new, sale): `rounded-full bg-[var(--accent-2)] text-[var(--ink)] text-xs font-mono px-2 py-0.5`
-- Hover: subtle `shadow-md` lift — do NOT change background color on hover
+- Square thumbnail, `bg-surface-raised`, `rounded-card`.
+- Text badge top-left: small UPPERCASE Inter, no colored fill.
+- Hover: quick-add fab + subtle `shadow-sh-2` lift. Do NOT change background color on hover.
+- "Add to bag" CTA is a pill.
+- Price: `text-ink`; mono optional via `font-mono`.
 
 ### Surfaces and panels
-- Page background: `bg-[var(--surface)]`
-- Cards/modals/dropdowns: `bg-[var(--surface-raised)] border border-[var(--line)]`
-- Do NOT create a third surface level — two is the limit
+- Page background: `bg-surface` (white). Cards/modals/drawers: `bg-surface-raised`.
+- Two surface levels only. Do NOT create a third.
 
 ### Forms and inputs
-- Border: `border border-[var(--line)] rounded-md`
-- Focus: `focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]`
-- Label: Plus Jakarta Sans, `text-sm font-medium text-[var(--ink)]`
-- Error state: `border-[var(--accent-3)]` with small inline error text
-
-### Accent usage
-- `--accent` (CAD blue): primary actions, links, active states, focus rings
-- `--accent-2` (filament yellow): badges, "new" flags, playful highlights — max 2 per viewport
-- `--accent-3` (coral): destructive/error, sparing pop — max 1 per viewport
+- Border: `border border-line rounded-pill` (search/inputs) or `rounded-card` for textareas.
+- Focus: neutral ink ring (`focus-visible:ring-ink`), never colored.
+- Label: Inter, `text-sm font-medium text-ink`.
 
 ---
 
 ## Animation
 
-Library: **Motion One** (`motion` package, WAAPI-based, ~18kb gzipped). No other animation library.
-
-### Core presets
-
-| Preset | Config | Use when |
-|--------|--------|----------|
-| `fade-up` | opacity 0→1, y 16→0, 300ms ease-out | Text blocks, headings, descriptions |
-| `fade-in` | opacity 0→1, 250ms ease-out | Banners, overlays, promo strips |
-| `scale-in` | opacity 0→1, scale 0.95→1, 280ms ease-out | CTAs, buttons, countdown, video embeds |
-| `stagger-cards` | `fade-up` per child, 60ms stagger | Product grids, pricing tables, feature grids |
-| `stagger-list` | `fade-in` per child, 40ms stagger | FAQ, steps, stats, columns |
-| `none` | no animation | Spacers, purely structural elements |
-
-### IntersectionObserver config
-```ts
-{ rootMargin: '0px 0px -10% 0px', threshold: 0.05 }
-```
-One-shot — unobserve after first trigger. Never re-animate on scroll-up.
-
-### Page transition
-Entry-only: opacity 0→1, y 8→0, 250ms ease-out. No exit animation.
-
-### `prefers-reduced-motion`
-Handled once in `lib/animations/config.ts`. When reduced motion is active:
-- All durations collapse to 0ms
-- All transform animations are stripped
-- Opacity-only fallback remains (fade but no movement)
-Never check `prefers-reduced-motion` inside individual components.
-
-### Block → preset mapping
-
-| Block | Preset |
-|-------|--------|
-| Hero / HeroCarousel | `fade-up` |
-| ProductCard | `stagger-cards` |
-| CardGrid | `stagger-cards` |
-| FeatureGrid | `stagger-cards` |
-| Recommendations | `stagger-cards` |
-| RecentlyViewed | `stagger-cards` |
-| PricingTable | `stagger-cards` |
-| FAQ | `stagger-list` |
-| Steps | `stagger-list` |
-| Stats | `stagger-list` |
-| Columns | `stagger-list` |
-| CallToAction | `scale-in` |
-| Button | `scale-in` |
-| VideoEmbed | `scale-in` |
-| Countdown | `scale-in` |
-| Text | `fade-up` |
-| Quote | `fade-up` |
-| PromoBanner | `fade-in` |
-| Banner | `fade-in` |
-| Tabs | `fade-in` |
-| SocialBar | `fade-in` |
-| Divider / LayerLineDivider | `fade-in` |
-| Spacer | `none` |
-
----
-
-## Layout Primitives
-
-### Signature devices
-
-**`BuildPlateGrid`** — faint dot-grid or crosshatch overlay on hero sections. Hex: `--line` at 20% opacity. Never on body content areas.
-
-**`LayerLineDivider`** — 1–2px horizontal rule at FDM layer spacing (0.2mm scale = ~4px visual rhythm). Animate in on scroll with `fade-in` preset. Replace plain `<hr>` elements in storefront layouts.
-
-**`SpecTag`** — mono eyebrow label: `font-family: Space Mono`, `text-xs tracking-widest uppercase`, `text-[var(--ink)]/60`. Used for product specs, dimensions, SKU chips, category eyebrows.
-
-### Radius grammar
-
-| Surface type | Radius | Token |
-|---|---|---|
-| Structural frames, data tables, spec panels | `rounded-none` or `rounded-sm` (2px) | — |
-| Cards, modals, inputs | `rounded-lg` (8px) | — |
-| Badges, chips, tags, avatars | `rounded-full` | — |
-
-Sharp = precise/technical. Rounded = playful/interactive. Never mix within the same component.
-
----
-
-## Components
-
-### Buttons
-
-- Primary: `bg-[var(--accent)] text-white rounded-lg` — CAD blue, hover darkens 10%
-- Secondary: `border border-[var(--line)] text-[var(--ink)] rounded-lg bg-transparent`
-- Danger/highlight: `bg-[var(--accent-3)]` — coral, sparing use only
-- Badge/pill: `bg-[var(--accent-2)] text-[var(--ink)] rounded-full text-xs` — filament yellow
-
-### Cards
-
-- Background: `bg-[var(--surface-raised)]`
-- Border: `border border-[var(--line)]`
-- Radius: `rounded-lg`
-- Shadow: `shadow-sm` — avoid heavy drop shadows; use `--line` borders instead
-- Product card price: Space Mono, `text-sm font-mono`
-- Product card name: Space Grotesk, `font-semibold`
-
-### Forms and inputs
-
-- Border: `border border-[var(--line)] rounded-lg`
-- Focus ring: `ring-2 ring-[var(--accent)]` — CAD blue
-- Label: Plus Jakarta Sans, `text-sm font-medium text-[var(--ink)]`
-- Error state: `border-[var(--accent-3)]` — coral
-
-### Surfaces and panels
-
-- Page background: `bg-[var(--surface)]`
-- Raised panels, drawers, modals: `bg-[var(--surface-raised)]`
-- Never use raw `white` or `black` — always route through token vars
+Library: **Motion** (`motion` package). Scroll-reveal is centralized in `lib/animations/` — wrap reveals with `shouldAnimate()` and map each page-builder block to its preset in `lib/animations/block-defaults.ts`. Respect `prefers-reduced-motion` via the shared guard; never check it per-component. Entry-only page transition (opacity + small y), no exit. Floating hero collage uses `float-gentle`.
 
 ---
 
 ## Agent Rules
 
 ### DO
-- Use `--surface`, `--surface-raised`, `--ink`, `--line`, `--accent`, `--accent-2`, `--accent-3` for every color decision
-- Use Space Grotesk for all display/headline text
-- Use Space Mono for prices, specs, dimensions, SKUs, and mono eyebrow labels
-- Apply `LayerLineDivider` between major content sections instead of plain `<hr>`
-- Apply `SpecTag` for any technical label, product attribute, or category eyebrow
-- Use `rounded-none`/`rounded-sm` on structural frames; `rounded-lg` on cards/inputs; `rounded-full` on badges
-- Wrap all scroll-reveal animations with the `shouldAnimate()` guard from `lib/animations/config.ts`
-- Map page-builder blocks to their assigned animation preset (see Animation section above)
+- Use `bg-surface`, `bg-surface-raised`, `text-ink`, `text-accent-2` (muted), `border-line`, `bg-accent` for every color decision.
+- Use Archivo (`font-display`) for headings, Inter (`font-sans`) for body/UI, Playfair (`font-logo`) for the wordmark ONLY.
+- Use `rounded-pill` for buttons/nav/search/badges and `rounded-card` for cards/panels.
+- Use `shadow-sh-1/2/3` and the `warm-*`/`cream-*` neutral ramp where token names don't reach.
+- Keep it monochrome and editorial — emphasis via weight, scale, whitespace.
 
 ### DO NOT
-- Do NOT use cream, off-white, beige, or warm neutral backgrounds — use `--surface` only
-- Do NOT use any serif font (Georgia, Merriweather, Playfair, etc.) anywhere
-- Do NOT use Inter or Roboto as body font — Plus Jakarta Sans is already loaded
-- Do NOT use terracotta, burnt orange, or warm amber as accent colors
-- Do NOT hardcode hex values — always reference CSS variables
-- Do NOT use Tailwind's default color palette (e.g., `bg-blue-600`, `text-gray-900`) — use `bg-[var(--accent)]`, `text-[var(--ink)]`
-- Do NOT apply heavy box shadows — use `border border-[var(--line)]` + `shadow-sm` maximum
-- Do NOT animate with raw CSS transitions when a Motion One preset exists for the block type
-- Do NOT bypass `prefers-reduced-motion` — the `shouldAnimate()` guard is mandatory
+- Do NOT introduce ANY chromatic accent (blue, terracotta, yellow, etc.) — the system is monochrome.
+- Do NOT use serif (Playfair, Georgia, Fraunces) for anything except the logo wordmark.
+- Do NOT use warm/cream/beige backgrounds — the `warm-*`/`cream-*` scales are neutral now; keep them neutral.
+- Do NOT hardcode hex values — reference tokens.
+- Do NOT use sharp/square buttons — primary actions are pills.
+- Do NOT add heavy drop shadows at rest — hairline `border-line` first.
 
 ---
 
 ## Tailwind Token Mapping
 
-Tailwind 4 uses CSS variables directly via arbitrary value syntax. No theme extension needed.
-
 | Semantic role | Tailwind class |
 |---|---|
-| Page background | `bg-[var(--surface)]` |
-| Card / panel background | `bg-[var(--surface-raised)]` |
-| Body text | `text-[var(--ink)]` |
-| Muted / secondary text | `text-[var(--ink)]/60` |
-| Border / divider | `border-[var(--line)]` |
-| Primary action (blue) | `bg-[var(--accent)]` / `text-[var(--accent)]` |
-| Playful badge (yellow) | `bg-[var(--accent-2)]` / `text-[var(--accent-2)]` |
-| Highlight / coral | `bg-[var(--accent-3)]` / `text-[var(--accent-3)]` |
-| Focus ring | `ring-[var(--accent)]` |
-| Hover surface | `hover:bg-[var(--surface-raised)]` |
+| Page background | `bg-surface` |
+| Card / panel background | `bg-surface-raised` |
+| Body text | `text-ink` |
+| Muted / secondary text | `text-accent-2` or `text-ink/60` |
+| Border / divider | `border-line` |
+| Primary action (ink pill) | `bg-accent text-surface` |
+| Card radius | `rounded-card` |
+| Pill radius | `rounded-pill` |
+| Rest / hover / modal elevation | `shadow-sh-1` / `shadow-sh-2` / `shadow-sh-3` |
+| Display heading font | `font-display` |
+| Logo wordmark font | `font-logo` |
+| Body font | `font-sans` |

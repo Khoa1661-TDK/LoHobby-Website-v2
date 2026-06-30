@@ -17,9 +17,10 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-sans-active, var(--font-jakarta))', 'system-ui', 'sans-serif'],
-        serif: ['var(--font-serif-active, var(--font-fraunces))', 'Georgia', 'serif'],
-        display: ['var(--font-serif-active, var(--font-fraunces))', 'Georgia', 'serif'],
+        sans: ['var(--font-sans-active, var(--font-inter))', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display-active, var(--font-archivo))', 'system-ui', 'sans-serif'],
+        logo: ['var(--font-logo-active, var(--font-playfair))', 'Georgia', 'serif'],
+        serif: ['var(--font-serif-active, var(--font-playfair))', 'Georgia', 'serif'],
         mono: ['var(--font-mono-active, var(--font-space-mono))', 'ui-monospace', 'monospace'],
       },
       keyframes: {
@@ -94,42 +95,45 @@ const config: Config = {
       },
       colors: {
         paper: '#f5f5f5',
-        // Warm off-white palette
+        // Lô Hobby neutral "paper" ramp — the storefront backbone. Body bg,
+        // borders, and muted text all reference these directly.
         cream: {
-          50: '#fefdfb',
-          100: '#fdfbf7',
-          200: '#faf5ed',
-          300: '#f5ecde',
-          400: '#ede0cc',
-          500: '#e2d1b8',
+          50: '#ffffff',
+          100: '#fafafa',
+          200: '#f5f5f5',
+          300: '#ededed',
+          400: '#e0e0e0',
+          500: '#d4d4d4',
         },
-        // Warm taupe/greige — bridges ink and paper with warmth
+        // Neutral greige replaced by a true monochrome scale: 50 = white,
+        // 950 = near-black. Drives bg-warm-50/text-warm-900 baseline + lines.
         warm: {
-          50: '#f9f7f4',
-          100: '#f0ece6',
-          200: '#e2ddd6',
-          300: '#c9c2b8',
-          400: '#a9a095',
-          500: '#8a8075',
-          600: '#6b6259',
-          700: '#524b44',
-          800: '#3d3732',
-          900: '#292420',
-          950: '#1a1613',
+          50: '#ffffff',
+          100: '#f5f5f5',
+          200: '#e5e5e5',
+          300: '#d4d4d4',
+          400: '#a3a3a3',
+          500: '#737373',
+          600: '#525252',
+          700: '#404040',
+          800: '#262626',
+          900: '#111111',
+          950: '#0b0b0b',
         },
-        // Terracotta accent
+        // Accent retuned to monochrome ink — focus rings, selection, and any
+        // legacy terracotta-* class now render as neutral ink, not orange.
         terracotta: {
-          50: '#fdf5f2',
-          100: '#fce8e0',
-          200: '#f9d2c0',
-          300: '#f4b297',
-          400: '#ed8b67',
-          500: '#e46a41',
-          600: '#d14e28',
-          700: '#af3d20',
-          800: '#93331e',
-          900: '#7a2e1d',
-          950: '#42150b',
+          50: '#fafafa',
+          100: '#f5f5f5',
+          200: '#e5e5e5',
+          300: '#d4d4d4',
+          400: '#737373',
+          500: '#525252',
+          600: '#404040',
+          700: '#262626',
+          800: '#1a1a1a',
+          900: '#111111',
+          950: '#000000',
         },
         // Monochrome primary scale — overridden at runtime via --brand-primary CSS vars
         filament: {
@@ -180,6 +184,10 @@ const config: Config = {
         '2xl': '1.25rem',
         '3xl': '1.75rem',
         full: '9999px',
+        // Lô Hobby mockup geometry — token-driven card + pill radii.
+        card: 'var(--r, 14px)',
+        'card-sm': 'var(--r-sm, 10px)',
+        pill: 'var(--r-pill, 9999px)',
       },
       // Enhanced shadow system
       boxShadow: {
@@ -188,7 +196,11 @@ const config: Config = {
         'soft-lg': '0 12px 32px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)',
         'soft-xl': '0 24px 48px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
         'inner-soft': 'inset 0 2px 4px rgba(0,0,0,0.03)',
-        'glow': '0 0 24px rgba(228, 106, 65, 0.15)',
+        'glow': '0 0 24px rgba(17, 17, 17, 0.12)',
+        // Lô Hobby mockup elevation scale — token-driven so light/dark swap.
+        'sh-1': 'var(--sh-1)',
+        'sh-2': 'var(--sh-2)',
+        'sh-3': 'var(--sh-3)',
       },
       // Extended spacing for editorial layouts
       spacing: {

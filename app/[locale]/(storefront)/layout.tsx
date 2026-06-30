@@ -1,5 +1,14 @@
 // app/[locale]/(storefront)/layout.tsx
-import { Fraunces, Inter, Plus_Jakarta_Sans, Roboto, Space_Grotesk, Space_Mono } from 'next/font/google';
+import {
+  Archivo,
+  Fraunces,
+  Inter,
+  Playfair_Display,
+  Plus_Jakarta_Sans,
+  Roboto,
+  Space_Grotesk,
+  Space_Mono,
+} from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactElement, ReactNode } from 'react';
@@ -53,6 +62,20 @@ const fraunces = Fraunces({
 const inter = Inter({
   subsets: ['latin', 'vietnamese'],
   variable: '--font-inter',
+  display: 'swap',
+});
+
+// Lô Hobby brand fonts: Archivo for display/headings, Playfair Display for the
+// serif logo wordmark.
+const archivo = Archivo({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-archivo',
+  display: 'swap',
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-playfair',
   display: 'swap',
 });
 
@@ -183,7 +206,7 @@ export default async function StorefrontLayout({
   return (
     <html
       lang={locale}
-      className={`${jakarta.variable} ${fraunces.variable} ${inter.variable} ${roboto.variable} ${spaceGrotesk.variable} ${spaceMono.variable}`}
+      className={`${archivo.variable} ${playfair.variable} ${jakarta.variable} ${fraunces.variable} ${inter.variable} ${roboto.variable} ${spaceGrotesk.variable} ${spaceMono.variable}`}
       suppressHydrationWarning
     >
       <head>

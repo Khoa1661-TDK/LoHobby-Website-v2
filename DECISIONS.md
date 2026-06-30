@@ -236,3 +236,12 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** We migrate stored `reveal-*` values out entirely and drop the alias layer, or the alias targets in `lib/animations/config.ts` change (keep this remap in sync).
 
 ---
+
+## 2026-06-30 — Retheme storefront to "Lô Hobby" monochrome + serif-logo system
+**Chosen:** Replace the inconsistent theme layers (cool slicer-gray `--surface` tokens, warm/terracotta Tailwind scales, Fraunces serif display, and a contradictory DESIGN.md) with one unified monochrome system: white `--surface` / `#f5f5f5` raised / `#111` ink / neutral `--line`, no chromatic accent, Archivo display + Inter body + Playfair Display serif **logo only**. Default font preset changed `jakarta`→`inter`. Retuned the `warm`/`cream`/`terracotta` Tailwind scales in-place to a neutral monochrome ramp rather than renaming them, and rewrote DESIGN.md to match.
+**Alternatives:** (1) Rename `warm-*`/`terracotta-*` to semantic neutral scales and rewrite every component reference — correct long-term but a large mechanical refactor mixed into a retheme. (2) Add a parallel set of neutral scales and migrate components gradually — leaves two palettes coexisting (existing-code.md §2 anti-pattern). (3) Drive everything off only `--surface/--ink/--line` semantic tokens — body/borders/focus rings reference `warm-*`/`terracotta-*` directly today, so this would still require touching every component.
+**Why:** The body element and most chrome reference `bg-warm-50`, `text-warm-900`, `border-warm-200`, `ring-terracotta-400` directly — the semantic `--surface` tokens were secondary. Retuning the scale values flips the entire baseline to white/ink with zero component edits, keeping Phase 1 confined to the token layer (component rethemes are Phase 2). Keeping the scale names avoids a repo-wide rename churning the same diff as the retheme.
+**Trade-offs:** The Tailwind scale names (`warm`, `terracotta`, `cream`) are now semantically misleading — a `terracotta-400` class renders neutral gray, not orange. This is documented in DESIGN.md and the config comments; a future cleanup can rename them in an isolated refactor. The brand-driven `filament`/`spool` scales are unchanged (already grayscale, runtime-overridable via `--brand-*`).
+**Revisit if:** We do a dedicated refactor to rename the color scales to semantic names, or a store needs a genuinely chromatic brand accent (would reintroduce color into the `--brand-*` vars, not the neutral ramp).
+
+---

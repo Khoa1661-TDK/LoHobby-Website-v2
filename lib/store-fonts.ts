@@ -1,35 +1,30 @@
 // lib/store-fonts.ts — font preset options for white-label storefronts
 
-export const FONT_PRESET_VALUES = ['jakarta', 'inter', 'roboto', 'system'] as const;
+export const FONT_PRESET_VALUES = ['inter', 'jakarta', 'roboto', 'system'] as const;
 
 export type FontPreset = (typeof FONT_PRESET_VALUES)[number];
 
 export type FontPresetConfig = {
   label: string;
   sansVar: string;
-  serifVar: string;
 };
 
 export const FONT_PRESETS: Record<FontPreset, FontPresetConfig> = {
-  jakarta: {
-    label: 'Plus Jakarta Sans + Fraunces (default)',
-    sansVar: 'var(--font-jakarta)',
-    serifVar: 'var(--font-fraunces)',
-  },
   inter: {
-    label: 'Inter',
+    label: 'Inter (Lô Hobby default)',
     sansVar: 'var(--font-inter)',
-    serifVar: 'var(--font-inter)',
+  },
+  jakarta: {
+    label: 'Plus Jakarta Sans',
+    sansVar: 'var(--font-jakarta)',
   },
   roboto: {
     label: 'Roboto',
     sansVar: 'var(--font-roboto)',
-    serifVar: 'Georgia, "Times New Roman", serif',
   },
   system: {
     label: 'System fonts',
     sansVar: 'system-ui, -apple-system, Segoe UI, sans-serif',
-    serifVar: 'Georgia, "Times New Roman", serif',
   },
 };
 
@@ -37,14 +32,19 @@ export function resolveFontPreset(raw: unknown): FontPreset {
   if (typeof raw === 'string' && FONT_PRESET_VALUES.includes(raw as FontPreset)) {
     return raw as FontPreset;
   }
-  return 'jakarta';
+  return 'inter';
 }
 
 export function fontCssVariables(preset: FontPreset): Record<string, string> {
   const config = FONT_PRESETS[preset];
   return {
+    // Body / UI text — admin-selectable per store.
     '--font-sans-active': config.sansVar,
-    '--font-serif-active': 'var(--font-space-grotesk)',
+    // Display headings + serif logo wordmark are part of the Lô Hobby brand
+    // identity and stay fixed regardless of the sans preset.
+    '--font-display-active': 'var(--font-archivo)',
+    '--font-logo-active': 'var(--font-playfair)',
+    '--font-serif-active': 'var(--font-playfair)',
     '--font-mono-active': 'var(--font-space-mono)',
   };
 }

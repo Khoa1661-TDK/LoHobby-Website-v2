@@ -2,7 +2,7 @@
 import type { GlobalAfterChangeHook, GlobalConfig } from 'payload';
 import { payloadAdminAccess } from '@/lib/payload-access';
 import { revalidateStoreSettingsCache } from '@/lib/store-settings';
-import { FONT_PRESET_VALUES } from '@/lib/store-fonts';
+import { FONT_PRESET_VALUES, FONT_PRESETS } from '@/lib/store-fonts';
 
 const invalidateOnChange: GlobalAfterChangeHook = ({ doc }) => {
   try {
@@ -140,16 +140,9 @@ export const StoreSettings: GlobalConfig = {
               name: 'fontPreset',
               type: 'select',
               label: 'Font pairing',
-              defaultValue: 'jakarta',
+              defaultValue: 'inter',
               options: FONT_PRESET_VALUES.map((value) => ({
-                label:
-                  value === 'jakarta'
-                    ? 'Plus Jakarta Sans + Fraunces (default)'
-                    : value === 'inter'
-                      ? 'Inter'
-                      : value === 'roboto'
-                        ? 'Roboto'
-                        : 'System fonts',
+                label: FONT_PRESETS[value].label,
                 value,
               })),
               admin: {
