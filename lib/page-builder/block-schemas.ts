@@ -35,6 +35,7 @@ import {
   FeatureGrid,
   ProductShowcase,
   Reels,
+  InfoSection,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -100,6 +101,7 @@ const REGISTERED_BLOCKS: Block[] = [
   FeatureGrid,
   ProductShowcase,
   Reels,
+  InfoSection,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the

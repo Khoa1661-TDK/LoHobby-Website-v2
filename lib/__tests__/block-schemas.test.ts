@@ -37,7 +37,9 @@ describe('getBlockSchemas', () => {
     expect(slugs).toEqual(
       expect.arrayContaining(['productShowcase', 'reels']),
     );
-    expect(slugs).toHaveLength(32);
+    // The footer-style info section block.
+    expect(slugs).toEqual(expect.arrayContaining(['infoSection']));
+    expect(slugs).toHaveLength(33);
   });
 
   it('should describe hero text and select fields with options', () => {

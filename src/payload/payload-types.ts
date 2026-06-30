@@ -781,6 +781,7 @@ export interface Page {
         | FeatureGridBlock
         | ProductShowcaseBlock
         | ReelsBlock
+        | InfoSectionBlock
       )[]
     | null;
   meta?: {
@@ -2966,7 +2967,7 @@ export interface FeatureGridBlock {
             )
           | null;
         /**
-         * Used by the "Cards" variant.
+         * Image tile for "Cards", or a thumbnail in place of the icon for "List".
          */
         image?: (number | null) | Media;
         title: string;
@@ -3191,6 +3192,125 @@ export interface ReelsBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'reels';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoSectionBlock".
+ */
+export interface InfoSectionBlock {
+  /**
+   * Optional title shown above the about blurb.
+   */
+  heading?: string | null;
+  /**
+   * About-us blurb / store description.
+   */
+  about?: string | null;
+  contact?: {
+    /**
+     * Column heading.
+     */
+    heading?: string | null;
+    address?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  };
+  /**
+   * Quick links column (e.g. Shipping, Returns, FAQ, Privacy).
+   */
+  links?:
+    | {
+        label: string;
+        href: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Heading for the quick links column.
+   */
+  linksHeading?: string | null;
+  /**
+   * Social media icon links.
+   */
+  social?:
+    | {
+        platform:
+          | 'facebook'
+          | 'instagram'
+          | 'x'
+          | 'youtube'
+          | 'tiktok'
+          | 'discord'
+          | 'linkedin'
+          | 'threads'
+          | 'pinterest'
+          | 'telegram'
+          | 'whatsapp'
+          | 'github'
+          | 'email';
+        /**
+         * Required for the icon to render. Items without a URL are hidden.
+         */
+        url?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
+   */
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'infoSection';
 }
 /**
  * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
@@ -3836,6 +3956,7 @@ export interface PagesSelect<T extends boolean = true> {
         featureGrid?: T | FeatureGridBlockSelect<T>;
         productShowcase?: T | ProductShowcaseBlockSelect<T>;
         reels?: T | ReelsBlockSelect<T>;
+        infoSection?: T | InfoSectionBlockSelect<T>;
       };
   meta?:
     | T
@@ -4696,6 +4817,50 @@ export interface ReelsBlockSelect<T extends boolean = true> {
         caption?: T;
         views?: T;
         embedUrl?: T;
+        id?: T;
+      };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoSectionBlock_select".
+ */
+export interface InfoSectionBlockSelect<T extends boolean = true> {
+  heading?: T;
+  about?: T;
+  contact?:
+    | T
+    | {
+        heading?: T;
+        address?: T;
+        phone?: T;
+        email?: T;
+      };
+  links?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        id?: T;
+      };
+  linksHeading?: T;
+  social?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
         id?: T;
       };
   background?: T;

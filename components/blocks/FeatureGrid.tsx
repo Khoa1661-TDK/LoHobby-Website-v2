@@ -109,6 +109,20 @@ export default function FeatureGridBlock(props: Props): ReactElement | null {
             ) : (
               <MaybeLink key={i} href={it.href} className="flex flex-col items-start">
                 {(() => {
+                  // An assigned image wins over the icon; fall back to the icon when no image.
+                  if (it.image?.url) {
+                    return (
+                      <span className="relative mb-4 h-14 w-14 overflow-hidden rounded-card-sm bg-surface-raised">
+                        <Image
+                          src={it.image.url}
+                          alt={it.image.alt ?? it.title ?? ''}
+                          fill
+                          className="object-cover"
+                          sizes="56px"
+                        />
+                      </span>
+                    );
+                  }
                   const Icon = it.icon ? ICONS[it.icon] : undefined;
                   return Icon ? (
                     <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-card-sm bg-surface-raised text-accent">

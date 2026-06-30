@@ -31,3 +31,4 @@ export { Tabs } from './Tabs';
 export { FeatureGrid } from './FeatureGrid';
 export { ProductShowcase } from './ProductShowcase';
 export { Reels } from './Reels';
+export { InfoSection } from './InfoSection';

@@ -34,4 +34,29 @@ describe('FeatureGridBlock', () => {
     );
     expect(html).toContain('Still ok');
   });
+
+  it('should render an item image in the list variant', () => {
+    const html = renderToStaticMarkup(
+      <FeatureGridBlock
+        variant="list"
+        items={[{ image: { url: '/img/feature.jpg', alt: 'Feature' }, title: 'With image' }]}
+      />,
+    );
+    expect(html).toContain('With image');
+    // next/image URL-encodes the src into its optimizer query string.
+    expect(html).toContain('%2Fimg%2Ffeature.jpg');
+    expect(html).toContain('alt="Feature"');
+  });
+
+  it('should prefer the image over the icon in the list variant', () => {
+    const html = renderToStaticMarkup(
+      <FeatureGridBlock
+        variant="list"
+        items={[{ icon: 'zap', image: { url: '/img/feature.jpg' }, title: 'Image wins' }]}
+      />,
+    );
+    expect(html).toContain('%2Fimg%2Ffeature.jpg');
+    // The icon's lucide svg must not render when an image is present.
+    expect(html).not.toContain('<svg');
+  });
 });

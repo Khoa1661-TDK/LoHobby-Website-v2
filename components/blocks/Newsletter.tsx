@@ -40,7 +40,7 @@ export default function NewsletterBlock(props: Props): ReactElement {
           </p>
         ) : null}
         <div className="mt-6">
-          <div className="mx-auto max-w-xl rounded-2xl bg-[#14181D] p-6 text-left">
+          <div className="w-full rounded-2xl bg-[#14181D] p-6 text-left md:p-8">
             <FooterNewsletter />
           </div>
         </div>

@@ -35,6 +35,7 @@ import TabsBlock from './Tabs';
 import FeatureGridBlock from './FeatureGrid';
 import ProductShowcaseBlock from './ProductShowcase';
 import ReelsBlock from './Reels';
+import InfoSectionBlock from './InfoSection';
 
 type Props = {
   blocks: PageBlock[];
@@ -156,6 +157,8 @@ function renderInner(block: PageBlock): ReactElement | null {
       return <ProductShowcaseBlock {...asProps<ComponentProps<typeof ProductShowcaseBlock>>(block)} />;
     case 'reels':
       return <ReelsBlock {...asProps<ComponentProps<typeof ReelsBlock>>(block)} />;
+    case 'infoSection':
+      return <InfoSectionBlock {...asProps<ComponentProps<typeof InfoSectionBlock>>(block)} />;
     default:
       return null;
   }

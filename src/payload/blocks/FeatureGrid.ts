@@ -35,7 +35,7 @@ export const FeatureGrid: Block = {
       type: 'array',
       fields: [
         { name: 'icon', type: 'select', options: FEATURE_ICON_OPTIONS },
-        { name: 'image', type: 'upload', relationTo: 'media', admin: { description: 'Used by the "Cards" variant.' } },
+        { name: 'image', type: 'upload', relationTo: 'media', admin: { description: 'Image tile for "Cards", or a thumbnail in place of the icon for "List".' } },
         { name: 'title', type: 'text', required: true },
         { name: 'text', type: 'textarea' },
         { name: 'caption', type: 'text', admin: { description: 'Small line under the title (e.g. item count).' } },
