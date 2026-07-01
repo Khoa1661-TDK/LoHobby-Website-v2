@@ -32,3 +32,5 @@ export { FeatureGrid } from './FeatureGrid';
 export { ProductShowcase } from './ProductShowcase';
 export { Reels } from './Reels';
 export { InfoSection } from './InfoSection';
+export { Marquee } from './Marquee';
+export { Spotlight } from './Spotlight';

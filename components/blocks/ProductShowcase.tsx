@@ -45,7 +45,7 @@ export default async function ProductShowcaseBlock(props: Props): Promise<ReactE
     <section className={section} style={style}>
       <div className={container}>
         {eyebrow ? (
-          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.3em] text-accent-2">
+          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.3em] text-accent">
             {eyebrow}
           </p>
         ) : null}

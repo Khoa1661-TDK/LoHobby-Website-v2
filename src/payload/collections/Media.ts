@@ -2,6 +2,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type {
+  CollectionAfterReadHook,
   CollectionBeforeDeleteHook,
   CollectionConfig,
 } from 'payload';
@@ -9,6 +10,7 @@ import { payloadPublicReadAdminWrite } from '@/lib/payload-access';
 import {
   loadMediaDoc,
   mediaDocToStored,
+  normalizeProductImageUrl,
   resolveMediaId,
   type StoredImage,
 } from '@/lib/product-image-snapshot';
@@ -134,6 +136,28 @@ const detachMediaFromProducts: CollectionBeforeDeleteHook = async ({ id, req }) 
   }
 };
 
+/**
+ * Rewrite Payload's absolute `url` (built from serverURL, e.g.
+ * `http://192.168.1.3:3000/admin/api/media/file/foo.jpg`) to the host-relative
+ * public path (`/media/foo.jpg`). The admin renders `doc.url` directly in an
+ * `<img>`, so an absolute URL freezes it to whatever host the server booted with
+ * (a stale LAN IP hangs forever). Relative URLs resolve against the browser's
+ * current origin — localhost, any LAN IP, any future DHCP address — with no
+ * rebuild. The storefront already normalizes this same way; SEO re-absolutizes
+ * via `absoluteUrl()`, so nothing that needs an absolute URL is affected.
+ */
+const relativizeMediaUrl: CollectionAfterReadHook = ({ doc }) => {
+  if (doc && typeof doc.url === 'string' && doc.url.trim().length > 0) {
+    doc.url = normalizeProductImageUrl(doc.url);
+  }
+  // Payload also emits `thumbnailURL` (the admin list/grid preview src) as an
+  // absolute URL off serverURL — relativize it too or the media grid hangs.
+  if (doc && typeof doc.thumbnailURL === 'string' && doc.thumbnailURL.trim().length > 0) {
+    doc.thumbnailURL = normalizeProductImageUrl(doc.thumbnailURL);
+  }
+  return doc;
+};
+
 export const Media: CollectionConfig = {
   slug: 'media',
   access: payloadPublicReadAdminWrite,
@@ -141,6 +165,7 @@ export const Media: CollectionConfig = {
     useAsTitle: 'filename',
   },
   hooks: {
+    afterRead: [relativizeMediaUrl],
     beforeDelete: [detachMediaFromProducts],
   },
   upload: {

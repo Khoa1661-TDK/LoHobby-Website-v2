@@ -2,11 +2,12 @@
 // This seed IS the home page: the storefront renders the CMS `home` page's `layout`
 // via RenderBlocks when it exists, falling back to the hardcoded homepage otherwise.
 //
-// Layout follows the "Lô Hobby" editorial monochrome mockup: a stat-backed hero,
-// a category card grid, a filterable product showcase, a reels strip, a trust
-// feature list, and the newsletter. Media-dependent fields (hero collage, reel
-// posters) are intentionally left for the store owner to fill in the admin — the
-// blocks degrade gracefully until then.
+// Layout follows the "Lô Hobby" redesign-3 mockup: a stat-backed hero, a scrolling
+// marquee strip, a category card grid, a deal spotlight with a live countdown, a
+// filterable product showcase, customer reviews, a trust feature list, and the
+// newsletter. The hero collage is left for the store owner to fill in the admin; the
+// spotlight embeds the first featured product (image/price derived from it). Blocks
+// degrade gracefully until their data is filled in.
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import type { PageBlock } from '@/lib/page-builder';
 
@@ -24,6 +25,12 @@ function block(slug: string, overrides: Record<string, unknown> = {}): PageBlock
   return base ? ({ ...base, ...overrides } as unknown as PageBlock) : null;
 }
 
+/** ISO timestamp `days` days from `now`, for the Spotlight deal countdown. Parameterized
+ *  on `now` so the seed stays deterministic in tests. */
+function daysFromNow(days: number, now: number = Date.now()): string {
+  return new Date(now + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
 export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
   const ids = opts.featuredProductIds ?? [];
 
@@ -31,6 +38,7 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
     block('hero', {
       eyebrow: 'Lô Hobby',
       headline: 'Collectibles, models & keychains — curated.',
+      headlineHighlight: 'keychains',
       subheadline:
         'A small shop with a sharp eye. Models, figures, and everyday carry, chosen one piece at a time.',
       ctaLabel: 'Shop the collection',
@@ -38,13 +46,34 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
       secondaryCtaLabel: 'Our story',
       secondaryCtaHref: '/about',
       textAlign: 'left',
-      imagePosition: 'none',
+      imagePosition: 'right',
       stats: [
         { value: '500+', label: 'pieces in the catalog' },
         { value: '48h', label: 'typical dispatch' },
         { value: '4.9★', label: 'average review' },
       ],
-      collage: [],
+      // Right-hand 2×2 grid. Labels render over brand-accent gradients until the
+      // store owner uploads images for each tile in the admin.
+      collage: [
+        { alt: 'Aircraft kits' },
+        { alt: 'Figures' },
+        { alt: 'Keychains' },
+        { alt: '3D printed' },
+      ],
+      mediaBadge: 'New stock daily',
+    }),
+    // Scrolling trust/marketing strip under the hero (mockup's blue marquee).
+    block('marquee', {
+      speed: 'normal',
+      direction: 'left',
+      paddingY: 'none',
+      items: [
+        { text: 'Free shipping over ₫500K' },
+        { text: 'Authentic, hand-picked stock' },
+        { text: 'Ships within 48 hours' },
+        { text: 'PayOS & cash on delivery' },
+        { text: 'Real humans, real support' },
+      ],
     }),
     block('featureGrid', {
       heading: 'Shop by category',
@@ -58,6 +87,16 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
         { title: 'New in', caption: 'Fresh arrivals', href: '/search' },
       ],
     }),
+    // Deal-of-the-week spotlight with a live countdown (mockup's dark split banner).
+    // Embeds the first featured product: its image, price, and sale discount drive the
+    // banner. Heading/description/prices fall back to product data when left blank.
+    block('spotlight', {
+      product: ids[0] ?? null,
+      eyebrow: 'Deal of the week',
+      ctaLabel: 'Grab the deal',
+      targetDate: daysFromNow(7),
+      expiredText: 'This deal has ended — check back for the next one.',
+    }),
     block('productShowcase', {
       eyebrow: 'Picks',
       heading: 'Featured this week',
@@ -66,17 +105,29 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
       showTabs: true,
       showSort: true,
     }),
-    block('reels', {
-      eyebrow: 'On the feed',
-      heading: 'Lô Hobby in motion',
-      followLabel: 'Follow us',
-      followHref: 'https://www.tiktok.com',
-      tiles: [
-        { tag: 'Unbox', caption: 'New model kit, start to finish', views: '12.4k views', embedUrl: '' },
-        { tag: 'Build', caption: 'Panel-lining a 1/144 fighter', views: '8.1k views', embedUrl: '' },
-        { tag: 'Shelf', caption: 'This month’s display refresh', views: '5.7k views', embedUrl: '' },
-        { tag: 'Haul', caption: 'Keychain restock just landed', views: '9.3k views', embedUrl: '' },
-        { tag: 'Studio', caption: 'How we pack your order', views: '3.2k views', embedUrl: '' },
+    // Customer reviews (mockup's star-rated review cards).
+    block('testimonials', {
+      title: 'What collectors say',
+      layout: 'grid',
+      entries: [
+        {
+          quote: 'Packaging was spotless and the model arrived faster than I expected. Repeat buyer now.',
+          author: 'Minh T.',
+          role: 'Model builder',
+          rating: 5,
+        },
+        {
+          quote: 'Real curation — every piece feels chosen, not dumped from a catalog. Love the shelf finds.',
+          author: 'Lan P.',
+          role: 'Figure collector',
+          rating: 5,
+        },
+        {
+          quote: 'Asked a question before ordering and got a straight, helpful answer from an actual person.',
+          author: 'Duc N.',
+          role: 'Keychain regular',
+          rating: 4,
+        },
       ],
     }),
     block('featureGrid', {

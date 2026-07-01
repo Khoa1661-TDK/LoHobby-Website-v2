@@ -47,7 +47,7 @@ export default async function ReelsBlock(props: Props): Promise<ReactElement | n
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             {eyebrow ? (
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-accent-2">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-accent">
                 {eyebrow}
               </p>
             ) : null}

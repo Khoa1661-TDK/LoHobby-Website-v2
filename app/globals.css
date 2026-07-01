@@ -4,14 +4,17 @@
 
 @layer base {
   :root {
-    /* Lô Hobby — monochrome "paper" light theme */
+    /* Lô Hobby — "paper" light theme with brand-blue accent (redesign-3) */
     --surface: #ffffff;
-    --surface-raised: #f5f5f5;
-    --ink: #111111;
-    --line: #e5e5e5;
-    --accent: #111111;
-    --accent-2: #525252;
-    --accent-3: #111111;
+    --surface-raised: #eceff3;
+    --ink: #1b2027;
+    --line: #c9d2dc;
+    /* Brand blue at three intensities: bright / muted-label / deep. */
+    --accent: #1f6feb;
+    --accent-2: #64748b;
+    --accent-3: #0b3ea8;
+    /* Soft blue wash for tinted section backgrounds (newsletter, chips). */
+    --accent-soft: #eaf1fe;
 
     /* Mockup geometry + elevation scale */
     --r: 14px;
@@ -22,14 +25,15 @@
     --sh-3: 0 18px 48px rgba(17, 17, 17, 0.12);
   }
   .dark {
-    /* Lô Hobby — "carbon" dark theme */
+    /* Lô Hobby — "carbon" dark theme with brand-blue accent */
     --surface: #0b0b0b;
     --surface-raised: #181818;
     --ink: #f5f5f5;
     --line: #2a2a2a;
-    --accent: #f5f5f5;
-    --accent-2: #a3a3a3;
-    --accent-3: #f5f5f5;
+    --accent: #5b96ff;
+    --accent-2: #94a3b8;
+    --accent-3: #8fb8ff;
+    --accent-soft: #14233f;
 
     --sh-1: 0 1px 2px rgba(0, 0, 0, 0.4);
     --sh-2: 0 6px 20px rgba(0, 0, 0, 0.5);

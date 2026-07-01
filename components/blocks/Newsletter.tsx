@@ -22,7 +22,7 @@ export default function NewsletterBlock(props: Props): ReactElement {
   // the chosen surface.
   const isDefaultBackground = !props.background || props.background === 'theme';
   const { section, container, style } = blockAppearanceClasses(props);
-  const sectionBg = isDefaultBackground ? 'bg-accent-2' : '';
+  const sectionBg = isDefaultBackground ? 'bg-accent-soft' : '';
   const headingColor = isDefaultBackground ? 'text-[#1B2027]' : '';
   const mutedColor = isDefaultBackground ? 'text-[#1B2027]/70' : 'opacity-70';
 

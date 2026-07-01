@@ -782,6 +782,8 @@ export interface Page {
         | ProductShowcaseBlock
         | ReelsBlock
         | InfoSectionBlock
+        | MarqueeBlock
+        | SpotlightBlock
       )[]
     | null;
   meta?: {
@@ -805,6 +807,10 @@ export interface HeroBlock {
    */
   eyebrow?: string | null;
   headline?: string | null;
+  /**
+   * Optional word or phrase within the headline to accent-underline. Must match the headline text exactly (case-insensitive).
+   */
+  headlineHighlight?: string | null;
   subheadline?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
@@ -834,6 +840,10 @@ export interface HeroBlock {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Optional pill with a pulsing dot shown over the media panel, e.g. "New stock daily".
+   */
+  mediaBadge?: string | null;
   image?: (number | null) | Media;
   imagePosition?: ('left' | 'right' | 'background' | 'none') | null;
   textAlign?: ('left' | 'center') | null;
@@ -3313,6 +3323,182 @@ export interface InfoSectionBlock {
   blockType: 'infoSection';
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MarqueeBlock".
+ */
+export interface MarqueeBlock {
+  /**
+   * Short phrases that scroll across the strip.
+   */
+  items?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * How fast the strip scrolls.
+   */
+  speed?: ('slow' | 'normal' | 'fast') | null;
+  direction?: ('left' | 'right') | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
+   */
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'marquee';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SpotlightBlock".
+ */
+export interface SpotlightBlock {
+  /**
+   * The featured product. Its image, price, and sale discount drive the banner — no need to re-upload media or retype prices.
+   */
+  product?: (number | null) | Product;
+  eyebrow?: string | null;
+  /**
+   * Optional. Falls back to the product title when blank.
+   */
+  heading?: string | null;
+  /**
+   * Optional. Falls back to the product description when blank.
+   */
+  description?: string | null;
+  /**
+   * Optional override, e.g. "-30%". Derived from the product sale price when blank.
+   */
+  discountLabel?: string | null;
+  /**
+   * Optional override, e.g. "₫1,290,000". Uses the product sale price when blank.
+   */
+  priceNow?: string | null;
+  /**
+   * Optional override for the struck-through price. Uses the product compare-at price when blank.
+   */
+  priceWas?: string | null;
+  /**
+   * Defaults to "Grab the deal".
+   */
+  ctaLabel?: string | null;
+  /**
+   * Optional override. Defaults to the product page (/product/{handle}).
+   */
+  ctaHref?: string | null;
+  /**
+   * Optional countdown target in ISO 8601, e.g. 2026-12-31T23:59:59Z. Leave blank to hide the timer.
+   */
+  targetDate?: string | null;
+  expiredText?: string | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
+   */
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'spotlight';
+}
+/**
  * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3957,6 +4143,8 @@ export interface PagesSelect<T extends boolean = true> {
         productShowcase?: T | ProductShowcaseBlockSelect<T>;
         reels?: T | ReelsBlockSelect<T>;
         infoSection?: T | InfoSectionBlockSelect<T>;
+        marquee?: T | MarqueeBlockSelect<T>;
+        spotlight?: T | SpotlightBlockSelect<T>;
       };
   meta?:
     | T
@@ -3975,6 +4163,7 @@ export interface PagesSelect<T extends boolean = true> {
 export interface HeroBlockSelect<T extends boolean = true> {
   eyebrow?: T;
   headline?: T;
+  headlineHighlight?: T;
   subheadline?: T;
   ctaLabel?: T;
   ctaHref?: T;
@@ -3995,6 +4184,7 @@ export interface HeroBlockSelect<T extends boolean = true> {
         alt?: T;
         id?: T;
       };
+  mediaBadge?: T;
   image?: T;
   imagePosition?: T;
   textAlign?: T;
@@ -4863,6 +5053,63 @@ export interface InfoSectionBlockSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MarqueeBlock_select".
+ */
+export interface MarqueeBlockSelect<T extends boolean = true> {
+  items?:
+    | T
+    | {
+        text?: T;
+        id?: T;
+      };
+  speed?: T;
+  direction?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SpotlightBlock_select".
+ */
+export interface SpotlightBlockSelect<T extends boolean = true> {
+  product?: T;
+  eyebrow?: T;
+  heading?: T;
+  description?: T;
+  discountLabel?: T;
+  priceNow?: T;
+  priceWas?: T;
+  ctaLabel?: T;
+  ctaHref?: T;
+  targetDate?: T;
+  expiredText?: T;
   background?: T;
   backgroundCustom?: T;
   backgroundCustomDark?: T;

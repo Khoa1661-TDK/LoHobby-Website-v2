@@ -36,6 +36,8 @@ import {
   ProductShowcase,
   Reels,
   InfoSection,
+  Marquee,
+  Spotlight,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -55,7 +57,7 @@ export type FieldDescriptor = {
   min?: number;
   /** Present for `number` fields with a configured upper bound. */
   max?: number;
-  /** Present for `array` fields. */
+  /** Present for `array` and `group` fields. */
   fields?: FieldDescriptor[];
   /** Simplified, serializable condition (only the common siblingData equality form). */
   condition?: FieldCondition;
@@ -102,6 +104,8 @@ const REGISTERED_BLOCKS: Block[] = [
   ProductShowcase,
   Reels,
   InfoSection,
+  Marquee,
+  Spotlight,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the
@@ -166,7 +170,11 @@ function describeField(field: Field): FieldDescriptor | null {
     if ('min' in field && typeof field.min === 'number') base.min = field.min;
     if ('max' in field && typeof field.max === 'number') base.max = field.max;
   }
-  if (field.type === 'array' && 'fields' in field && Array.isArray(field.fields)) {
+  if (
+    (field.type === 'array' || field.type === 'group') &&
+    'fields' in field &&
+    Array.isArray(field.fields)
+  ) {
     base.fields = field.fields
       .map(describeField)
       .filter((f): f is FieldDescriptor => f !== null);

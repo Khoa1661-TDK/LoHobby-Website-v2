@@ -8,6 +8,10 @@ const STORAGE_KEY = 'theme';
 function applyTheme(theme: 'light' | 'dark'): void {
   const root = document.documentElement;
   root.classList.toggle('dark', theme === 'dark');
+  // Mirror into a cookie so the server renders the matching `dark` class on the
+  // next request/navigation — otherwise soft navigation (e.g. switching locale)
+  // drops the class and snaps back to light.
+  document.cookie = `${STORAGE_KEY}=${theme};path=/;max-age=31536000;samesite=lax`;
 }
 
 export default function ThemeToggle(): ReactElement {

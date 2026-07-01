@@ -35,11 +35,11 @@ async function main(): Promise<void> {
       contactPhone: BRAND_CONTACT.phone,
       contactAddress: BRAND_CONTACT.address,
       currencyCode: 'VND',
-      primaryColor: process.env.NEXT_PUBLIC_BRAND_PRIMARY ?? '#000000',
+      primaryColor: process.env.NEXT_PUBLIC_BRAND_PRIMARY ?? '#1f6feb',
       secondaryColor:
         process.env.NEXT_PUBLIC_BRAND_SECONDARY ??
         process.env.NEXT_PUBLIC_BRAND_ACCENT ??
-        '#737373',
+        '#0b3ea8',
       fontPreset: 'jakarta',
       heroEnabled: true,
       heroShowCarousel: true,

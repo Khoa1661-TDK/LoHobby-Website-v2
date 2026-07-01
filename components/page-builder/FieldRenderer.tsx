@@ -19,12 +19,20 @@ type Props = {
   themeMode?: ThemeMode;
 };
 
+// Mirrors the shared appearanceFields in src/payload/blocks/_appearance.ts so every
+// appearance knob lands in the collapsible Appearance section rather than the main
+// field list. Keep in sync when appearance fields are added/removed.
 const APPEARANCE_FIELDS = new Set([
   'background',
   'backgroundCustom',
   'backgroundCustomDark',
   'containerWidth',
+  'maxWidthCustom',
   'paddingY',
+  'contentAlign',
+  'rounded',
+  'border',
+  'scrollAnimation',
 ]);
 
 // Fields that exist for internal bookkeeping (cross-locale mirroring) and must never be
@@ -136,6 +144,41 @@ function ArrayField({
       </button>
     </div>
   );
+}
+
+function GroupField({
+  field,
+  value,
+  onChange,
+}: {
+  field: FieldDescriptor;
+  value: Record<string, unknown>;
+  onChange: (next: Record<string, unknown>) => void;
+}): ReactElement {
+  const subFields = field.fields ?? [];
+  return (
+    <div className="flex flex-col gap-3 rounded border border-warm-200 p-2">
+      {subFields.map((subField) => (
+        <Field
+          key={subField.name}
+          field={subField}
+          value={value[subField.name]}
+          onChange={(name, v) => onChange({ ...value, [name]: v })}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Coerce a stored value (ISO string or epoch ms) into the `YYYY-MM-DDTHH:mm`
+// shape the native datetime-local input expects, in local time. Returns '' when
+// the value is missing or unparseable so the input stays empty rather than NaN.
+function toDateInputValue(value: unknown): string {
+  if (typeof value !== 'string' && typeof value !== 'number') return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function RelationshipField({
@@ -483,6 +526,38 @@ function Field({
             value={typeof value === 'number' ? value : ''}
             disabled={disabled}
             onChange={(e) => set(e.target.value === '' ? null : Number(e.target.value))}
+          />
+        );
+      case 'checkbox':
+        return (
+          <input
+            id={id}
+            type="checkbox"
+            className="h-4 w-4 self-start rounded border-warm-300 accent-blue-500 disabled:cursor-not-allowed"
+            checked={value === true}
+            disabled={disabled}
+            onChange={(e) => set(e.target.checked)}
+          />
+        );
+      case 'date':
+        return (
+          <input
+            id={id}
+            type="datetime-local"
+            className="rounded border border-warm-300 bg-warm-50 px-2 py-1 text-sm text-warm-900 dark:border-warm-700 dark:bg-warm-900 dark:text-warm-100"
+            value={toDateInputValue(value)}
+            disabled={disabled}
+            onChange={(e) =>
+              set(e.target.value === '' ? null : new Date(e.target.value).toISOString())
+            }
+          />
+        );
+      case 'group':
+        return (
+          <GroupField
+            field={field}
+            value={value && typeof value === 'object' ? (value as Record<string, unknown>) : {}}
+            onChange={(next) => set(next)}
           />
         );
       case 'relationship':

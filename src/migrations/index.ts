@@ -17,6 +17,8 @@ import * as migration_20260627_132058_block_expansion from './20260627_132058_bl
 import * as migration_20260629_152734_scroll_animation_presets from './20260629_152734_scroll_animation_presets';
 import * as migration_20260630_140550_lohobby_blocks from './20260630_140550_lohobby_blocks';
 import * as migration_20260630_142912_info_section_block from './20260630_142912_info_section_block';
+import * as migration_20260701_130122_marquee_spotlight_blocks from './20260701_130122_marquee_spotlight_blocks';
+import * as migration_20260701_140000_hero_badge_highlight from './20260701_140000_hero_badge_highlight';
 
 export const migrations = [
   {
@@ -112,6 +114,16 @@ export const migrations = [
   {
     up: migration_20260630_142912_info_section_block.up,
     down: migration_20260630_142912_info_section_block.down,
-    name: '20260630_142912_info_section_block'
+    name: '20260630_142912_info_section_block',
+  },
+  {
+    up: migration_20260701_130122_marquee_spotlight_blocks.up,
+    down: migration_20260701_130122_marquee_spotlight_blocks.down,
+    name: '20260701_130122_marquee_spotlight_blocks'
+  },
+  {
+    up: migration_20260701_140000_hero_badge_highlight.up,
+    down: migration_20260701_140000_hero_badge_highlight.down,
+    name: '20260701_140000_hero_badge_highlight',
   },
 ];

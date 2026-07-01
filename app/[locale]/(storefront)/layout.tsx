@@ -10,6 +10,7 @@ import {
   Space_Mono,
 } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import type { ReactElement, ReactNode } from 'react';
 import { Suspense } from 'react';
@@ -196,25 +197,37 @@ export default async function StorefrontLayout({
   // Enable static rendering for this locale segment.
   setRequestLocale(locale);
 
-  const [branding, messages, t, chatConfig] = await Promise.all([
+  const [branding, messages, t, chatConfig, cookieStore] = await Promise.all([
     getStoreBranding(),
     getMessages(),
     getTranslations('common'),
     getChatConfig(),
+    cookies(),
   ]);
+
+  // Render the `dark` class server-side from the theme cookie so the class is
+  // present in the initial payload and survives soft navigation (e.g. switching
+  // locale). Without this, the class is only added by the pre-paint script on a
+  // full load and gets dropped when the [locale] layout re-renders.
+  const isDark = cookieStore.get('theme')?.value === 'dark';
+  const fontVars = `${archivo.variable} ${playfair.variable} ${jakarta.variable} ${fraunces.variable} ${inter.variable} ${roboto.variable} ${spaceGrotesk.variable} ${spaceMono.variable}`;
 
   return (
     <html
       lang={locale}
-      className={`${archivo.variable} ${playfair.variable} ${jakarta.variable} ${fraunces.variable} ${inter.variable} ${roboto.variable} ${spaceGrotesk.variable} ${spaceMono.variable}`}
+      className={isDark ? `dark ${fontVars}` : fontVars}
       suppressHydrationWarning
     >
       <head>
         <BrandTheme branding={branding} />
         <script
-          // Apply the saved theme before paint to avoid a flash of the wrong theme.
+          // Resolve the theme before paint (localStorage wins, else OS preference),
+          // apply the class, and mirror the result into the `theme` cookie so the
+          // server renders the matching class on the next navigation. This keeps the
+          // server and client in agreement and prevents dark mode from being dropped
+          // when the [locale] layout re-renders (e.g. switching language).
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+            __html: `(function(){try{var s=localStorage.getItem('theme');var d=s==='dark'||(!s&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);document.cookie='theme='+(d?'dark':'light')+';path=/;max-age=31536000;samesite=lax';}catch(e){}})();`,
           }}
         />
         {/* Warm up DNS for payment gateways the user is redirected to at checkout. */}

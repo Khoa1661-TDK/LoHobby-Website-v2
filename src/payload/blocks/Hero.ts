@@ -19,6 +19,14 @@ export const Hero: Block = {
       type: 'text',
     },
     {
+      name: 'headlineHighlight',
+      type: 'text',
+      admin: {
+        description:
+          'Optional word or phrase within the headline to accent-underline. Must match the headline text exactly (case-insensitive).',
+      },
+    },
+    {
       name: 'subheadline',
       type: 'textarea',
     },
@@ -65,12 +73,20 @@ export const Hero: Block = {
       labels: { singular: 'Collage image', plural: 'Collage images' },
       admin: {
         description:
-          'Floating images shown on the media side (gently bob). Replaces the single image when provided.',
+          'Up to 4 tiles for the right-hand 2×2 grid. Each tile shows its image, or a brand-accent gradient with the alt text as its label when no image is set.',
       },
       fields: [
         { name: 'image', type: 'upload', relationTo: 'media' },
         { name: 'alt', type: 'text' },
       ],
+    },
+    {
+      name: 'mediaBadge',
+      type: 'text',
+      admin: {
+        description:
+          'Optional pill with a pulsing dot shown over the media panel, e.g. "New stock daily".',
+      },
     },
     {
       name: 'image',

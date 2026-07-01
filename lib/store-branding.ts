@@ -74,10 +74,12 @@ type MediaLike = {
   url?: string | null;
 };
 
-const DEFAULT_PRIMARY = normalizeHexColor(process.env.NEXT_PUBLIC_BRAND_PRIMARY, '#000000');
+// Lô Hobby redesign-3 defaults to brand blue. CMS Store Settings still override
+// these; the env vars win over the hardcoded fallback when set.
+const DEFAULT_PRIMARY = normalizeHexColor(process.env.NEXT_PUBLIC_BRAND_PRIMARY, '#1f6feb');
 const DEFAULT_SECONDARY = normalizeHexColor(
   process.env.NEXT_PUBLIC_BRAND_SECONDARY ?? process.env.NEXT_PUBLIC_BRAND_ACCENT,
-  '#737373',
+  '#0b3ea8',
 );
 
 function resolveMediaUrl(field: unknown): string | null {

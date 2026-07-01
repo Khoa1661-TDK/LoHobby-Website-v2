@@ -42,6 +42,9 @@ export const BLOCK_DEFAULTS: Record<string, PresetName> = {
   featureGrid: 'stagger-cards',
   productShowcase: 'stagger-cards',
   reels: 'stagger-cards',
+  infoSection: 'fade-up',
+  marquee: 'fade-in',
+  spotlight: 'fade-up',
 };
 
 /** Resolve the effective preset for a block.

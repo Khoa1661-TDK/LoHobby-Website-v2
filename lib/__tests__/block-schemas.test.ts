@@ -39,7 +39,9 @@ describe('getBlockSchemas', () => {
     );
     // The footer-style info section block.
     expect(slugs).toEqual(expect.arrayContaining(['infoSection']));
-    expect(slugs).toHaveLength(33);
+    // The redesign-3 home rebuild added the marquee strip and spotlight deal.
+    expect(slugs).toEqual(expect.arrayContaining(['marquee', 'spotlight']));
+    expect(slugs).toHaveLength(35);
   });
 
   it('should describe hero text and select fields with options', () => {
@@ -75,6 +77,13 @@ describe('getBlockSchemas', () => {
     expect(items.type).toBe('array');
     expect(items.fields?.map((f) => f.name)).toEqual(['question', 'answer']);
     expect(items.fields?.find((f) => f.name === 'answer')?.type).toBe('richText');
+  });
+
+  it('should describe group fields with nested sub-fields', () => {
+    const info = getBlockSchema('infoSection')!;
+    const contact = info.fields.find((f) => f.name === 'contact') as FieldDescriptor;
+    expect(contact.type).toBe('group');
+    expect(contact.fields?.map((f) => f.name)).toEqual(['heading', 'address', 'phone', 'email']);
   });
 
   it('should include recommendations and recentlyViewed blocks', () => {

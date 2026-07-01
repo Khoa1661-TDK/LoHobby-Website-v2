@@ -47,6 +47,8 @@ import {
   ProductShowcase,
   Reels,
   InfoSection,
+  Marquee,
+  Spotlight,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -90,6 +92,8 @@ const layoutBlocks = [
   ProductShowcase,
   Reels,
   InfoSection,
+  Marquee,
+  Spotlight,
 ].map((block) => ({
   ...block,
   fields: [...(block.fields ?? []), blockKeyField],

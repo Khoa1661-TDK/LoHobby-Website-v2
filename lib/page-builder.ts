@@ -61,7 +61,9 @@ export type PageBlock =
   | ({ blockType: 'featureGrid' } & Record<string, unknown>)
   | ({ blockType: 'productShowcase' } & Record<string, unknown>)
   | ({ blockType: 'reels' } & Record<string, unknown>)
-  | ({ blockType: 'infoSection' } & Record<string, unknown>);
+  | ({ blockType: 'infoSection' } & Record<string, unknown>)
+  | ({ blockType: 'marquee' } & Record<string, unknown>)
+  | ({ blockType: 'spotlight' } & Record<string, unknown>);
 
 export type PageDoc = {
   id: string | number;

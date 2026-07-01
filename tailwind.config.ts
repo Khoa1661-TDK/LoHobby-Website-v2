@@ -172,6 +172,7 @@ const config: Config = {
           DEFAULT: 'var(--accent)',
           2: 'var(--accent-2)',
           3: 'var(--accent-3)',
+          soft: 'var(--accent-soft)',
         },
       },
       // Custom border radius scales

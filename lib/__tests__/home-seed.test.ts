@@ -38,11 +38,31 @@ describe('buildHomeSeedLayout', () => {
     expect(showcase?.showSort).toBe(true);
   });
 
-  it('should include a reels block with multiple tiles', () => {
-    const reels = find(buildHomeSeedLayout(), 'reels');
-    expect(reels).toBeDefined();
-    expect(Array.isArray(reels?.tiles)).toBe(true);
-    expect((reels?.tiles as unknown[]).length).toBeGreaterThan(1);
+  it('should include a marquee strip with multiple phrases', () => {
+    const marquee = find(buildHomeSeedLayout(), 'marquee');
+    expect(marquee).toBeDefined();
+    expect(Array.isArray(marquee?.items)).toBe(true);
+    expect((marquee?.items as unknown[]).length).toBeGreaterThan(1);
+  });
+
+  it('should include a spotlight deal bound to a product with a live future countdown', () => {
+    const spotlight = find(
+      buildHomeSeedLayout({ featuredProductIds: [42, 43] }),
+      'spotlight',
+    );
+    expect(spotlight).toBeDefined();
+    expect(spotlight?.product).toBe(42);
+    const target = Date.parse(spotlight?.targetDate as string);
+    expect(Number.isFinite(target)).toBe(true);
+    expect(target).toBeGreaterThan(Date.now());
+  });
+
+  it('should include a testimonials block with rated review entries', () => {
+    const reviews = find(buildHomeSeedLayout(), 'testimonials');
+    expect(reviews).toBeDefined();
+    const entries = reviews?.entries as Array<Record<string, unknown>>;
+    expect(entries.length).toBeGreaterThan(1);
+    expect(entries.every((e) => typeof e.rating === 'number')).toBe(true);
   });
 
   it('should end with the newsletter block', () => {

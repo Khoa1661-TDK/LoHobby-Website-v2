@@ -36,6 +36,8 @@ import FeatureGridBlock from './FeatureGrid';
 import ProductShowcaseBlock from './ProductShowcase';
 import ReelsBlock from './Reels';
 import InfoSectionBlock from './InfoSection';
+import MarqueeBlock from './Marquee';
+import SpotlightBlock from './Spotlight';
 
 type Props = {
   blocks: PageBlock[];
@@ -159,6 +161,10 @@ function renderInner(block: PageBlock): ReactElement | null {
       return <ReelsBlock {...asProps<ComponentProps<typeof ReelsBlock>>(block)} />;
     case 'infoSection':
       return <InfoSectionBlock {...asProps<ComponentProps<typeof InfoSectionBlock>>(block)} />;
+    case 'marquee':
+      return <MarqueeBlock {...asProps<ComponentProps<typeof MarqueeBlock>>(block)} />;
+    case 'spotlight':
+      return <SpotlightBlock {...asProps<ComponentProps<typeof SpotlightBlock>>(block)} />;
     default:
       return null;
   }
