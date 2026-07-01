@@ -431,6 +431,11 @@
     "faqLinkReturns": "Returns",
     "faqLinkTrackOrder": "Track your order",
     "faqLinkCustomPrint": "Custom 3D printing process",
-    "faqLinkContact": "Contact"
+    "faqLinkContact": "Contact",
+    "indexMetaTitle": "Help & information",
+    "indexMetaDescription": "Guides and policies about ordering, payment, shipping, returns, and our 3D printed products.",
+    "indexEyebrow": "Information",
+    "indexHeading": "Help & information",
+    "indexSubtitle": "Everything you need to know about ordering, payment, shipping, and our policies."
   }
 }

@@ -4,20 +4,21 @@ import type { ReactElement } from 'react';
 import InfoPageLayout from '@/components/content/info-page';
 import { getSiteName } from '@/lib/brand';
 import { getAllInfoSlugs, getInfoPage } from '@/lib/info-pages';
+import type { Locale } from '@/i18n/routing';
 import { buildWebPageJsonLd, jsonLdToScriptString } from '@/lib/seo';
 import { absoluteUrl } from '@/lib/utils';
 
 const siteName = getSiteName();
 
-type Params = Promise<{ slug: string }>;
+type Params = Promise<{ slug: string; locale: Locale }>;
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   return getAllInfoSlugs().map((slug) => ({ slug }));
 }
 
 export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
-  const { slug } = await props.params;
-  const page = getInfoPage(slug);
+  const { slug, locale } = await props.params;
+  const page = getInfoPage(slug, locale);
   if (!page) return {};
 
   const canonical = `/info/${slug}`;
@@ -42,8 +43,8 @@ export async function generateMetadata(props: { params: Params }): Promise<Metad
 }
 
 export default async function InfoPage(props: { params: Params }): Promise<ReactElement> {
-  const { slug } = await props.params;
-  const page = getInfoPage(slug);
+  const { slug, locale } = await props.params;
+  const page = getInfoPage(slug, locale);
   if (!page) return notFound();
 
   const webPageJsonLd = buildWebPageJsonLd({

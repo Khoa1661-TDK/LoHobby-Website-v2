@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl('/about'), lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: absoluteUrl('/contact'), lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: absoluteUrl('/faq'), lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: absoluteUrl('/info'), lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ];
 
   const infoEntries: SitemapEntry[] = getAllInfoSlugs().map((slug) => ({
