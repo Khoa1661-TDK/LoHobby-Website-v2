@@ -62,6 +62,13 @@ services:
       PREVIEW_SECRET: "CHANGE_ME"
       OPENROUTER_API_KEY: ""
       OPENROUTER_MODEL: "meta-llama/llama-3.3-70b-instruct:free"
+      # First boot on an empty DB volume: seed a complete store once — admin user
+      # (ADMIN_EMAILS), store settings, header, payment methods, categories, the
+      # 118-product catalog, home page, and theme. Runs only while the products
+      # table is empty, so it is skipped automatically on every later start. The
+      # catalog seed downloads product images from the Shopee CDN, so the first
+      # boot takes a few minutes. Set to "false" to start empty and seed manually.
+      SEED_ON_BOOT: "true"
     ports:
       - '3000:3000'
     volumes:
