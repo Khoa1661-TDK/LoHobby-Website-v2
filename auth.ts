@@ -5,11 +5,12 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 
 import { authConfig } from '@/auth.config';
+import { autoVerifyGoogleUser } from '@/lib/auth-verify';
 import { prisma } from '@/lib/prisma';
 
 declare module 'next-auth' {
   interface Session {
-    user: { id: string } & DefaultSession['user'];
+    user: { id: string; provider?: string } & DefaultSession['user'];
   }
 }
 
@@ -49,6 +50,12 @@ const config = {
   ],
   callbacks: {
     ...authConfig.callbacks,
+    async signIn({ user, account }) {
+      if (account?.provider === 'google' && typeof user.id === 'string') {
+        await autoVerifyGoogleUser(user.id);
+      }
+      return true;
+    },
     async jwt(params) {
       const token = authConfig.callbacks?.jwt
         ? await authConfig.callbacks.jwt(params)
