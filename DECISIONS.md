@@ -26,6 +26,41 @@ See `rules/common/decisions.md` for the logging format and rules.
 
 ---
 
+## 2026-07-14 — Admin identity gated on Google OAuth provider, not email alone
+**Chosen:** `getAdminUser()` requires both an allowlisted email AND `session.user.provider === 'google'`. `/api/register` now rejects any email in `ADMIN_EMAILS` with 403. `lib/admin-emails.ts` fails closed (empty allowlist) when `ADMIN_EMAILS` is unset — the `your-email@gmail.com` placeholder fallback is removed.
+**Alternatives:** Keep the fallback but document it as "must be set in prod"; rely solely on blocking admin emails at `/api/register` without also gating on provider.
+**Why:** A security audit found that `POST /api/register` let anyone create a password account for any unclaimed email, including an admin address, and the hardcoded fallback became a live public admin on any deploy that forgot `ADMIN_EMAILS`. Blocking registration alone still left a race: an attacker could register the admin's email before the real admin's first Google sign-in. Gating admin status on the OAuth provider closes that race even if a credentials account with that email ever exists.
+**Trade-offs:** An admin can never use the credentials (password) provider — Google sign-in is now mandatory for admin access. Acceptable since Google is already the intended admin flow.
+**Revisit if:** A non-Google SSO provider is added for admins — the provider check needs to allowlist it explicitly.
+
+## 2026-07-14 — Pinned `images.remotePatterns` to `cf.shopee.vn`; `http: '**'` is dev-only
+**Chosen:** Production `remotePatterns` is `[{ protocol: 'https', hostname: 'cf.shopee.vn' }]`; the wide-open `http: '**'` LAN-dev pattern is now spread in only when `NODE_ENV !== 'production'`.
+**Alternatives:** Keep `https: '**'` since the storefront could in principle need arbitrary image hosts; add a broader allowlist of speculative hosts.
+**Why:** Security audit flagged `hostname: '**'` (both http and https) as a blind SSRF/open-proxy primitive via the Next.js image optimizer (e.g. `http://169.254.169.254/...` cloud metadata). Grepping `scripts/data/shopee-catalog.json` confirmed the real, imported product catalog's images all come from `cf.shopee.vn` — no other host is in production use, and there is no S3/Cloudinary configured (Payload media is same-origin).
+**Trade-offs:** If a future data source introduces images from a new host, `remotePatterns` must be updated or those images will 400. This is an intentional trade — an allowlist that requires a deliberate code change beats an open proxy.
+**Revisit if:** The product catalog moves to a different image CDN/host, or Payload media moves to external object storage.
+
+## 2026-07-14 — CSP flipped to enforcing, `unsafe-inline`/`unsafe-eval` kept for now
+**Chosen:** `Content-Security-Policy-Report-Only` → `Content-Security-Policy` (enforcing), directive body unchanged (`script-src 'self' 'unsafe-inline' 'unsafe-eval'` still present).
+**Alternatives:** Also remove `unsafe-inline`/`unsafe-eval` and migrate to nonces in the same change.
+**Why:** Audit flagged Report-Only as providing zero real XSS defense-in-depth. Enforcing the existing policy immediately blocks any resource-loading/framing XSS vector at no cost, since the directive body was already tuned against real traffic in Report-Only mode. Removing `unsafe-inline`/`unsafe-eval` requires nonce plumbing through the Payload admin bundle and Next.js runtime, which is materially riskier to do blind alongside four other concurrent security fixes.
+**Trade-offs:** Inline/eval'd script injection is still not blocked by CSP — the policy mainly now stops exfiltration/framing/foreign-resource vectors, not script injection itself.
+**Revisit if:** Ready to invest in nonce-based CSP for the admin panel — track as a follow-up, not done here.
+
+## 2026-07-14 — `clientIp()` trusts the last `X-Forwarded-For` hop, not the first
+**Chosen:** Rate-limit bucketing in `middleware.ts` now keys on the last comma-separated hop of `X-Forwarded-For` (falls back to `X-Real-Ip`, then `'unknown'`).
+**Alternatives:** Read the IP from the raw socket/connection instead of any header; require a dedicated trusted header set only by the reverse proxy.
+**Why:** The first hop is fully attacker-controlled — a client can send an arbitrary `X-Forwarded-For` value, generating a fresh rate-limit bucket per request and bypassing login/register/checkout throttling entirely. This deploy's standard (see `~/.claude/rules/common/deploy.md`) puts Caddy/nginx in front of the app, which appends (not overwrites) `X-Forwarded-For`, so the last hop is the proxy's own observed connection IP — the one hop the client cannot forge.
+**Trade-offs:** This assumes the reverse proxy is configured to append rather than blindly forward a client-supplied header. If that assumption doesn't hold in a given deployment, the last hop can still be spoofed — proxy config is a hard dependency of this fix, not just a nice-to-have.
+**Revisit if:** The deploy topology changes (e.g. a CDN in front of the proxy) — re-verify which hop is actually trustworthy.
+
+## 2026-07-14 — Per-user random salt added to Payload admin password derivation
+**Chosen:** `derivePayloadPassword(email, salt)` mixes a random per-user `ssoSalt` (stored on the Payload `users` row, lazily backfilled) into the HMAC input, instead of deriving purely from `(PAYLOAD_SECRET, email)`. A forced password reset also rotates the salt.
+**Alternatives:** Leave the derivation as pure `HMAC(secret, email)` and rely solely on secrets-manager hygiene; store a full random password per user instead of deriving one (breaks the self-healing SSO-cookie flow).
+**Why:** Audit found that a leaked `PAYLOAD_SECRET`/`AUTH_SECRET` alone was sufficient to compute every admin's Payload login password from their email — no per-user secret was involved. The salt narrows that blast radius: the leaked secret alone is no longer enough, the attacker also needs each user's stored salt (DB-only, not in any env var or image).
+**Trade-offs:** Existing admin rows have `ssoSalt = null` until their next `ensurePayloadAdminUser` call (lazy backfill) — the migration only adds the nullable column, it doesn't backfill data. Requires a manual `payload migrate` run before this takes effect (see `src/migrations/20260714_090000_users_sso_salt.ts`, not yet applied).
+**Revisit if:** The SSO bridge is redesigned to avoid password derivation entirely (e.g. a dedicated internal auth strategy).
+
 ---
 
 ---
@@ -243,5 +278,37 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Why:** The body element and most chrome reference `bg-warm-50`, `text-warm-900`, `border-warm-200`, `ring-terracotta-400` directly — the semantic `--surface` tokens were secondary. Retuning the scale values flips the entire baseline to white/ink with zero component edits, keeping Phase 1 confined to the token layer (component rethemes are Phase 2). Keeping the scale names avoids a repo-wide rename churning the same diff as the retheme.
 **Trade-offs:** The Tailwind scale names (`warm`, `terracotta`, `cream`) are now semantically misleading — a `terracotta-400` class renders neutral gray, not orange. This is documented in DESIGN.md and the config comments; a future cleanup can rename them in an isolated refactor. The brand-driven `filament`/`spool` scales are unchanged (already grayscale, runtime-overridable via `--brand-*`).
 **Revisit if:** We do a dedicated refactor to rename the color scales to semantic names, or a store needs a genuinely chromatic brand accent (would reintroduce color into the `--brand-*` vars, not the neutral ramp).
+
+---
+
+## 2026-07-02 — YouTube channel block: live Data API v3 with manual fallback
+**Chosen:** Fetch subscriber/view/video counts server-side via YouTube Data API v3 (`channels.list?part=snippet,statistics`), cached ~1h with `unstable_cache`. Editor-entered manual fields render when `YOUTUBE_API_KEY` is unset or the fetch fails.
+**Alternatives:** Manual entry only (no key needed, static numbers); live-only with no fallback (block hides on failure).
+**Why:** User decision. Live numbers keep the card honest without editor upkeep, while the manual fallback means the block still renders on dev/self-host setups that never configured a key, and survives quota exhaustion.
+**Trade-offs:** Requires a Google Cloud key + enabling the Data API; counts lag up to an hour behind reality; the API has a daily quota (mitigated by the 1h cache tagged `youtube-channel`).
+**Revisit if:** We need real-time counts, hit quota limits at scale, or want to support non-YouTube channel stats.
+
+## 2026-07-02 — Reel carousel: poster + click-to-play modal (not inline embeds)
+**Chosen:** Horizontal scroll track of poster tiles with prev/next arrows; clicking a tile opens a modal that loads the platform embed (YouTube `/embed`, TikTok `/embed/v2`, Facebook `plugins/video.php`). Embed URL conversion lives in the pure, unit-tested `lib/reel-embed.ts`.
+**Alternatives:** Render each platform's live iframe embed inline in the track.
+**Why:** User decision. Inline TikTok/Facebook embeds load heavy third-party player scripts up front and behave poorly inside a horizontal scroller; poster-first keeps initial load light and the track smooth, matching the existing Reels block pattern.
+**Trade-offs:** One extra click to play; posters must be supplied by the editor (no auto-thumbnail from the platform).
+**Revisit if:** We want autoplaying inline reels or auto-fetched thumbnails per platform.
+
+---
+
+## 2026-07-14 — Email verification: small testable lib modules, not inline logic
+**Chosen:** Split the checkout-gate and Google-auto-verify logic into small, independently unit-testable modules (`lib/checkout-auth.ts`, `lib/auth-verify.ts`, `lib/email-verification.ts`, `lib/email/send.ts`) that the route/page/callback each call, rather than inlining the checks directly into `app/api/checkout/route.ts` and `auth.ts`.
+**Alternatives:** Inline the `userId`/`emailVerified` check directly in `app/api/checkout/route.ts`'s `POST` handler and test it via a full-route test that mocks all ~20 of that file's existing dependencies (mirroring `app/api/checkout/demo/__tests__/confirm.test.ts`'s pattern).
+**Why:** `app/api/checkout/route.ts` has no pre-existing test coverage and a large dependency surface (payment providers, dropshipping, coupons, gift cards, inventory, tax…); mocking all of it just to exercise a two-branch authorization gate is expensive to write and fragile to maintain. Extracting `requireVerifiedCheckoutUser`/`autoVerifyGoogleUser` as pure, prisma-only functions lets them be tested in isolation, while the route/callback integration is still covered by a narrow test that mocks only `@/auth` and `@/lib/prisma` (verified working — the gate runs before body parsing, so no other checkout dependency needs mocking for those tests).
+**Trade-offs:** One more file per concern instead of inline code; the checkout route's authorization boundary now lives one hop away from the handler that enforces it.
+**Revisit if:** The checkout route gets a full end-to-end test suite anyway, at which point the extraction stops paying for itself.
+
+## 2026-07-14 — Checkout: buyer email now sourced only from the verified session
+**Chosen:** With guest checkout removed, `buyerEmail` in `app/api/checkout/route.ts` is `session.user.email` only. The client-supplied `customerInfo.email` field (previously used as a guest fallback) is left in the request type/parser but no longer read for `buyerEmail`; `checkout-form.tsx`'s `requireEmail` prop and its guest email input become unreachable (still default to `false`/hidden) since the page never passes `requireEmail={true}` anymore.
+**Alternatives:** Also strip `customerInfo.email` from the request type and delete the now-dead `requireEmail` branch in `components/checkout-form.tsx`.
+**Why:** The email-verification spec only asks to remove the guest-checkout *fallback*, not to refactor `checkout-form.tsx`. Per `existing-code.md` §3 (refactoring and features are separate changes), the dead UI branch is left in place rather than pulled into this feature change.
+**Trade-offs:** `components/checkout-form.tsx` carries an unreachable `requireEmail` code path until a follow-up cleanup removes it.
+**Revisit if:** Someone picks up the flagged cleanup — remove `requireEmail`/the guest email field from `checkout-form.tsx` and `customerInfo.email` from the checkout API's request type, as a standalone refactor.
 
 ---
