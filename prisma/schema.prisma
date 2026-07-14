@@ -380,3 +380,15 @@ model ProductCtrDaily {
   @@unique([productId, day])
   @@index([day])
 }
+
+// Binary store for Payload media uploads. Payload's `media` collection keeps
+// the metadata (alt, filename, url); this table holds the actual file bytes so
+// every machine sharing this DB serves the same images. See
+// docs/superpowers/specs/2026-07-15-db-media-storage-design.md.
+model MediaFile {
+  filename  String   @id
+  mimeType  String
+  size      Int
+  data      Bytes
+  updatedAt DateTime @updatedAt
+}
