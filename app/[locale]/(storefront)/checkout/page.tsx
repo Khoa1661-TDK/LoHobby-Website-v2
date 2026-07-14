@@ -1,10 +1,12 @@
 // app/checkout/page.tsx
 import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
+import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { auth } from '@/auth';
 import CheckoutForm, { type SavedAddress } from '@/components/checkout-form';
+import ResendVerificationForm from '@/components/resend-verification-form';
 import { getCart } from '@/lib/cart';
 import { getCheckoutPaymentMethods } from '@/lib/payment-methods';
 import { prisma } from '@/lib/prisma';
@@ -24,9 +26,30 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function CheckoutPage(): Promise<ReactElement> {
   const t = await getTranslations('checkout');
   const session = await auth();
-  const userId = session?.user?.id ?? null;
+  if (!session?.user?.id) {
+    redirect('/login?callbackUrl=/checkout');
+  }
 
-  const cart = await getCart(userId);
+  const userId = session.user.id;
+
+  const [cart, dbUser] = await Promise.all([
+    getCart(userId),
+    prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true } }),
+  ]);
+
+  if (!dbUser?.emailVerified) {
+    return (
+      <section className="mx-auto max-w-screen-sm px-4 py-12 md:py-16">
+        <div className="mx-auto w-full max-w-md rounded-2xl border border-line bg-surface-raised p-6 shadow-soft-md">
+          <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">
+            {t('verifyGateHeading')}
+          </h1>
+          <p className="mb-6 text-sm text-warm-600 dark:text-warm-400">{t('verifyGateBody')}</p>
+          <ResendVerificationForm initialEmail={session.user.email ?? ''} />
+        </div>
+      </section>
+    );
+  }
 
   if (cart.lines.length === 0) {
     return (
@@ -48,12 +71,10 @@ export default async function CheckoutPage(): Promise<ReactElement> {
   }
 
   const [addressRows, paymentMethods, shippingSettings, storeSettings] = await Promise.all([
-    userId
-      ? prisma.userAddress.findMany({
-          where: { userId },
-          orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
-        })
-      : Promise.resolve([]),
+    prisma.userAddress.findMany({
+      where: { userId },
+      orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
+    }),
     getCheckoutPaymentMethods(),
     getShippingSettings(),
     getStoreSettings(),
@@ -72,8 +93,6 @@ export default async function CheckoutPage(): Promise<ReactElement> {
     isDefault: row.isDefault,
   }));
 
-  const isGuest = !userId;
-
   return (
     <section className="mx-auto w-full max-w-5xl px-4 py-8">
       <header className="mb-8">
@@ -83,15 +102,6 @@ export default async function CheckoutPage(): Promise<ReactElement> {
         <p className="mt-2 text-sm text-warm-600 dark:text-warm-400">
           {t('subtitle')}
         </p>
-        {isGuest ? (
-          <p className="mt-3 rounded-2xl border border-line bg-surface-raised px-4 py-3 text-sm text-warm-600 shadow-soft-sm dark:text-warm-400">
-            {t('guestNotice')}{' '}
-            <Link href="/login?callbackUrl=/checkout" className="font-medium text-accent underline">
-              {t('guestLogin')}
-            </Link>{' '}
-            {t('guestNoticeSuffix')}
-          </p>
-        ) : null}
       </header>
       <CheckoutForm
         cart={cart}
@@ -111,8 +121,7 @@ export default async function CheckoutPage(): Promise<ReactElement> {
         }}
         checkoutNote={storeSettings.checkoutNote}
         savedAddresses={savedAddresses}
-        defaultName={session?.user?.name ?? ''}
-        requireEmail={isGuest}
+        defaultName={session.user.name ?? ''}
       />
     </section>
   );

@@ -136,9 +136,8 @@
     "browseCta": "Browse products",
     "heading": "Checkout",
     "subtitle": "Tell us where to deliver and how you'd like to pay.",
-    "guestNotice": "You are checking out as a guest.",
-    "guestLogin": "Sign in",
-    "guestNoticeSuffix": "to save your addresses and track orders more easily.",
+    "verifyGateHeading": "Verify your email to continue",
+    "verifyGateBody": "You need to verify your email address before completing checkout. We can resend the verification link below.",
     "success": {
       "metaTitle": "Order confirmed",
       "headingPaid": "Thank you — your order is being prepared!",

@@ -27,6 +27,7 @@ import { logger } from '@/lib/logger';
 import { resolveBaseUrl } from '@/lib/utils';
 import { prisma } from '@/lib/prisma';
 import { boundedString, requestHasConsent } from '@/lib/analytics/track-server';
+import { requireVerifiedCheckoutUser } from '@/lib/checkout-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -153,8 +154,6 @@ function parseBody(value: unknown): CheckoutBody | null {
   };
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 function isDuplicateOrderError(error: unknown): boolean {
   return (
     error instanceof Error &&
@@ -171,19 +170,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
+  const gate = await requireVerifiedCheckoutUser(userId);
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
+  }
+
   const raw: unknown = await req.json().catch(() => null);
   const body = parseBody(raw);
   if (!body) {
     return NextResponse.json({ error: 'Dữ liệu thanh toán không hợp lệ' }, { status: 400 });
   }
 
-  const buyerEmail = body.customerInfo.email ?? session?.user?.email ?? null;
-  if (!userId && (!buyerEmail || !EMAIL_RE.test(buyerEmail))) {
-    return NextResponse.json(
-      { error: 'Vui lòng nhập email hợp lệ để nhận xác nhận đơn hàng.' },
-      { status: 400 },
-    );
-  }
+  const buyerEmail = session?.user?.email ?? null;
 
   const [shippingSettings, storeSettings] = await Promise.all([
     getShippingSettings(),

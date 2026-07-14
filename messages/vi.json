@@ -136,9 +136,8 @@
     "browseCta": "Xem danh mục",
     "heading": "Thanh toán",
     "subtitle": "Cho chúng tôi biết nơi giao hàng và cách bạn muốn thanh toán.",
-    "guestNotice": "Bạn đang thanh toán với tư cách khách.",
-    "guestLogin": "Đăng nhập",
-    "guestNoticeSuffix": "để lưu địa chỉ và theo dõi đơn hàng dễ dàng hơn.",
+    "verifyGateHeading": "Xác minh email để tiếp tục",
+    "verifyGateBody": "Bạn cần xác minh địa chỉ email trước khi hoàn tất thanh toán. Bạn có thể gửi lại liên kết xác minh bên dưới.",
     "success": {
       "metaTitle": "Xác nhận đơn hàng",
       "headingPaid": "Cảm ơn bạn — đơn hàng đang được chuẩn bị!",
