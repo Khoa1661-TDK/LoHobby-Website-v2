@@ -19,6 +19,9 @@ import * as migration_20260630_140550_lohobby_blocks from './20260630_140550_loh
 import * as migration_20260630_142912_info_section_block from './20260630_142912_info_section_block';
 import * as migration_20260701_130122_marquee_spotlight_blocks from './20260701_130122_marquee_spotlight_blocks';
 import * as migration_20260701_140000_hero_badge_highlight from './20260701_140000_hero_badge_highlight';
+import * as migration_20260702_090000_spotlight_deals_array from './20260702_090000_spotlight_deals_array';
+import * as migration_20260702_100000_youtube_reel_carousel_blocks from './20260702_100000_youtube_reel_carousel_blocks';
+import * as migration_20260714_090000_users_sso_salt from './20260714_090000_users_sso_salt';
 
 export const migrations = [
   {
@@ -125,5 +128,20 @@ export const migrations = [
     up: migration_20260701_140000_hero_badge_highlight.up,
     down: migration_20260701_140000_hero_badge_highlight.down,
     name: '20260701_140000_hero_badge_highlight',
+  },
+  {
+    up: migration_20260702_090000_spotlight_deals_array.up,
+    down: migration_20260702_090000_spotlight_deals_array.down,
+    name: '20260702_090000_spotlight_deals_array',
+  },
+  {
+    up: migration_20260702_100000_youtube_reel_carousel_blocks.up,
+    down: migration_20260702_100000_youtube_reel_carousel_blocks.down,
+    name: '20260702_100000_youtube_reel_carousel_blocks',
+  },
+  {
+    up: migration_20260714_090000_users_sso_salt.up,
+    down: migration_20260714_090000_users_sso_salt.down,
+    name: '20260714_090000_users_sso_salt',
   },
 ];
