@@ -27,13 +27,17 @@ requirements: a mandatory adversarial self-test gate, and a running session log.
 - Add a context-hunger self-check (MUST): if confidence in the available
   context is low, stop and ask the user — even when running autonomously —
   rather than guessing or filling gaps with invented specifics.
+- Trim to only necessary `@rules/common/*.md` imports, and tighten the
+  Project-Specific Constraints wording, to cut CLAUDE.md's per-read token
+  cost further.
 
 ## Non-Goals
 - Not touching `DECISIONS.md`'s existing format or content.
 - Not moving reference material into a separate `docs/ARCHITECTURE.md` —
   it's being cut, not relocated (per user decision: architecture is derivable
   from code, keep only true gotchas).
-- Not changing the global `@rules/common/*.md` imports or their content.
+- Not editing the content of any `@rules/common/*.md` file — trimming only
+  changes which files this project's CLAUDE.md imports.
 - Not changing the solo-project git workflow (commit directly to main).
 
 ## New CLAUDE.md Structure
@@ -64,54 +68,42 @@ Pointer only — check .claude/phases/ before starting work.
 ## Rules
 ### Always active
 @rules/common/core.md
-@rules/common/decisions.md
 @rules/common/git.md
 @rules/common/testing.md
 @rules/common/debug.md
 @rules/common/existing-code.md
 @rules/common/frontend.md
 
+Note: `@rules/common/decisions.md` is deliberately NOT imported — it's
+redundant with `core.md` §2 ("Decision Logging"), which already inlines the
+same `DECISIONS.md` format (Chosen/Alternatives/Why/Trade-offs/Revisit-if).
+
 ### Project-Specific Constraints
 
-**Git workflow (overrides global git rules):** solo project, commit directly
-to main, no branches/PRs required. Atomic commits, Conventional Commit
-messages still apply. (User decision, 2026-06-22.)
+**Git workflow (overrides global git rules):** solo project — commit
+directly to main, no branches/PRs. Atomic commits, Conventional Commits.
+(2026-06-22.)
 
-**Subagent policy (cost-based, symmetric):** before starting any non-trivial
-task, estimate whether a subagent or inline work costs fewer total tokens.
-Whichever is cheaper wins — no default bias toward inline or toward
-subagents. Broad multi-file searches, isolated implementation chunks, and
-genuinely parallel independent work usually favor subagents; single-file
-edits and directed lookups usually favor inline. When genuinely unsure, do
-it inline (cheaper to reason about, not a tiebreaker rule).
+**Subagent policy (cost-based, symmetric):** before non-trivial work, use
+whichever costs fewer tokens: subagent or inline. No default bias; if
+unsure, go inline.
 
 **Break-it-yourself gate (MUST, every non-trivial change):** before
-declaring implementation work done, spawn a subagent whose only job is to
-try to break the diff — bad input, boundary values, concurrent access,
-wrong assumptions. It reports findings; it does not fix. Real findings get
-fixed inline, then the gate is considered passed. Skip only for trivial
-one-liners/typo fixes.
+marking non-trivial work done, spawn a report-only adversarial subagent to
+try to break the diff. Fix real findings inline. Skip for trivial
+one-liners.
 
 **Simplicity / hard-to-break-in code (MUST):** prefer the smallest correct
-implementation over a defensible/extensible one. No speculative
-abstractions, no config flags for one call site, no defensive checks for
-states that can't occur. Validate only at real boundaries (user input,
-external APIs, webhooks). Fewer moving parts = fewer ways in.
+implementation. No speculative abstractions or unused flexibility.
+Validate only at real boundaries.
 
 **Session summary (MUST, end of every work session):** append one entry to
-SESSIONS.md — what changed, files touched, what's next. Do not duplicate
-DECISIONS.md (that's for technical decisions with alternatives/trade-offs);
-SESSIONS.md is a plain activity log.
+SESSIONS.md — what changed, files, what's next. Keep separate from
+DECISIONS.md.
 
-**Context hunger self-check (MUST):** before acting — including in
-autonomous/auto mode — assess whether you actually have enough context
-(codebase state, requirements, prior decisions) to proceed correctly. If
-not, stop and ask the user rather than guessing, assuming, or inventing
-specifics (file contents, APIs, prior conversation details) to fill the
-gap. This overrides the "be autonomous" default: autonomy applies to
-low-risk reversible choices with sufficient context, not to filling
-knowledge gaps. Do not hallucinate — if something can't be verified
-(a file, a function, a fact), check it or say you don't know.
+**Context hunger self-check (MUST):** if context confidence is low, stop
+and ask — even in auto mode. Don't guess or invent specifics; verify or
+say you don't know.
 ```
 
 ## New File: SESSIONS.md
@@ -148,3 +140,14 @@ directly. Approximately 280 of the current 360 lines are removed.
   MUST — explicitly carves out an exception to the "be autonomous" default:
   low context confidence means stop and ask, even in auto mode, rather than
   hallucinating specifics.
+- **Rule-import trim:** dropped `@rules/common/decisions.md` from the
+  imports — its content duplicates `core.md` §2 verbatim (same
+  `DECISIONS.md` format). Kept the other 6 imports; each covers ground the
+  others don't.
+- **Project-Specific Constraints wording trim:** shortened all 6 rules to
+  their operative sentence(s), cutting restated rationale/examples, to
+  reduce CLAUDE.md's per-read token cost. Substance unchanged.
+- **SESSIONS.md kept, not cut:** considered dropping it during the trim
+  pass but kept it — it's the only place cross-session continuity lives
+  (chat-only was already rejected earlier), and its ongoing cost is a few
+  lines per session.
