@@ -1,0 +1,7 @@
+<svg viewBox="0 0 64 40" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
+  <rect x="6" y="10" width="28" height="20" rx="3"/>
+  <path d="M18 15 L26 20 L18 25 Z" fill="currentColor" stroke="none"/>
+  <line x1="40" y1="14" x2="58" y2="14" stroke-linecap="round"/>
+  <line x1="40" y1="20" x2="54" y2="20" stroke-linecap="round"/>
+  <line x1="40" y1="26" x2="50" y2="26" stroke-linecap="round"/>
+</svg>

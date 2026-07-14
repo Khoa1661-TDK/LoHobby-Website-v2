@@ -34,3 +34,5 @@ export { Reels } from './Reels';
 export { InfoSection } from './InfoSection';
 export { Marquee } from './Marquee';
 export { Spotlight } from './Spotlight';
+export { YouTubeChannel } from './YouTubeChannel';
+export { ReelCarousel } from './ReelCarousel';
