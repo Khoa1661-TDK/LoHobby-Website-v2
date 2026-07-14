@@ -24,6 +24,9 @@ requirements: a mandatory adversarial self-test gate, and a running session log.
   `DECISIONS.md`, which stays reserved for technical decisions with
   alternatives/trade-offs). One entry per session: what changed, files
   touched, what's next.
+- Add a context-hunger self-check (MUST): if confidence in the available
+  context is low, stop and ask the user — even when running autonomously —
+  rather than guessing or filling gaps with invented specifics.
 
 ## Non-Goals
 - Not touching `DECISIONS.md`'s existing format or content.
@@ -99,6 +102,16 @@ external APIs, webhooks). Fewer moving parts = fewer ways in.
 SESSIONS.md — what changed, files touched, what's next. Do not duplicate
 DECISIONS.md (that's for technical decisions with alternatives/trade-offs);
 SESSIONS.md is a plain activity log.
+
+**Context hunger self-check (MUST):** before acting — including in
+autonomous/auto mode — assess whether you actually have enough context
+(codebase state, requirements, prior decisions) to proceed correctly. If
+not, stop and ask the user rather than guessing, assuming, or inventing
+specifics (file contents, APIs, prior conversation details) to fill the
+gap. This overrides the "be autonomous" default: autonomy applies to
+low-risk reversible choices with sufficient context, not to filling
+knowledge gaps. Do not hallucinate — if something can't be verified
+(a file, a function, a fact), check it or say you don't know.
 ```
 
 ## New File: SESSIONS.md
@@ -131,3 +144,7 @@ directly. Approximately 280 of the current 360 lines are removed.
 - **Doc trimming approach:** cut derivable architecture content entirely
   (per existing-code.md's own principle) rather than relocating it to a
   separate docs file.
+- **Context hunger self-check:** added mid-review (user follow-up) as a
+  MUST — explicitly carves out an exception to the "be autonomous" default:
+  low context confidence means stop and ask, even in auto mode, rather than
+  hallucinating specifics.
