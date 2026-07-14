@@ -7,7 +7,7 @@ import { getPayload } from 'payload';
 import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
 import { fetchPageBySlugDraft } from '@/lib/page-builder';
-import { type Locale } from '@/i18n/routing';
+import { routing, type Locale } from '@/i18n/routing';
 import EditorShell from '@/components/page-builder/EditorShell';
 
 type Props = { params: Promise<{ locale: Locale; slug: string }> };
@@ -25,13 +25,27 @@ export default async function BuilderPage(props: Props): Promise<ReactElement> {
     redirect(`/admin/login?redirect=${encodeURIComponent(`/${locale}/build/${slug}`)}`);
   }
 
-  const page = await fetchPageBySlugDraft(slug, locale);
+  const otherLocale = (routing.locales.find((code) => code !== locale) ?? locale) as Locale;
+
+  // Load both locales' drafts. The active locale must exist (as before). If only the other
+  // locale's draft is missing, degrade gracefully: mirror the active structure so the two
+  // stay in lockstep (same copy until translated) rather than 404-ing.
+  const [page, otherPage] = await Promise.all([
+    fetchPageBySlugDraft(slug, locale),
+    fetchPageBySlugDraft(slug, otherLocale),
+  ]);
   if (!page) notFound();
+
+  const otherLayout = otherPage?.layout ?? (structuredClone(page.layout) as typeof page.layout);
+  const otherTitle = otherPage?.title ?? page.title;
 
   return (
     <EditorShell
       locale={locale}
       page={page}
+      otherLocale={otherLocale}
+      otherLayout={otherLayout}
+      otherTitle={otherTitle}
       schemas={getBlockSchemas()}
     />
   );

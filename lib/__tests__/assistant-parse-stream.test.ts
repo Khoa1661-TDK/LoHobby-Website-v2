@@ -21,4 +21,18 @@ describe('parseAssistantStream', () => {
     for await (const e of parseAssistantStream(body)) events.push(e);
     expect(events.map((e) => e.type)).toEqual(['mutation', 'summary', 'done']);
   });
+
+  it('should parse token events carrying incremental text deltas', async () => {
+    const body = streamFrom([
+      '{"type":"token","text":"Hel"}\n{"type":"token","text":"lo"}\n{"type":"summary","text":"Hello"}\n{"type":"done"}\n',
+    ]);
+    const events = [];
+    for await (const e of parseAssistantStream(body)) events.push(e);
+    expect(events.map((e) => e.type)).toEqual(['token', 'token', 'summary', 'done']);
+    const tokenText = events
+      .filter((e): e is { type: 'token'; text: string } => e.type === 'token')
+      .map((e) => e.text)
+      .join('');
+    expect(tokenText).toBe('Hello');
+  });
 });

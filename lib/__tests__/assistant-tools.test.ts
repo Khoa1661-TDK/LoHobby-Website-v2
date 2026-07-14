@@ -3,10 +3,10 @@ import { ASSISTANT_TOOLS, buildSystemPrompt } from '@/lib/page-builder/assistant
 import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
 
 describe('assistant tools', () => {
-  it('should define exactly the five layout-mutation tools as OpenAI functions', () => {
+  it('should define the layout-mutation tools plus read_block as OpenAI functions', () => {
     expect(ASSISTANT_TOOLS.every((t) => t.type === 'function')).toBe(true);
     expect(ASSISTANT_TOOLS.map((t) => t.function.name).sort()).toEqual(
-      ['add_block', 'duplicate_block', 'move_block', 'remove_block', 'update_block'].sort(),
+      ['add_block', 'duplicate_block', 'move_block', 'read_block', 'remove_block', 'update_block'].sort(),
     );
   });
 

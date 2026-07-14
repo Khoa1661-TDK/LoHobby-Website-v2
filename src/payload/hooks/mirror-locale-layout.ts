@@ -30,9 +30,20 @@ type MirrorReq = PayloadRequest & {
   __mirrorPriorKeys?: Set<string>;
 };
 
+// The visual builder now owns cross-locale consistency (it writes both locales itself), so
+// its saves send `X-PB-Skip-Mirror: 1` to opt out of the mirror/auto-translate hook. Saves
+// from the Payload admin UI carry no such header and keep mirroring. Header values like
+// "0"/"false"/"" are treated as absent.
+function hasSkipMirrorHeader(req: unknown): boolean {
+  const headers = (req as { headers?: { get?: (name: string) => string | null } }).headers;
+  if (!headers || typeof headers.get !== 'function') return false;
+  const value = headers.get('x-pb-skip-mirror');
+  return typeof value === 'string' && value !== '' && value !== '0' && value.toLowerCase() !== 'false';
+}
+
 export const capturePriorLayoutKeys: CollectionBeforeChangeHook = ({ data, originalDoc, req }) => {
   const mreq = req as MirrorReq;
-  if (mreq.skipMirror) return data;
+  if (mreq.skipMirror || hasSkipMirrorHeader(req)) return data;
   const prior = Array.isArray(originalDoc?.layout) ? originalDoc.layout : [];
   mreq.__mirrorPriorKeys = new Set(
     prior.map((b: unknown) => blockKeyOf(b)).filter((k: string | undefined): k is string => !!k),
@@ -42,7 +53,7 @@ export const capturePriorLayoutKeys: CollectionBeforeChangeHook = ({ data, origi
 
 export const mirrorLocaleLayout: CollectionAfterChangeHook = async ({ doc, req }) => {
   const mreq = req as MirrorReq;
-  if (mreq.skipMirror) return doc;
+  if (mreq.skipMirror || hasSkipMirrorHeader(req)) return doc;
 
   const activeLocale = typeof req.locale === 'string' ? req.locale : undefined;
   if (!activeLocale) return doc;

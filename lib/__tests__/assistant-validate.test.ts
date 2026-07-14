@@ -123,7 +123,7 @@ describe('validateToolCall', () => {
       fields: { content: '# Hello\n\nWorld' },
     });
     expect(r.ok).toBe(true);
-    if (r.ok && r.mutation.kind === 'add') {
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'add') {
       const content = (r.mutation.block as { content?: unknown }).content;
       expect(content).not.toBe('# Hello\n\nWorld');
       expect((content as { root?: unknown }).root).toBeTypeOf('object');
@@ -137,10 +137,117 @@ describe('validateToolCall', () => {
       fields: { items: [{ question: 'Q?', answer: 'A plain answer.' }] },
     });
     expect(r.ok).toBe(true);
-    if (r.ok && r.mutation.kind === 'add') {
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'add') {
       const items = (r.mutation.block as { items?: Array<{ answer?: unknown }> }).items ?? [];
       expect((items[0]?.answer as { root?: unknown }).root).toBeTypeOf('object');
     }
+  });
+
+  it('should not emit blockOther when fieldsOther is omitted', () => {
+    const r = validateToolCall('add_block', { blockType: 'hero', index: 0, fields: { headline: 'Hi' } });
+    expect(r.ok).toBe(true);
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'add') {
+      expect(r.mutation.blockOther).toBeUndefined();
+    }
+  });
+
+  it('should validate fieldsOther and merge it over the active fields into blockOther', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'hero',
+      index: 0,
+      fields: { headline: 'Xin chào', ctaStyle: 'primary' },
+      fieldsOther: { headline: 'Hello' },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'add') {
+      expect(r.mutation.block).toMatchObject({ headline: 'Xin chào', ctaStyle: 'primary' });
+      // Shared/config fields default to the active value; only copy is overridden.
+      expect(r.mutation.blockOther).toMatchObject({ headline: 'Hello', ctaStyle: 'primary' });
+    }
+  });
+
+  it('should reject an invalid field inside fieldsOther', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'hero',
+      index: 0,
+      fields: { headline: 'Hi' },
+      fieldsOther: { notAField: 'x' },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/notAField/);
+  });
+
+  it('should coerce a richText Markdown string inside fieldsOther to Lexical JSON', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'richText',
+      index: 0,
+      fields: { content: '# Xin chào' },
+      fieldsOther: { content: '# Hello' },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'add') {
+      const other = (r.mutation.blockOther as { content?: unknown }).content;
+      expect(other).not.toBe('# Hello');
+      expect((other as { root?: unknown }).root).toBeTypeOf('object');
+    }
+  });
+});
+
+describe('validateToolCall — update_block locale', () => {
+  it('should accept an update_block without a locale tag (defaults handled by the caller)', () => {
+    const r = validateToolCall('update_block', { index: 0, fields: { headline: 'Hi' } });
+    expect(r.ok).toBe(true);
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'update') {
+      expect(r.mutation.locale).toBeUndefined();
+    }
+  });
+
+  it('should carry a valid locale tag through to the mutation', () => {
+    const r = validateToolCall('update_block', { index: 0, fields: { headline: 'Hi' }, locale: 'en' });
+    expect(r.ok).toBe(true);
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'update') {
+      expect(r.mutation.locale).toBe('en');
+    }
+  });
+
+  it('should accept "both" as a locale tag', () => {
+    const r = validateToolCall('update_block', { index: 0, fields: { headline: 'Hi' }, locale: 'both' });
+    expect(r.ok).toBe(true);
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'update') {
+      expect(r.mutation.locale).toBe('both');
+    }
+  });
+
+  it('should reject an invalid locale tag', () => {
+    const r = validateToolCall('update_block', { index: 0, fields: { headline: 'Hi' }, locale: 'fr' });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/locale/i);
+  });
+});
+
+describe('validateToolCall — read_block', () => {
+  it('should produce a read request with index and locale', () => {
+    const r = validateToolCall('read_block', { index: 2, locale: 'en' });
+    expect(r).toEqual({ ok: true, read: { index: 2, locale: 'en' } });
+  });
+
+  it('should omit the locale when not provided (caller defaults to active)', () => {
+    const r = validateToolCall('read_block', { index: 0 });
+    expect(r.ok).toBe(true);
+    if (r.ok && 'read' in r) {
+      expect(r.read).toEqual({ index: 0 });
+    }
+  });
+
+  it('should reject a missing integer index', () => {
+    const r = validateToolCall('read_block', { locale: 'vi' });
+    expect(r.ok).toBe(false);
+  });
+
+  it('should reject an invalid locale', () => {
+    const r = validateToolCall('read_block', { index: 0, locale: 'de' });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/locale/i);
   });
 });
 

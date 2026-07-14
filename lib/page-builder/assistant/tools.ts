@@ -5,6 +5,7 @@
 // (Gemini's OpenAI-compat layer does not reliably support it).
 import type { ChatCompletionFunctionTool } from 'openai/resources/chat/completions';
 import type { BlockSchema } from '@/lib/page-builder/block-schemas';
+import { THEMED_COLOR_BASES } from '@/lib/page-builder/themed-color';
 
 export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
   {
@@ -12,7 +13,7 @@ export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
     function: {
       name: 'add_block',
       description:
-        'Insert a new block into the page layout at the given index. Use a blockType that exists in the block contract and only fields that block defines.',
+        'Insert a new block into the page layout at the given index. The block is added to BOTH locales at once (structure is shared). Use a blockType that exists in the block contract and only fields that block defines.',
       parameters: {
         type: 'object',
         additionalProperties: false,
@@ -21,7 +22,13 @@ export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
           index: { type: 'integer', description: 'Position to insert at; 0 is the top.' },
           fields: {
             type: 'object',
-            description: 'Field values for this block. Keys must be fields the block defines.',
+            description:
+              'Field values for the block, written in the ACTIVE locale. Keys must be fields the block defines.',
+          },
+          fieldsOther: {
+            type: 'object',
+            description:
+              'Optional: copy for the OTHER locale (same field keys, translated text). Omit to reuse the active-locale copy verbatim. Shared/config fields default to the active values.',
           },
         },
         required: ['blockType', 'index', 'fields'],
@@ -32,15 +39,43 @@ export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
     type: 'function',
     function: {
       name: 'update_block',
-      description: 'Update one or more field values on the block at the given index.',
+      description:
+        'Update one or more field values on the block at the given index. Targets the active locale by default; pass locale to edit a specific locale or "both".',
       parameters: {
         type: 'object',
         additionalProperties: false,
         properties: {
           index: { type: 'integer', description: 'Index of the block to update.' },
           fields: { type: 'object', description: 'Field values to set on the block.' },
+          locale: {
+            type: 'string',
+            enum: ['vi', 'en', 'both'],
+            description:
+              'Which locale copy to update. Defaults to the active locale. Use "both" for shared/config fields (colors, enums, relationships).',
+          },
         },
         required: ['index', 'fields'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'read_block',
+      description:
+        'Read the full, untruncated field values of the block at the given index in a locale. The layout snapshot truncates long strings — use this before copying or translating a block between locales. Returns data only; it changes nothing.',
+      parameters: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          index: { type: 'integer', description: 'Index of the block to read.' },
+          locale: {
+            type: 'string',
+            enum: ['vi', 'en'],
+            description: 'Which locale copy to read. Defaults to the active locale.',
+          },
+        },
+        required: ['index'],
       },
     },
   },
@@ -123,6 +158,14 @@ function describeBlock(schema: BlockSchema, rels: RelationshipOptions): string {
   return `  ${schema.slug} — ${schema.label}\n${fields}`;
 }
 
+/** The light/dark slot pairs the model must set together, derived from THEMED_COLOR_BASES
+ *  so the prompt tracks the schema instead of hardcoding field names. */
+function themedColorPairs(): string {
+  return Array.from(THEMED_COLOR_BASES)
+    .map((base) => `${base} (light) + ${base}Dark (dark)`)
+    .join(', ');
+}
+
 export function buildSystemPrompt(
   schemas: BlockSchema[],
   relationshipOptions: RelationshipOptions = {},
@@ -135,7 +178,22 @@ export function buildSystemPrompt(
     'Relationship fields must be set to a real numeric id from the contract. Never invent an id; if no suitable id exists, omit the field and leave the block unbound.',
     'Indices refer to the current layout the user message provides. After each tool call the layout changes, so reason about positions in order.',
     'Prefer sensible defaults and concise, on-brand copy. When the user asks to "build a page", add a coherent sequence of blocks (e.g. a hero, then feature/product sections, then an FAQ or newsletter).',
-    'If the user attaches an image, treat it as a design reference: reproduce its layout, sections, copy, and visual order as closely as the available blocks and fields allow.',
+    '',
+    'DUAL-LOCALE EDITING:',
+    'The page exists in two locales, vi and en. Block STRUCTURE, ORDER, and TYPES are shared across both locales — add_block, move_block, remove_block, and duplicate_block always affect both at once. Only COPY (text) is per-locale.',
+    'When you add a block, write the active-locale copy in `fields` and the other locale\'s translation in `fieldsOther`. If you omit `fieldsOther`, both locales get the same copy.',
+    'Use update_block with `locale` to edit one locale\'s copy; use `locale: "both"` for shared/config fields (colors, enums, relationships).',
+    'The layout snapshot truncates long strings to 80 chars. Before copying or faithfully translating a block between locales, call read_block to get its full field values.',
+    '',
+    'THEMED COLORS (light + dark):',
+    `Some color fields come in light/dark pairs: ${themedColorPairs()}. The base field is the LIGHT-mode value and the "Dark" field is the DARK-mode value.`,
+    'Whenever you set a background color, set BOTH slots. If you only know one color (e.g. from an image), set the light slot to it and derive a readable dark-mode variant for the "Dark" slot (dark surfaces with light text).',
+    '',
+    'If the user attaches an image, treat it as a design reference:',
+    '- Map each visible section of the screenshot to the closest block in the contract; preserve top-to-bottom order and do not skip a section that has a plausible block match.',
+    '- Transcribe visible copy VERBATIM for the locale it appears to be in, and write a faithful translation for the other locale (via fields + fieldsOther).',
+    '- Extract the dominant background and accent colors; set the light color slot from the image and derive a readable dark-mode variant for the paired "Dark" slot.',
+    '',
     'When finished, end your turn with a one-sentence summary of what you changed.',
     '',
     'BLOCK CONTRACT (available blocks and their fields):',

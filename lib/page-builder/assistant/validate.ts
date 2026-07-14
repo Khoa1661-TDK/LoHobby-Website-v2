@@ -2,14 +2,31 @@
 import { getBlockSchema, getBlockSchemas, type BlockSchema, type FieldDescriptor } from '@/lib/page-builder/block-schemas';
 import { markdownToLexical } from '@/lib/page-builder/lexical-markdown';
 
+/** Which locale copy a field-level mutation targets. Structure (add/move/remove/
+ *  duplicate) is always shared across both locales, so only `update` carries a tag. */
+export type LocaleTag = 'vi' | 'en' | 'both';
+
 export type Mutation =
-  | { kind: 'add'; index: number; block: Record<string, unknown> }
-  | { kind: 'update'; index: number; fields: Record<string, unknown> }
+  | {
+      kind: 'add';
+      index: number;
+      block: Record<string, unknown>;
+      /** Copy for the non-active locale. Absent → the other locale gets a clone of `block`. */
+      blockOther?: Record<string, unknown>;
+    }
+  | { kind: 'update'; index: number; fields: Record<string, unknown>; locale?: LocaleTag }
   | { kind: 'move'; from: number; to: number }
   | { kind: 'remove'; index: number }
   | { kind: 'duplicate'; index: number };
 
-export type ValidateResult = { ok: true; mutation: Mutation } | { ok: false; error: string };
+/** A read_block request. Server-side only: the route answers it with the full,
+ *  untruncated block values as a tool message; it emits no client mutation. */
+export type ReadRequest = { index: number; locale?: 'vi' | 'en' };
+
+export type ValidateResult =
+  | { ok: true; mutation: Mutation }
+  | { ok: true; read: ReadRequest }
+  | { ok: false; error: string };
 
 function asRecord(input: unknown): Record<string, unknown> {
   return input && typeof input === 'object' ? (input as Record<string, unknown>) : {};
@@ -17,6 +34,13 @@ function asRecord(input: unknown): Record<string, unknown> {
 
 function asInt(value: unknown): number | null {
   return typeof value === 'number' && Number.isInteger(value) ? value : null;
+}
+
+/** Validate an optional locale tag on update_block. Returns an error string or null. */
+function checkLocaleTag(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (value === 'vi' || value === 'en' || value === 'both') return null;
+  return 'update_block locale must be one of: vi, en, both.';
 }
 
 /** An unbound relationship — Payload accepts these and renders the block unconfigured. */
@@ -130,12 +154,28 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
       // richText fields arrive as Markdown strings; store them as Lexical JSON so the
       // page save does not 400 (see coerceRichText).
       coerceRichText(schema.fields, fields);
-      return { ok: true, mutation: { kind: 'add', index, block: { blockType, ...fields } } };
+      // Optional copy for the non-active locale. Validated the same way; merged over the
+      // active fields so shared/config fields (enum, relationship, number, colors) match
+      // while per-locale copy is overridden. Absent → the other locale clones `block`.
+      let blockOther: Record<string, unknown> | undefined;
+      if (args.fieldsOther !== undefined) {
+        const fieldsOther = asRecord(args.fieldsOther);
+        const otherErr = checkFields(schema, fieldsOther);
+        if (otherErr) return { ok: false, error: otherErr };
+        const merged = { ...fields, ...fieldsOther };
+        coerceRichText(schema.fields, merged);
+        blockOther = { blockType, ...merged };
+      }
+      const mutation: Mutation = { kind: 'add', index, block: { blockType, ...fields } };
+      if (blockOther) mutation.blockOther = blockOther;
+      return { ok: true, mutation };
     }
     case 'update_block': {
       const index = asInt(args.index);
       const fields = asRecord(args.fields);
       if (index === null) return { ok: false, error: 'update_block requires an integer index.' };
+      const localeErr = checkLocaleTag(args.locale);
+      if (localeErr) return { ok: false, error: localeErr };
       // First pass: validate field NAMES against the union of all blocks. If no block
       // declares a field at all, it is definitely invalid. This is a cheap early-out only —
       // the authoritative per-target-block check (field existence + enum range) runs in the
@@ -145,7 +185,19 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
         const known = anyBlockHasField(key);
         if (!known) return { ok: false, error: `No block defines a field named "${key}".` };
       }
-      return { ok: true, mutation: { kind: 'update', index, fields } };
+      const mutation: Mutation = { kind: 'update', index, fields };
+      if (typeof args.locale === 'string') mutation.locale = args.locale as LocaleTag;
+      return { ok: true, mutation };
+    }
+    case 'read_block': {
+      const index = asInt(args.index);
+      if (index === null) return { ok: false, error: 'read_block requires an integer index.' };
+      if (args.locale !== undefined && args.locale !== 'vi' && args.locale !== 'en') {
+        return { ok: false, error: 'read_block locale must be "vi" or "en".' };
+      }
+      const read: ReadRequest = { index };
+      if (args.locale === 'vi' || args.locale === 'en') read.locale = args.locale;
+      return { ok: true, read };
     }
     case 'move_block': {
       const from = asInt(args.from);

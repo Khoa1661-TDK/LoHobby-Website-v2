@@ -15,11 +15,17 @@ import { blockKeyOf } from '@/lib/page-builder/mirror/reconcile';
 
 type Layout = Record<string, unknown>[];
 
-function makeReq(locale: string, store: { vi: Layout; en: Layout }, priorKeys?: Set<string>) {
+function makeReq(
+  locale: string,
+  store: { vi: Layout; en: Layout },
+  priorKeys?: Set<string>,
+  headers?: HeadersInit,
+) {
   return {
     locale,
     skipMirror: undefined as boolean | undefined,
     __mirrorPriorKeys: priorKeys,
+    headers: headers ? new Headers(headers) : undefined,
     payload: {
       findByID: vi.fn(async ({ locale: loc }: { locale: string }) => ({ id: 1, layout: store[loc as 'vi' | 'en'] ?? [] })),
       update: vi.fn(async ({ locale: loc, data }: { locale: string; data: { layout: Layout } }) => {
@@ -93,6 +99,20 @@ describe('mirrorLocaleLayout', () => {
     expect(req.payload.update).not.toHaveBeenCalled();
   });
 
+  it('should short-circuit when the X-PB-Skip-Mirror header is present', async () => {
+    const store = { vi: [{ blockType: 'text', blockKey: 'k1', heading: 'Hi' }] as Layout, en: [] as Layout };
+    const req = makeReq('vi', store, undefined, { 'X-PB-Skip-Mirror': '1' });
+    await mirrorLocaleLayout({ doc: { id: 1 }, req } as never);
+    expect(req.payload.update).not.toHaveBeenCalled();
+  });
+
+  it('should still mirror when a skip header is present but falsy ("0")', async () => {
+    const store = { vi: [{ blockType: 'text', blockKey: 'k1', heading: 'Hi' }] as Layout, en: [] as Layout };
+    const req = makeReq('vi', store, undefined, { 'X-PB-Skip-Mirror': '0' });
+    await mirrorLocaleLayout({ doc: { id: 1 }, req } as never);
+    expect(req.payload.update).toHaveBeenCalledTimes(1);
+  });
+
   it('should mirror all blocks on first create', async () => {
     const store = {
       vi: [{ blockType: 'text', blockKey: 'k1', heading: 'A' }, { blockType: 'text', blockKey: 'k2', heading: 'B' }] as Layout,
@@ -117,6 +137,13 @@ describe('capturePriorLayoutKeys', () => {
   it('should short-circuit when skipMirror is set', () => {
     const req = makeReq('vi', { vi: [], en: [] });
     req.skipMirror = true;
+    const data = { layout: [] };
+    capturePriorLayoutKeys({ data, originalDoc: { layout: [{ blockType: 'text', blockKey: 'x' }] }, req } as never);
+    expect(req.__mirrorPriorKeys).toBeUndefined();
+  });
+
+  it('should short-circuit when the X-PB-Skip-Mirror header is present', () => {
+    const req = makeReq('vi', { vi: [], en: [] }, undefined, { 'X-PB-Skip-Mirror': '1' });
     const data = { layout: [] };
     capturePriorLayoutKeys({ data, originalDoc: { layout: [{ blockType: 'text', blockKey: 'x' }] }, req } as never);
     expect(req.__mirrorPriorKeys).toBeUndefined();

@@ -174,6 +174,20 @@ const config: Config = {
           3: 'var(--accent-3)',
           soft: 'var(--accent-soft)',
         },
+        // Page-builder AI helper palette (Gemini-style). Fixed dark chrome, driven by
+        // the --gemini-* custom properties in app/globals.css so no component inlines hex.
+        gemini: {
+          bg: 'var(--gemini-bg)',
+          surface: 'var(--gemini-surface)',
+          raised: 'var(--gemini-surface-raised)',
+          border: 'var(--gemini-border)',
+          text: 'var(--gemini-text)',
+          muted: 'var(--gemini-text-muted)',
+          bubble: 'var(--gemini-bubble)',
+          blue: 'var(--gemini-blue)',
+          purple: 'var(--gemini-purple)',
+          pink: 'var(--gemini-pink)',
+        },
       },
       // Custom border radius scales
       borderRadius: {
