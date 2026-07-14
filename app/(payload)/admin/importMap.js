@@ -39,6 +39,7 @@ import { FieldsToExport as FieldsToExport_2cddc2e1d3f965d7263141af56b26a90 } fro
 import { CollectionField as CollectionField_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { WhereField as WhereField_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
 import { Preview as Preview_2cddc2e1d3f965d7263141af56b26a90 } from '@shopnex/import-export-plugin/rsc'
+import { HeaderBuilderLink as HeaderBuilderLink_cb50600839094baa743b4b7d20678f7f } from '@/src/payload/components/HeaderBuilderLink'
 import { HeaderDropdownItemRowLabel as HeaderDropdownItemRowLabel_e020642e91f91dd59cec6f75d1f6c02c } from '@/src/payload/components/HeaderDropdownItemRowLabel'
 import { HeaderTabRowLabel as HeaderTabRowLabel_9e5a08b5dcee3047768f1fdddf070d7d } from '@/src/payload/components/HeaderTabRowLabel'
 import { Nav as Nav_843028945cda50810eba35c5314c6296 } from '@shopnex/sidebar-plugin/rsc'
@@ -92,6 +93,7 @@ export const importMap = {
   "@shopnex/import-export-plugin/rsc#CollectionField": CollectionField_2cddc2e1d3f965d7263141af56b26a90,
   "@shopnex/import-export-plugin/rsc#WhereField": WhereField_2cddc2e1d3f965d7263141af56b26a90,
   "@shopnex/import-export-plugin/rsc#Preview": Preview_2cddc2e1d3f965d7263141af56b26a90,
+  "@/src/payload/components/HeaderBuilderLink#HeaderBuilderLink": HeaderBuilderLink_cb50600839094baa743b4b7d20678f7f,
   "@/src/payload/components/HeaderDropdownItemRowLabel#HeaderDropdownItemRowLabel": HeaderDropdownItemRowLabel_e020642e91f91dd59cec6f75d1f6c02c,
   "@/src/payload/components/HeaderTabRowLabel#HeaderTabRowLabel": HeaderTabRowLabel_9e5a08b5dcee3047768f1fdddf070d7d,
   "@shopnex/sidebar-plugin/rsc#Nav": Nav_843028945cda50810eba35c5314c6296,
