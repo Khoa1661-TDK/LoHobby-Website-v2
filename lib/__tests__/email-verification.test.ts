@@ -54,7 +54,7 @@ describe('issueVerificationEmail', () => {
       where: { identifier: 'verify-email:buyer@example.com' },
     });
     expect(createMock).toHaveBeenCalledTimes(1);
-    const createArgs = createMock.mock.calls[0][0] as {
+    const createArgs = createMock.mock.calls[0]![0] as {
       data: { identifier: string; token: string; expires: Date };
     };
     expect(createArgs.data.identifier).toBe('verify-email:buyer@example.com');
