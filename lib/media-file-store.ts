@@ -31,6 +31,9 @@ export async function upsertMediaFile(input: {
       `Media file "${input.filename}" is ${input.data.byteLength} bytes; the database store caps files at ${MAX_MEDIA_FILE_BYTES} bytes`,
     );
   }
+  // Prisma 7 types Bytes as Uint8Array<ArrayBuffer>; copy once so Buffer-backed
+  // inputs (ArrayBufferLike) satisfy it without casting. Inputs are ≤ 25 MB.
+  const bytes = new Uint8Array(input.data);
   const prisma = await db();
   await prisma.mediaFile.upsert({
     where: { filename: input.filename },
@@ -38,12 +41,12 @@ export async function upsertMediaFile(input: {
       filename: input.filename,
       mimeType: input.mimeType,
       size: input.data.byteLength,
-      data: input.data as any,
+      data: bytes,
     },
     update: {
       mimeType: input.mimeType,
       size: input.data.byteLength,
-      data: input.data as any,
+      data: bytes,
     },
   });
 }
