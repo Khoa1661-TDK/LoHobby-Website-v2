@@ -1,5 +1,5 @@
 // lib/payload-admin-sync.ts — sync NextAuth admins into Payload CMS accounts
-import { createHmac } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 import { headers } from 'next/headers';
 import config from '@payload-config';
 import { generatePayloadCookie, getPayload } from 'payload';
@@ -54,16 +54,22 @@ function normalizeSameSite(value: unknown): 'lax' | 'strict' | 'none' {
  * sign-in.
  *
  * ⚠️  SECRET-ROTATION HAZARD: this password is deterministic on
- * (PAYLOAD_SECRET ?? AUTH_SECRET, email). If either secret is rotated, every
- * existing Payload `users` row will have a stale password hash. The
- * `forcePasswordReset` recovery in `createPayloadAdminSessionCookie()` self-
- * heals this on the NEXT admin visit, but ONLY if it actually runs (i.e. the
- * first login fails). Never rotate the secret without also re-seeding admin
- * passwords, or be prepared for a one-time login failure per admin.
+ * (PAYLOAD_SECRET ?? AUTH_SECRET, per-user `ssoSalt`, email). If either secret
+ * is rotated, every existing Payload `users` row will have a stale password
+ * hash. The `forcePasswordReset` recovery in `createPayloadAdminSessionCookie()`
+ * self-heals this on the NEXT admin visit, but ONLY if it actually runs (i.e.
+ * the first login fails). Never rotate the secret without also re-seeding
+ * admin passwords, or be prepared for a one-time login failure per admin.
+ *
+ * The per-user `salt` (stored on the Payload `users` row, see
+ * `ensurePayloadAdminUser`) narrows the blast radius of a leaked
+ * PAYLOAD_SECRET/AUTH_SECRET: the secret alone is no longer sufficient to
+ * compute an admin's derived password — an attacker would also need each
+ * user's stored salt, which lives only in the database.
  */
-export function derivePayloadPassword(email: string): string {
+export function derivePayloadPassword(email: string, salt: string): string {
   return createHmac('sha256', getSsoSecret())
-    .update(email.trim().toLowerCase())
+    .update(`${salt}:${email.trim().toLowerCase()}`)
     .digest('hex');
 }
 
@@ -86,14 +92,13 @@ function readCookieRaw(cookieHeader: string, name: string): string | null {
 export async function ensurePayloadAdminUser(
   admin: Pick<AdminSessionUser, 'email' | 'name'>,
   options: { forcePasswordReset?: boolean } = {},
-): Promise<void> {
+): Promise<{ salt: string }> {
   if (!isAdminEmail(admin.email)) {
     throw new Error('Only administrator emails can have CMS accounts');
   }
 
   const payload = await getPayload({ config });
   const email = admin.email.trim().toLowerCase();
-  const password = derivePayloadPassword(email);
 
   const existing = await payload.find({
     collection: 'users',
@@ -103,6 +108,8 @@ export async function ensurePayloadAdminUser(
   });
 
   if (existing.docs.length === 0) {
+    const salt = randomBytes(16).toString('hex');
+    const password = derivePayloadPassword(email, salt);
     await payload.create({
       collection: 'users',
       overrideAccess: true,
@@ -110,21 +117,34 @@ export async function ensurePayloadAdminUser(
         email,
         name: admin.name ?? email,
         password,
+        ssoSalt: salt,
       },
     });
-    return;
+    return { salt };
   }
 
-  // The derived password is deterministic (HMAC of email + PAYLOAD_SECRET) so
-  // there is no reason to re-hash and rewrite it on every admin session — that
-  // turns a fast cookie set into a DB write per visit AND races with any
-  // concurrent admin-connect. Only write when:
-  //   - the display name changed, OR
-  //   - the caller explicitly asked for a recovery reset
+  // The derived password is deterministic (HMAC of email + salt +
+  // PAYLOAD_SECRET) so there is no reason to re-hash and rewrite it on every
+  // admin session — that turns a fast cookie set into a DB write per visit
+  // AND races with any concurrent admin-connect. Only write when:
+  //   - the display name changed,
+  //   - the caller explicitly asked for a recovery reset, or
+  //   - the row predates `ssoSalt` and needs one backfilled
   const existingDoc = existing.docs[0]!;
+  const existingSalt = existingDoc.ssoSalt ?? null;
   const nextName = admin.name ?? email;
   const needsNameSync = existingDoc.name !== nextName;
-  const needsPasswordSync = options.forcePasswordReset === true;
+
+  // A forced reset always rotates the salt too, not just the password: this
+  // is the self-heal/recovery path (rare — only runs after a login failure),
+  // so the extra churn is cheap, and rotating invalidates a possibly-
+  // compromised salt at the same time as the password it derives.
+  const saltRotated = !existingSalt || options.forcePasswordReset === true;
+  const salt = saltRotated ? randomBytes(16).toString('hex') : existingSalt!;
+  // Any time the salt changes (fresh backfill or forced rotation) the stored
+  // password hash is stale and must be rewritten, even if the caller didn't
+  // explicitly ask for a password reset.
+  const needsPasswordSync = options.forcePasswordReset === true || saltRotated;
 
   if (needsPasswordSync || needsNameSync) {
     const updateData: Record<string, unknown> = {};
@@ -134,7 +154,10 @@ export async function ensurePayloadAdminUser(
     }
 
     if (needsPasswordSync) {
-      updateData.password = password;
+      updateData.password = derivePayloadPassword(email, salt);
+      if (saltRotated) {
+        updateData.ssoSalt = salt;
+      }
       // Clear any login lockout that may have been triggered by earlier
       // failed SSO attempts (e.g. after a secret rotation). Payload auth
       // tracks `loginAttempts` and `lockUntil`; resetting them prevents the
@@ -150,6 +173,8 @@ export async function ensurePayloadAdminUser(
       data: updateData,
     });
   }
+
+  return { salt };
 }
 
 /**
@@ -167,10 +192,10 @@ export async function createPayloadAdminSessionCookie(
   const payload = await getPayload({ config });
   const cookiePrefix = payload.config.cookiePrefix ?? 'payload';
 
-  await ensurePayloadAdminUser(admin);
+  const { salt } = await ensurePayloadAdminUser(admin);
 
   const email = admin.email.trim().toLowerCase();
-  const password = derivePayloadPassword(email);
+  const password = derivePayloadPassword(email, salt);
 
   // ---------- first login attempt ----------
   let token: string | undefined | null;
@@ -189,14 +214,16 @@ export async function createPayloadAdminSessionCookie(
 
   // ---------- recovery path ----------
   if (!token) {
-    // Force-reset the Payload user's password to the deterministic derived
-    // value and clear any login lockout, then retry once.
-    await ensurePayloadAdminUser(admin, { forcePasswordReset: true });
+    // Force-reset the Payload user's password (and rotate its salt — see
+    // `ensurePayloadAdminUser`) and clear any login lockout, then retry once
+    // using the freshly rotated salt.
+    const { salt: retrySalt } = await ensurePayloadAdminUser(admin, { forcePasswordReset: true });
+    const retryPassword = derivePayloadPassword(email, retrySalt);
 
     try {
       const retry = await payload.login({
         collection: 'users',
-        data: { email, password },
+        data: { email, password: retryPassword },
       });
       token = retry.token;
     } catch {

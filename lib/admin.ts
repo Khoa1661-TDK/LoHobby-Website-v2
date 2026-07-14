@@ -15,6 +15,13 @@ export async function getAdminUser(): Promise<AdminSessionUser | null> {
   const user = session?.user;
   if (!user?.email || !isAdminEmail(user.email)) return null;
 
+  // Admin recognition requires the Google OAuth provider, not just an
+  // allowlisted email. A credentials-provider session (email/password) must
+  // never be treated as admin, even if it holds an allowlisted email — this
+  // closes the race where an attacker registers the admin's email via
+  // /api/register before the real admin has ever signed in with Google.
+  if (user.provider !== 'google') return null;
+
   return {
     id: user.id,
     email: user.email,

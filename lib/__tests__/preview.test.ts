@@ -28,4 +28,12 @@ describe('isValidPreviewToken', () => {
     delete process.env.PREVIEW_SECRET;
     expect(isValidPreviewToken('anything')).toBe(false);
   });
+
+  it('should reject a token of different length than PREVIEW_SECRET without throwing', () => {
+    process.env.PREVIEW_SECRET = 'topsecret';
+    expect(() => isValidPreviewToken('short')).not.toThrow();
+    expect(isValidPreviewToken('short')).toBe(false);
+    expect(() => isValidPreviewToken('a-much-longer-token-than-the-secret')).not.toThrow();
+    expect(isValidPreviewToken('a-much-longer-token-than-the-secret')).toBe(false);
+  });
 });

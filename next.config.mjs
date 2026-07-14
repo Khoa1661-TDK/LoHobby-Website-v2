@@ -4,13 +4,13 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
-// Content-Security-Policy in REPORT-ONLY mode. It does not block anything yet —
-// it surfaces violations so we can tighten the policy before enforcing it.
-// Permissive on purpose: the Payload admin panel and the Next.js runtime both
-// need inline + eval'd scripts, the storefront loads remote product images from
-// arbitrary https hosts (see images.remotePatterns), and checkout posts to the
-// PayOS payment domain. Tighten (drop 'unsafe-*', pin hosts) once reports are
-// clean, then switch the header name to `Content-Security-Policy`.
+// Content-Security-Policy — ENFORCING. Permissive on script-src only: the
+// Payload admin panel and the Next.js runtime both need inline + eval'd
+// scripts, so 'unsafe-inline'/'unsafe-eval' remain for now — removing them
+// requires migrating the admin panel to a nonce-based CSP, which is a
+// separate follow-up. Remote product images are limited to the pinned hosts
+// in images.remotePatterns (not "arbitrary https hosts"), and checkout posts
+// to the PayOS payment domain.
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
@@ -39,7 +39,7 @@ const securityHeaders = [
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
   },
-  { key: 'Content-Security-Policy-Report-Only', value: contentSecurityPolicy },
+  { key: 'Content-Security-Policy', value: contentSecurityPolicy },
 ];
 
 /** @type {import('next').NextConfig} */
@@ -59,13 +59,24 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: '**' },
-      // Payload builds media URLs from the request host, so browsing the store
-      // over http via a LAN IP (e.g. http://192.168.1.3:3000 from a phone) or any
-      // non-localhost dev host yields http image sources. Without this the image
-      // optimizer returns 400 and every Payload-hosted image fails to load. This
-      // mirrors the wide-open https rule above.
-      { protocol: 'http', hostname: '**' },
+      // Imported product catalog images (Shopee CDN) — the only external https
+      // image host the storefront actually renders. Pinned to the exact host,
+      // not a wildcard, to close the SSRF hole a wide-open `hostname: '**'`
+      // pattern created (the Next.js image optimizer would otherwise
+      // server-side-fetch any attacker-supplied URL, including cloud instance
+      // metadata endpoints and internal service ports).
+      { protocol: 'https', hostname: 'cf.shopee.vn' },
+      // Dev-only: Payload builds media URLs from the request host, so browsing
+      // the store over http via a LAN IP (e.g. http://192.168.1.3:3000 from a
+      // phone) or any non-localhost dev host yields http image sources.
+      // Without this the image optimizer returns 400 and every Payload-hosted
+      // image fails to load locally. Excluded from production builds — an
+      // open http:'**' pattern is the primary SSRF vector (plain-http fetches
+      // to e.g. 169.254.169.254 cloud metadata), and production never needs it
+      // since prod Payload media is served over https from the app's own host.
+      ...(process.env.NODE_ENV !== 'production'
+        ? [{ protocol: 'http', hostname: '**' }]
+        : []),
     ],
   },
   async headers() {

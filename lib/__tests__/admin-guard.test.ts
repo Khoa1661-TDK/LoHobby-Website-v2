@@ -1,5 +1,5 @@
 // lib/__tests__/admin-guard.test.ts
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 
 describe('isAuthorizedAdmin', () => {
@@ -51,5 +51,107 @@ describe('isAuthorizedAdmin', () => {
     const result = await isAuthorizedAdmin(payload as never, new Headers(), () => true);
     expect(result).toBe(false);
     expect(auth).toHaveBeenCalledTimes(1);
+  });
+});
+
+// lib/admin-emails.ts — ADMIN_EMAILS must fail closed (empty), never fall back
+// to a hardcoded public admin email, when unset or misconfigured.
+describe('isAdminEmail (fail-closed, no hardcoded fallback)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it('should return false for every input when ADMIN_EMAILS is unset', async () => {
+    vi.stubEnv('ADMIN_EMAILS', undefined);
+    vi.resetModules();
+    const { ADMIN_EMAILS, isAdminEmail } = await import('@/lib/admin-emails');
+
+    expect(ADMIN_EMAILS).toEqual([]);
+    expect(isAdminEmail('admin@shop.test')).toBe(false);
+    expect(isAdminEmail('your-email@gmail.com')).toBe(false);
+    expect(isAdminEmail(undefined)).toBe(false);
+  });
+
+  it('should return false for every input when ADMIN_EMAILS parses to an empty list', async () => {
+    vi.stubEnv('ADMIN_EMAILS', '   ,  ,');
+    vi.resetModules();
+    const { ADMIN_EMAILS, isAdminEmail } = await import('@/lib/admin-emails');
+
+    expect(ADMIN_EMAILS).toEqual([]);
+    expect(isAdminEmail('admin@shop.test')).toBe(false);
+  });
+
+  it('should still recognize a configured allowlist', async () => {
+    vi.stubEnv('ADMIN_EMAILS', 'Admin@Shop.test, second@shop.test');
+    vi.resetModules();
+    const { isAdminEmail } = await import('@/lib/admin-emails');
+
+    expect(isAdminEmail('admin@shop.test')).toBe(true);
+    expect(isAdminEmail('second@shop.test')).toBe(true);
+    expect(isAdminEmail('nope@shop.test')).toBe(false);
+  });
+});
+
+// lib/admin.ts — admin recognition must require the Google OAuth provider, not
+// just an allowlisted email, to close the register-then-race privilege
+// escalation (attacker registers the admin's email via credentials first).
+describe('getAdminUser provider gating', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+    vi.doUnmock('@/auth');
+  });
+
+  it('should return null when the email matches the allowlist but provider is "credentials"', async () => {
+    vi.stubEnv('ADMIN_EMAILS', 'admin@shop.test');
+    vi.doMock('@/auth', () => ({
+      auth: vi.fn().mockResolvedValue({
+        user: { id: 'u1', email: 'admin@shop.test', name: 'Admin', provider: 'credentials' },
+      }),
+    }));
+    vi.resetModules();
+
+    const { getAdminUser } = await import('@/lib/admin');
+    expect(await getAdminUser()).toBeNull();
+  });
+
+  it('should return null when the email matches the allowlist but provider is missing', async () => {
+    vi.stubEnv('ADMIN_EMAILS', 'admin@shop.test');
+    vi.doMock('@/auth', () => ({
+      auth: vi.fn().mockResolvedValue({
+        user: { id: 'u1', email: 'admin@shop.test', name: 'Admin' },
+      }),
+    }));
+    vi.resetModules();
+
+    const { getAdminUser } = await import('@/lib/admin');
+    expect(await getAdminUser()).toBeNull();
+  });
+
+  it('should return the admin when the email matches the allowlist and provider is "google"', async () => {
+    vi.stubEnv('ADMIN_EMAILS', 'admin@shop.test');
+    vi.doMock('@/auth', () => ({
+      auth: vi.fn().mockResolvedValue({
+        user: { id: 'u1', email: 'admin@shop.test', name: 'Admin', provider: 'google' },
+      }),
+    }));
+    vi.resetModules();
+
+    const { getAdminUser } = await import('@/lib/admin');
+    expect(await getAdminUser()).toEqual({ id: 'u1', email: 'admin@shop.test', name: 'Admin' });
+  });
+
+  it('should return null when the email does not match the allowlist even with provider "google"', async () => {
+    vi.stubEnv('ADMIN_EMAILS', 'admin@shop.test');
+    vi.doMock('@/auth', () => ({
+      auth: vi.fn().mockResolvedValue({
+        user: { id: 'u2', email: 'nope@shop.test', name: 'Nope', provider: 'google' },
+      }),
+    }));
+    vi.resetModules();
+
+    const { getAdminUser } = await import('@/lib/admin');
+    expect(await getAdminUser()).toBeNull();
   });
 });

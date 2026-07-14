@@ -42,5 +42,19 @@ export const Users: CollectionConfig = {
       name: 'name',
       type: 'text',
     },
+    {
+      // Per-user random salt mixed into `derivePayloadPassword` (see
+      // lib/payload-admin-sync.ts). Narrows the blast radius of a leaked
+      // PAYLOAD_SECRET/AUTH_SECRET: without this row's value, the secret
+      // alone is no longer sufficient to compute an admin's derived
+      // password. Nullable because existing rows predate this field — it is
+      // generated lazily on next sync (same lazy-write pattern as name/
+      // password sync in ensurePayloadAdminUser).
+      name: 'ssoSalt',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+    },
   ],
 };

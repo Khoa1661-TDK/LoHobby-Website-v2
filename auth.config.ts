@@ -18,9 +18,13 @@ export const authConfig = {
      * initial signin), `token.email` is always the normalized email. Both are
      * preserved across refreshes because `user` is only defined on signin.
      */
-    jwt({ token, user, profile }) {
+    jwt({ token, user, profile, account }) {
       if (user && typeof user.id === 'string') {
         token.sub = user.id;
+      }
+
+      if (account?.provider) {
+        token.provider = account.provider;
       }
 
       const nextEmail =
@@ -66,6 +70,9 @@ export const authConfig = {
         } else if (token.picture === null) {
           session.user.image = null;
         }
+        // Sign-in provider ('google' | 'credentials') — used by getAdminUser()
+        // to require Google sign-in for admin recognition, not just email match.
+        session.user.provider = typeof token.provider === 'string' ? token.provider : undefined;
       }
       return session;
     },

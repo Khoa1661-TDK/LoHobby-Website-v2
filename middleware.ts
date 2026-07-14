@@ -19,11 +19,19 @@ import { routing } from '@/i18n/routing';
 // /media — so the redirect → locale → rate-limit ordering below stays explicit.
 const intlMiddleware = createIntlMiddleware(routing);
 
-function clientIp(req: NextRequest): string {
+// Trust the LAST hop of X-Forwarded-For, not the first. The first hop is
+// whatever the client sent (fully attacker-controlled — a client can spoof a
+// fresh value per request to dodge rate-limit buckets). This project's deploy
+// standard fronts the app with a reverse proxy (Caddy/nginx) configured to
+// APPEND the true client IP as the final hop (e.g. nginx's
+// `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for`), so any
+// attacker-supplied earlier hops land before it, never after. This assumes
+// the proxy appends rather than blindly forwarding a client-supplied header.
+export function clientIp(req: NextRequest): string {
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
-    const first = forwarded.split(',')[0]?.trim();
-    if (first) return first;
+    const last = forwarded.split(',').pop()?.trim();
+    if (last) return last;
   }
   const realIp = req.headers.get('x-real-ip');
   if (realIp) return realIp.trim();

@@ -1,17 +1,15 @@
 // lib/admin-emails.ts — edge-safe admin allowlist (no NextAuth/Prisma imports)
 
-const FALLBACK_ADMIN_EMAILS: readonly string[] = ['your-email@gmail.com'];
-
+// No hardcoded fallback: an unset or empty ADMIN_EMAILS must fail closed to
+// zero admins, never to a public, self-registerable admin account.
 function parseAdminEmails(): readonly string[] {
   const raw = process.env.ADMIN_EMAILS;
-  if (!raw) return FALLBACK_ADMIN_EMAILS;
+  if (!raw) return [];
 
-  const parsed = raw
+  return raw
     .split(',')
     .map((value) => value.trim().toLowerCase())
     .filter((value) => value.length > 0);
-
-  return parsed.length > 0 ? parsed : FALLBACK_ADMIN_EMAILS;
 }
 
 export const ADMIN_EMAILS: readonly string[] = parseAdminEmails();
