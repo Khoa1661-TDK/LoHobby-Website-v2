@@ -174,6 +174,7 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   name?: string | null;
+  ssoSalt?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -784,6 +785,8 @@ export interface Page {
         | InfoSectionBlock
         | MarqueeBlock
         | SpotlightBlock
+        | YouTubeChannelBlock
+        | ReelCarouselBlock
       )[]
     | null;
   meta?: {
@@ -831,7 +834,7 @@ export interface HeroBlock {
       }[]
     | null;
   /**
-   * Floating images shown on the media side (gently bob). Replaces the single image when provided.
+   * Up to 4 tiles for the right-hand 2×2 grid. Each tile shows its image, or a brand-accent gradient with the alt text as its label when no image is set.
    */
   collage?:
     | {
@@ -3404,43 +3407,62 @@ export interface MarqueeBlock {
  */
 export interface SpotlightBlock {
   /**
-   * The featured product. Its image, price, and sale discount drive the banner — no need to re-upload media or retype prices.
+   * Shared label above every deal, e.g. "Deal of the week".
    */
-  product?: (number | null) | Product;
   eyebrow?: string | null;
   /**
-   * Optional. Falls back to the product title when blank.
+   * Each deal is one slide. The carousel auto-advances through them and the shopper can also click the dots or arrows to switch.
    */
-  heading?: string | null;
+  deals?:
+    | {
+        /**
+         * The featured product. Its image, price, and sale discount drive the slide — no need to re-upload media or retype prices.
+         */
+        product?: (number | null) | Product;
+        /**
+         * Optional. Falls back to the product title when blank.
+         */
+        heading?: string | null;
+        /**
+         * Optional. Falls back to the product description when blank.
+         */
+        description?: string | null;
+        /**
+         * Optional override, e.g. "-30%". Derived from the product sale price when blank.
+         */
+        discountLabel?: string | null;
+        /**
+         * The discounted deal price, e.g. "₫899,000". Leave blank to use the product price as-is.
+         */
+        priceNow?: string | null;
+        /**
+         * Auto-fills with the selected product's price. Edit it to override, or clear it to re-fill from the product.
+         */
+        priceWas?: string | null;
+        /**
+         * Defaults to "Grab the deal".
+         */
+        ctaLabel?: string | null;
+        /**
+         * Optional override. Defaults to the product page (/product/{handle}).
+         */
+        ctaHref?: string | null;
+        /**
+         * Optional countdown target in ISO 8601, e.g. 2026-12-31T23:59:59Z. Leave blank to hide the timer.
+         */
+        targetDate?: string | null;
+        expiredText?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
-   * Optional. Falls back to the product description when blank.
+   * Automatically rotate to the next deal. Ignored when there is only one deal.
    */
-  description?: string | null;
+  autoplay?: boolean | null;
   /**
-   * Optional override, e.g. "-30%". Derived from the product sale price when blank.
+   * Seconds each deal stays on screen before auto-advancing (2–30).
    */
-  discountLabel?: string | null;
-  /**
-   * Optional override, e.g. "₫1,290,000". Uses the product sale price when blank.
-   */
-  priceNow?: string | null;
-  /**
-   * Optional override for the struck-through price. Uses the product compare-at price when blank.
-   */
-  priceWas?: string | null;
-  /**
-   * Defaults to "Grab the deal".
-   */
-  ctaLabel?: string | null;
-  /**
-   * Optional override. Defaults to the product page (/product/{handle}).
-   */
-  ctaHref?: string | null;
-  /**
-   * Optional countdown target in ISO 8601, e.g. 2026-12-31T23:59:59Z. Leave blank to hide the timer.
-   */
-  targetDate?: string | null;
-  expiredText?: string | null;
+  autoplaySeconds?: number | null;
   /**
    * Background mode for this section.
    */
@@ -3497,6 +3519,190 @@ export interface SpotlightBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'spotlight';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "YouTubeChannelBlock".
+ */
+export interface YouTubeChannelBlock {
+  eyebrow?: string | null;
+  heading?: string | null;
+  /**
+   * Channel ID (UC…), @handle, or full channel URL. Live counts require YOUTUBE_API_KEY. Leave blank to use only the manual fallback fields below.
+   */
+  channelIdentifier?: string | null;
+  /**
+   * Link for the Subscribe button. Falls back to the resolved channel page.
+   */
+  channelUrl?: string | null;
+  subscribeLabel?: string | null;
+  /**
+   * Show subscriber count.
+   */
+  showSubscribers?: boolean | null;
+  /**
+   * Show total view count.
+   */
+  showViews?: boolean | null;
+  /**
+   * Show total video count.
+   */
+  showVideos?: boolean | null;
+  /**
+   * Fallback channel name when the API is unavailable.
+   */
+  manualName?: string | null;
+  /**
+   * Fallback avatar when the API is unavailable.
+   */
+  manualAvatar?: (number | null) | Media;
+  /**
+   * Fallback subscriber count (e.g. "1.2M"). Used when the API is unavailable.
+   */
+  manualSubscribers?: string | null;
+  /**
+   * Fallback view count (e.g. "480M"). Used when the API is unavailable.
+   */
+  manualViews?: string | null;
+  /**
+   * Fallback video count (e.g. "742"). Used when the API is unavailable.
+   */
+  manualVideos?: string | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
+   */
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'youtubeChannel';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ReelCarouselBlock".
+ */
+export interface ReelCarouselBlock {
+  eyebrow?: string | null;
+  heading?: string | null;
+  followLabel?: string | null;
+  followHref?: string | null;
+  reels?:
+    | {
+        platform: 'youtube' | 'tiktok' | 'facebook';
+        /**
+         * Reel/short/video URL (YouTube Shorts, TikTok, or Facebook video).
+         */
+        url?: string | null;
+        poster?: (number | null) | Media;
+        caption?: string | null;
+        views?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
+   */
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'reelCarousel';
 }
 /**
  * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
@@ -3781,6 +3987,7 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  ssoSalt?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -4145,6 +4352,8 @@ export interface PagesSelect<T extends boolean = true> {
         infoSection?: T | InfoSectionBlockSelect<T>;
         marquee?: T | MarqueeBlockSelect<T>;
         spotlight?: T | SpotlightBlockSelect<T>;
+        youtubeChannel?: T | YouTubeChannelBlockSelect<T>;
+        reelCarousel?: T | ReelCarouselBlockSelect<T>;
       };
   meta?:
     | T
@@ -5099,17 +5308,89 @@ export interface MarqueeBlockSelect<T extends boolean = true> {
  * via the `definition` "SpotlightBlock_select".
  */
 export interface SpotlightBlockSelect<T extends boolean = true> {
-  product?: T;
+  eyebrow?: T;
+  deals?:
+    | T
+    | {
+        product?: T;
+        heading?: T;
+        description?: T;
+        discountLabel?: T;
+        priceNow?: T;
+        priceWas?: T;
+        ctaLabel?: T;
+        ctaHref?: T;
+        targetDate?: T;
+        expiredText?: T;
+        id?: T;
+      };
+  autoplay?: T;
+  autoplaySeconds?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "YouTubeChannelBlock_select".
+ */
+export interface YouTubeChannelBlockSelect<T extends boolean = true> {
   eyebrow?: T;
   heading?: T;
-  description?: T;
-  discountLabel?: T;
-  priceNow?: T;
-  priceWas?: T;
-  ctaLabel?: T;
-  ctaHref?: T;
-  targetDate?: T;
-  expiredText?: T;
+  channelIdentifier?: T;
+  channelUrl?: T;
+  subscribeLabel?: T;
+  showSubscribers?: T;
+  showViews?: T;
+  showVideos?: T;
+  manualName?: T;
+  manualAvatar?: T;
+  manualSubscribers?: T;
+  manualViews?: T;
+  manualVideos?: T;
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ReelCarouselBlock_select".
+ */
+export interface ReelCarouselBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  followLabel?: T;
+  followHref?: T;
+  reels?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        poster?: T;
+        caption?: T;
+        views?: T;
+        id?: T;
+      };
   background?: T;
   backgroundCustom?: T;
   backgroundCustomDark?: T;
@@ -5235,7 +5516,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Configure the announcement banner and navigation tabs on the storefront header. Each tab can be a single link or a multi-category dropdown. Dropdown tabs open on hover.
+ * The announcement banner and navigation tabs are edited in the visual builder (Header & navigation), not here.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-header".
@@ -5262,15 +5543,7 @@ export interface SiteHeader {
     textColor?: string | null;
   };
   /**
-   * When enabled, Home / Shop / Categories appear automatically. Disable this to use only the tabs you add below — deleting a tab then removes it from the navbar.
-   */
-  includeDefaultTabs?: boolean | null;
-  /**
-   * Only applies when "Include default tabs" is on. Select built-in tabs to remove from the navbar.
-   */
-  hiddenDefaults?: ('home' | 'shop' | 'categories')[] | null;
-  /**
-   * Custom navigation tabs. When "Include default tabs" is off, this list is your complete menu — remove a row and save to delete it from the storefront.
+   * Custom navigation tabs added after the built-in Home / Shop / Categories tabs. Remove a row and save to delete it from the storefront. The default tabs cannot be removed.
    */
   tabs?:
     | {
@@ -5594,8 +5867,6 @@ export interface SiteHeaderSelect<T extends boolean = true> {
         backgroundColor?: T;
         textColor?: T;
       };
-  includeDefaultTabs?: T;
-  hiddenDefaults?: T;
   tabs?:
     | T
     | {
