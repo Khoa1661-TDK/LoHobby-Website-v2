@@ -45,6 +45,8 @@ export const BLOCK_DEFAULTS: Record<string, PresetName> = {
   infoSection: 'fade-up',
   marquee: 'fade-in',
   spotlight: 'fade-up',
+  youtubeChannel: 'scale-in',
+  reelCarousel: 'stagger-cards',
 };
 
 /** Resolve the effective preset for a block.

@@ -1,10 +1,11 @@
 // components/page-builder/FieldRenderer.tsx — schema-driven field panel.
 'use client';
-import { useEffect, useMemo, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import type { BlockSchema, FieldDescriptor } from '@/lib/page-builder/block-schemas';
 import { isFieldVisible } from '@/lib/page-builder/conditions';
 import { defaultRowFor } from '@/lib/page-builder/default-block';
 import { addRow, removeRow, moveRow, updateRowField } from '@/lib/page-builder/array-reducer';
+import { formatVnd } from '@/lib/analytics/currency';
 import MediaPicker from './MediaPicker';
 import RelationshipPicker, { type RelationItem } from './RelationshipPicker';
 import RichTextField from './RichTextField';
@@ -91,49 +92,16 @@ function ArrayField({
     <div className="flex flex-col gap-2 rounded border border-warm-200 p-2">
       <span className="text-xs font-medium text-warm-600">{field.label ?? field.name}</span>
       {rows.map((row, index) => (
-        <div key={index} className="flex flex-col gap-2 rounded border border-warm-100 p-2">
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-warm-400">Row {index + 1}</span>
-            <div className="ml-auto flex gap-1">
-              <button
-                type="button"
-                disabled={index === 0}
-                onClick={() => onChange(moveRow(rows, index, index - 1))}
-                className="text-xs"
-                aria-label="Move row up"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                disabled={index === rows.length - 1}
-                onClick={() => onChange(moveRow(rows, index, index + 1))}
-                className="text-xs"
-                aria-label="Move row down"
-              >
-                ↓
-              </button>
-              <button
-                type="button"
-                onClick={() => onChange(removeRow(rows, index))}
-                className="text-xs text-red-500"
-                aria-label="Remove row"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-          {subFields.map((subField) => (
-            <Field
-              key={subField.name}
-              field={subField}
-              value={row[subField.name]}
-              onChange={(name, value) =>
-                onChange(updateRowField(rows, index, name, value))
-              }
-            />
-          ))}
-        </div>
+        <ArrayRow
+          key={index}
+          index={index}
+          rowCount={rows.length}
+          row={row}
+          subFields={subFields}
+          onMove={(to) => onChange(moveRow(rows, index, to))}
+          onRemove={() => onChange(removeRow(rows, index))}
+          onFieldChange={(name, value) => onChange(updateRowField(rows, index, name, value))}
+        />
       ))}
       <button
         type="button"
@@ -144,6 +112,148 @@ function ArrayField({
       </button>
     </div>
   );
+}
+
+function ArrayRow({
+  index,
+  rowCount,
+  row,
+  subFields,
+  onMove,
+  onRemove,
+  onFieldChange,
+}: {
+  index: number;
+  rowCount: number;
+  row: Record<string, unknown>;
+  subFields: FieldDescriptor[];
+  onMove: (to: number) => void;
+  onRemove: () => void;
+  onFieldChange: (name: string, value: unknown) => void;
+}): ReactElement {
+  return (
+    <div className="flex flex-col gap-2 rounded border border-warm-100 p-2">
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-warm-400">Row {index + 1}</span>
+        <div className="ml-auto flex gap-1">
+          <button
+            type="button"
+            disabled={index === 0}
+            onClick={() => onMove(index - 1)}
+            className="text-xs"
+            aria-label="Move row up"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            disabled={index === rowCount - 1}
+            onClick={() => onMove(index + 1)}
+            className="text-xs"
+            aria-label="Move row down"
+          >
+            ↓
+          </button>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-xs text-red-500"
+            aria-label="Remove row"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+      {subFields.map((subField) =>
+        subField.autoFillPriceFrom ? (
+          <AutoFillPriceField
+            key={subField.name}
+            field={subField}
+            value={row[subField.name]}
+            sourceValue={row[subField.autoFillPriceFrom]}
+            onChange={onFieldChange}
+          />
+        ) : (
+          <Field
+            key={subField.name}
+            field={subField}
+            value={row[subField.name]}
+            onChange={onFieldChange}
+          />
+        ),
+      )}
+    </div>
+  );
+}
+
+// Extract the id from a relationship value that may be a bare id, a stringified id, or a
+// populated `{ id }` doc (depth:2 initial loads). Returns '' when nothing usable is present.
+function relationshipId(value: unknown): string {
+  if (value == null || value === '') return '';
+  if (typeof value === 'object' && 'id' in (value as Record<string, unknown>)) {
+    return String((value as { id: unknown }).id);
+  }
+  return String(value);
+}
+
+// A text field (e.g. Spotlight's "Was" price) that auto-fills from a sibling product's real
+// price. It fetches the product's list price and writes the formatted amount into the box
+// when the box is empty, or still holds a value we auto-filled for a *different* product — so
+// it follows product changes but never clobbers a value the editor typed by hand.
+function AutoFillPriceField({
+  field,
+  value,
+  sourceValue,
+  onChange,
+}: {
+  field: FieldDescriptor;
+  value: unknown;
+  sourceValue: unknown;
+  onChange: (name: string, value: unknown) => void;
+}): ReactElement {
+  const productId = relationshipId(sourceValue);
+  // The last value we auto-filled and the product it was for. If the current box still equals
+  // `autoFilled.current`, the editor hasn't hand-edited it, so we may overwrite it on change.
+  const autoFilled = useRef<{ productId: string; text: string } | null>(null);
+  // Latest committed text, read inside the effect without making it a dependency (so the
+  // effect only re-runs when the selected product changes).
+  const current = typeof value === 'string' ? value : '';
+  const currentRef = useRef(current);
+  currentRef.current = current;
+
+  useEffect(() => {
+    if (!productId) return;
+    // Already filled for this product and untouched — nothing to do.
+    if (autoFilled.current?.productId === productId && currentRef.current === autoFilled.current.text) {
+      return;
+    }
+    // Respect a manual edit: a non-empty box that we didn't write stays as-is.
+    const boxIsOurs = autoFilled.current != null && currentRef.current === autoFilled.current.text;
+    if (currentRef.current !== '' && !boxIsOurs) return;
+
+    let cancelled = false;
+    // Payload REST is mounted at '/admin/api' (see payload.config.ts routes.api).
+    fetch(`/admin/api/products/${productId}?depth=0`, { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .then((doc) => {
+        if (cancelled) return;
+        const price = typeof doc?.price === 'number' ? doc.price : Number(doc?.price);
+        if (!Number.isFinite(price) || price <= 0) return;
+        const text = formatVnd(price);
+        autoFilled.current = { productId, text };
+        onChange(field.name, text);
+      })
+      .catch(() => {
+        /* ignore — leave the box for manual entry */
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally keyed only on productId; onChange/field.name are stable per row.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productId]);
+
+  return <Field field={field} value={value} onChange={onChange} />;
 }
 
 function GroupField({

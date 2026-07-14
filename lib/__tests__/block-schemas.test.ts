@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import type { Field } from 'payload';
 import {
   getBlockSchemas,
   getBlockSchema,
+  describeFieldsAsSchema,
   type FieldDescriptor,
 } from '@/lib/page-builder/block-schemas';
+import { announcementField, tabsField } from '@/src/payload/globals/SiteHeader';
 
 describe('getBlockSchemas', () => {
   it('should expose one schema per registered layout block', () => {
@@ -41,7 +44,9 @@ describe('getBlockSchemas', () => {
     expect(slugs).toEqual(expect.arrayContaining(['infoSection']));
     // The redesign-3 home rebuild added the marquee strip and spotlight deal.
     expect(slugs).toEqual(expect.arrayContaining(['marquee', 'spotlight']));
-    expect(slugs).toHaveLength(35);
+    // The social blocks added a YouTube channel card and a reel carousel.
+    expect(slugs).toEqual(expect.arrayContaining(['youtubeChannel', 'reelCarousel']));
+    expect(slugs).toHaveLength(37);
   });
 
   it('should describe hero text and select fields with options', () => {
@@ -131,4 +136,62 @@ describe('pinned products on auto blocks', () => {
       expect(products).toMatchObject({ type: 'relationship', relationTo: 'products', hasMany: true });
     },
   );
+});
+
+describe('describeFieldsAsSchema', () => {
+  it('should build a schema from an arbitrary field list (site-header tabs array)', () => {
+    const schema = describeFieldsAsSchema('tabs', 'Navigation tabs', [tabsField]);
+    expect(schema.slug).toBe('tabs');
+    expect(schema.label).toBe('Navigation tabs');
+    const tabs = schema.fields.find((f) => f.name === 'tabs') as FieldDescriptor;
+    expect(tabs.type).toBe('array');
+    // Sub-fields are described just like a block's array field.
+    expect(tabs.fields?.map((f) => f.name)).toEqual([
+      'label',
+      'kind',
+      'category',
+      'href',
+      'showAllCategories',
+      'dropdownItems',
+    ]);
+  });
+
+  it('should describe the announcement group inner fields for the panel', () => {
+    const inner = 'fields' in announcementField ? (announcementField.fields as Field[]) : [];
+    const schema = describeFieldsAsSchema('announcement', 'Announcement banner', inner);
+    expect(schema.fields.map((f) => f.name)).toEqual([
+      'enabled',
+      'text',
+      'link',
+      'backgroundColor',
+      'textColor',
+    ]);
+  });
+
+  it('should stay JSON-serializable (no condition functions leak through)', () => {
+    const schema = describeFieldsAsSchema('tabs', 'Navigation tabs', [tabsField]);
+    expect(() => JSON.parse(JSON.stringify(schema))).not.toThrow();
+  });
+});
+
+describe('kind-based condition recovery (site-header tabs)', () => {
+  it('should recover the sibling kind value that reveals each conditional tab sub-field', () => {
+    const tabs = describeFieldsAsSchema('tabs', 'Navigation tabs', [tabsField]).fields.find(
+      (f) => f.name === 'tabs',
+    ) as FieldDescriptor;
+    const sub = (name: string) => tabs.fields?.find((f) => f.name === name);
+
+    expect(sub('category')?.condition).toEqual({ field: 'kind', equals: 'category' });
+    expect(sub('href')?.condition).toEqual({ field: 'kind', equals: 'custom' });
+    expect(sub('showAllCategories')?.condition).toEqual({ field: 'kind', equals: 'dropdown' });
+    expect(sub('dropdownItems')?.condition).toEqual({ field: 'kind', equals: 'dropdown' });
+  });
+
+  it('should leave unconditional sub-fields (label, kind) without a condition', () => {
+    const tabs = describeFieldsAsSchema('tabs', 'Navigation tabs', [tabsField]).fields.find(
+      (f) => f.name === 'tabs',
+    ) as FieldDescriptor;
+    expect(tabs.fields?.find((f) => f.name === 'label')?.condition).toBeUndefined();
+    expect(tabs.fields?.find((f) => f.name === 'kind')?.condition).toBeUndefined();
+  });
 });

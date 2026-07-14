@@ -6,8 +6,8 @@
 // marquee strip, a category card grid, a deal spotlight with a live countdown, a
 // filterable product showcase, customer reviews, a trust feature list, and the
 // newsletter. The hero collage is left for the store owner to fill in the admin; the
-// spotlight embeds the first featured product (image/price derived from it). Blocks
-// degrade gracefully until their data is filled in.
+// spotlight is an auto-advancing carousel of deals, each embedding a featured product
+// (image/price derived from it). Blocks degrade gracefully until their data is filled in.
 import { createDefaultBlock } from '@/lib/page-builder/default-block';
 import type { PageBlock } from '@/lib/page-builder';
 
@@ -87,15 +87,21 @@ export function buildHomeSeedLayout(opts: HomeSeedOptions = {}): PageBlock[] {
         { title: 'New in', caption: 'Fresh arrivals', href: '/search' },
       ],
     }),
-    // Deal-of-the-week spotlight with a live countdown (mockup's dark split banner).
-    // Embeds the first featured product: its image, price, and sale discount drive the
-    // banner. Heading/description/prices fall back to product data when left blank.
+    // Deal-of-the-week spotlight: an auto-advancing carousel of deals (mockup's dark
+    // split banner). Each deal embeds a featured product — its image, price, and sale
+    // discount drive the slide. Heading/description/prices fall back to product data when
+    // left blank; each deal carries its own countdown. Seeds up to three deals from the
+    // featured products so different discounts each get the full spotlight rotation.
     block('spotlight', {
-      product: ids[0] ?? null,
       eyebrow: 'Deal of the week',
-      ctaLabel: 'Grab the deal',
-      targetDate: daysFromNow(7),
-      expiredText: 'This deal has ended — check back for the next one.',
+      autoplay: true,
+      autoplaySeconds: 6,
+      deals: ids.slice(0, 3).map((id, i) => ({
+        product: id,
+        ctaLabel: 'Grab the deal',
+        targetDate: daysFromNow(7 + i * 2),
+        expiredText: 'This deal has ended — check back for the next one.',
+      })),
     }),
     block('productShowcase', {
       eyebrow: 'Picks',

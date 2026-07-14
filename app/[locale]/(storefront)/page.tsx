@@ -42,9 +42,12 @@ export default async function HomePage({
   const homePage = await getHomePage(locale);
   if (homePage) {
     return (
-      <article>
-        <RenderBlocks blocks={homePage.layout} />
-      </article>
+      <>
+        <article>
+          <RenderBlocks blocks={homePage.layout} />
+        </article>
+        <Footer />
+      </>
     );
   }
 

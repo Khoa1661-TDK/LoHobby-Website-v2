@@ -38,6 +38,8 @@ import {
   InfoSection,
   Marquee,
   Spotlight,
+  YouTubeChannel,
+  ReelCarousel,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -61,6 +63,9 @@ export type FieldDescriptor = {
   fields?: FieldDescriptor[];
   /** Simplified, serializable condition (only the common siblingData equality form). */
   condition?: FieldCondition;
+  /** Builder-only authoring aid: name of a sibling `relationship` (to `products`) whose
+   * list price auto-fills this text field. Set via the Payload field's `custom` metadata. */
+  autoFillPriceFrom?: string;
 };
 
 export type BlockSchema = {
@@ -106,6 +111,8 @@ const REGISTERED_BLOCKS: Block[] = [
   InfoSection,
   Marquee,
   Spotlight,
+  YouTubeChannel,
+  ReelCarousel,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the
@@ -118,10 +125,16 @@ function describeCondition(field: Field): FieldCondition | undefined {
   // Find which sibling field name + value flips the condition true.
   // We can only recover simple equality conditions; complex ones fall back to always-visible.
   const fn = condition as (data: unknown, sibling: Record<string, unknown>) => unknown;
-  // Heuristic: conditions use a single sibling field equal to 'custom'
-  // (background -> backgroundCustom; containerWidth -> maxWidthCustom).
-  for (const candidate of ['background', 'containerWidth'] as const) {
-    for (const value of ['custom']) {
+  // Heuristic: conditions gate on a single sibling field equal to a fixed value.
+  // Appearance blocks use 'custom' (background -> backgroundCustom; containerWidth ->
+  // maxWidthCustom). Site-header tabs gate sub-fields on the `kind` select.
+  const probes: Array<{ field: string; values: readonly string[] }> = [
+    { field: 'background', values: ['custom'] },
+    { field: 'containerWidth', values: ['custom'] },
+    { field: 'kind', values: ['home', 'all-products', 'category', 'custom', 'dropdown'] },
+  ];
+  for (const { field: candidate, values } of probes) {
+    for (const value of values) {
       try {
         if (fn({}, { [candidate]: value }) && !fn({}, {})) {
           return { field: candidate, equals: value };
@@ -182,6 +195,12 @@ function describeField(field: Field): FieldDescriptor | null {
   const condition = describeCondition(field);
   if (condition) base.condition = condition;
 
+  // Recover the builder-only auto-fill hint from the field's `custom` metadata.
+  const custom = (field as { custom?: { autoFillPriceFrom?: unknown } }).custom;
+  if (custom && typeof custom.autoFillPriceFrom === 'string') {
+    base.autoFillPriceFrom = custom.autoFillPriceFrom;
+  }
+
   return base;
 }
 
@@ -212,4 +231,22 @@ export function getBlockSchemas(): BlockSchema[] {
 
 export function getBlockSchema(slug: string): BlockSchema | null {
   return getBlockSchemas().find((s) => s.slug === slug) ?? null;
+}
+
+/**
+ * Build a BlockSchema from an arbitrary list of Payload fields — used to drive the
+ * page-builder FieldRenderer for non-block surfaces (e.g. the `site-header` global's
+ * announcement + tabs). Reuses the same describeField logic so the panel can't drift
+ * from the Payload field definitions.
+ */
+export function describeFieldsAsSchema(
+  slug: string,
+  label: string,
+  fields: Field[],
+): BlockSchema {
+  return {
+    slug,
+    label,
+    fields: fields.map(describeField).filter((f): f is FieldDescriptor => f !== null),
+  };
 }

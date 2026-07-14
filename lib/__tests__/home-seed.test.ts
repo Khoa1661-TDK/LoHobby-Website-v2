@@ -45,16 +45,23 @@ describe('buildHomeSeedLayout', () => {
     expect((marquee?.items as unknown[]).length).toBeGreaterThan(1);
   });
 
-  it('should include a spotlight deal bound to a product with a live future countdown', () => {
+  it('should include a spotlight carousel of deals, each bound to a product with a live future countdown', () => {
     const spotlight = find(
       buildHomeSeedLayout({ featuredProductIds: [42, 43] }),
       'spotlight',
     );
     expect(spotlight).toBeDefined();
-    expect(spotlight?.product).toBe(42);
-    const target = Date.parse(spotlight?.targetDate as string);
-    expect(Number.isFinite(target)).toBe(true);
-    expect(target).toBeGreaterThan(Date.now());
+    const deals = spotlight?.deals as Array<Record<string, unknown>>;
+    expect(Array.isArray(deals)).toBe(true);
+    expect(deals.length).toBe(2);
+    expect(deals[0]?.product).toBe(42);
+    expect(deals[1]?.product).toBe(43);
+    // Every deal carries its own future countdown target.
+    for (const deal of deals) {
+      const target = Date.parse(deal.targetDate as string);
+      expect(Number.isFinite(target)).toBe(true);
+      expect(target).toBeGreaterThan(Date.now());
+    }
   });
 
   it('should include a testimonials block with rated review entries', () => {

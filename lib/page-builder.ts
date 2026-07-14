@@ -63,7 +63,9 @@ export type PageBlock =
   | ({ blockType: 'reels' } & Record<string, unknown>)
   | ({ blockType: 'infoSection' } & Record<string, unknown>)
   | ({ blockType: 'marquee' } & Record<string, unknown>)
-  | ({ blockType: 'spotlight' } & Record<string, unknown>);
+  | ({ blockType: 'spotlight' } & Record<string, unknown>)
+  | ({ blockType: 'youtubeChannel' } & Record<string, unknown>)
+  | ({ blockType: 'reelCarousel' } & Record<string, unknown>);
 
 export type PageDoc = {
   id: string | number;
