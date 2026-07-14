@@ -228,6 +228,18 @@
     "confirmPasswordLabel": "Xác nhận mật khẩu",
     "resetPasswordSubmitting": "Đang lưu…",
     "resetPasswordSubmit": "Đặt lại mật khẩu",
+    "verifyEmailMetaTitle": "Xác minh email",
+    "verifyEmailMetaDescription": "Xác minh địa chỉ email để hoàn tất thanh toán.",
+    "verifyEmailHeading": "Xác minh email",
+    "verifyEmailSuccessBody": "Email của bạn đã được xác minh.",
+    "verifyEmailContinueLogin": "Đăng nhập",
+    "verifyEmailContinueCheckout": "Tiếp tục thanh toán",
+    "verifyEmailNeedsLinkBody": "Liên kết không hợp lệ hoặc đã hết hạn. Nhập email để nhận liên kết mới.",
+    "resendVerificationEmailLabel": "Email",
+    "resendVerificationSubmit": "Gửi lại email xác minh",
+    "resendVerificationSubmitting": "Đang gửi...",
+    "resendVerificationSent": "Nếu email này đã đăng ký và chưa xác minh, một liên kết mới đã được gửi.",
+    "resendVerificationError": "Đã xảy ra lỗi. Vui lòng thử lại.",
     "adminRequiredTitle": "Cần quyền quản trị",
     "adminRequiredBefore": "Bạn đang đăng nhập bằng ",
     "adminRequiredAfter": ", nhưng tài khoản này không nằm trong danh sách quản trị viên."
@@ -437,5 +449,11 @@
     "indexEyebrow": "Thông tin",
     "indexHeading": "Trợ giúp & thông tin",
     "indexSubtitle": "Tất cả những gì bạn cần biết về đặt hàng, thanh toán, vận chuyển và các chính sách của chúng tôi."
+  },
+  "youtube": {
+    "subscribe": "Đăng ký",
+    "subscribers": "Người đăng ký",
+    "views": "Lượt xem",
+    "videos": "Video"
   }
 }

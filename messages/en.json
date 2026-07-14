@@ -228,6 +228,18 @@
     "confirmPasswordLabel": "Confirm password",
     "resetPasswordSubmitting": "Saving…",
     "resetPasswordSubmit": "Reset password",
+    "verifyEmailMetaTitle": "Verify email",
+    "verifyEmailMetaDescription": "Verify your email address to complete checkout.",
+    "verifyEmailHeading": "Verify email",
+    "verifyEmailSuccessBody": "Your email has been verified.",
+    "verifyEmailContinueLogin": "Sign in",
+    "verifyEmailContinueCheckout": "Continue to checkout",
+    "verifyEmailNeedsLinkBody": "This link is invalid or has expired. Enter your email to request a new one.",
+    "resendVerificationEmailLabel": "Email",
+    "resendVerificationSubmit": "Resend verification email",
+    "resendVerificationSubmitting": "Sending...",
+    "resendVerificationSent": "If that email is registered and unverified, a new link has been sent.",
+    "resendVerificationError": "Something went wrong. Please try again.",
     "adminRequiredTitle": "Admin access required",
     "adminRequiredBefore": "You are signed in as ",
     "adminRequiredAfter": ", but this account is not on the administrator list."
@@ -437,5 +449,11 @@
     "indexEyebrow": "Information",
     "indexHeading": "Help & information",
     "indexSubtitle": "Everything you need to know about ordering, payment, shipping, and our policies."
+  },
+  "youtube": {
+    "subscribe": "Subscribe",
+    "subscribers": "Subscribers",
+    "views": "Views",
+    "videos": "Videos"
   }
 }
