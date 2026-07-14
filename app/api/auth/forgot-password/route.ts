@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { absoluteUrl } from '@/lib/utils';
+import { sendEmail } from '@/lib/email/send';
 import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -36,19 +37,20 @@ export async function POST(req: Request): Promise<NextResponse> {
       await prisma.verificationToken.create({ data: { identifier: email, token, expires } });
 
       const resetUrl = absoluteUrl(`/reset-password?token=${token}`);
-      // No email provider is wired yet. The reset URL contains a live token, so
-      // it must NEVER hit production logs. In development we print it so the flow
-      // is testable; in production we record only that a reset was requested
-      // (no email, no token) — delivery is a known gap until email is wired.
-      if (process.env.NODE_ENV === 'production') {
-        logger.warn(
-          { route: '/api/auth/forgot-password' },
-          'password reset requested but no email provider is configured; token not delivered',
-        );
-      } else {
+      const result = await sendEmail({
+        to: email,
+        subject: 'Đặt lại mật khẩu',
+        text: `Nhấp vào liên kết sau để đặt lại mật khẩu của bạn: ${resetUrl}\n\nLiên kết có hiệu lực trong 1 giờ.`,
+        html: `<p>Nhấp vào liên kết sau để đặt lại mật khẩu của bạn:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Liên kết có hiệu lực trong 1 giờ.</p>`,
+      });
+
+      // No email provider configured: the reset URL contains a live token, so
+      // it must NEVER hit production logs. In development we print it so the
+      // flow stays testable without Resend credentials.
+      if (!result.configured && process.env.NODE_ENV !== 'production') {
         logger.debug(
           { route: '/api/auth/forgot-password', resetUrl },
-          'password reset link (dev only)',
+          'password reset link (dev only, email not configured)',
         );
       }
     }
