@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { isAdminEmail } from '@/lib/admin';
-import { ensurePayloadAdminUser } from '@/lib/payload-admin-sync';
+import { issueVerificationEmail } from '@/lib/email-verification';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 
@@ -27,6 +27,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ error: 'Email không hợp lệ' }, { status: 400 });
+  }
+  if (isAdminEmail(email)) {
+    return NextResponse.json({ error: 'Email này không thể tự đăng ký' }, { status: 403 });
   }
   if (password.length < 8) {
     return NextResponse.json(
@@ -53,8 +56,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       select: { id: true, email: true, name: true, createdAt: true },
     });
 
-    if (isAdminEmail(email)) {
-      await ensurePayloadAdminUser({ email, name });
+    // Best-effort — the account is created regardless of whether the
+    // verification email goes out; verification can always be resent.
+    try {
+      await issueVerificationEmail(email);
+    } catch (error) {
+      logger.error({ route: '/api/register', err: error }, 'verification email failed');
     }
 
     return NextResponse.json({ user }, { status: 201 });
