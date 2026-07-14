@@ -651,7 +651,9 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 // MediaFile table, making the shared Postgres DB the source of truth for
 // media binaries. Files over MAX_MEDIA_FILE_BYTES are skipped with a warning.
 //
-// Run: node_modules/.bin/tsx scripts/import-media-to-db.ts
+// Run: node_modules/.bin/tsx --conditions=react-server scripts/import-media-to-db.ts
+// (the flag neutralizes lib/prisma.ts's 'server-only' guard under plain tsx —
+// same workaround scripts/backfill-google-email-verified.ts needs)
 import 'dotenv/config';
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -706,11 +708,11 @@ main()
   });
 ```
 
-Note: `console.*` is fine here — this is a CLI script, not a production code path. `@/lib/prisma`'s `'server-only'` import throws under plain tsx **only when statically imported at load time in some setups** — if `import 'dotenv/config'` + lazy prisma still hits the `server-only` guard when running this script, replace the count block with a second lazy call pattern identical to `lib/media-file-store.ts` (which is already lazy). If `server-only` throws regardless under tsx, drop the count block and verify the row count via Step 3's SQL instead.
+Note: `console.*` is fine here — this is a CLI script, not a production code path. **Known repo gotcha:** importing `@/lib/prisma` (even lazily) under plain tsx throws via its `'server-only'` guard; running tsx with `--conditions=react-server` neutralizes the guard (verified previously by `scripts/backfill-google-email-verified.ts`). Always use that flag for this script.
 
 - [ ] **Step 2: Run the import twice (idempotency check)**
 
-Run: `node_modules/.bin/tsx scripts/import-media-to-db.ts`
+Run: `node_modules/.bin/tsx --conditions=react-server scripts/import-media-to-db.ts`
 Expected: `imported/updated: 715`, `MediaFile rows in database: 715`, no skips.
 
 Run it again: same numbers (upserts, no duplicates, no errors).
@@ -755,7 +757,7 @@ Expected: `200 image/jpeg` **while the disk directory is absent** — bytes came
 
 - [ ] **Step 2: E2E upload + delete through Payload (local API)**
 
-Write to the scratchpad (not the repo) an e2e script and run it with `node_modules/.bin/tsx`:
+Write to the scratchpad (not the repo) an e2e script and run it with `node_modules/.bin/tsx --conditions=react-server` (the flag neutralizes `lib/prisma.ts`'s `'server-only'` guard under plain tsx):
 
 ```ts
 import 'dotenv/config';
