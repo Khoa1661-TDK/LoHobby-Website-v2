@@ -312,3 +312,10 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** Someone picks up the flagged cleanup — remove `requireEmail`/the guest email field from `checkout-form.tsx` and `customerInfo.email` from the checkout API's request type, as a standalone refactor.
 
 ---
+
+## 2026-07-15 — Media binaries stored in Postgres (bytea) instead of host filesystem
+**Chosen:** Store media file bytes in the shared Postgres DB via a custom Payload storage adapter (`@payloadcms/plugin-cloud-storage` extension point) writing to a Prisma-managed `MediaFile` table; serve through the existing `app/media/[...path]/route.ts` with disk fallback. Spec: `docs/superpowers/specs/2026-07-15-db-media-storage-design.md`.
+**Alternatives:** MinIO/S3-compatible object storage on the employer's 24/7 machine (`@payloadcms/storage-s3`); keeping filesystem storage and syncing `public/media` via git/rsync.
+**Why:** The DB is the one piece of infrastructure already shared by all machines (employer's always-on Postgres), so putting bytes there makes images propagate automatically with zero new services. Dataset is small (715 files, 89 MB, max < 2 MB), well within comfortable bytea territory. Filesystem+sync fails the actual goal (admin uploads diverge); MinIO adds a service to install/secure/back up to solve an 89 MB problem.
+**Trade-offs:** Cold image loads cross the network to the remote DB (mitigated by next/image caching + Cache-Control); `pg_dump` grows ~90 MB; unconventional pattern. Upload size capped at 25 MB in the adapter since the collection allows `video/*`.
+**Revisit if:** Catalog media grows toward multi-GB, video uploads become a real use case, or origin image traffic becomes a bottleneck — then move to `@payloadcms/storage-s3` (adapter swap, same plugin architecture).
