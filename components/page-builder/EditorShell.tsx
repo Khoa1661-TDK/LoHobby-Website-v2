@@ -3,7 +3,7 @@
 // field editing in the right panel. No block components are imported here, so no
 // server-only code leaks into the client bundle.
 'use client';
-import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import type { PageDoc, PageBlock } from '@/lib/page-builder';
 import type { BlockSchema } from '@/lib/page-builder/block-schemas';
 import type { ThemeMode } from '@/lib/page-builder/themed-color';
@@ -18,6 +18,7 @@ import GeminiSpark from './GeminiSpark';
 import { highlight, setLayout as setLayoutMsg, setTheme, isPreviewToParent } from '@/lib/page-builder/preview-messages';
 import { routing, type Locale } from '@/i18n/routing';
 import type { LocaleLayouts } from '@/lib/page-builder/assistant/apply-dual';
+import { isStructurallyAligned, syncFromActive } from '@/lib/page-builder/mirror/structure-sync';
 
 type Props = {
   locale: string;
@@ -107,6 +108,31 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
     setLayouts((prev) => ({ vi: fn(prev.vi), en: fn(prev.en) }));
   }, []);
 
+  // Structural guard: lockstep edits are index-based, so they only stay correct while the two
+  // locale layouts are aligned (same length + blockKey at each position). A page whose locales
+  // drifted apart (legacy data, single-locale admin edit, duplicate-key bug) is misaligned;
+  // while misaligned we pause every structural + AI edit and prompt the user to sync structure
+  // from the active locale, rather than silently corrupting the other language.
+  const structuralLocked = useMemo(
+    () => !isStructurallyAligned(layouts.vi, layouts.en),
+    [layouts.vi, layouts.en],
+  );
+  const syncStructure = useCallback((): void => {
+    setLayouts((prev) => {
+      const { active, other } = syncFromActive(prev[activeLocale], prev[otherLocale]);
+      const next: LocaleLayouts = { ...prev };
+      next[activeLocale] = active;
+      next[otherLocale] = other;
+      return next;
+    });
+  }, [activeLocale, otherLocale]);
+
+  // If the page loads misaligned with the assistant somehow open, close it — its mutations are
+  // index-based and unsafe until structure is synced.
+  useEffect(() => {
+    if (structuralLocked) setAssistantOpen(false);
+  }, [structuralLocked]);
+
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const readyRef = useRef(false);
 
@@ -149,6 +175,7 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
   }, [layout, post]);
 
   const handlePick = (slug: string): void => {
+    if (structuralLocked) { setAddAt(null); return; }
     const block = createDefaultBlock(slug);
     if (block && addAt !== null) {
       // Insert into both locales at the same index, sharing one blockKey so the pair stays
@@ -246,6 +273,26 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
         </button>
       </header>
 
+      {structuralLocked && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900"
+        >
+          <span className="font-medium">⚠ Section structures differ between languages.</span>
+          <span className="text-amber-800">
+            Structural edits (add, reorder, duplicate, delete) and the AI helper are paused so a
+            change here can&apos;t corrupt the other language. Copy edits still work.
+          </span>
+          <button
+            type="button"
+            onClick={syncStructure}
+            className="ml-auto rounded bg-amber-900 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-amber-800"
+          >
+            Sync structure from {activeLocale.toUpperCase()}
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-1 overflow-hidden">
         <LayersRail
           layout={layout}
@@ -256,6 +303,7 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
           onDuplicate={(index) => applyStructural((prev) => duplicateBlock(prev, index))}
           onDelete={(index) => { applyStructural((prev) => deleteBlock(prev, index)); setSelectedIndex(null); }}
           onAdd={(at) => setAddAt(at)}
+          locked={structuralLocked}
         />
 
         <main className="flex-1 overflow-hidden bg-warm-50">
@@ -339,8 +387,10 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
         type="button"
         aria-label={assistantOpen ? 'Close AI helper' : 'Open AI helper'}
         aria-pressed={assistantOpen}
+        disabled={structuralLocked}
+        title={structuralLocked ? 'Sync structure first to use the AI helper' : undefined}
         onClick={() => setAssistantOpen((v) => !v)}
-        className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-gemini-surface shadow-lg ring-1 ring-gemini-border transition-all duration-200 hover:scale-105 active:scale-95"
+        className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-gemini-surface shadow-lg ring-1 ring-gemini-border transition-all duration-200 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
       >
         {assistantOpen ? (
           <span className="text-lg text-gemini-text">✕</span>

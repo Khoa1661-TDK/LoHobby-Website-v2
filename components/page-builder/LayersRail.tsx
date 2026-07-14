@@ -18,6 +18,10 @@ type Props = {
   onDuplicate: (index: number) => void;
   onDelete: (index: number) => void;
   onAdd: (at: number) => void;
+  /** When true, structural affordances (add/reorder/duplicate/delete) are disabled — the two
+   *  locale layouts are misaligned and lockstep edits would corrupt the other locale until the
+   *  user syncs structure. Selection still works. */
+  locked?: boolean;
 };
 
 function labelFor(block: PageBlock, schemas: BlockSchema[]): string {
@@ -29,6 +33,7 @@ function Row({
   index,
   label,
   selected,
+  locked,
   onSelect,
   onDuplicate,
   onDelete,
@@ -37,11 +42,12 @@ function Row({
   index: number;
   label: string;
   selected: boolean;
+  locked: boolean;
   onSelect: (index: number) => void;
   onDuplicate: (index: number) => void;
   onDelete: (index: number) => void;
 }): ReactElement {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: locked });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   return (
     <li ref={setNodeRef} style={style} {...attributes}>
@@ -54,8 +60,9 @@ function Row({
       >
         <button
           type="button"
-          {...listeners}
-          className="cursor-grab text-warm-400 hover:text-warm-600"
+          {...(locked ? {} : listeners)}
+          disabled={locked}
+          className="cursor-grab text-warm-400 hover:text-warm-600 disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Drag to reorder"
           onClick={(e) => e.stopPropagation()}
         >
@@ -65,7 +72,8 @@ function Row({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onDuplicate(index); }}
-          className="opacity-0 group-hover:opacity-100 text-warm-400 hover:text-warm-700"
+          disabled={locked}
+          className="opacity-0 group-hover:opacity-100 text-warm-400 hover:text-warm-700 disabled:hidden"
           aria-label="Duplicate"
         >
           ⧉
@@ -73,7 +81,8 @@ function Row({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onDelete(index); }}
-          className="opacity-0 group-hover:opacity-100 text-warm-400 hover:text-red-600"
+          disabled={locked}
+          className="opacity-0 group-hover:opacity-100 text-warm-400 hover:text-red-600 disabled:hidden"
           aria-label="Delete"
         >
           ✕
@@ -92,8 +101,10 @@ export default function LayersRail({
   onDuplicate,
   onDelete,
   onAdd,
+  locked = false,
 }: Props): ReactElement {
   const handleDragEnd = (event: DragEndEvent): void => {
+    if (locked) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     onReorder(Number(active.id), Number(over.id));
@@ -103,7 +114,12 @@ export default function LayersRail({
     <aside className="flex w-64 flex-col border-r border-warm-200 bg-white">
       <div className="flex items-center justify-between border-b border-warm-200 px-3 py-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-warm-500">Sections</span>
-        <button type="button" onClick={() => onAdd(layout.length)} className="text-sm text-blue-600 hover:underline">
+        <button
+          type="button"
+          onClick={() => onAdd(layout.length)}
+          disabled={locked}
+          className="text-sm text-blue-600 hover:underline disabled:cursor-not-allowed disabled:text-warm-300 disabled:no-underline"
+        >
           + Add
         </button>
       </div>
@@ -120,6 +136,7 @@ export default function LayersRail({
                 index={index}
                 label={labelFor(block, schemas)}
                 selected={selectedIndex === index}
+                locked={locked}
                 onSelect={onSelect}
                 onDuplicate={onDuplicate}
                 onDelete={onDelete}
