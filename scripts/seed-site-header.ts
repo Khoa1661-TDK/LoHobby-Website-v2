@@ -20,8 +20,6 @@ async function main(): Promise<void> {
   await payload.updateGlobal({
     slug: 'site-header',
     data: {
-      includeDefaultTabs: true,
-      hiddenDefaults: [],
       tabs: [],
     },
     depth: 0,

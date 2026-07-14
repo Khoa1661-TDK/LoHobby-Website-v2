@@ -48,9 +48,6 @@ type RawAnnouncement = {
 
 type RawHeaderGlobal = {
   announcement?: RawAnnouncement | null;
-  /** When false, only admin-configured tabs are shown (no built-in Home / Shop / Categories). */
-  includeDefaultTabs?: boolean | null;
-  hiddenDefaults?: DefaultTabKey[] | null;
   tabs?: RawTab[] | null;
 };
 
@@ -107,8 +104,8 @@ async function fetchAllCategories(): Promise<Array<{ slug: string; title: string
 }
 
 /**
- * Built-in default tabs (Home · Shop · Categories auto dropdown).
- * Any key listed in `hidden` is removed, letting admins delete defaults they don't want.
+ * Maps a configured tab to the default key it duplicates, so that default can be
+ * suppressed (defaults themselves are never deletable — this only avoids duplicates).
  */
 function defaultKeyForConfiguredTab(tab: RawTab): DefaultTabKey | null {
   switch (tab.kind) {
@@ -123,13 +120,13 @@ function defaultKeyForConfiguredTab(tab: RawTab): DefaultTabKey | null {
   }
 }
 
-function collectHiddenDefaults(
-  raw: RawHeaderGlobal | null,
-  configuredTabs: RawTab[],
-): Set<DefaultTabKey> {
-  const hidden = new Set<DefaultTabKey>(
-    Array.isArray(raw?.hiddenDefaults) ? raw!.hiddenDefaults : [],
-  );
+/**
+ * Defaults (Home · Shop · Categories) always appear and cannot be deleted.
+ * We only suppress a default when a custom tab already covers the same target,
+ * so admins don't end up with a duplicate row.
+ */
+function collectHiddenDefaults(configuredTabs: RawTab[]): Set<DefaultTabKey> {
+  const hidden = new Set<DefaultTabKey>();
 
   for (const tab of configuredTabs) {
     const key = defaultKeyForConfiguredTab(tab);
@@ -236,20 +233,13 @@ async function fetchSiteHeaderData(): Promise<SiteHeaderData> {
 
   const announcement = resolveAnnouncement(raw?.announcement);
   const configuredTabs = Array.isArray(raw?.tabs) ? raw!.tabs.filter((t): t is RawTab => Boolean(t)) : [];
-  const includeDefaultTabs = raw?.includeDefaultTabs !== false;
-  const hidden = collectHiddenDefaults(raw, configuredTabs);
-  const resolved = await resolveConfiguredTabs(configuredTabs);
+  const hidden = collectHiddenDefaults(configuredTabs);
+  const [defaults, resolved] = await Promise.all([
+    buildDefaultTabs(hidden),
+    resolveConfiguredTabs(configuredTabs),
+  ]);
 
-  if (!includeDefaultTabs) {
-    return { tabs: resolved, announcement };
-  }
-
-  const defaults = await buildDefaultTabs(hidden);
-
-  if (configuredTabs.length === 0) {
-    return { tabs: defaults, announcement };
-  }
-
+  // Defaults are always present and cannot be deleted; custom tabs follow them.
   return { tabs: [...defaults, ...resolved], announcement };
 }
 
