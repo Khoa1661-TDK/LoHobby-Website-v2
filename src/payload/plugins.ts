@@ -6,6 +6,8 @@ import { quickActionsPlugin } from '@shopnex/quick-actions-plugin';
 import { sidebarPlugin } from '@shopnex/sidebar-plugin';
 import { seoPlugin } from '@payloadcms/plugin-seo';
 import type { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types';
+import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage';
+import { postgresStorageAdapter } from './storage/postgres-adapter';
 
 const storeName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Lô Hobby';
 // `APP_URL` (runtime, non-`NEXT_PUBLIC_`) first so SEO canonical/OG URLs follow
@@ -128,4 +130,12 @@ export const shopnexPlugins: Plugin[] = [
   vndAnalyticsDashboardPlugin(),
   sidebarPlugin(),
   commerceNavPlugin(),
+  cloudStoragePlugin({
+    collections: {
+      media: {
+        adapter: postgresStorageAdapter(),
+        disableLocalStorage: true,
+      },
+    },
+  }),
 ];
