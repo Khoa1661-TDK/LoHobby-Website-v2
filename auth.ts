@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 
 import { authConfig } from '@/auth.config';
 import { autoVerifyGoogleUser } from '@/lib/auth-verify';
+import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 
 declare module 'next-auth' {
@@ -52,7 +53,11 @@ const config = {
     ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider === 'google' && typeof user.id === 'string') {
-        await autoVerifyGoogleUser(user.id);
+        try {
+          await autoVerifyGoogleUser(user.id);
+        } catch (error) {
+          logger.error({ route: 'auth.signIn', err: error }, 'google auto-verify failed');
+        }
       }
       return true;
     },
