@@ -38,6 +38,10 @@ describe('verificationIdentifier', () => {
     expect(verificationIdentifier('buyer@example.com')).toBe('verify-email:buyer@example.com');
     expect(verificationIdentifier('buyer@example.com')).not.toBe('buyer@example.com');
   });
+
+  it('should normalize the email to lowercase', () => {
+    expect(verificationIdentifier('Buyer@Example.com')).toBe('verify-email:buyer@example.com');
+  });
 });
 
 describe('issueVerificationEmail', () => {

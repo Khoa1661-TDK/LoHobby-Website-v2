@@ -13,7 +13,7 @@ const VERIFY_PREFIX = 'verify-email:';
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export function verificationIdentifier(email: string): string {
-  return `${VERIFY_PREFIX}${email}`;
+  return `${VERIFY_PREFIX}${email.toLowerCase()}`;
 }
 
 export type ConsumeVerificationResult =
