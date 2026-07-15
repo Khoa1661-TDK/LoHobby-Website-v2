@@ -2,6 +2,13 @@ import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
+   -- Every object below is created inside the "payload" schema (postgresAdapter
+   -- schemaName in payload.config.ts). Nothing else creates it: Payload only
+   -- creates the schema during a dev push, so on a database that has never been
+   -- pushed to — any fresh deploy — this migration used to fail on its first
+   -- statement with 42P06 'schema "payload" does not exist'. Existing databases
+   -- got the schema from an earlier dev push, which is why this went unnoticed.
+   CREATE SCHEMA IF NOT EXISTS "payload";
    CREATE TYPE "payload"."enum_products_stored_gallery_kind" AS ENUM('image', 'video');
   CREATE TYPE "payload"."enum_products_stored_image_kind" AS ENUM('image', 'video');
   CREATE TYPE "payload"."enum_payment_methods_kind" AS ENUM('cod', 'manual_transfer', 'gateway');

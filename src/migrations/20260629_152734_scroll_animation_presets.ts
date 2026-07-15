@@ -4,10 +4,21 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   // Remap dropped presets before the enum swap. The old enum had
   // ('none','reveal-up','reveal-right','scale-in'); the new enum drops
   // 'reveal-up'/'reveal-right'. Any existing row holding those would fail the
-  // final `USING ::enum` cast, so remap them while the columns are still the
-  // old type. Targets mirror the runtime alias map in lib/animations/config.ts
-  // (reveal-up→fade-up, reveal-right→slide-right) so stored data and code agree
-  // — both targets exist in the new enum, so the remap is semantic, not lossy.
+  // final `USING ::enum` cast, so remap them first. Targets mirror the runtime
+  // alias map in lib/animations/config.ts (reveal-up→fade-up,
+  // reveal-right→slide-right) so stored data and code agree — both targets
+  // exist in the new enum, so the remap is semantic, not lossy.
+  //
+  // The remap MUST happen while the columns are `text`, not while they are the
+  // old enum. Postgres resolves an enum literal against the column's type when
+  // it PLANS the statement, so `SET scroll_animation = 'fade-up'` on a column
+  // still typed as the old enum raises 22P02 'invalid input value for enum'
+  // even when zero rows match. That made this migration fail on every database
+  // still holding the old enum — i.e. every fresh deploy — while passing on
+  // dev databases whose columns a schema push had already moved to the new
+  // enum, where the update was a no-op. Dropping the default first is required:
+  // a `'none'::old_enum` default cannot be cast to text automatically. The type
+  // swap below re-applies both the default and the enum type per table.
   await db.execute(sql`
     DO $$
     DECLARE r record;
@@ -16,10 +27,16 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
                WHERE table_schema = 'payload' AND column_name = 'scroll_animation'
       LOOP
         EXECUTE format(
-          'UPDATE payload.%I SET scroll_animation = ''fade-up'' WHERE scroll_animation::text = ''reveal-up''',
+          'ALTER TABLE payload.%I ALTER COLUMN scroll_animation DROP DEFAULT',
           r.table_name);
         EXECUTE format(
-          'UPDATE payload.%I SET scroll_animation = ''slide-right'' WHERE scroll_animation::text = ''reveal-right''',
+          'ALTER TABLE payload.%I ALTER COLUMN scroll_animation SET DATA TYPE text',
+          r.table_name);
+        EXECUTE format(
+          'UPDATE payload.%I SET scroll_animation = ''fade-up'' WHERE scroll_animation = ''reveal-up''',
+          r.table_name);
+        EXECUTE format(
+          'UPDATE payload.%I SET scroll_animation = ''slide-right'' WHERE scroll_animation = ''reveal-right''',
           r.table_name);
       END LOOP;
     END $$;
