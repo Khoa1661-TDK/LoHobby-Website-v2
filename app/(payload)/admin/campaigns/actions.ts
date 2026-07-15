@@ -40,9 +40,9 @@ export async function createCampaignAction(input: {
 }
 
 /**
- * Send a campaign to every newsletter subscriber via Resend (lib/email/client).
- * Credential-agnostic: stays DRAFT with a clear message until RESEND_API_KEY and
- * EMAIL_FROM are configured. Marks SENT only when at least one email is delivered.
+ * Send a campaign to every newsletter subscriber via Gmail SMTP (lib/email/client).
+ * Credential-agnostic: stays DRAFT with a clear message until GMAIL_USER and
+ * GMAIL_APP_PASSWORD are configured. Marks SENT only when at least one email is delivered.
  */
 export async function sendCampaignToNewsletterAction(
   campaignId: string,
@@ -63,7 +63,10 @@ export async function sendCampaignToNewsletterAction(
   }
 
   if (!getEmailConfig().configured) {
-    return { ok: false, message: 'Email chưa cấu hình (đặt RESEND_API_KEY) — chưa gửi.' };
+    return {
+      ok: false,
+      message: 'Email chưa cấu hình (đặt GMAIL_USER và GMAIL_APP_PASSWORD) — chưa gửi.',
+    };
   }
 
   const subscribers = await prisma.newsletterSubscriber.findMany({ select: { email: true } });
