@@ -249,7 +249,13 @@ export default async function StorefrontLayout({
             <AnnouncementBanner />
             <main id="main-content">
               <PageTransition>{children}</PageTransition>
-              <Toaster closeButton richColors />
+              <Toaster
+                position="top-center"
+                offset={{ top: '5rem' }}
+                mobileOffset={{ top: '4.5rem' }}
+                closeButton
+                richColors
+              />
               <WelcomeToast />
             </main>
             <CookieConsent />
