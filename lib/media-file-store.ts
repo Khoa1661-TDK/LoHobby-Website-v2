@@ -2,10 +2,15 @@
 // Postgres-backed binary store for Payload media uploads. The shared DB is the
 // source of truth for media bytes; Payload's `media` collection keeps metadata.
 //
-// This module is reachable from payload.config.ts (via the storage adapter),
-// which `payload generate:importmap` executes under plain tsx where importing
-// 'server-only' throws. lib/prisma.ts imports 'server-only', so prisma must be
-// imported lazily inside each function — never at module top level.
+// This module is reachable from payload.config.ts (via the storage adapter), so
+// it runs under plain tsx — `payload generate:importmap`, `payload migrate`, and
+// every seed in scripts/ — not just inside Next. Importing 'server-only' throws
+// everywhere except under Next's `react-server` condition, so this module must
+// reach Prisma through './prisma-client' (unguarded) rather than './prisma'.
+// Importing it lazily is NOT enough: a lazy import still loads 'server-only'
+// when the function is first called, which turned every media upload during
+// `scripts/seed-shopee-catalog.ts` into "This module cannot be imported from a
+// Client Component module" and left the catalog seeded with zero products.
 
 export const MAX_MEDIA_FILE_BYTES = 25 * 1024 * 1024;
 
@@ -17,7 +22,7 @@ export interface StoredMediaFile {
 }
 
 async function db() {
-  const { prisma } = await import('./prisma');
+  const { prisma } = await import('./prisma-client');
   return prisma;
 }
 

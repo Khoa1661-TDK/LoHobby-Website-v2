@@ -1,24 +1,15 @@
 // lib/prisma.ts
+// Prisma singleton for application code, guarded against client bundling.
+//
+// The client itself lives in `./prisma-client`; this module only adds the
+// 'server-only' guard on top. Keep importing THIS module from app code — the
+// guard is what turns an accidental import from a Client Component into a build
+// error. Only code that must run outside Next's `react-server` condition (the
+// Payload storage adapter, scripts/) may import `./prisma-client` directly, and
+// it must say why.
 import 'server-only';
 
-import { PrismaClient } from '@/generated/prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
+import prisma from './prisma-client';
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
-
-function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error('DATABASE_URL is not set');
-  }
-  const adapter = new PrismaPg({ connectionString });
-  return new PrismaClient({ adapter });
-}
-
-export const prisma: PrismaClient = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
-}
-
+export { prisma };
 export default prisma;
