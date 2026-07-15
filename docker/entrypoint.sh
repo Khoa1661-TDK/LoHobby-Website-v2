@@ -26,7 +26,21 @@ echo "[entrypoint] payload migrate"
 # lose data. That is the correct default for this image, which only ever runs
 # against deploy databases — a silently unmigrated schema is the worse failure.
 # Take a dump before deploying onto a DB that holds data you cannot lose.
+#
+# `yes` must not be used in a bare pipeline here: it writes until the reader
+# closes the pipe, so it always dies of SIGPIPE (141) once migrate exits. Under
+# `pipefail` that 141 becomes the pipeline's status and `set -e` aborts the boot
+# even though the migration succeeded — a restart loop that re-runs migrate
+# forever. Read migrate's OWN status out of PIPESTATUS instead, so a real
+# migration failure still aborts while SIGPIPE on the writer is ignored.
+set +e +o pipefail
 yes | node_modules/.bin/payload migrate
+migrate_status=${PIPESTATUS[1]}
+set -e -o pipefail
+if [ "$migrate_status" -ne 0 ]; then
+  echo "[entrypoint] FATAL: payload migrate failed (exit $migrate_status)" >&2
+  exit 1
+fi
 
 # Fail loudly if the schema still is not there. Without this the container serves
 # 500s that look like an application bug rather than a failed migration.
