@@ -39,8 +39,15 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`[theme-presets] seed failed: ${message}`);
-  process.exit(1);
-});
+// Exit explicitly on success. Payload holds an open Postgres pool, so the event
+// loop never drains on its own and the process would hang here forever —
+// blocking docker/entrypoint.sh, which runs these seeds sequentially before
+// starting the server. Only the failure path used to exit, so a seed that
+// WORKED hung the boot while a seed that FAILED let it continue.
+main()
+  .then(() => process.exit(0))
+  .catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[theme-presets] seed failed: ${message}`);
+    process.exit(1);
+  });
