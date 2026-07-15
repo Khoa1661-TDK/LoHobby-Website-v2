@@ -1,19 +1,22 @@
-// lib/email/client.ts — credential-agnostic bulk email send via Resend's HTTP API.
+// lib/email/client.ts — Gmail SMTP transport, shared by every outbound email.
 //
 // Required env to activate (inert until both are set):
-//   RESEND_API_KEY  — Resend API key (https://resend.com/api-keys)
-//   EMAIL_FROM      — verified sender, e.g. "Shop <shop@yourdomain.com>"
+//   GMAIL_USER          — full Gmail address; SMTP user and default sender
+//   GMAIL_APP_PASSWORD  — 16-char App Password (myaccount.google.com/apppasswords),
+//                         NOT the account password. Requires 2FA on the account.
+//   EMAIL_FROM          — optional display sender; falls back to GMAIL_USER
 //
-// No SDK dependency — raw fetch against the batch endpoint, mirroring lib/zalo/oa-client.ts.
-
+// Gmail caps ~500 recipients/day (2,000 on Workspace) and will temporarily lock
+// the account past that. Fine for verification/reset volume; a real ceiling for
+// campaigns — that cap is what will eventually force a move to a domain-backed
+// provider.
+import nodemailer, { type Transporter } from 'nodemailer';
 import { logger } from '@/lib/logger';
-
-const BATCH_URL = 'https://api.resend.com/emails/batch';
-const BATCH_LIMIT = 100; // Resend accepts up to 100 emails per batch request
 
 export interface EmailConfig {
   configured: boolean;
-  apiKey: string;
+  user: string;
+  appPassword: string;
   from: string;
 }
 
@@ -24,24 +27,41 @@ export interface SendBulkResult {
 }
 
 export function getEmailConfig(): EmailConfig {
-  const apiKey = process.env.RESEND_API_KEY ?? '';
-  const from = process.env.EMAIL_FROM ?? '';
-  return { configured: Boolean(apiKey && from), apiKey, from };
+  const user = process.env.GMAIL_USER ?? '';
+  const appPassword = process.env.GMAIL_APP_PASSWORD ?? '';
+  const from = process.env.EMAIL_FROM || user;
+  return { configured: Boolean(user && appPassword), user, appPassword, from };
 }
 
-function chunk<T>(items: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    out.push(items.slice(i, i + size));
+// Built once and reused: a transporter per email would reopen an SMTP
+// connection each send, which is slow and burns Gmail's connection budget.
+let transporter: Transporter | null = null;
+
+export function getTransporter(): Transporter | null {
+  const config = getEmailConfig();
+  if (!config.configured) return null;
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // STARTTLS upgrade on 587
+      auth: { user: config.user, pass: config.appPassword },
+    });
   }
-  return out;
+  return transporter;
+}
+
+/** Test seam: drops the cached transporter so env changes take effect. */
+export function resetTransporter(): void {
+  transporter = null;
 }
 
 /**
- * Send one email per recipient (no shared To/BCC, so addresses are never exposed)
- * in batches of 100. Per-chunk HTTP/network failures are tallied as `failed` and
- * never thrown. Returns `{ configured: false, ... }` and skips the network entirely
- * when credentials are missing.
+ * Send one email per recipient (never a shared To/BCC, so addresses are never
+ * exposed between customers). SMTP has no batch endpoint, so this is a
+ * sequential loop over the pooled connection. Per-recipient failures are
+ * tallied as `failed` and never thrown. Returns `{ configured: false, ... }`
+ * and skips the network entirely when credentials are missing.
  */
 export async function sendBulkEmail(args: {
   subject: string;
@@ -51,8 +71,9 @@ export async function sendBulkEmail(args: {
 }): Promise<SendBulkResult> {
   const { subject, text, html, recipients } = args;
   const config = getEmailConfig();
+  const mailer = getTransporter();
 
-  if (!config.configured) {
+  if (!mailer) {
     logger.info(
       { recipients: recipients.length, subject },
       '[email] not configured — skipping send',
@@ -63,27 +84,13 @@ export async function sendBulkEmail(args: {
   let sent = 0;
   let failed = 0;
 
-  for (const batch of chunk(recipients, BATCH_LIMIT)) {
-    const payload = batch.map((to) => ({ from: config.from, to: [to], subject, text, html }));
+  for (const to of recipients) {
     try {
-      const res = await fetch(BATCH_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${config.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        sent += batch.length;
-      } else {
-        failed += batch.length;
-        const detail = await res.json().catch(() => ({}));
-        logger.warn({ status: res.status, detail }, '[email] batch send failed');
-      }
+      await mailer.sendMail({ from: config.from, to, subject, text, html });
+      sent += 1;
     } catch (err: unknown) {
-      failed += batch.length;
-      logger.warn({ err }, '[email] batch send threw');
+      failed += 1;
+      logger.warn({ err }, '[email] recipient send failed');
     }
   }
 

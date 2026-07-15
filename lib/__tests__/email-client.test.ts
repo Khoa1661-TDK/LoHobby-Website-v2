@@ -1,107 +1,93 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getEmailConfig, sendBulkEmail } from '@/lib/email/client';
 
-function okResponse() {
-  return { ok: true, json: async () => ({ data: [] }) };
-}
-function errResponse() {
-  return { ok: false, status: 422, json: async () => ({ message: 'invalid' }) };
-}
+const sendMailMock = vi.fn();
+vi.mock('nodemailer', () => ({
+  default: { createTransport: vi.fn(() => ({ sendMail: sendMailMock })) },
+}));
+vi.mock('@/lib/logger', () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() },
+}));
+
+import { getEmailConfig, sendBulkEmail, resetTransporter } from '@/lib/email/client';
 
 function emails(n: number): string[] {
   return Array.from({ length: n }, (_, i) => `user${i}@example.com`);
 }
 
+beforeEach(() => {
+  vi.stubEnv('GMAIL_USER', 'shop@gmail.com');
+  vi.stubEnv('GMAIL_APP_PASSWORD', 'abcd efgh ijkl mnop');
+  vi.stubEnv('EMAIL_FROM', 'Shop <shop@gmail.com>');
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.clearAllMocks();
+  resetTransporter();
+});
+
 describe('getEmailConfig', () => {
-  afterEach(() => vi.unstubAllEnvs());
-
-  it('should be unconfigured when RESEND_API_KEY is missing', () => {
-    vi.stubEnv('RESEND_API_KEY', '');
-    vi.stubEnv('EMAIL_FROM', 'shop@example.com');
+  it('should be unconfigured when GMAIL_USER is missing', () => {
+    vi.stubEnv('GMAIL_USER', '');
     expect(getEmailConfig().configured).toBe(false);
   });
 
-  it('should be unconfigured when EMAIL_FROM is missing', () => {
-    vi.stubEnv('RESEND_API_KEY', 're_123');
-    vi.stubEnv('EMAIL_FROM', '');
+  it('should be unconfigured when GMAIL_APP_PASSWORD is missing', () => {
+    vi.stubEnv('GMAIL_APP_PASSWORD', '');
     expect(getEmailConfig().configured).toBe(false);
   });
 
-  it('should be configured when both env vars are present', () => {
-    vi.stubEnv('RESEND_API_KEY', 're_123');
-    vi.stubEnv('EMAIL_FROM', 'shop@example.com');
+  it('should be configured when both credentials are present', () => {
     const config = getEmailConfig();
     expect(config.configured).toBe(true);
-    expect(config.from).toBe('shop@example.com');
+    expect(config.user).toBe('shop@gmail.com');
+    expect(config.from).toBe('Shop <shop@gmail.com>');
+  });
+
+  it('should fall back to GMAIL_USER as the sender when EMAIL_FROM is unset', () => {
+    vi.stubEnv('EMAIL_FROM', '');
+    expect(getEmailConfig().from).toBe('shop@gmail.com');
   });
 });
 
 describe('sendBulkEmail', () => {
-  beforeEach(() => vi.stubGlobal('fetch', vi.fn()));
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.unstubAllEnvs();
-    vi.restoreAllMocks();
-  });
+  it('should be inert and never touch the transport when not configured', async () => {
+    vi.stubEnv('GMAIL_APP_PASSWORD', '');
 
-  it('should be inert and never call fetch when not configured', async () => {
-    vi.stubEnv('RESEND_API_KEY', '');
-    vi.stubEnv('EMAIL_FROM', '');
     const result = await sendBulkEmail({
-      subject: 's',
-      text: 't',
-      html: '<p>t</p>',
-      recipients: emails(3),
+      subject: 's', text: 't', html: '<p>t</p>', recipients: emails(3),
     });
+
     expect(result).toEqual({ configured: false, sent: 0, failed: 0 });
-    expect(fetch).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
   });
 
-  it('should chunk recipients into batches of 100', async () => {
-    vi.stubEnv('RESEND_API_KEY', 're_123');
-    vi.stubEnv('EMAIL_FROM', 'shop@example.com');
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(okResponse());
+  it('should send one message per recipient and never expose addresses to each other', async () => {
+    sendMailMock.mockResolvedValue({ messageId: 'x' });
 
     const result = await sendBulkEmail({
-      subject: 's',
-      text: 't',
-      html: '<p>t</p>',
-      recipients: emails(101),
+      subject: 's', text: 't', html: '<p>t</p>', recipients: emails(3),
     });
 
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(result).toEqual({ configured: true, sent: 101, failed: 0 });
+    expect(result).toEqual({ configured: true, sent: 3, failed: 0 });
+    expect(sendMailMock).toHaveBeenCalledTimes(3);
+    for (const call of sendMailMock.mock.calls) {
+      expect(call[0].to).toEqual(expect.stringMatching(/^user\d@example\.com$/));
+      expect(call[0].bcc).toBeUndefined();
+    }
   });
 
-  it('should count a failed chunk as failed and keep the rest as sent', async () => {
-    vi.stubEnv('RESEND_API_KEY', 're_123');
-    vi.stubEnv('EMAIL_FROM', 'shop@example.com');
-    (fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce(okResponse())
-      .mockResolvedValueOnce(errResponse());
+  it('should tally a per-recipient rejection as failed without aborting the rest', async () => {
+    sendMailMock
+      .mockResolvedValueOnce({ messageId: 'x' })
+      .mockRejectedValueOnce(new Error('mailbox full'))
+      .mockResolvedValueOnce({ messageId: 'z' });
 
     const result = await sendBulkEmail({
-      subject: 's',
-      text: 't',
-      html: '<p>t</p>',
-      recipients: emails(101),
+      subject: 's', text: 't', html: '<p>t</p>', recipients: emails(3),
     });
 
-    expect(result).toEqual({ configured: true, sent: 100, failed: 1 });
-  });
-
-  it('should count a thrown network error as failed without throwing', async () => {
-    vi.stubEnv('RESEND_API_KEY', 're_123');
-    vi.stubEnv('EMAIL_FROM', 'shop@example.com');
-    (fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('network down'));
-
-    const result = await sendBulkEmail({
-      subject: 's',
-      text: 't',
-      html: '<p>t</p>',
-      recipients: emails(2),
-    });
-
-    expect(result).toEqual({ configured: true, sent: 0, failed: 2 });
+    expect(result).toEqual({ configured: true, sent: 2, failed: 1 });
+    expect(sendMailMock).toHaveBeenCalledTimes(3);
   });
 });
