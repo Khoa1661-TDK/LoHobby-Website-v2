@@ -60,3 +60,14 @@ export function isGiftCardsEnabled(): boolean {
 export function isDemoPaymentAllowed(): boolean {
   return process.env.NODE_ENV !== 'production' || envFlag('ALLOW_DEMO_PAYMENTS', false);
 }
+
+/**
+ * Checkout email-verification gate. Defaults to true; set
+ * REQUIRE_EMAIL_VERIFICATION=false to temporarily let unverified accounts
+ * through checkout — verification links are only reachable at APP_URL, so
+ * this stays off between a deploy and setting APP_URL to the real domain.
+ * Re-enable once that's configured.
+ */
+export function isEmailVerificationRequired(): boolean {
+  return envFlag('REQUIRE_EMAIL_VERIFICATION', true);
+}
