@@ -82,8 +82,10 @@ through `sendEmail()` / `sendBulkEmail()`.
 The `EmailConfig` interface changes shape (`apiKey: string` → `user: string`
 and `appPassword: string`; `from` stays). The only consumer outside
 `lib/email/` is `app/(payload)/admin/campaigns/actions.ts:65`, which reads
-`.configured` only — **it needs no change**. Verify this with grep before
-assuming.
+`.configured` only — so it needs **no structural change**. It does need a copy
+fix: line 66 renders the user-facing string
+`'Email chưa cấu hình (đặt RESEND_API_KEY) — chưa gửi.'`, which names the wrong
+env var once this lands. Update it to reference `GMAIL_APP_PASSWORD`.
 
 App Passwords require 2-Step Verification enabled on the Google account. That
 is a manual user step; Gmail rejects plain SMTP auth without it.
@@ -163,8 +165,11 @@ the coverage should stay equivalent, only the transport being asserted changes:
 
 - Add `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `EMAIL_FROM` to `.env.example`,
   `docker-compose.yml`, and `Dockerfile.private`, with a comment pointing at
-  `myaccount.google.com/apppasswords` and noting 2FA is a prerequisite. Never
-  commit a real App Password — treat it as a secret.
+  `myaccount.google.com/apppasswords` and noting 2FA is a prerequisite.
+- **`.env`, `docker-compose.yml`, and `Dockerfile.private` are gitignored and
+  contain live secrets — edit them locally but NEVER `git add` them.** Only
+  `.env.example` is tracked, and it takes placeholder values only. A real App
+  Password in a commit is a credential leak requiring rotation.
 - Log a `DECISIONS.md` entry: Gmail SMTP chosen over Gmail API (restricted
   scope, 7-day token expiry) and over Resend (no domain yet); trade-off is the
   500/day cap and gmail.com sender; revisit when a domain is acquired or
