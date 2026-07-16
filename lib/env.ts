@@ -72,6 +72,26 @@ export const envSchema = z
 export type Env = z.infer<typeof envSchema>;
 
 /**
+ * Auth.js builds every sign-in/sign-out/OAuth redirect from `AUTH_URL`. When
+ * it is unset it falls back to the request URL — but under `next start`,
+ * `request.nextUrl.origin` is the server's own listen address
+ * (`http://localhost:3000`), NOT the host the visitor used, even with
+ * `trustHost: true`. Every deployed auth redirect (logout, login errors,
+ * OAuth callbacks) therefore pointed at localhost. Defaulting `AUTH_URL` to
+ * `APP_URL` makes the one runtime knob that already re-points admin, SEO and
+ * email links (see `resolveBaseUrl`) cover auth too. An explicitly set
+ * `AUTH_URL`/`NEXTAUTH_URL` still wins. Call once at server boot, before any
+ * request is served.
+ */
+export function applyAuthUrlDefault(
+  env: Record<string, string | undefined> = process.env,
+): void {
+  if (!env.AUTH_URL && !env.NEXTAUTH_URL && env.APP_URL) {
+    env.AUTH_URL = env.APP_URL;
+  }
+}
+
+/**
  * Validate `process.env` against {@link envSchema} and throw a single, readable
  * error listing every problem. Call once at server boot.
  */

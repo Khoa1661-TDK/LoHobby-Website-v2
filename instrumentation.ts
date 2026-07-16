@@ -11,6 +11,9 @@ export async function register() {
   // Only validate on the Node.js runtime, not the Edge runtime (middleware).
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
 
-  const { validateEnv } = await import('@/lib/env');
+  const { applyAuthUrlDefault, validateEnv } = await import('@/lib/env');
+  // Must run before the first request: Auth.js otherwise generates redirects
+  // against next start's own listen address (localhost) instead of APP_URL.
+  applyAuthUrlDefault();
   validateEnv();
 }

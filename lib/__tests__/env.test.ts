@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { envSchema, validateEnv } from '@/lib/env';
+import { applyAuthUrlDefault, envSchema, validateEnv } from '@/lib/env';
 
 const SECRET = 'x'.repeat(32);
 
@@ -105,5 +105,42 @@ describe('validateEnv', () => {
     expect(() => validateEnv({})).toThrow(
       /Invalid environment configuration/,
     );
+  });
+});
+
+// Auth.js redirects must follow APP_URL: under `next start` the request URL's
+// origin is the listen address (localhost), so an unset AUTH_URL sends every
+// logout/sign-in redirect to localhost on deployed hosts.
+describe('applyAuthUrlDefault', () => {
+  it('should default AUTH_URL to APP_URL when neither AUTH_URL nor NEXTAUTH_URL is set', () => {
+    const env: Record<string, string | undefined> = {
+      APP_URL: 'http://116.118.6.30:3000',
+    };
+    applyAuthUrlDefault(env);
+    expect(env.AUTH_URL).toBe('http://116.118.6.30:3000');
+  });
+
+  it('should not override an explicitly set AUTH_URL', () => {
+    const env: Record<string, string | undefined> = {
+      APP_URL: 'http://app.example',
+      AUTH_URL: 'https://auth.example',
+    };
+    applyAuthUrlDefault(env);
+    expect(env.AUTH_URL).toBe('https://auth.example');
+  });
+
+  it('should not set AUTH_URL when NEXTAUTH_URL is already set', () => {
+    const env: Record<string, string | undefined> = {
+      APP_URL: 'http://app.example',
+      NEXTAUTH_URL: 'https://legacy.example',
+    };
+    applyAuthUrlDefault(env);
+    expect(env.AUTH_URL).toBeUndefined();
+  });
+
+  it('should leave AUTH_URL unset when APP_URL is not configured', () => {
+    const env: Record<string, string | undefined> = {};
+    applyAuthUrlDefault(env);
+    expect(env.AUTH_URL).toBeUndefined();
   });
 });
