@@ -4,7 +4,7 @@ const upsert = vi.fn();
 const deleteMany = vi.fn();
 const findUnique = vi.fn();
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma-client', () => ({
   prisma: { mediaFile: { upsert, deleteMany, findUnique } },
 }));
 
