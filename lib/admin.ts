@@ -1,6 +1,7 @@
 // lib/admin.ts
 import { auth } from '@/auth';
 import { isAdminEmail } from '@/lib/admin-emails';
+import { isCredentialsAdminAllowed } from '@/lib/feature-flags';
 
 export { ADMIN_EMAILS, isAdminEmail } from '@/lib/admin-emails';
 
@@ -20,7 +21,15 @@ export async function getAdminUser(): Promise<AdminSessionUser | null> {
   // never be treated as admin, even if it holds an allowlisted email — this
   // closes the race where an attacker registers the admin's email via
   // /api/register before the real admin has ever signed in with Google.
-  if (user.provider !== 'google') return null;
+  //
+  // TEMPORARY escape hatch (see DECISIONS.md 2026-07-17): Google OAuth cannot
+  // run against the raw-IP production deploy yet, so ALLOW_CREDENTIALS_ADMIN
+  // lets a password session through for admin testing. Never set it outside
+  // that window; remove the env var (and the flag) once the domain + TLS
+  // setup lands and Google sign-in works on the deployed host.
+  if (user.provider !== 'google' && !isCredentialsAdminAllowed()) {
+    return null;
+  }
 
   return {
     id: user.id,

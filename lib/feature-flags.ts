@@ -71,3 +71,16 @@ export function isDemoPaymentAllowed(): boolean {
 export function isEmailVerificationRequired(): boolean {
   return envFlag('REQUIRE_EMAIL_VERIFICATION', true);
 }
+
+/**
+ * TEMPORARY (see DECISIONS.md 2026-07-17): accept credentials-provider
+ * sessions for admin recognition. Google OAuth cannot run against the raw-IP
+ * production host yet, so this is the only way into /admin there. Defaults to
+ * false — the Google-only rule that closes the register-then-race privilege
+ * escalation stays in force everywhere the flag is not explicitly set. Remove
+ * the env var (and this flag) once domain + TLS land and Google sign-in works
+ * on the deployed host.
+ */
+export function isCredentialsAdminAllowed(): boolean {
+  return envFlag('ALLOW_CREDENTIALS_ADMIN', false);
+}

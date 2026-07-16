@@ -129,6 +129,34 @@ describe('getAdminUser provider gating', () => {
     expect(await getAdminUser()).toBeNull();
   });
 
+  it('should return the admin for a credentials session when ALLOW_CREDENTIALS_ADMIN is "true"', async () => {
+    vi.stubEnv('ADMIN_EMAILS', 'admin@shop.test');
+    vi.stubEnv('ALLOW_CREDENTIALS_ADMIN', 'true');
+    vi.doMock('@/auth', () => ({
+      auth: vi.fn().mockResolvedValue({
+        user: { id: 'u1', email: 'admin@shop.test', name: 'Admin', provider: 'credentials' },
+      }),
+    }));
+    vi.resetModules();
+
+    const { getAdminUser } = await import('@/lib/admin');
+    expect(await getAdminUser()).toEqual({ id: 'u1', email: 'admin@shop.test', name: 'Admin' });
+  });
+
+  it('should return null for a non-allowlisted email even when ALLOW_CREDENTIALS_ADMIN is "true"', async () => {
+    vi.stubEnv('ADMIN_EMAILS', 'admin@shop.test');
+    vi.stubEnv('ALLOW_CREDENTIALS_ADMIN', 'true');
+    vi.doMock('@/auth', () => ({
+      auth: vi.fn().mockResolvedValue({
+        user: { id: 'u2', email: 'nope@shop.test', name: 'Nope', provider: 'credentials' },
+      }),
+    }));
+    vi.resetModules();
+
+    const { getAdminUser } = await import('@/lib/admin');
+    expect(await getAdminUser()).toBeNull();
+  });
+
   it('should return the admin when the email matches the allowlist and provider is "google"', async () => {
     vi.stubEnv('ADMIN_EMAILS', 'admin@shop.test');
     vi.doMock('@/auth', () => ({
