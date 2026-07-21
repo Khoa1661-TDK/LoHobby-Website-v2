@@ -308,64 +308,112 @@ risks implying progress on a page that may immediately redirect.
 
 ---
 
-## 6. No search suggestions
+## 6. Search fails on unaccented Vietnamese queries, and its dropdown is mouse-only
 
-**Priority:** genuine improvement, largest build. Sequenced last.
+> **Correction (2026-07-21):** an earlier revision of this spec claimed no search
+> autocomplete existed. That was wrong. `app/api/search/suggest/route.ts` exists and is live,
+> and `components/layout/navbar/search.tsx` already implements debounce (`setTimeout`,
+> line 60) and a 2-character minimum (line 55), rendering suggestions with thumbnail, title,
+> and price. The claim was made from a failed grep without opening the file. Verifying it
+> surfaced the two real defects below.
 
-### Problem
+### 6a. Unaccented multi-word queries return nothing
 
-`components/layout/navbar/search.tsx` has no debounce, suggestion, or autocomplete logic.
-Search is submit-then-navigate: the shopper must type a full query and load a results page
-before learning whether anything matches.
+**Priority: high — above §4 and §5.** This is a core function failing silently, not a polish item.
 
-### Fix
+Measured against the deploy:
 
-Add a debounced suggestion dropdown to the navbar search. On input (debounced ~200ms, minimum
-2 characters), query the existing `/api/search` endpoint for a small result set and render
-product suggestions with thumbnail, title, and price. Selecting one navigates directly to the
-PDP; submitting still goes to the full results page.
+| Query | Results |
+|---|---|
+| `mô hình` | 6 |
+| `mo hinh` | **0** |
+| `móc khóa` | 6 |
+| `moc khoa` | 1 |
 
-Accessibility is a hard requirement, not a follow-up — this is a combobox and must behave like
-one:
+Vietnamese shoppers routinely type without diacritics. `mo hinh` is plausibly the single most
+common query for this catalogue, and it returns an empty dropdown.
 
-- `role="combobox"` on the input with `aria-expanded` and `aria-controls`
-- `role="listbox"` on the dropdown, `role="option"` on each item
-- `aria-activedescendant` tracking the highlighted option
-- Full keyboard support: Up/Down to move, Enter to select, Escape to dismiss
-- Results announced via a polite live region
+**Cause.** Matching runs against the slugified product **handle** (`mo-hinh-cheems-bonk`), in
+which words are joined by hyphens. A single unaccented token (`mo`) substring-matches the
+handle, so it appears to work. Insert a space (`mo hinh`) and it can no longer match the
+hyphen, so the query collapses to zero. The accented forms match the title directly, which is
+why they behave differently.
 
-This bar is set deliberately high because the existing storefront already meets a strong
-accessibility standard (see "What is already good"), and this feature must not regress it.
+**Fix.** Normalise both sides of the comparison so an unaccented, space-separated query matches
+an accented, hyphenated record. Strip diacritics (Unicode NFD, drop combining marks) and treat
+spaces and hyphens as equivalent separators, then match token-wise so every token must appear
+rather than requiring one contiguous string.
 
-### Verification needed during implementation
+The match itself lives behind `getProducts({ query })` in `lib/shopify`, which
+`app/api/search/suggest/route.ts:20` calls. The implementer must trace that call down to the
+actual query construction before changing anything — the normalisation belongs at the query
+layer so that the suggestion dropdown and the full `/search` results page both benefit from one
+change rather than diverging.
 
-Confirm `/api/search` accepts a result-limit parameter and returns image and price fields. If
-it does not, extending it is part of this item.
+**Acceptance criteria**
 
-### Acceptance criteria
+- `mo hinh`, `mô hình`, `MO HINH`, and `mo  hinh` (double space) all return the same non-empty
+  result set.
+- `moc khoa` and `móc khóa` return the same result set.
+- A query matching nothing still returns `{"suggestions":[]}` and HTTP 200.
+- The full `/vi/search?q=mo+hinh` results page returns the same products as the dropdown.
+- Unit tests cover the normalisation helper directly: diacritics stripped, case folded,
+  space/hyphen equivalence, multi-token matching, and empty input.
 
-- Typing ≥2 characters shows suggestions; fewer than 2 shows none.
-- Requests are debounced — one in-flight request per pause, not one per keystroke.
-- Full keyboard operation works without a mouse.
-- Empty results render a "no matches" affordance, not an empty box.
-- Submitting still navigates to the full search results page.
+### 6b. Suggestion dropdown is not keyboard or screen-reader operable
+
+**Priority: medium.**
+
+`components/layout/navbar/search.tsx` carries only an `aria-label` (line 109). It has no
+`role="combobox"`, `role="listbox"`, or `role="option"`, no `aria-expanded`,
+no `aria-activedescendant`, and no Arrow/Enter/Escape key handling. A keyboard-only or
+screen-reader user can type a query and can be shown results, but cannot reach or select one.
+
+This matters more here than it would elsewhere: the storefront otherwise meets a strong
+accessibility standard (see "What is already good"), so this is the one component that breaks
+an established pattern.
+
+**Fix.** Promote the existing markup to a proper combobox without changing its visual design or
+its existing debounce/minimum-length behaviour:
+
+- `role="combobox"` on the input, with `aria-expanded` and `aria-controls`
+- `role="listbox"` on the existing overlay `<ul>`, `role="option"` on each item
+- `aria-activedescendant` on the input tracking the highlighted option id
+- Arrow Up/Down to move the highlight, Enter to select, Escape to dismiss and restore the typed
+  value
+- A polite live region announcing the result count
+
+**Acceptance criteria**
+
+- The dropdown is fully operable with the keyboard alone: open, traverse, select, dismiss.
+- `aria-activedescendant` always references the id of the currently highlighted option, and is
+  absent when nothing is highlighted.
+- Existing behaviour is unchanged: 2-character minimum, debounced requests, submit still
+  navigates to the full results page, and the entry animation still respects
+  `prefersReducedMotion()`.
+- Zero results renders a "no matches" affordance rather than an empty box.
 - Copy is localized in `vi` and `en`.
 
 ---
 
 ## Implementation order
 
-| # | Item | Owner | Effort |
-|---|---|---|---|
-| 1 | `APP_URL` fix in Portainer | User | ~1 min, no code |
-| 2 | Branded, localized, route-catching 404 | Agent | Small |
-| 3 | Free-shipping progress in cart modal | Agent | Small |
-| 4 | Dedicated `/cart` page | Agent | Medium |
-| 5 | `global-error.tsx` + `loading.tsx` | Agent | Small |
-| 6 | Search autocomplete | Agent | Large |
+Re-ordered after the §6 correction: unaccented search returning zero results is a core
+function failing, so it moves ahead of the cart and scaffolding work.
 
-Items 2–6 are independent of item 1 and of each other, except that §4 consumes the component
-built in §3. They can be committed separately.
+| Order | Item | Spec § | Owner | Effort |
+|---|---|---|---|---|
+| 1 | `APP_URL` fix in Portainer | §1 | User | ~1 min, no code |
+| 2 | Unaccented Vietnamese search matching | §6a | Agent | Medium |
+| 3 | Branded, localized, route-catching 404 | §2 | Agent | Small |
+| 4 | Free-shipping progress in cart modal | §3 | Agent | Small |
+| 5 | Dedicated `/cart` page | §4 | Agent | Medium |
+| 6 | Search combobox accessibility | §6b | Agent | Medium |
+| 7 | `global-error.tsx` + `loading.tsx` | §5 | Agent | Small |
+
+All items are independent of item 1 and of each other, with two exceptions: §4 consumes the
+component built in §3, and §6b touches the same file as §6a (do §6a first to avoid conflicting
+edits to `components/layout/navbar/search.tsx`). They can be committed separately.
 
 ## Verification approach
 
@@ -374,8 +422,16 @@ Per user decision (2026-07-21): the agent verifies via HTTP probe against
 the agent shell cannot reach the Docker daemon.
 
 Each item's acceptance criteria above are written to be checkable by `curl` against the
-deployed instance, plus unit tests where logic warrants them (§3 threshold states, §6 debounce
-and keyboard handling).
+deployed instance, plus unit tests where logic warrants them (§3 threshold states, §6a query
+normalisation, §6b keyboard handling).
+
+§6a is additionally verifiable end-to-end by probe, which is how the defect was found:
+
+```bash
+curl -s --get --data-urlencode "q=mo hinh" http://116.118.6.30:3000/api/search/suggest
+```
+
+This must return a non-empty `suggestions` array after the fix; today it returns `[]`.
 
 Local `tsc --noEmit` and the Vitest suite must pass before any change is handed over for
 deploy. Test files must import `describe`/`it`/`expect` from `vitest` explicitly, or
@@ -387,4 +443,7 @@ deploy. Test files must import `describe`/`it`/`expect` from `vitest` explicitly
   verification work currently out of scope becomes viable again.
 - Social traffic does not recover after §1 — re-examine whether crawlers are being blocked by
   something other than origin (CSP, rate limiting in `middleware.ts`).
-- Search analytics show high no-result rates — §6 rises in priority above §4.
+- Search still shows high no-result rates after §6a — the problem is ranking or catalogue
+  coverage rather than query normalisation, and needs its own investigation.
+- Any other finding in this document was asserted without opening the relevant file — §6 was,
+  and was wrong. Re-verify before acting on it.
