@@ -8,6 +8,7 @@ import { auth } from '@/auth';
 import CheckoutForm, { type SavedAddress } from '@/components/checkout-form';
 import ResendVerificationForm from '@/components/resend-verification-form';
 import { getCart } from '@/lib/cart';
+import { isEmailVerificationRequired } from '@/lib/feature-flags';
 import { getCheckoutPaymentMethods } from '@/lib/payment-methods';
 import { prisma } from '@/lib/prisma';
 import { getShippingSettings } from '@/lib/shipping-settings';
@@ -37,7 +38,7 @@ export default async function CheckoutPage(): Promise<ReactElement> {
     prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true } }),
   ]);
 
-  if (!dbUser?.emailVerified) {
+  if (isEmailVerificationRequired() && !dbUser?.emailVerified) {
     return (
       <section className="mx-auto max-w-screen-sm px-4 py-12 md:py-16">
         <div className="mx-auto w-full max-w-md rounded-2xl border border-line bg-surface-raised p-6 shadow-soft-md">
