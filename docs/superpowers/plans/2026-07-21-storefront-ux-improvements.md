@@ -322,17 +322,38 @@ Expected: exits 0.
 
 - [ ] **Step 3: Verify the page renders a complete document**
 
-With the dev server running:
-```bash
-curl -s http://localhost:3000/vi/definitely-not-a-real-page | grep -c '<nav'
-```
-Expected: **non-zero** — confirms Task 1's in-layout 404 still wins for locale paths and this root page did not take over.
+Two corrections to how this must be verified — both established during Task 1, do not use the
+naive checks:
 
-Then confirm the root page itself produces a valid document (single `<html>`, single `<body>`):
+**(a) Do not grep for literal `<nav>` / `<footer>` tags.** Next 15.5.18 streams `notFound()`-triggered
+responses as RSC payload, so those tags are absent from the initial curl body even when the components
+genuinely render. This was confirmed against a pre-existing untouched route — it is not a defect. Grep
+for a component's distinctive class-name fingerprint in the payload instead, e.g. `mt-auto bg-warm-950`
+for `components/layout/footer.tsx` or `sticky top-0 z-40` for the navbar.
+
+**(b) `/_not-a-locale/nope` does NOT reach this page.** The intl middleware locale-prefixes it to
+`/vi/_not-a-locale/nope`, where Task 1's catch-all handles it. Only the paths in
+`NON_LOCALIZED_PREFIXES` (`lib/locale-routing.ts` — `/products`, `/icon`, `/opengraph-image`, `/health`)
+bypass locale prefixing, so **`/products/<unmatched-handle>` is the real trigger** for this page.
+
+With the dev server running:
+
 ```bash
-curl -s http://localhost:3000/_not-a-locale/nope | grep -o '<html\|<body' | sort | uniq -c
+# The root not-found's actual audience: an unmatched legacy /products path.
+curl -s -o /dev/null -w 'products 404 -> %{http_code}\n' http://localhost:3000/products/definitely-not-a-real-handle
+curl -s http://localhost:3000/products/definitely-not-a-real-handle | grep -o '<html\|<body' | sort | uniq -c
+
+# Task 1's in-layout 404 must still win for locale-prefixed paths.
+curl -s http://localhost:3000/vi/definitely-not-a-real-page | grep -c 'mt-auto bg-warm-950'
 ```
-Expected: exactly one `<html` and one `<body`. If you see zero, the page is not being reached; if you see two, a layout is also emitting them.
+
+Expected: the first returns **404**; the second shows exactly one `<html` and one `<body` (zero means
+the page is not being reached; two means a layout is also emitting them); the third is **non-zero**,
+proving Task 1's storefront 404 with its footer still handles locale paths and this root page did not
+take over.
+
+If `/products/<bad-handle>` does not return 404, inspect `app/products/` — a legacy redirect route
+lives there and may be catching it. Report what you find rather than working around it.
 
 - [ ] **Step 4: Commit**
 
