@@ -20,6 +20,7 @@ import {
   type MediaKind,
   type StoredImage,
 } from '@/lib/product-image-snapshot';
+import { buildProductSearchWhere } from '@/lib/search-query';
 import type { Collection, Image, Money, Product, SortKey } from '@/lib/shopify/types';
 
 const PLACEHOLDER = '/images/placeholder.svg';
@@ -570,15 +571,7 @@ async function fetchPayloadProducts(opts?: {
   limit?: number;
 }): Promise<Product[]> {
   const payload = await getPayloadClient();
-  const where: Where = opts?.query
-    ? {
-        or: [
-          { title: { contains: opts.query } },
-          { description: { contains: opts.query } },
-          { slug: { contains: opts.query } },
-        ],
-      }
-    : {};
+  const where: Where = buildProductSearchWhere(opts?.query);
 
   const result = await payload.find({
     collection: 'products',
