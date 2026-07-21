@@ -66,6 +66,13 @@ const nextConfig = {
       // server-side-fetch any attacker-supplied URL, including cloud instance
       // metadata endpoints and internal service ports).
       { protocol: 'https', hostname: 'cf.shopee.vn' },
+      // YouTube thumbnails derived by `youtubeThumbnail()` in lib/reel-embed.ts
+      // and rendered through next/image by components/blocks/ReelCarousel.client.tsx
+      // when a reel has no hand-uploaded poster. An un-allowed hostname makes
+      // next/image THROW during render rather than just failing the image, so
+      // omitting this 500s any page carrying a posterless reel — including the
+      // seeded homepage. Pinned to the exact host for the same SSRF reason as above.
+      { protocol: 'https', hostname: 'i.ytimg.com' },
       // Dev-only: Payload builds media URLs from the request host, so browsing
       // the store over http via a LAN IP (e.g. http://192.168.1.3:3000 from a
       // phone) or any non-localhost dev host yields http image sources.
