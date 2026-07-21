@@ -29,7 +29,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'Email không hợp lệ' }, { status: 400 });
   }
   if (isAdminEmail(email)) {
-    return NextResponse.json({ error: 'Email này không thể tự đăng ký' }, { status: 403 });
+    // Same response as an already-registered email — do not reveal that
+    // this address is an admin account.
+    return NextResponse.json(
+      { error: 'Email này đã được đăng ký' },
+      { status: 409 },
+    );
   }
   if (password.length < 8) {
     return NextResponse.json(

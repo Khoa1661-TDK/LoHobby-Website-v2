@@ -37,13 +37,13 @@ afterEach(() => {
 });
 
 describe('POST /api/register', () => {
-  it('should reject registration for an email on the admin allowlist', async () => {
+  it('should respond identically to an already-registered email for an admin allowlist email', async () => {
     isAdminEmailMock.mockReturnValue(true);
 
     const res = await POST(post({ ...validBody, email: 'admin@shop.test' }) as never);
 
-    expect(res.status).toBe(403);
-    await expect(res.json()).resolves.toEqual({ error: 'Email này không thể tự đăng ký' });
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toEqual({ error: 'Email này đã được đăng ký' });
     expect(findUniqueMock).not.toHaveBeenCalled();
     expect(createMock).not.toHaveBeenCalled();
   });
