@@ -454,5 +454,13 @@
     "subscribers": "Người đăng ký",
     "views": "Lượt xem",
     "videos": "Video"
+  },
+  "notFound": {
+    "metaTitle": "Không tìm thấy trang",
+    "heading": "Không tìm thấy trang",
+    "body": "Trang hoặc sản phẩm bạn tìm không tồn tại hoặc đã được gỡ xuống.",
+    "helpBody": "Thử tìm kiếm ở thanh trên, hoặc quay lại khám phá cửa hàng.",
+    "homeCta": "Về trang chủ",
+    "browseCta": "Xem tất cả sản phẩm"
   }
 }

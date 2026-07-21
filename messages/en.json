@@ -454,5 +454,13 @@
     "subscribers": "Subscribers",
     "views": "Views",
     "videos": "Videos"
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "heading": "Page not found",
+    "body": "The page or product you're looking for doesn't exist or has been taken down.",
+    "helpBody": "Try the search bar above, or head back and browse the store.",
+    "homeCta": "Back to home",
+    "browseCta": "Browse all products"
   }
 }
