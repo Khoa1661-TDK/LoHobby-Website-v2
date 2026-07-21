@@ -363,3 +363,12 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** Domain + TLS are set up and Google sign-in works on the deployed host — remove `ALLOW_CREDENTIALS_ADMIN` from the stack env immediately, then delete the flag and the bypass branch in `lib/admin.ts`. Tracked in `.claude/phases/RESTORE-ADMIN-GATE-pending.md`.
 
 ---
+
+## 2026-07-20 — APP_URL corrected to the public IP, not the Tailscale address
+**Chosen:** User decision: set `APP_URL=http://116.118.6.30:3000` (the VPS's public IP) in the Portainer stack env, replacing `http://100.73.36.117:3000`.
+**Alternatives:** Leave `APP_URL` on the Tailscale IP (`100.73.36.117`) since that's also where Portainer itself connects to manage the VPS.
+**Why:** `100.73.36.117` is a Tailscale/CGNAT address (100.64.0.0/10) — routable only for devices on the user's tailnet, which is why Portainer can reach it. Real customers and Google's/Facebook's crawlers are not on that tailnet, so with `APP_URL` set there, every absolute URL the app builds — Google sign-in/sign-out redirects, `authjs.callback-url` cookie, `<link rel=canonical>`, `og:url` — pointed at an address only the operator could load. Confirmed live against production (`curl http://116.118.6.30:3000/api/auth/providers` and the homepage HTML both showed `100.73.36.117:3000`) before the change. Portainer's own connection to the VPS is a separate concern (admin tooling reaching the Docker host) from what host the running app advertises to visitors, and can keep using the Tailscale address.
+**Trade-offs:** `116.118.6.30:3000` is still a bare IP over plain HTTP (no TLS in front — confirmed both `:3000` and `:443` refuse HTTPS). Per the 2026-07-17 entry above, Google's OAuth console does not accept bare IP addresses as an Authorized Redirect URI at all, on public or private ranges alike — so this change fixes canonical/OG links, social-share previews, and Credentials (email/password) sign-in/logout redirects, but does **not** make "Sign in with Google" work for storefront customers, same as it didn't for admin. Credentials sign-in remains the working path until a domain exists.
+**Revisit if:** A domain is purchased and pointed at the VPS — set `APP_URL` to `https://<domain>` behind real TLS (Caddy/nginx + certbot), add the domain's callback URL in the Google OAuth console, and re-test Google sign-in end-to-end before relying on it for customers.
+
+---
