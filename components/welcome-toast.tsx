@@ -18,14 +18,19 @@ export default function WelcomeToast(): ReactElement | null {
     const description = branding?.descriptionShort ?? BRAND_DESCRIPTION_SHORT;
     const tagline = branding?.tagline ?? BRAND_TAGLINE;
 
-    toast(`Chào mừng đến ${storeName}!`, {
-      id: 'welcome-toast',
-      duration: 7000,
-      onDismiss: () => {
-        document.cookie = 'welcome-toast=2; max-age=31536000; path=/';
-      },
-      description: `${description} ${tagline}.`,
-    });
+    // Delay so the cookie-consent banner gets first shot at the user's attention.
+    const timer = setTimeout(() => {
+      toast(`Chào mừng đến ${storeName}!`, {
+        id: 'welcome-toast',
+        duration: 7000,
+        onDismiss: () => {
+          document.cookie = 'welcome-toast=2; max-age=31536000; path=/';
+        },
+        description: `${description} ${tagline}.`,
+      });
+    }, 2000);
+
+    return () => clearTimeout(timer);
   }, [branding]);
 
   return null;

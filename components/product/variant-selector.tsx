@@ -33,6 +33,7 @@ export default function VariantSelector({
   const [hoverGalleryIndex, setHoverGalleryIndex] = useState<number | null>(null);
   const [heroFromGallery, setHeroFromGallery] = useState(false);
   const buyBoxRef = useRef<HTMLDivElement>(null);
+  const stickyBarRef = useRef<HTMLDivElement>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
 
   // Show the mobile sticky bar only once the main buy box has scrolled out of
@@ -47,6 +48,19 @@ export default function VariantSelector({
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
+
+  // Publish the bar's real rendered height (incl. the safe-area padding) as a
+  // CSS var so other fixed-bottom overlays (cookie consent, PWA install
+  // prompt) can stack above it instead of covering the buy button — see
+  // `--cta-bar-offset` in globals.css. Reset on hide/unmount so it doesn't
+  // leak into pages without this bar.
+  useEffect(() => {
+    const height = showStickyBar ? (stickyBarRef.current?.offsetHeight ?? 0) : 0;
+    document.documentElement.style.setProperty('--cta-bar-offset', `${height}px`);
+    return () => {
+      document.documentElement.style.setProperty('--cta-bar-offset', '0px');
+    };
+  }, [showStickyBar]);
 
   const selectedVariant = useMemo(
     () => variants.find((v) => v.sku === selectedSku) ?? null,
@@ -293,6 +307,7 @@ export default function VariantSelector({
 
       {/* Mobile sticky add-to-cart bar — appears once the buy box scrolls away */}
       <div
+        ref={stickyBarRef}
         aria-hidden={!showStickyBar}
         className={clsx(
           'fixed inset-x-0 bottom-0 z-30 border-t border-warm-200/80 bg-warm-50/95 px-4 py-3 backdrop-blur-xl transition-transform duration-300 lg:hidden dark:border-warm-800/50 dark:bg-warm-950/95',

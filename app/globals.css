@@ -38,6 +38,11 @@
     --gemini-blue: #4285f4;
     --gemini-purple: #9b72cb;
     --gemini-pink: #d96570;
+
+    /* Height of the mobile sticky add-to-cart bar (product/variant-selector.tsx)
+       when visible, else 0px. Other fixed-bottom overlays (cookie consent, PWA
+       install prompt) read this so they stack above it instead of covering it. */
+    --cta-bar-offset: 0px;
   }
   .dark {
     /* Lô Hobby — "carbon" dark theme with brand-blue accent */
@@ -347,14 +352,16 @@
   }
 }
 
-/* Live chat: stack Messenger above the Zalo bubble so they don't overlap. */
+/* Live chat: stack Messenger above the Zalo bubble so they don't overlap.
+   Also add the mobile sticky buy bar's published height (--cta-bar-offset,
+   see variant-selector.tsx) so neither bubble overlaps it when visible. */
 .fb_dialog {
-  bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px) + var(--cta-bar-offset, 0px)) !important;
 }
 .fb_dialog.fb_dialog_advanced,
 .fb-customerchat > span > iframe {
-  bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px) + var(--cta-bar-offset, 0px)) !important;
 }
 .zalo-chat-widget {
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px) + var(--cta-bar-offset, 0px));
 }

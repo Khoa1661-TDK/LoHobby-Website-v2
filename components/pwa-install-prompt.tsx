@@ -11,11 +11,14 @@ type BeforeInstallPromptEvent = Event & {
 
 export default function PwaInstallPrompt(): ReactElement | null {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
+  const [readyToShow, setReadyToShow] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem(DISMISS_KEY) === '1') return;
 
     const onPrompt = (event: Event) => {
+      // Must stay synchronous: preventDefault() suppresses the browser's
+      // native install mini-infobar and has to run immediately.
       event.preventDefault();
       setDeferred(event as BeforeInstallPromptEvent);
     };
@@ -23,7 +26,14 @@ export default function PwaInstallPrompt(): ReactElement | null {
     return () => window.removeEventListener('beforeinstallprompt', onPrompt);
   }, []);
 
-  if (!deferred) return null;
+  useEffect(() => {
+    // Delay only the visible UI so it doesn't compete with cookie consent
+    // and the welcome toast right after page load.
+    const timer = setTimeout(() => setReadyToShow(true), 12000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!deferred || !readyToShow) return null;
 
   const install = async () => {
     await deferred.prompt();
@@ -37,7 +47,7 @@ export default function PwaInstallPrompt(): ReactElement | null {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-sm rounded-xl border border-neutral-200 bg-white p-4 shadow-lg sm:left-auto dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="fixed bottom-[calc(1rem+var(--cta-bar-offset,0px))] left-4 right-4 z-40 mx-auto max-w-sm rounded-xl border border-neutral-200 bg-white p-4 shadow-lg transition-[bottom] duration-300 sm:left-auto dark:border-neutral-800 dark:bg-neutral-900">
       <p className="text-sm font-medium">Cài đặt ứng dụng</p>
       <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
         Thêm cửa hàng vào màn hình chính để mua sắm nhanh hơn.

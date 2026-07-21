@@ -53,11 +53,6 @@ export default function AddToCart({
             return;
           }
           flyToCart(trigger);
-          toast.success(
-            quantity > 1
-              ? t('addedQtyToast', { quantity, title: product.title })
-              : t('addedToast', { title: product.title }),
-          );
           beacon('/api/track/cart', {
             anonId: getAnonId(),
             sessionId: getSession().id,

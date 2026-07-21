@@ -41,7 +41,7 @@ export default function CookieConsent(): ReactElement | null {
     <div
       role="dialog"
       aria-label="Thông báo cookie"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-warm-200/80 bg-white/95 p-4 shadow-soft-xl backdrop-blur-xl dark:border-warm-800/40 dark:bg-warm-950/95"
+      className="fixed inset-x-0 bottom-[var(--cta-bar-offset,0px)] z-50 border-t border-warm-200/80 bg-white/95 p-4 shadow-soft-xl backdrop-blur-xl transition-[bottom] duration-300 dark:border-warm-800/40 dark:bg-warm-950/95"
     >
       <div className="mx-auto flex max-w-screen-2xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-warm-600 dark:text-warm-400">
