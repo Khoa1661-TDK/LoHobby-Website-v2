@@ -249,8 +249,23 @@ Spec §2 part 3. Delivers: a self-contained branded page for requests that never
 - Create: `app/not-found.tsx`
 
 **Interfaces:**
-- Consumes: nothing. It sits outside `NextIntlClientProvider`, so `useTranslations`/`getTranslations` are **unavailable** — copy is hardcoded Vietnamese (the default locale), which is the deliberate trade-off recorded in the spec.
+- Consumes: nothing. It sits outside `NextIntlClientProvider`, so `useTranslations`/`getTranslations` are **unavailable** — copy is hardcoded Vietnamese (the default locale), which is the deliberate trade-off recorded in the spec and ruled acceptable on 2026-07-21.
 - Produces: nothing consumed by later tasks.
+
+**What actually reaches this page (verified 2026-07-21).** This is not a hypothetical fallback:
+
+- `lib/locale-routing.ts` exempts `/products`, `/icon`, `/opengraph-image`, and `/health` from locale
+  prefixing (`NON_LOCALIZED_PREFIXES`), and `middleware.ts:178` passes them straight through. So an
+  unmatched **`/products/<stale-handle>`** — the legacy Shopify-style product path, i.e. precisely the
+  old-shared-link case the spec cares about — bypasses locale routing and lands here. **This is the
+  primary audience for this page.**
+- `/admin/*` does **not** reach here: Payload owns `app/(payload)/admin/[[...segments]]/not-found.tsx`,
+  an optional catch-all that handles every unmatched admin path itself, and `middleware.ts:167` passes
+  `/admin` through untouched. Do not add anything here that assumes admin traffic.
+- `/api/*` returns JSON from route handlers; `/media/` and any path with a file extension are excluded
+  by the middleware matcher (`middleware.ts:189`).
+- Ordinary storefront paths are locale-prefixed by the intl middleware and are caught by Task 1's
+  in-layout catch-all instead.
 
 - [ ] **Step 1: Create `app/not-found.tsx`**
 
@@ -2015,6 +2030,18 @@ Spec §5. **Lowest priority — the spec itself marks this as the candidate to c
 
 Checkout is **deliberately excluded** — it is `force-dynamic` and auth-gated, and a skeleton there would imply progress on a page that may immediately redirect. `product/[handle]/loading.tsx` already exists; do not touch it.
 
+**Known scope limit — the admin group (verified 2026-07-21).** `app/(payload)/` has no `error.tsx` and
+no `global-error.tsx` of its own. `global-error.tsx` is root-level, so an error thrown in the **admin's**
+root layout will render this storefront-styled Vietnamese page rather than an admin-appropriate one.
+
+This is accepted, not overlooked. It fires only when the admin has already crashed at the root-layout
+level, where the current behaviour is a blank white page — so it is strictly an improvement, just a
+cosmetically wrong one. Giving `(payload)` its own error boundary is the proper fix and is **outside
+this spec** — do not add it here. Note it for the final review instead.
+
+**Do not** make this file import from `@/i18n/*`, read Payload config, or touch the database. A global
+error boundary that can itself throw is worse than none.
+
 - [ ] **Step 1: Create `app/global-error.tsx`**
 
 This must be a client component and must render its own `<html>`/`<body>` — both because Next.js requires it of `global-error`, and because `app/layout.tsx` here renders no document shell. It sits outside `NextIntlClientProvider`, so copy is default-locale Vietnamese, same trade-off as Task 2.
@@ -2146,6 +2173,22 @@ for p in /vi /vi/blog /vi/search /vi/profile; do
 done
 ```
 Expected: each returns the same status it did before this task (`/vi/profile` redirects when signed out).
+
+- [ ] **Step 5b: Verify the admin panel is unaffected**
+
+`global-error.tsx` is root-level and therefore in scope for the `(payload)` group too, which has no
+error boundary of its own. Confirm it has not disturbed normal admin routing:
+
+```bash
+curl -s -o /dev/null -w '/admin -> %{http_code}\n' http://localhost:3000/admin
+curl -s -o /dev/null -w '/admin/nope -> %{http_code}\n' http://localhost:3000/admin/nope
+curl -s -o /dev/null -w '/api/auth/providers -> %{http_code}\n' http://localhost:3000/api/auth/providers
+```
+
+Expected: `/admin` returns its pre-existing status (200, or a redirect to login); `/admin/nope` is
+handled by **Payload's own** `admin/[[...segments]]/not-found.tsx`, not by anything in this plan;
+`/api/auth/providers` returns 200. If `/admin/nope` starts rendering Vietnamese storefront copy, the
+root boundary is intercepting admin traffic — stop and report it.
 
 - [ ] **Step 6: Commit**
 
