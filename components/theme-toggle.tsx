@@ -24,6 +24,7 @@ export default function ThemeToggle(): ReactElement {
     const initial =
       stored === 'dark' || stored === 'light' ? stored : mql.matches ? 'dark' : 'light';
     setTheme(initial);
+    applyTheme(initial);
     setMounted(true);
 
     // Track OS appearance changes live, but only while the user hasn't made an
