@@ -16,6 +16,7 @@ These apply to **every** task. They are not repeated per-task.
 - **Test files MUST explicitly import from vitest** — `import { describe, expect, it } from 'vitest';`. `globals: true` is runtime-only; without the import `tsc --noEmit` fails.
 - **Test file locations are fixed by `vitest.config.ts`:** node-environment tests go in `lib/__tests__/**/*.test.ts`; React/jsdom tests go in `components/**/__tests__/**/*.test.tsx`. A `.test.tsx` outside `components/` will not be collected.
 - **No hardcoded user-facing strings.** Every new string is added to **both** `messages/vi.json` and `messages/en.json` and read via `useTranslations` (client) or `getTranslations` (server).
+  - **Two files are exempt, by ruling (2026-07-21):** `app/not-found.tsx` (Task 2) and `app/global-error.tsx` (Task 8). Both render outside `NextIntlClientProvider`, where next-intl is genuinely unavailable, and both must never themselves throw. Their copy is hardcoded default-locale Vietnamese. **This is intentional — reviewers must not flag it.** No other file may claim this exemption.
 - **Theme tokens only.** Use `font-display` and the `warm-*` scale. `font-serif` and `filament-*` are from the retired pre-Lô Hobby theme and must not appear in new code.
 - **No class-name strings or regex literals in `lib/`.** Tailwind's content globs exclude `lib/`, so class strings returned from there get purged; a bracketed regex in `lib/` has previously broken the entire stylesheet. Keep both in `components/`.
 - **Locale-aware navigation.** Inside storefront components import `Link` / `useRouter` from `@/i18n/navigation`, never from `next/link` or `next/navigation`. The one exception is `app/not-found.tsx` (Task 2), which sits outside locale context.
@@ -691,11 +692,12 @@ export default function FreeShippingProgress({
 Run: `node_modules/.bin/vitest run components/cart/__tests__/free-shipping-progress.test.tsx`
 Expected: PASS, 5 tests.
 
-If the "more for free shipping" text assertion fails because `t.rich` splits the string across elements, change that assertion to match on the container instead:
-```tsx
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    expect(screen.queryByText("You've earned free shipping!")).toBeNull();
-```
+`t.rich` renders the message as multiple sibling nodes, so `getByText(/more for free shipping/)`
+matches on a text fragment rather than a whole node. The test above already accounts for this by
+using a regex against the trailing fragment. If it still fails, **fix the query, not the
+assertion** — e.g. `screen.getByText((_, el) => el?.textContent === 'Add ₫200.000 more for free shipping')`.
+Do not weaken the test to merely assert the progress bar exists; the remaining-amount copy is the
+behaviour this task delivers.
 
 - [ ] **Step 8: Fetch the shipping settings in the cart server wrapper**
 
@@ -778,16 +780,17 @@ configured, since 0 is the shipping-settings default and means disabled."
 
 ---
 
-## Task 5: Extract the shared cart line item
+## Task 5: Extract the shared cart line item and totals summary
 
 Spec §4, refactor half. **No behaviour change.** Kept as its own commit per `existing-code.md` §3 — refactoring and features do not share a commit.
 
 **Files:**
 - Create: `components/cart/line-item.tsx`
+- Create: `components/cart/summary.tsx`
 - Modify: `components/cart/modal.tsx`
 
 **Interfaces:**
-- Consumes: `CartLine` from `@/lib/cart`.
+- Consumes: `Cart`, `CartLine` from `@/lib/cart`.
 - Produces:
   ```tsx
   type CartLineItemProps = {
@@ -798,8 +801,24 @@ Spec §4, refactor half. **No behaviour change.** Kept as its own commit per `ex
     onNavigate?: () => void;
   };
   export default function CartLineItem(props: CartLineItemProps): ReactElement;
+
+  type CartSummaryProps = {
+    cart: Cart;
+    /** Modal shows a tax row; the page shows a subtotal row instead. */
+    showTax?: boolean;
+    showSubtotal?: boolean;
+  };
+  export default function CartSummary(props: CartSummaryProps): ReactElement;
   ```
-  Task 6 renders this on the `/cart` page. `onNavigate` is optional because only the modal needs to close itself when a product link is followed.
+  Task 6 renders both on the `/cart` page. `onNavigate` is optional because only the modal needs to close itself when a product link is followed.
+
+**Why the summary is extracted too (ruling, 2026-07-21):** the spec's acceptance criterion for §4 is
+"the modal and the page show identical totals for the same cart". Hand-writing the totals block twice
+is exactly what puts that criterion at risk, and it is the same drift argument that already justified
+extracting the line item. The shipping and total rows — the ones the criterion is about — are shared
+unconditionally; the two call sites differ only in which *extra* row they show, so that difference is
+a prop rather than a fork. **This does not change what either surface renders today:** the modal keeps
+its tax row, the page gets its subtotal row.
 
 - [ ] **Step 1: Create the shared line-item component**
 
@@ -1022,13 +1041,94 @@ function MinusIcon(): ReactElement {
 }
 ```
 
-- [ ] **Step 2: Use the shared component in the modal**
+- [ ] **Step 2: Create the shared totals summary**
+
+Create `components/cart/summary.tsx`. The rows and every class name are lifted verbatim from the
+totals block in `modal.tsx` (the `<div className="py-4 text-sm text-warm-500 dark:text-warm-400">`
+block). `showTax` defaults to `false` and `showSubtotal` to `false`, so a caller must opt in — that
+keeps the two surfaces' difference explicit at the call site rather than hidden in a default.
+
+```tsx
+// components/cart/summary.tsx — cart totals, shared by the modal and /cart so
+// the two cannot report different numbers for the same cart.
+'use client';
+
+import { useTranslations } from 'next-intl';
+import type { ReactElement } from 'react';
+import Price from '@/components/price';
+import type { Cart } from '@/lib/cart';
+
+type Props = {
+  cart: Cart;
+  /** The modal shows a tax row; the page shows a subtotal row instead. */
+  showTax?: boolean;
+  showSubtotal?: boolean;
+};
+
+const ROW = 'mb-2 flex items-center justify-between border-b border-warm-200/30 pb-2 dark:border-warm-800/20';
+
+export default function CartSummary({
+  cart,
+  showTax = false,
+  showSubtotal = false,
+}: Props): ReactElement {
+  const t = useTranslations('cart');
+
+  return (
+    <div className="py-4 text-sm text-warm-500 dark:text-warm-400">
+      {showSubtotal ? (
+        <div className={ROW}>
+          <span>{t('subtotal')}</span>
+          <Price
+            className="text-sm font-medium text-warm-900 dark:text-warm-100"
+            amount={cart.cost.subtotalAmount.amount}
+            currencyCode={cart.cost.subtotalAmount.currencyCode}
+          />
+        </div>
+      ) : null}
+      {showTax ? (
+        <div className={ROW}>
+          <span>{t('tax')}</span>
+          <Price
+            className="text-sm font-medium text-warm-900 dark:text-warm-100"
+            amount="0"
+            currencyCode={cart.cost.totalAmount.currencyCode}
+          />
+        </div>
+      ) : null}
+      <div className={ROW}>
+        <span>{t('shipping')}</span>
+        <span>{t('shippingAtCheckout')}</span>
+      </div>
+      <div className="flex items-center justify-between pt-1">
+        <span className="font-semibold text-warm-900 dark:text-warm-100">{t('total')}</span>
+        <Price
+          className="text-base font-bold text-warm-900 dark:text-warm-100"
+          amount={cart.cost.totalAmount.amount}
+          currencyCode={cart.cost.totalAmount.currencyCode}
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+`ROW` is a module-level class string in a **component** file, not in `lib/` — Tailwind's content globs
+cover `components/`, so it is not purged.
+
+Note this file uses `t('subtotal')`, a key **Task 6 adds**. To keep this task self-contained and
+green on its own, add just that one key now, to both message files, inside the existing `cart` object:
+`"subtotal": "Tạm tính"` in `messages/vi.json` and `"subtotal": "Subtotal"` in `messages/en.json`.
+Task 6 then adds only its remaining four keys.
+
+- [ ] **Step 3: Use the shared components in the modal**
 
 In `components/cart/modal.tsx`:
 
-a) Add the import:
+a) Add the imports:
 ```tsx
 import CartLineItem from '@/components/cart/line-item';
+import CartSummary from '@/components/cart/summary';
 ```
 
 b) Replace the whole `<li>…</li>` block inside `.map((item, idx) => (…))` with a `CartLineItem`. The `.map` callback no longer needs `idx`:
@@ -1062,33 +1162,46 @@ b) Replace the whole `<li>…</li>` block inside `.map((item, idx) => (…))` wi
                       ))}
 ```
 
-c) Delete the now-unused local helpers from the bottom of `modal.tsx`: `CloseIcon`, `QtyInput`, `QtyButton`, `PlusIcon`, `MinusIcon`. **Keep** `OpenCart` and `CloseCart` — those are still used by the modal itself and are *not* the same as `CloseIcon`.
+c) Replace the totals block — the whole `<div className="py-4 text-sm text-warm-500 dark:text-warm-400">…</div>`
+containing the tax, shipping, and total rows — with:
 
-d) Remove imports that are now unused in `modal.tsx`: `Image`, `useBumpPulse` is still used by `OpenCart` so **keep** it, `toNextImageSrc`. Let `tsc` tell you — see the next step.
+```tsx
+                  <CartSummary cart={cart} showTax />
+```
 
-- [ ] **Step 3: Verify types compile and no unused imports remain**
+This preserves the modal's current rows exactly: tax, shipping, total, no subtotal.
+
+d) Delete the now-unused local helpers from the bottom of `modal.tsx`: `CloseIcon`, `QtyInput`, `QtyButton`, `PlusIcon`, `MinusIcon`. **Keep** `OpenCart` and `CloseCart` — those are still used by the modal itself and are *not* the same as `CloseIcon`.
+
+e) Remove imports that are now unused in `modal.tsx`: `Image` and `toNextImageSrc`. **Keep** `useBumpPulse` — `OpenCart` still uses it. Let `tsc` confirm; see the next step.
+
+- [ ] **Step 4: Verify types compile and no unused imports remain**
 
 Run: `node_modules/.bin/tsc --noEmit`
 Expected: exits 0. If it reports unused imports in `modal.tsx`, remove exactly those.
 
-- [ ] **Step 4: Run the full test suite**
+- [ ] **Step 5: Run the full test suite**
 
 Run: `node_modules/.bin/vitest run`
 Expected: all pass.
 
-- [ ] **Step 5: Verify the modal is unchanged in the browser**
+- [ ] **Step 6: Verify the modal and its totals are unchanged in the browser**
 
-Open the cart modal with items in it. Confirm: the image, title, variant name, line price, +/- buttons, typed quantity, and the remove button all still work, and clicking a product title still closes the modal and navigates. This refactor must produce **zero** visible difference.
+Open the cart modal with items in it. Confirm: the image, title, variant name, line price, +/- buttons, typed quantity, and the remove button all still work, and clicking a product title still closes the modal and navigates.
 
-- [ ] **Step 6: Commit**
+Then confirm the totals block is byte-for-byte what it was: a **tax** row, a **shipping** row reading "calculated at checkout", and a **total** row — **no subtotal row**, since the modal passes only `showTax`. This refactor must produce **zero** visible difference.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add components/cart/line-item.tsx components/cart/modal.tsx
-git commit -m "refactor(cart): extract the shared cart line item component
+git add components/cart/line-item.tsx components/cart/summary.tsx components/cart/modal.tsx messages/vi.json messages/en.json
+git commit -m "refactor(cart): extract the shared cart line item and totals summary
 
-No behaviour change. Pulls the line markup and its qty controls out of the
-modal so the upcoming /cart page renders the identical line and the two
-cannot drift."
+No behaviour change: the modal renders the same line markup and the same
+tax/shipping/total rows it did before. Pulling both out of the modal is what
+lets the upcoming /cart page reuse them, so the spec's requirement that the
+two surfaces report identical totals is structural rather than a thing to
+re-verify by hand after every edit."
 ```
 
 ---
@@ -1104,18 +1217,17 @@ Spec §4. Delivers: a bookmarkable, back-button-friendly, full-width cart.
 - Modify: `messages/vi.json`, `messages/en.json`
 
 **Interfaces:**
-- Consumes: `CartLineItem` (Task 5), `FreeShippingProgress` (Task 4), `removeItemAction` / `updateItemAction` from `components/cart/actions.ts`, `getCart` from `@/lib/cart`, `getShippingSettings` from `@/lib/shipping-settings`.
+- Consumes: `CartLineItem` and `CartSummary` (Task 5), `FreeShippingProgress` (Task 4), `removeItemAction` / `updateItemAction` from `components/cart/actions.ts`, `getCart` from `@/lib/cart`, `getShippingSettings` from `@/lib/shipping-settings`.
 - Produces: the route `/[locale]/cart`. Nothing later consumes it.
 
 - [ ] **Step 1: Add the message keys to `messages/vi.json`**
 
-Inside the existing `cart` object:
+Inside the existing `cart` object. Four keys — `subtotal` is **not** among them, Task 5 already added it:
 
 ```json
 "pageTitle": "Giỏ hàng của bạn",
 "metaTitle": "Giỏ hàng",
 "viewFullCart": "Xem giỏ hàng đầy đủ",
-"subtotal": "Tạm tính",
 "continueShopping": "Tiếp tục mua sắm"
 ```
 
@@ -1125,7 +1237,6 @@ Inside the existing `cart` object:
 "pageTitle": "Your cart",
 "metaTitle": "Cart",
 "viewFullCart": "View full cart",
-"subtotal": "Subtotal",
 "continueShopping": "Continue shopping"
 ```
 
@@ -1151,8 +1262,8 @@ import { useTransition, type ReactElement } from 'react';
 import { Link } from '@/i18n/navigation';
 import CartCrossSell from '@/components/cart/cross-sell';
 import CartLineItem from '@/components/cart/line-item';
+import CartSummary from '@/components/cart/summary';
 import FreeShippingProgress from '@/components/cart/free-shipping-progress';
-import Price from '@/components/price';
 import { removeItemAction, updateItemAction } from '@/components/cart/actions';
 import type { Cart } from '@/lib/cart';
 
@@ -1209,28 +1320,7 @@ export default function CartPageClient({
           thresholdVnd={freeShippingThresholdVnd}
         />
 
-        <div className="mt-4 space-y-2 text-sm text-warm-500 dark:text-warm-400">
-          <div className="flex items-center justify-between border-b border-warm-200/30 pb-2 dark:border-warm-800/20">
-            <span>{t('subtotal')}</span>
-            <Price
-              className="text-sm font-medium text-warm-900 dark:text-warm-100"
-              amount={cart.cost.subtotalAmount.amount}
-              currencyCode={cart.cost.subtotalAmount.currencyCode}
-            />
-          </div>
-          <div className="flex items-center justify-between border-b border-warm-200/30 pb-2 dark:border-warm-800/20">
-            <span>{t('shipping')}</span>
-            <span>{t('shippingAtCheckout')}</span>
-          </div>
-          <div className="flex items-center justify-between pt-1">
-            <span className="font-semibold text-warm-900 dark:text-warm-100">{t('total')}</span>
-            <Price
-              className="text-base font-bold text-warm-900 dark:text-warm-100"
-              amount={cart.cost.totalAmount.amount}
-              currencyCode={cart.cost.totalAmount.currencyCode}
-            />
-          </div>
-        </div>
+        <CartSummary cart={cart} showSubtotal />
 
         <Link
           href="/checkout"
