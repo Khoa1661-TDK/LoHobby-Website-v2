@@ -556,10 +556,17 @@ Spec §3, UI half. Delivers: shoppers see how far they are from free shipping *b
 
 - [ ] **Step 1: Add the message keys to `messages/vi.json`**
 
-Add inside the existing `cart` object, after `"shippingAtCheckout"`:
+Add inside the existing `cart` object, after `"shippingAtCheckout"`.
+
+**Note the `<amount></amount>` tag syntax — this is deliberate and required.** The amount is a
+`<Price>` React element, not a string, so it is injected via a `t.rich` **tag callback**, not a
+`{placeholder}`. In next-intl a `{placeholder}` accepts only `string | number | Date`; passing it a
+function returning JSX fails `tsc`. Only tag positions (`<amount>…</amount>`) accept a callback that
+returns a React element. The tags are empty because the callback ignores the chunks and renders the
+Price itself. Do **not** change these to `{amount}`.
 
 ```json
-"freeShippingRemaining": "Mua thêm {amount} để được miễn phí vận chuyển",
+"freeShippingRemaining": "Mua thêm <amount></amount> để được miễn phí vận chuyển",
 "freeShippingQualified": "Bạn được miễn phí vận chuyển!",
 "freeShippingProgressAria": "Tiến độ miễn phí vận chuyển"
 ```
@@ -569,7 +576,7 @@ Add inside the existing `cart` object, after `"shippingAtCheckout"`:
 Inside the same `cart` object:
 
 ```json
-"freeShippingRemaining": "Add {amount} more for free shipping",
+"freeShippingRemaining": "Add <amount></amount> more for free shipping",
 "freeShippingQualified": "You've earned free shipping!",
 "freeShippingProgressAria": "Free shipping progress"
 ```
@@ -594,7 +601,7 @@ import FreeShippingProgress from '@/components/cart/free-shipping-progress';
 
 const messages = {
   cart: {
-    freeShippingRemaining: 'Add {amount} more for free shipping',
+    freeShippingRemaining: 'Add <amount></amount> more for free shipping',
     freeShippingQualified: "You've earned free shipping!",
     freeShippingProgressAria: 'Free shipping progress',
   },
@@ -691,7 +698,9 @@ export default function FreeShippingProgress({
           {t('freeShippingQualified')}
         </p>
       ) : (
-        <p className="flex flex-wrap items-center gap-1 text-xs text-warm-600 dark:text-warm-400">
+        // A <div>, not a <p>: Price renders its own <p>, and a <p> inside a <p>
+        // is invalid DOM that React warns on and jsdom silently reparents.
+        <div className="flex flex-wrap items-center gap-1 text-xs text-warm-600 dark:text-warm-400">
           {t.rich('freeShippingRemaining', {
             amount: () => (
               <Price
@@ -701,7 +710,7 @@ export default function FreeShippingProgress({
               />
             ),
           })}
-        </p>
+        </div>
       )}
       <div
         role="progressbar"
