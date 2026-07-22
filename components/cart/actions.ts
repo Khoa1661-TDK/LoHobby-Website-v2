@@ -12,25 +12,12 @@ import {
 } from '@/lib/cart';
 import { mergeGuestCartIntoPersisted } from '@/lib/persisted-cart';
 import { syncStoreCustomerForUser } from '@/lib/store-customer-sync';
+import { cartErrorMessageKey } from '@/lib/cart-error-messages';
 import { getTranslations } from 'next-intl/server';
 
 type ActionError = { error: string };
 type ActionOk = Record<string, never>;
 type ActionResult = ActionOk | ActionError;
-
-/** Keys thrown by lib/cart that carry a specific message key prefix. */
-const ERROR_KEY_PREFIX = 'errors.' as const;
-
-const KNOWN_ERROR_KEYS = new Set([
-  'INVALID_PRODUCT',
-  'INVALID_QUANTITY',
-  'PRODUCT_NOT_FOUND',
-  'PRODUCT_UNAVAILABLE',
-  'CART_FULL',
-  'VARIANT_REQUIRED',
-  'INVALID_VARIANT',
-  'INSUFFICIENT_STOCK',
-]);
 
 async function toUserError(
   t: Awaited<ReturnType<typeof getTranslations>>,
@@ -38,11 +25,9 @@ async function toUserError(
   fallbackKey: string,
 ): Promise<string> {
   if (error instanceof Error) {
-    if (KNOWN_ERROR_KEYS.has(error.message)) {
-      const translated = t(`${ERROR_KEY_PREFIX}${error.message}`);
-      if (translated && !translated.startsWith('errors.')) return translated;
-    }
-    if (error.message.length > 0) return error.message;
+    const key = cartErrorMessageKey(error.message);
+    if (key) return t(`errors.${key}`);
+    // Unknown code: never surface the raw Error message to the shopper.
   }
   return t(fallbackKey);
 }
