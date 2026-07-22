@@ -50,6 +50,7 @@
     "increaseQtyAria": "Increase quantity",
     "decreaseQtyAria": "Decrease quantity",
     "quantityAria": "Quantity",
+    "subtotal": "Subtotal",
     "tax": "Tax",
     "shipping": "Shipping",
     "shippingAtCheckout": "Calculated at checkout",
