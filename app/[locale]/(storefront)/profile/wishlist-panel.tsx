@@ -18,6 +18,7 @@ export default function WishlistPanel({
   products: ProfileWishlistProduct[];
 }): ReactElement {
   const t = useTranslations('profile');
+  const tWishlist = useTranslations('wishlist');
   const router = useRouter();
   const { setSaved } = useWishlist();
   const [pending, startTransition] = useTransition();
@@ -43,7 +44,7 @@ export default function WishlistPanel({
     startTransition(async () => {
       const result = await toggleWishlistAction(productId, productHandle);
       if (!result.ok) {
-        toast.error(result.error);
+        toast.error(tWishlist(result.code));
         return;
       }
       setSaved(productId, false);

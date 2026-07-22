@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
 
 export type WishlistToggleResult =
   | { ok: true; saved: boolean }
-  | { ok: false; error: string };
+  | { ok: false; code: string };
 
 export async function toggleWishlistAction(
   productId: string,
@@ -15,11 +15,11 @@ export async function toggleWishlistAction(
 ): Promise<WishlistToggleResult> {
   const session = await auth();
   if (!session?.user?.id) {
-    return { ok: false, error: 'Bạn cần đăng nhập để lưu sản phẩm.' };
+    return { ok: false, code: 'needAuth' };
   }
   const id = productId?.trim();
   if (!id) {
-    return { ok: false, error: 'Sản phẩm không hợp lệ.' };
+    return { ok: false, code: 'invalidProduct' };
   }
 
   const userId = session.user.id;
@@ -41,6 +41,6 @@ export async function toggleWishlistAction(
     return { ok: true, saved: true };
   } catch (error) {
     logger.error({ err: error }, '[wishlist.toggleWishlistAction] failed');
-    return { ok: false, error: 'Không thể cập nhật danh sách yêu thích.' };
+    return { ok: false, code: 'updateFailed' };
   }
 }

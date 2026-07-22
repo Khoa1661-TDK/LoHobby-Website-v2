@@ -139,6 +139,20 @@
     "reelPlay": "Play",
     "reelClose": "Close"
   },
+  "wishlist": {
+    "savedToast": "Saved to your wishlist",
+    "removedToast": "Removed from your wishlist",
+    "removeAria": "Remove from wishlist",
+    "saveAria": "Save to wishlist",
+    "removeTitle": "Remove from wishlist",
+    "saveTitle": "Save to wishlist",
+    "savedLabel": "Saved",
+    "saveLabel": "Save item",
+    "needAuth": "Sign in to save items to your wishlist.",
+    "invalidProduct": "Invalid product.",
+    "updateFailed": "Could not update your wishlist.",
+    "signInCta": "Sign in"
+  },
   "checkout": {
     "metaTitle": "Checkout",
     "emptyCartHeading": "Your cart is empty",

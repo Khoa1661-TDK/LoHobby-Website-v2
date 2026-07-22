@@ -139,6 +139,20 @@
     "reelPlay": "Phát video",
     "reelClose": "Đóng"
   },
+  "wishlist": {
+    "savedToast": "Đã lưu vào yêu thích",
+    "removedToast": "Đã bỏ khỏi yêu thích",
+    "removeAria": "Bỏ khỏi danh sách yêu thích",
+    "saveAria": "Lưu vào danh sách yêu thích",
+    "removeTitle": "Bỏ khỏi yêu thích",
+    "saveTitle": "Lưu vào yêu thích",
+    "savedLabel": "Đã lưu",
+    "saveLabel": "Lưu sản phẩm",
+    "needAuth": "Bạn cần đăng nhập để lưu sản phẩm.",
+    "invalidProduct": "Sản phẩm không hợp lệ.",
+    "updateFailed": "Không thể cập nhật danh sách yêu thích.",
+    "signInCta": "Đăng nhập"
+  },
   "checkout": {
     "metaTitle": "Thanh toán",
     "emptyCartHeading": "Giỏ hàng trống",

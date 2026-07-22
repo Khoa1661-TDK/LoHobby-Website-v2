@@ -1,10 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useTransition, type ReactElement } from 'react';
 import { toast } from 'sonner';
 import { toggleWishlistAction } from '@/app/[locale]/(storefront)/wishlist-actions';
 import { useWishlist } from '@/components/wishlist/wishlist-provider';
+import { useRouter } from '@/i18n/navigation';
 import { useWishlistPop } from '@/lib/animations/hooks/useWishlistPop';
 
 type Props = {
@@ -20,6 +21,7 @@ export default function WishlistButton({
   variant = 'overlay',
   className,
 }: Props): ReactElement {
+  const t = useTranslations('wishlist');
   const router = useRouter();
   const { has, setSaved } = useWishlist();
   const [pending, startTransition] = useTransition();
@@ -33,11 +35,17 @@ export default function WishlistButton({
     startTransition(async () => {
       const result = await toggleWishlistAction(productId, productHandle);
       if (!result.ok) {
-        toast.error(result.error);
+        if (result.code === 'needAuth') {
+          toast.error(t('needAuth'), {
+            action: { label: t('signInCta'), onClick: () => router.push('/login') },
+          });
+        } else {
+          toast.error(t(result.code));
+        }
         return;
       }
       setSaved(productId, result.saved);
-      toast.success(result.saved ? 'Đã lưu vào yêu thích' : 'Đã bỏ khỏi yêu thích');
+      toast.success(result.saved ? t('savedToast') : t('removedToast'));
       router.refresh();
     });
   };
@@ -53,8 +61,8 @@ export default function WishlistButton({
       onClick={onClick}
       disabled={pending}
       aria-pressed={saved}
-      aria-label={saved ? 'Bỏ khỏi danh sách yêu thích' : 'Lưu vào danh sách yêu thích'}
-      title={saved ? 'Bỏ khỏi yêu thích' : 'Lưu vào yêu thích'}
+      aria-label={saved ? t('removeAria') : t('saveAria')}
+      title={saved ? t('removeTitle') : t('saveTitle')}
       className={`${base} ${className ?? ''} disabled:opacity-60`}
     >
       <svg
@@ -72,7 +80,7 @@ export default function WishlistButton({
           d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.687 0-3.163.91-3.937 2.262C11.601 4.66 10.124 3.75 8.437 3.75 5.85 3.75 3.75 5.765 3.75 8.25c0 7.22 8.25 11.25 8.25 11.25s8.25-4.03 8.25-11.25z"
         />
       </svg>
-      {variant === 'inline' ? <span className="text-warm-700 dark:text-warm-300">{saved ? 'Đã lưu' : 'Lưu sản phẩm'}</span> : null}
+      {variant === 'inline' ? <span className="text-warm-700 dark:text-warm-300">{saved ? t('savedLabel') : t('saveLabel')}</span> : null}
     </button>
   );
 }
