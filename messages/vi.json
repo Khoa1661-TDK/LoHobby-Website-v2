@@ -354,6 +354,10 @@
     "cancelPending": "Đang hủy..."
   },
   "search": {
+    "placeholder": "Tìm móc khóa, mô hình, figure…",
+    "submitAria": "Tìm kiếm",
+    "suggestionsAria": "Gợi ý sản phẩm",
+    "suggestionCount": "{count} gợi ý",
     "metaTitle": "Tìm kiếm",
     "metaTitleWithQuery": "Tìm kiếm: \"{query}\"",
     "metaDescription": "Tìm móc khóa, mô hình, figure & sản phẩm hobby trong cửa hàng.",

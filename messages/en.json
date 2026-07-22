@@ -354,6 +354,10 @@
     "cancelPending": "Canceling..."
   },
   "search": {
+    "placeholder": "Search keychains, models, figures…",
+    "submitAria": "Search",
+    "suggestionsAria": "Product suggestions",
+    "suggestionCount": "{count} suggestions",
     "metaTitle": "Search",
     "metaTitleWithQuery": "Search: \"{query}\"",
     "metaDescription": "Find keychains, models, figures and hobby products in the store.",
