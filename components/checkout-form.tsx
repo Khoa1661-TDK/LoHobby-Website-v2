@@ -197,12 +197,23 @@ export default function CheckoutForm({
 
   const estimatedTotalVnd = subtotalVnd + shippingVnd + estimatedTaxVnd;
 
+  function defaultMethodDescription(kind: PaymentMethodKind): string {
+    switch (kind) {
+      case 'gateway':
+        return t('payGateway');
+      case 'manual_transfer':
+        return t('payTransfer');
+      default:
+        return t('payCod');
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setError(null);
 
     if (items.length === 0) {
-      setError('Giỏ hàng trống.');
+      setError(t('errCartEmpty'));
       return;
     }
 
@@ -212,23 +223,23 @@ export default function CheckoutForm({
     const trimmedAddress = address.trim();
 
     if (trimmedName.length === 0) {
-      setError('Vui lòng nhập họ tên.');
+      setError(t('errName'));
       return;
     }
     if (requireEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      setError('Vui lòng nhập email hợp lệ để nhận xác nhận đơn hàng.');
+      setError(t('errEmail'));
       return;
     }
     if (trimmedPhone.length === 0) {
-      setError('Vui lòng nhập số điện thoại.');
+      setError(t('errPhone'));
       return;
     }
     if (deliveryMethod === 'SHIPMENT' && trimmedAddress.length === 0) {
-      setError('Vui lòng nhập địa chỉ giao hàng.');
+      setError(t('errAddress'));
       return;
     }
     if (!paymentMethodKey) {
-      setError('Vui lòng chọn hình thức thanh toán.');
+      setError(t('errPayment'));
       return;
     }
 
@@ -264,7 +275,7 @@ export default function CheckoutForm({
         const message =
           data && 'error' in data && typeof data.error === 'string'
             ? data.error
-            : 'Thanh toán thất bại. Vui lòng thử lại.';
+            : t('errPayFailed');
         throw new Error(message);
       }
 
@@ -275,7 +286,7 @@ export default function CheckoutForm({
 
       router.replace(`/checkout/success?orderCode=${data.orderCode}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
+      setError(err instanceof Error ? err.message : t('errGeneric'));
       setSubmitting(false);
     }
   }
@@ -293,10 +304,10 @@ export default function CheckoutForm({
         ) : null}
 
         {/* Contact info */}
-        <Section title="Thông tin liên hệ" subtitle="Để chúng tôi liên hệ về đơn hàng này.">
+        <Section title={t('contactTitle')} subtitle={t('contactSubtitle')}>
           {savedAddresses.length > 0 && (
             <div className="mb-4">
-              <Field label="Dùng địa chỉ đã lưu" htmlFor="checkout-saved-address">
+              <Field label={t('savedAddressLabel')} htmlFor="checkout-saved-address">
                 <select
                   id="checkout-saved-address"
                   value={selectedAddressId}
@@ -311,23 +322,23 @@ export default function CheckoutForm({
                   }}
                   className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                 >
-                  <option value="">Nhập địa chỉ mới…</option>
+                  <option value="">{t('newAddressOption')}</option>
                   {savedAddresses.map((entry) => (
                     <option key={entry.id} value={entry.id}>
                       {entry.title}
-                      {entry.isDefault ? ' (mặc định)' : ''} — {entry.fullName} ·{' '}
+                      {entry.isDefault ? ` ${t('defaultSuffix')}` : ''} — {entry.fullName} ·{' '}
                       {formatAddressLine(entry)}
                     </option>
                   ))}
                 </select>
                 <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  Chọn địa chỉ đã lưu sẽ điền sẵn các trường bên dưới — bạn vẫn có thể chỉnh sửa.
+                  {t('savedAddressHint')}
                 </p>
               </Field>
             </div>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Họ tên" htmlFor="checkout-name">
+            <Field label={t('nameLabel')} htmlFor="checkout-name">
               <input
                 id="checkout-name"
                 type="text"
@@ -338,7 +349,7 @@ export default function CheckoutForm({
                 className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
               />
             </Field>
-            <Field label="Số điện thoại" htmlFor="checkout-phone">
+            <Field label={t('phoneLabel')} htmlFor="checkout-phone">
               <input
                 id="checkout-phone"
                 type="tel"
@@ -362,11 +373,11 @@ export default function CheckoutForm({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ban@email.com"
+                  placeholder={t('emailPlaceholder')}
                   className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                 />
                 <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  Chúng tôi sẽ gửi xác nhận đơn hàng tới email này.
+                  {t('emailHint')}
                 </p>
               </Field>
             </div>
@@ -374,7 +385,7 @@ export default function CheckoutForm({
         </Section>
 
         {/* Delivery method */}
-        <Section title="Hình thức giao hàng" subtitle="Chọn nơi bạn muốn nhận hàng.">
+        <Section title={t('deliveryTitle')} subtitle={t('deliverySubtitle')}>
           <div className="grid gap-3 sm:grid-cols-2">
             {shipping.shipmentEnabled ? (
               <OptionCard
@@ -382,11 +393,16 @@ export default function CheckoutForm({
                 value="SHIPMENT"
                 checked={deliveryMethod === 'SHIPMENT'}
                 onChange={() => setDeliveryMethod('SHIPMENT')}
-                title="Giao tận nhà"
+                title={t('homeDeliveryTitle')}
                 description={
                   shipping.freeShippingThresholdVnd > 0
-                    ? `Phí cố định ${shipping.flatRateVnd.toLocaleString('vi-VN')}₫ — miễn phí từ ${shipping.freeShippingThresholdVnd.toLocaleString('vi-VN')}₫`
-                    : `Phí vận chuyển ${shipping.flatRateVnd.toLocaleString('vi-VN')}₫`
+                    ? t('freeThresholdHint', {
+                        flatRate: shipping.flatRateVnd.toLocaleString('vi-VN'),
+                        threshold: shipping.freeShippingThresholdVnd.toLocaleString('vi-VN'),
+                      })
+                    : t('flatRateHint', {
+                        flatRate: shipping.flatRateVnd.toLocaleString('vi-VN'),
+                      })
                 }
                 icon={<TruckIcon />}
               />
@@ -397,8 +413,8 @@ export default function CheckoutForm({
                 value="PICKUP"
                 checked={deliveryMethod === 'PICKUP'}
                 onChange={() => setDeliveryMethod('PICKUP')}
-                title="Nhận tại cửa hàng"
-                description="Đến lấy tại cửa hàng."
+                title={t('pickupTitle')}
+                description={t('pickupDescription')}
                 icon={<StoreIcon />}
               />
             ) : null}
@@ -410,7 +426,7 @@ export default function CheckoutForm({
                 role="status"
                 className="rounded-lg border border-spool-200 bg-spool-50 p-4 text-sm text-spool-800 dark:border-spool-800 dark:bg-spool-900/40 dark:text-spool-100"
               >
-                <p className="font-semibold">Địa điểm nhận hàng</p>
+                <p className="font-semibold">{t('pickupLocation')}</p>
                 <p className="mt-1">{shipping.pickupAddress}</p>
                 {shipping.pickupInstructions ? (
                   <p className="mt-2 text-xs text-spool-700 dark:text-spool-200">
@@ -418,12 +434,12 @@ export default function CheckoutForm({
                   </p>
                 ) : (
                   <p className="mt-2 text-xs text-spool-700 dark:text-spool-200">
-                    Chúng tôi sẽ nhắn tin qua số điện thoại trên khi đơn sẵn sàng để bạn đến lấy.
+                    {t('pickupInstructionsDefault')}
                   </p>
                 )}
               </div>
             ) : (
-              <Field label="Địa chỉ giao hàng" htmlFor="checkout-address">
+              <Field label={t('addressLabel')} htmlFor="checkout-address">
                 <textarea
                   id="checkout-address"
                   required
@@ -431,7 +447,7 @@ export default function CheckoutForm({
                   rows={3}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Số nhà, phường, quận, tỉnh/thành"
+                  placeholder={t('addressPlaceholder')}
                   className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                 />
               </Field>
@@ -439,37 +455,37 @@ export default function CheckoutForm({
           </div>
         </Section>
 
-        <Section title="Mã giảm giá" subtitle="Nhập mã nếu bạn có (áp dụng khi đặt hàng).">
-          <Field label="Mã coupon" htmlFor="checkout-coupon">
+        <Section title={t('couponTitle')} subtitle={t('couponSubtitle')}>
+          <Field label={t('couponLabel')} htmlFor="checkout-coupon">
             <input
               id="checkout-coupon"
               type="text"
               value={couponCode}
               onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-              placeholder="VD: WELCOME10"
+              placeholder={t('couponPlaceholder')}
               className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm uppercase shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
             />
           </Field>
         </Section>
 
-        <Section title="Thẻ quà tặng" subtitle="Nhập mã thẻ quà tặng nếu bạn có (áp dụng khi đặt hàng).">
-          <Field label="Mã thẻ quà tặng" htmlFor="checkout-gift-card">
+        <Section title={t('giftCardTitle')} subtitle={t('giftCardSubtitle')}>
+          <Field label={t('giftCardLabel')} htmlFor="checkout-gift-card">
             <input
               id="checkout-gift-card"
               type="text"
               value={giftCardCode}
               onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
-              placeholder="VD: GC-ABCD-EFGH"
+              placeholder={t('giftCardPlaceholder')}
               className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm uppercase shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
             />
           </Field>
         </Section>
 
         {/* Payment method */}
-        <Section title="Hình thức thanh toán" subtitle="Chọn cách bạn muốn thanh toán.">
+        <Section title={t('paymentTitle')} subtitle={t('paymentSubtitle')}>
           {paymentMethods.length === 0 ? (
             <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-              Hiện chưa có hình thức thanh toán nào khả dụng. Vui lòng liên hệ cửa hàng.
+              {t('noPaymentMethods')}
             </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -515,18 +531,18 @@ export default function CheckoutForm({
 
       {/* Order summary */}
       <aside className="h-fit rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
-        <h2 className="text-lg font-semibold">Tóm tắt đơn hàng</h2>
+        <h2 className="text-lg font-semibold">{t('summaryTitle')}</h2>
 
         <ul className="mt-4 divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
           {cart.lines.length === 0 ? (
-            <li className="py-3 text-neutral-500 dark:text-neutral-400">Giỏ hàng trống.</li>
+            <li className="py-3 text-neutral-500 dark:text-neutral-400">{t('summaryEmpty')}</li>
           ) : (
             cart.lines.map((line) => (
               <li key={line.id} className="flex items-start justify-between gap-3 py-3">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{line.product.title}</p>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    SL {line.quantity}
+                    {t('lineQty', { quantity: line.quantity })}
                   </p>
                 </div>
                 <Price
@@ -541,7 +557,7 @@ export default function CheckoutForm({
 
         <dl className="mt-4 space-y-2 border-t border-neutral-200 pt-4 text-sm dark:border-neutral-800">
           <div className="flex justify-between">
-            <dt className="text-neutral-500 dark:text-neutral-400">Tạm tính</dt>
+            <dt className="text-neutral-500 dark:text-neutral-400">{t('subtotalLabel')}</dt>
             <dd>
               <Price
                 amount={cart.cost.subtotalAmount.amount}
@@ -550,7 +566,7 @@ export default function CheckoutForm({
             </dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-neutral-500 dark:text-neutral-400">Phí vận chuyển</dt>
+            <dt className="text-neutral-500 dark:text-neutral-400">{t('shippingLabel')}</dt>
             <dd className="text-neutral-500 dark:text-neutral-400">
               {isPickup ? (
                 t('freePickup')
@@ -568,7 +584,7 @@ export default function CheckoutForm({
           {tax.taxEnabled ? (
             <div className="flex justify-between">
               <dt className="text-neutral-500 dark:text-neutral-400">
-                Thuế ({tax.taxRatePercent}%)
+                {t('taxLabel', { rate: tax.taxRatePercent })}
               </dt>
               <dd>
                 <Price amount={String(estimatedTaxVnd)} currencyCode="VND" />
@@ -577,24 +593,24 @@ export default function CheckoutForm({
           ) : null}
           {couponCode.trim().length > 0 ? (
             <div className="flex justify-between text-sm text-emerald-700 dark:text-emerald-400">
-              <dt>Mã giảm giá</dt>
+              <dt>{t('discountRow')}</dt>
               <dd className="font-mono uppercase">{couponCode.trim()}</dd>
             </div>
           ) : null}
           {giftCardCode.trim().length > 0 ? (
             <div className="flex justify-between text-sm text-violet-700 dark:text-violet-400">
-              <dt>Thẻ quà tặng</dt>
+              <dt>{t('giftCardRow')}</dt>
               <dd className="font-mono uppercase">{giftCardCode.trim()}</dd>
             </div>
           ) : null}
           <div className="flex justify-between border-t border-neutral-200 pt-2 text-base font-semibold dark:border-neutral-800">
-            <dt>Tổng cộng (ước tính)</dt>
+            <dt>{t('totalEstimated')}</dt>
             <dd>
               <Price amount={String(estimatedTotalVnd)} currencyCode="VND" />
             </dd>
           </div>
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Giảm giá coupon và thẻ quà tặng được xác nhận khi đặt hàng. Tổng cuối có thể thay đổi.
+            {t('totalHint')}
           </p>
         </dl>
 
@@ -609,18 +625,18 @@ export default function CheckoutForm({
           className="mt-6 w-full rounded-full bg-filament-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-filament-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
         >
           {submitting
-            ? 'Đang đặt hàng…'
+            ? t('submitting')
             : selectedKind === 'gateway'
-              ? 'Tiếp tục thanh toán'
-              : 'Đặt hàng'}
+              ? t('submitGateway')
+              : t('submitOrder')}
         </button>
 
         <p className="mt-3 text-center text-xs text-neutral-500 dark:text-neutral-400">
           {selectedKind === 'gateway'
-            ? 'Bạn sẽ được chuyển đến cổng thanh toán để hoàn tất.'
+            ? t('hintGateway')
             : selectedKind === 'manual_transfer'
-              ? 'Chúng tôi sẽ hiển thị thông tin chuyển khoản sau khi đặt hàng.'
-              : 'Chúng tôi sẽ thu tiền mặt khi giao hàng.'}
+              ? t('hintTransfer')
+              : t('hintCod')}
         </p>
       </aside>
     </form>
@@ -840,13 +856,3 @@ function defaultMethodIcon(kind: PaymentMethodKind): ReactElement {
   }
 }
 
-function defaultMethodDescription(kind: PaymentMethodKind): string {
-  switch (kind) {
-    case 'gateway':
-      return 'Thanh toán online qua cổng thanh toán.';
-    case 'manual_transfer':
-      return 'Chuyển khoản ngân hàng theo thông tin hiển thị sau khi đặt hàng.';
-    default:
-      return 'Trả tiền mặt khi nhận hàng.';
-  }
-}
