@@ -16,6 +16,20 @@
 - **Vitest test files MUST import `describe/expect/it` from `vitest`.**
 - **Conventional Commits**, atomic. Commit directly to `main`.
 
+> **Carried over from Phase 1 (user decision 2026-07-22):** Phase 1 Task 1 rewired
+> `toUserError` (`components/cart/actions.ts`) to suppress ALL raw thrown messages to
+> close a raw-code leak. Side effect: the already-localized **VN-only** stock sentences
+> thrown by `assertCartLineStock` → `resolveCheckoutLines` (`lib/inventory.ts:86-135`,
+> e.g. `"X" chỉ còn 3 sản phẩm.`, `"X" đã hết hàng.`, `Vui lòng chọn biến thể...`) no
+> longer reach the shopper — cart add/update stock failures now collapse to the generic
+> `cart.errors.addFailed` / `cart.errors.updateFailed`. **Restore specific stock messaging
+> here, properly localized:** have `resolveCheckoutLines`/`assertCartLineStock` return a
+> code + params (e.g. `INSUFFICIENT_STOCK` with `{name, stock}`) instead of a baked VN
+> sentence, add `cart.errors.insufficientStock` / `outOfStock` / `variantRequired`
+> translation keys with interpolated `{name}`/`{stock}`, and have `toUserError` map them.
+> The dead `INSUFFICIENT_STOCK` entry already present in `lib/cart-error-messages.ts` is
+> the placeholder for this. Add this as a task in this phase.
+
 ---
 
 ## File Structure
