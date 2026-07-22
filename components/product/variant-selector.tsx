@@ -218,11 +218,8 @@ export default function VariantSelector({
                       aria-label={t('variantSelectAria', { name: variant.name })}
                       disabled={disabled}
                       onClick={() => {
-                        setSelectedSku((prev) => {
-                          const next = prev === variant.sku ? null : variant.sku;
-                          if (next !== null) setHeroFromGallery(false);
-                          return next;
-                        });
+                        setSelectedSku(variant.sku);
+                        setHeroFromGallery(false);
                       }}
                       className={clsx(
                         'rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-200',
@@ -290,6 +287,7 @@ export default function VariantSelector({
                   ? product.availableForSale
                   : Boolean(selectedVariant?.inStock)
               }
+              needsSelection={variants.length > 0 && !selectedVariant}
             />
           </div>
           <WishlistButton productId={product.id} productHandle={product.handle} variant="inline" />
@@ -332,6 +330,7 @@ export default function VariantSelector({
                   ? product.availableForSale
                   : Boolean(selectedVariant?.inStock)
               }
+              needsSelection={variants.length > 0 && !selectedVariant}
             />
           </div>
         </div>

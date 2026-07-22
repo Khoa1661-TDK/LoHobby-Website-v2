@@ -18,6 +18,7 @@ type Props = {
   variantSku?: string | null;
   canAdd?: boolean;
   quantity?: number;
+  needsSelection?: boolean;
 };
 
 export default function AddToCart({
@@ -25,6 +26,7 @@ export default function AddToCart({
   variantSku = null,
   canAdd = true,
   quantity = 1,
+  needsSelection = false,
 }: Props): ReactElement {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -32,11 +34,14 @@ export default function AddToCart({
   const { flyToCart } = useCartFlyIn();
   const { ref: rippleRef, onPointerDown } = useRipple<HTMLButtonElement>();
   const available = product.availableForSale && canAdd;
-  const label = !available
-    ? t('outOfStock')
-    : isPending
-      ? t('adding')
-      : t('addToCart');
+  const label =
+    needsSelection && product.availableForSale
+      ? t('selectOption')
+      : !available
+        ? t('outOfStock')
+        : isPending
+          ? t('adding')
+          : t('addToCart');
 
   return (
     <button
