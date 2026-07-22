@@ -148,6 +148,9 @@
     "subtitle": "Cho chúng tôi biết nơi giao hàng và cách bạn muốn thanh toán.",
     "verifyGateHeading": "Xác minh email để tiếp tục",
     "verifyGateBody": "Bạn cần xác minh địa chỉ email trước khi hoàn tất thanh toán. Bạn có thể gửi lại liên kết xác minh bên dưới.",
+    "shippingUnavailable": "Hiện chưa thể giao theo lựa chọn này. Vui lòng chọn phương thức khác hoặc liên hệ với chúng tôi.",
+    "freePickup": "Miễn phí (nhận tại cửa hàng)",
+    "freeShipping": "Miễn phí",
     "success": {
       "metaTitle": "Xác nhận đơn hàng",
       "headingPaid": "Cảm ơn bạn — đơn hàng đang được chuẩn bị!",

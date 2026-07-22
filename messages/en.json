@@ -148,6 +148,9 @@
     "subtitle": "Tell us where to deliver and how you'd like to pay.",
     "verifyGateHeading": "Verify your email to continue",
     "verifyGateBody": "You need to verify your email address before completing checkout. We can resend the verification link below.",
+    "shippingUnavailable": "We can't ship to this option right now. Please choose another delivery method or contact us.",
+    "freePickup": "Free (store pickup)",
+    "freeShipping": "Free",
     "success": {
       "metaTitle": "Order confirmed",
       "headingPaid": "Thank you — your order is being prepared!",

@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Price from '@/components/price';
 import { clearCartAction } from '@/components/cart/actions';
@@ -74,19 +75,20 @@ function formatAddressLine(address: SavedAddress): string {
     .join(', ');
 }
 
+/** Returns the shipping amount in VND, or null when the selected method is unquotable. */
 function estimateShippingVnd(
   shipping: CheckoutShippingPreview,
   deliveryMethod: DeliveryMethod,
   subtotalVnd: number,
   shippingRegion: string | null,
-): number {
+): number | null {
   const quote = computeShippingQuote(
     shipping,
     deliveryMethod,
     subtotalVnd,
     shippingRegion,
   );
-  if ('error' in quote) return 0;
+  if ('error' in quote) return null;
   return quote.shippingAmount;
 }
 
@@ -101,6 +103,7 @@ export default function CheckoutForm({
   requireEmail = false,
 }: Props): ReactElement {
   const router = useRouter();
+  const t = useTranslations('checkout');
 
   const initialAddress = savedAddresses.find((entry) => entry.isDefault) ?? savedAddresses[0];
 
@@ -166,10 +169,12 @@ export default function CheckoutForm({
     [address, deliveryMethod],
   );
 
-  const shippingVnd = useMemo(
+  const rawShippingVnd = useMemo(
     () => estimateShippingVnd(shipping, deliveryMethod, subtotalVnd, shippingRegion),
     [shipping, deliveryMethod, subtotalVnd, shippingRegion],
   );
+  const shippingUnquotable = rawShippingVnd === null;
+  const shippingVnd = rawShippingVnd ?? 0;
 
   const estimatedTaxVnd = useMemo(
     () => computeTaxAmount(tax, subtotalVnd),
@@ -534,9 +539,13 @@ export default function CheckoutForm({
             <dt className="text-neutral-500 dark:text-neutral-400">Phí vận chuyển</dt>
             <dd className="text-neutral-500 dark:text-neutral-400">
               {isPickup ? (
-                'Miễn phí (nhận tại cửa hàng)'
+                t('freePickup')
+              ) : shippingUnquotable ? (
+                <span className="text-terracotta-600 dark:text-terracotta-400">
+                  {t('shippingUnavailable')}
+                </span>
               ) : shippingVnd === 0 ? (
-                'Miễn phí'
+                t('freeShipping')
               ) : (
                 <Price amount={String(shippingVnd)} currencyCode="VND" />
               )}
@@ -577,7 +586,12 @@ export default function CheckoutForm({
 
         <button
           type="submit"
-          disabled={submitting || cart.lines.length === 0 || paymentMethods.length === 0}
+          disabled={
+            submitting ||
+            cart.lines.length === 0 ||
+            paymentMethods.length === 0 ||
+            (!isPickup && shippingUnquotable)
+          }
           className="mt-6 w-full rounded-full bg-filament-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-filament-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
         >
           {submitting
