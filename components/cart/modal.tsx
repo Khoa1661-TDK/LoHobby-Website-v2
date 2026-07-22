@@ -16,6 +16,7 @@ import {
   type ReactElement,
 } from 'react';
 import CartCrossSell from '@/components/cart/cross-sell';
+import FreeShippingProgress from '@/components/cart/free-shipping-progress';
 import Price from '@/components/price';
 import { useBumpPulse } from '@/lib/animations/hooks/useBumpPulse';
 import { toNextImageSrc } from '@/lib/product-image-snapshot';
@@ -25,9 +26,9 @@ import {
 } from '@/components/cart/actions';
 import type { Cart } from '@/lib/cart';
 
-type Props = { cart: Cart };
+type Props = { cart: Cart; freeShippingThresholdVnd: number };
 
-export default function CartModal({ cart }: Props): ReactElement {
+export default function CartModal({ cart, freeShippingThresholdVnd }: Props): ReactElement {
   const t = useTranslations('cart');
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -228,6 +229,14 @@ export default function CartModal({ cart }: Props): ReactElement {
                   <CartCrossSell
                     excludeHandles={cart.lines.map((line) => line.handle)}
                   />
+
+                  <div className="pt-3">
+                    <FreeShippingProgress
+                      subtotalVnd={Number(cart.cost.subtotalAmount.amount)}
+                      currencyCode={cart.cost.subtotalAmount.currencyCode}
+                      thresholdVnd={freeShippingThresholdVnd}
+                    />
+                  </div>
 
                   <div className="py-4 text-sm text-warm-500 dark:text-warm-400">
                     <div className="mb-2 flex items-center justify-between border-b border-warm-200/30 pb-2 dark:border-warm-800/20">
