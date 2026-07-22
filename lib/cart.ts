@@ -45,6 +45,8 @@ export type Cart = {
   id: string;
   totalQuantity: number;
   lines: CartLine[];
+  /** Stored lines skipped during hydrate because the product/variant is gone or unavailable. */
+  droppedLineCount?: number;
   cost: {
     subtotalAmount: Money;
     totalAmount: Money;
@@ -162,11 +164,15 @@ async function hydrate(stored: Stored): Promise<Cart> {
   const lines: CartLine[] = [];
   let subtotal = 0;
   let totalQty = 0;
+  let dropped = 0;
   const currency = 'VND';
 
   for (const it of stored.items) {
     const doc = docMap.get(it.productId);
-    if (!doc) continue;
+    if (!doc) {
+      dropped += 1;
+      continue;
+    }
 
     const variants = normalizeVariantDocs(doc.variants);
     const variantSku = normalizeVariantSku(it.variantSku);
@@ -175,7 +181,10 @@ async function hydrate(stored: Stored): Promise<Cart> {
 
     if (variants.length > 0) {
       const match = variantSku ? variants.find((v) => v.sku.trim() === variantSku) : null;
-      if (!match) continue;
+      if (!match) {
+        dropped += 1;
+        continue;
+      }
       variantName = match.name.trim();
       const base = Math.max(0, Math.round(doc.price));
       const overridden =
@@ -188,7 +197,10 @@ async function hydrate(stored: Stored): Promise<Cart> {
     }
 
     const p = await getPayloadProductById(it.productId);
-    if (!p || !p.availableForSale) continue;
+    if (!p || !p.availableForSale) {
+      dropped += 1;
+      continue;
+    }
 
     const lineTotal = unit * it.quantity;
     subtotal += lineTotal;
@@ -215,6 +227,7 @@ async function hydrate(stored: Stored): Promise<Cart> {
     id: stored.id,
     totalQuantity: totalQty,
     lines,
+    droppedLineCount: dropped,
     cost: {
       subtotalAmount: { amount: subtotal.toString(), currencyCode: currency },
       totalAmount: { amount: subtotal.toString(), currencyCode: currency },

@@ -166,6 +166,12 @@ export default function CartModal({ cart, freeShippingThresholdVnd }: Props): Re
                     />
                   </div>
 
+                  {cart.droppedLineCount ? (
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                      {t('itemsRemovedNotice')}
+                    </p>
+                  ) : null}
+
                   <CartSummary cart={cart} showTax />
 
                   <Link

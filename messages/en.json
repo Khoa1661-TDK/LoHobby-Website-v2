@@ -61,6 +61,7 @@
     "freeShippingRemaining": "Add <amount></amount> more for free shipping",
     "freeShippingQualified": "You've earned free shipping!",
     "freeShippingProgressAria": "Free shipping progress",
+    "itemsRemovedNotice": "Some items were removed because they are no longer available.",
     "total": "Total",
     "checkout": "Checkout",
     "outOfStock": "Out of stock",
