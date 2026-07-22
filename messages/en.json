@@ -267,6 +267,17 @@
       "heading": "Payment cancelled",
       "body": "You haven't been charged. Your cart is still saved.",
       "backToCatalog": "Back to catalog"
+    },
+    "apiErrors": {
+      "invalidPayload": "Invalid checkout data.",
+      "addressRequired": "A delivery address is required for home delivery.",
+      "itemUnavailable": "An item in your cart is no longer available. Update your cart and try again.",
+      "giftCardUnavailable": "Gift cards are currently unavailable.",
+      "invalidTotal": "Invalid order total.",
+      "paymentUnavailable": "That payment method is unavailable.",
+      "gatewayNotConfigured": "The payment gateway is not configured.",
+      "linkFailed": "Could not create the payment link.",
+      "orderCodeFailed": "Could not generate an order code."
     }
   },
   "auth": {

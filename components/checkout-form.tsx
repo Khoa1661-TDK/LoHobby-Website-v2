@@ -10,7 +10,7 @@ import {
   type ReactElement,
 } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Price from '@/components/price';
 import type { Cart } from '@/lib/cart';
@@ -110,6 +110,7 @@ export default function CheckoutForm({
 }: Props): ReactElement {
   const router = useRouter();
   const t = useTranslations('checkout');
+  const locale = useLocale();
 
   const initialAddress = savedAddresses.find((entry) => entry.isDefault) ?? savedAddresses[0];
 
@@ -266,6 +267,7 @@ export default function CheckoutForm({
           couponCode: couponCode.trim() || null,
           giftCardCode: giftCardCode.trim() || null,
           anonId,
+          locale,
         }),
       });
 

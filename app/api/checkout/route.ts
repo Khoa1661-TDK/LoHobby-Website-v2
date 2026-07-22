@@ -1,5 +1,6 @@
 // app/api/checkout/route.ts — creates ShopNex-compatible Payload `orders` (VND + VN gateways)
 import { NextRequest, NextResponse } from 'next/server';
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/auth';
 import { recordCouponRedemption, validateCoupon } from '@/lib/coupons';
 import { submitDropshipOrder } from '@/lib/dropshipping';
@@ -176,9 +177,16 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
   }
 
   const raw: unknown = await req.json().catch(() => null);
+  const rawLocale =
+    typeof raw === 'object' && raw !== null
+      ? (raw as Record<string, unknown>).locale
+      : undefined;
+  const locale = typeof rawLocale === 'string' ? rawLocale : 'vi';
+  const te = await getTranslations({ locale, namespace: 'checkout.apiErrors' });
+
   const body = parseBody(raw);
   if (!body) {
-    return NextResponse.json({ error: 'Dữ liệu thanh toán không hợp lệ' }, { status: 400 });
+    return NextResponse.json({ error: te('invalidPayload') }, { status: 400 });
   }
 
   const buyerEmail = session?.user?.email ?? null;
@@ -208,7 +216,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
 
   if (body.deliveryMethod === 'SHIPMENT' && shippingAddress.length === 0) {
     return NextResponse.json(
-      { error: 'Địa chỉ giao hàng là bắt buộc khi giao tận nhà' },
+      { error: te('addressRequired') },
       { status: 400 },
     );
   }
@@ -217,14 +225,14 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
   const products = await getPayloadProductsByIds(productIds, { requirePurchasable: true });
   if (products.length !== new Set(productIds).size) {
     return NextResponse.json(
-      { error: 'Một sản phẩm trong giỏ hàng không còn bán. Hãy cập nhật giỏ hàng và thử lại.' },
+      { error: te('itemUnavailable') },
       { status: 409 },
     );
   }
   for (const product of products) {
     if (!isPurchasableProduct(product)) {
       return NextResponse.json(
-        { error: 'Một sản phẩm trong giỏ hàng không còn bán. Hãy cập nhật giỏ hàng và thử lại.' },
+        { error: te('itemUnavailable') },
         { status: 409 },
       );
     }
@@ -290,7 +298,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
 
   if (body.giftCardCode) {
     if (!isGiftCardsEnabled()) {
-      return NextResponse.json({ error: 'Thẻ quà tặng hiện không khả dụng.' }, { status: 400 });
+      return NextResponse.json({ error: te('giftCardUnavailable') }, { status: 400 });
     }
     const giftResult = await validateGiftCard(body.giftCardCode, totalBeforeGiftCard);
     if (!giftResult.ok) {
@@ -303,13 +311,13 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
 
   const amount = totalBeforeGiftCard - giftCardAmount;
   if (amount < 0 || !Number.isInteger(amount) || !Number.isSafeInteger(amount)) {
-    return NextResponse.json({ error: 'Tổng tiền không hợp lệ' }, { status: 400 });
+    return NextResponse.json({ error: te('invalidTotal') }, { status: 400 });
   }
 
   const method = await getPaymentMethodByKey(body.paymentMethodKey);
   if (!method || !isPaymentMethodOfferable(method)) {
     return NextResponse.json(
-      { error: 'Hình thức thanh toán không khả dụng.' },
+      { error: te('paymentUnavailable') },
       { status: 400 },
     );
   }
@@ -425,7 +433,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
         data: { orderStatus: 'canceled', paymentStatus: 'failed' },
       });
       return NextResponse.json(
-        { error: 'Cổng thanh toán chưa được cấu hình.' },
+        { error: te('gatewayNotConfigured') },
         { status: 500 },
       );
     }
@@ -483,7 +491,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
       const message =
         gatewayError instanceof Error
           ? gatewayError.message
-          : 'Không thể tạo liên kết thanh toán.';
+          : te('linkFailed');
       logger.error(
         { route: '/api/checkout', order_code: orderCode, err: gatewayError },
         'payment gateway error',
@@ -492,5 +500,5 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
     }
   }
 
-  return NextResponse.json({ error: 'Không thể tạo mã đơn hàng' }, { status: 503 });
+  return NextResponse.json({ error: te('orderCodeFailed') }, { status: 503 });
 }

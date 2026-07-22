@@ -267,6 +267,17 @@
       "heading": "Đã hủy thanh toán",
       "body": "Bạn chưa bị trừ tiền. Giỏ hàng vẫn được lưu.",
       "backToCatalog": "Quay lại danh mục"
+    },
+    "apiErrors": {
+      "invalidPayload": "Dữ liệu thanh toán không hợp lệ",
+      "addressRequired": "Địa chỉ giao hàng là bắt buộc khi giao tận nhà",
+      "itemUnavailable": "Một sản phẩm trong giỏ hàng không còn bán. Hãy cập nhật giỏ hàng và thử lại.",
+      "giftCardUnavailable": "Thẻ quà tặng hiện không khả dụng.",
+      "invalidTotal": "Tổng tiền không hợp lệ",
+      "paymentUnavailable": "Hình thức thanh toán không khả dụng.",
+      "gatewayNotConfigured": "Cổng thanh toán chưa được cấu hình.",
+      "linkFailed": "Không thể tạo liên kết thanh toán.",
+      "orderCodeFailed": "Không thể tạo mã đơn hàng"
     }
   },
   "auth": {
