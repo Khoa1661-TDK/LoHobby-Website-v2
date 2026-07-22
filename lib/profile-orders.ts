@@ -21,7 +21,13 @@ function mapStatus(doc: {
     case 'packing':
       return 'SHIPPED';
     case 'to_confirm':
-      return doc.paymentStatus === 'paid' ? 'PAID' : doc.paymentKind === 'cod' ? 'PENDING_COD' : 'PENDING';
+      return doc.paymentStatus === 'paid'
+        ? 'PAID'
+        : doc.paymentKind === 'cod'
+          ? 'PENDING_COD'
+          : doc.paymentKind === 'manual_transfer'
+            ? 'PENDING_TRANSFER'
+            : 'PENDING';
     case 'awaiting_payment':
       return 'PENDING_ONLINE';
     case 'payment_failed':

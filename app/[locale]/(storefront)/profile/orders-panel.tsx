@@ -20,6 +20,7 @@ type StatusStyle = {
 const STATUS_ORDER: ProfileOrderStatus[] = [
   'PENDING_ONLINE',
   'PENDING_COD',
+  'PENDING_TRANSFER',
   'PAID',
   'SHIPPED',
   'DELIVERED',
@@ -37,6 +38,11 @@ const STATUS_STYLES: Record<ProfileOrderStatus, StatusStyle> = {
     dot: 'bg-spool-500',
     badge: 'bg-spool-100 text-spool-800 dark:bg-spool-500/15 dark:text-spool-200',
     card: 'border-spool-200/80 dark:border-spool-500/30',
+  },
+  PENDING_TRANSFER: {
+    dot: 'bg-sky-500',
+    badge: 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-200',
+    card: 'border-sky-200/80 dark:border-sky-500/30',
   },
   PAID: {
     dot: 'bg-emerald-500',
@@ -68,6 +74,7 @@ const STATUS_STYLES: Record<ProfileOrderStatus, StatusStyle> = {
 const STATUS_LABEL_KEYS: Record<ProfileOrderStatus, string> = {
   PENDING_ONLINE: 'statusLabelPendingOnline',
   PENDING_COD: 'statusLabelPendingCod',
+  PENDING_TRANSFER: 'statusLabelPendingTransfer',
   PAID: 'statusLabelPaid',
   SHIPPED: 'statusLabelShipped',
   DELIVERED: 'statusLabelDelivered',
@@ -78,6 +85,7 @@ const STATUS_LABEL_KEYS: Record<ProfileOrderStatus, string> = {
 const STATUS_DESC_KEYS: Record<ProfileOrderStatus, string> = {
   PENDING_ONLINE: 'statusDescPendingOnline',
   PENDING_COD: 'statusDescPendingCod',
+  PENDING_TRANSFER: 'statusDescPendingTransfer',
   PAID: 'statusDescPaid',
   SHIPPED: 'statusDescShipped',
   DELIVERED: 'statusDescDelivered',

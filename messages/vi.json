@@ -151,6 +151,16 @@
     "shippingUnavailable": "Hiện chưa thể giao theo lựa chọn này. Vui lòng chọn phương thức khác hoặc liên hệ với chúng tôi.",
     "freePickup": "Miễn phí (nhận tại cửa hàng)",
     "freeShipping": "Miễn phí",
+    "statusLabels": {
+      "pending": "Chờ xử lý",
+      "pendingCod": "Chờ xử lý (thanh toán khi nhận hàng)",
+      "pendingOnline": "Chờ thanh toán",
+      "pendingTransfer": "Chờ chuyển khoản",
+      "paid": "Đã thanh toán",
+      "shipped": "Đang giao",
+      "delivered": "Đã giao",
+      "cancelled": "Đã huỷ"
+    },
     "success": {
       "metaTitle": "Xác nhận đơn hàng",
       "headingPaid": "Cảm ơn bạn — đơn hàng đang được chuẩn bị!",
@@ -300,6 +310,8 @@
     "statusDescPendingOnline": "Đơn hàng đang chờ chuyển khoản VietQR / payOS được xác nhận.",
     "statusLabelPendingCod": "Thanh toán khi nhận hàng",
     "statusDescPendingCod": "Đơn COD đã xác nhận, đang chuẩn bị giao hàng.",
+    "statusLabelPendingTransfer": "Chờ chuyển khoản",
+    "statusDescPendingTransfer": "Đơn hàng đã được ghi nhận — đang chờ xác nhận chuyển khoản của bạn.",
     "statusLabelPaid": "Đã thanh toán",
     "statusDescPaid": "Đã nhận thanh toán — chúng tôi đang chuẩn bị giao đơn hàng.",
     "statusLabelShipped": "Đang giao hàng",

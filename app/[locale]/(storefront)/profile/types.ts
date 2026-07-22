@@ -11,6 +11,7 @@ export type ProfileOrderStatus =
   | 'PENDING'
   | 'PENDING_COD'
   | 'PENDING_ONLINE'
+  | 'PENDING_TRANSFER'
   | 'PAID'
   | 'SHIPPED'
   | 'DELIVERED'

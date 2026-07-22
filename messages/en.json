@@ -151,6 +151,16 @@
     "shippingUnavailable": "We can't ship to this option right now. Please choose another delivery method or contact us.",
     "freePickup": "Free (store pickup)",
     "freeShipping": "Free",
+    "statusLabels": {
+      "pending": "Pending",
+      "pendingCod": "Pending (cash on delivery)",
+      "pendingOnline": "Awaiting payment",
+      "pendingTransfer": "Awaiting bank transfer",
+      "paid": "Paid",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    },
     "success": {
       "metaTitle": "Order confirmed",
       "headingPaid": "Thank you — your order is being prepared!",
@@ -300,6 +310,8 @@
     "statusDescPendingOnline": "Order is awaiting VietQR / payOS transfer confirmation.",
     "statusLabelPendingCod": "Cash on delivery",
     "statusDescPendingCod": "COD order confirmed, preparing for delivery.",
+    "statusLabelPendingTransfer": "Awaiting bank transfer",
+    "statusDescPendingTransfer": "Order recorded — awaiting confirmation of your bank transfer.",
     "statusLabelPaid": "Paid",
     "statusDescPaid": "Payment received — we are preparing your order for dispatch.",
     "statusLabelShipped": "Shipped",

@@ -13,6 +13,7 @@ import {
   mapPayloadOrderToStorefrontStatus,
   ownsPayloadOrder,
 } from '@/lib/payload-order-storefront';
+import { orderStatusLabelKey } from '@/lib/order-status-labels';
 
 type SearchParams = Promise<{ orderCode?: string }>;
 
@@ -30,6 +31,9 @@ export default async function CheckoutSuccessPage(props: {
   searchParams: SearchParams;
 }): Promise<ReactElement> {
   const t = await getTranslations('checkout.success');
+  // `checkout.statusLabels` lives one level up from the `checkout.success`
+  // namespace `t` is scoped to, so it needs its own translator.
+  const tCheckout = await getTranslations('checkout');
   const { orderCode } = await props.searchParams;
   const code = Number(orderCode);
   if (!Number.isInteger(code)) redirect('/');
@@ -107,7 +111,7 @@ export default async function CheckoutSuccessPage(props: {
         </div>
         <div className="flex justify-between border-b py-2">
           <dt>{t('status')}</dt>
-          <dd>{status}</dd>
+          <dd>{tCheckout(`statusLabels.${orderStatusLabelKey(status)}`)}</dd>
         </div>
         <div className="flex justify-between border-b py-2">
           <dt>{t('payment')}</dt>
