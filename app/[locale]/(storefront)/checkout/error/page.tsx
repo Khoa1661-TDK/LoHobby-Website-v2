@@ -19,9 +19,6 @@ export default async function CheckoutErrorPage(): Promise<ReactElement> {
       <h1 className="font-display text-2xl font-semibold text-warm-900 dark:text-warm-100">{t('heading')}</h1>
       <p className="mt-4 rounded-2xl border border-terracotta-200 bg-terracotta-50 p-4 text-sm text-terracotta-700 dark:border-terracotta-900 dark:bg-terracotta-950 dark:text-terracotta-300">
         {t('instructions')}
-        <code className="mx-1 rounded bg-terracotta-100 px-1 dark:bg-terracotta-900">PAYOS_CLIENT_ID</code>,
-        <code className="mx-1 rounded bg-terracotta-100 px-1 dark:bg-terracotta-900">PAYOS_API_KEY</code>,
-        <code className="mx-1 rounded bg-terracotta-100 px-1 dark:bg-terracotta-900">PAYOS_CHECKSUM_KEY</code>.
       </p>
       <Link
         href="/"

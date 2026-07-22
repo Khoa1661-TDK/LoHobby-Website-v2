@@ -188,7 +188,7 @@
     "error": {
       "metaTitle": "Payment failed",
       "heading": "Payment failed",
-      "instructions": "Could not create a VietQR payment request for this cart. Check the server log and verify",
+      "instructions": "Payment is temporarily unavailable. Please try again in a few minutes or contact us if it keeps happening.",
       "backToCatalog": "Back to catalog"
     },
     "cancel": {

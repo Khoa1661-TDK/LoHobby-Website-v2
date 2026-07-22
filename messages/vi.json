@@ -188,7 +188,7 @@
     "error": {
       "metaTitle": "Thanh toán thất bại",
       "heading": "Thanh toán thất bại",
-      "instructions": "Không thể tạo yêu cầu thanh toán VietQR cho giỏ hàng. Kiểm tra log máy chủ và xác minh",
+      "instructions": "Thanh toán tạm thời không khả dụng. Vui lòng thử lại sau ít phút hoặc liên hệ với chúng tôi nếu vẫn gặp lỗi.",
       "backToCatalog": "Quay lại danh mục"
     },
     "cancel": {
