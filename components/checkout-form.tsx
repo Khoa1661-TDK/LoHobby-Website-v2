@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Price from '@/components/price';
-import { clearCartAction } from '@/components/cart/actions';
 import type { Cart } from '@/lib/cart';
 import type { CheckoutPaymentMethod, PaymentMethodKind } from '@/lib/payment-methods';
 import {
@@ -253,8 +252,6 @@ export default function CheckoutForm({
             : 'Thanh toán thất bại. Vui lòng thử lại.';
         throw new Error(message);
       }
-
-      await clearCartAction();
 
       if (data.checkoutUrl) {
         window.location.assign(data.checkoutUrl);

@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { auth } from '@/auth';
 import OrderStatusPoller from '@/components/checkout/order-status-poller';
+import ClearCartOnConfirmed from '@/components/checkout/clear-cart-on-confirmed';
 import { isAdminEmail } from '@/lib/admin-emails';
 import { getPaymentMethodByKey, type PaymentMethodKind } from '@/lib/payment-methods';
 import { getPayloadOrderByCode } from '@/lib/payload-orders';
@@ -82,6 +83,10 @@ export default async function CheckoutSuccessPage(props: {
 
   const shouldPoll = isGateway && !isPaid;
 
+  // The order is committed (safe to clear the cart) once it is no longer
+  // merely awaiting online payment. COD/transfer land already-committed.
+  const cartConfirmed = status !== 'PENDING' && status !== 'PENDING_ONLINE';
+
   const paymentLabel =
     method?.label ??
     (isCod
@@ -97,6 +102,7 @@ export default async function CheckoutSuccessPage(props: {
   return (
     <section className="mx-auto max-w-xl px-4 py-8">
       {shouldPoll && <OrderStatusPoller orderCode={code} initialStatus={status} />}
+      <ClearCartOnConfirmed confirmed={cartConfirmed} />
 
       <h1 className="font-display text-2xl font-semibold text-warm-900 dark:text-warm-100">{heading}</h1>
 
