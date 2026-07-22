@@ -10,6 +10,7 @@ import { GalleryMediaThumb, GalleryMediaViewer } from '@/components/product/gall
 import Price from '@/components/price';
 import Prose from '@/components/prose';
 import WishlistButton from '@/components/wishlist/wishlist-button';
+import { maxSelectableQuantity } from '@/lib/max-cart-quantity';
 import type { StorefrontVariant } from '@/lib/payload-products';
 import type { Image as ImageType, Product } from '@/lib/shopify/types';
 
@@ -67,10 +68,11 @@ export default function VariantSelector({
     [variants, selectedSku],
   );
 
-  const maxQuantity =
-    typeof selectedVariant?.stock === 'number' && selectedVariant.stock > 0
-      ? selectedVariant.stock
-      : 99;
+  const maxQuantity = maxSelectableQuantity({
+    hasVariants: variants.length > 0,
+    variantSelected: Boolean(selectedVariant),
+    stock: selectedVariant?.stock ?? null,
+  });
 
   // Reset to 1 when switching variants so a leftover count can't exceed new stock.
   useEffect(() => {
