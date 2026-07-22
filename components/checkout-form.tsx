@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Price from '@/components/price';
