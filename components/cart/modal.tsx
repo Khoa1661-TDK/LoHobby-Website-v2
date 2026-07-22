@@ -14,6 +14,7 @@ import {
   useTransition,
   type ReactElement,
 } from 'react';
+import { toast } from 'sonner';
 import CartCrossSell from '@/components/cart/cross-sell';
 import FreeShippingProgress from '@/components/cart/free-shipping-progress';
 import CartLineItem from '@/components/cart/line-item';
@@ -48,6 +49,17 @@ export default function CartModal({ cart, freeShippingThresholdVnd }: Props): Re
 
   const refresh = (): void => {
     router.refresh();
+  };
+
+  const runCartEdit = (action: () => Promise<{} | { error: string }>): void => {
+    startTransition(async () => {
+      const result = await action();
+      if (result && 'error' in result && result.error) {
+        toast.error(result.error);
+        return;
+      }
+      refresh();
+    });
   };
 
   return (
@@ -125,20 +137,18 @@ export default function CartModal({ cart, freeShippingThresholdVnd }: Props): Re
                           disabled={isPending}
                           onNavigate={closeCart}
                           onRemove={() =>
-                            startTransition(async () => {
-                              await removeItemAction(item.merchandiseId, item.variantSku);
-                              refresh();
-                            })
+                            runCartEdit(() =>
+                              removeItemAction(item.merchandiseId, item.variantSku),
+                            )
                           }
                           onQuantityChange={(quantity) =>
-                            startTransition(async () => {
-                              await updateItemAction(
+                            runCartEdit(() =>
+                              updateItemAction(
                                 item.merchandiseId,
                                 quantity,
                                 item.variantSku,
-                              );
-                              refresh();
-                            })
+                              ),
+                            )
                           }
                         />
                       ))}
