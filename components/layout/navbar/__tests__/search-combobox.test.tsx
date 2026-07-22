@@ -6,9 +6,16 @@ import Search from '@/components/layout/navbar/search';
 
 const push = vi.fn();
 
+// Search reads useSearchParams from next/navigation but now takes useRouter from
+// the locale-aware @/i18n/navigation (Phase 2 Task 2). Mock both: next/navigation
+// for useSearchParams, and @/i18n/navigation for the router push spy — otherwise
+// @/i18n/navigation eval-loads next-intl's real navigation and fails under jsdom.
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push }),
   useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock('@/i18n/navigation', () => ({
+  useRouter: () => ({ push }),
 }));
 
 const messages = {
