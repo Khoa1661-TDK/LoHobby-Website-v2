@@ -193,7 +193,9 @@
       "content": "Content",
       "qrAlt": "Bank transfer QR code",
       "gatewayPending": "The gateway is processing the transaction. This page will automatically update to <strong>PAID</strong> once payOS sends the webhook (usually within seconds), then we'll cut the files and start printing.",
-      "continueShopping": "Continue shopping"
+      "continueShopping": "Continue shopping",
+      "checkingPayment": "Confirming your payment…",
+      "paymentTimeout": "Still processing. This can take a few minutes — we'll email you when it's confirmed."
     },
     "error": {
       "metaTitle": "Payment failed",

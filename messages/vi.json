@@ -193,7 +193,9 @@
       "content": "Nội dung",
       "qrAlt": "Mã QR chuyển khoản",
       "gatewayPending": "Ngân hàng đang xử lý giao dịch. Trang này sẽ chuyển sang <strong>ĐÃ THANH TOÁN</strong> ngay khi payOS gửi webhook (thường trong vài giây), sau đó chúng tôi sẽ cắt file và bắt đầu in.",
-      "continueShopping": "Tiếp tục mua sắm"
+      "continueShopping": "Tiếp tục mua sắm",
+      "checkingPayment": "Đang xác nhận thanh toán…",
+      "paymentTimeout": "Vẫn đang xử lý. Việc này có thể mất vài phút — chúng tôi sẽ gửi email khi thanh toán được xác nhận."
     },
     "error": {
       "metaTitle": "Thanh toán thất bại",

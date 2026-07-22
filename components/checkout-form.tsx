@@ -1,7 +1,14 @@
 // components/checkout-form.tsx
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactElement,
+} from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
@@ -125,6 +132,7 @@ export default function CheckoutForm({
   const [giftCardCode, setGiftCardCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
 
   const selectedMethod = paymentMethods.find((method) => method.key === paymentMethodKey) ?? null;
   const selectedKind = selectedMethod?.kind ?? null;
@@ -136,6 +144,13 @@ export default function CheckoutForm({
       setDeliveryMethod('SHIPMENT');
     }
   }, [shipping.shipmentEnabled, shipping.pickupEnabled]);
+
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      errorRef.current.focus();
+    }
+  }, [error]);
 
   useEffect(() => {
     if (!selectedAddressId) return;
@@ -488,7 +503,9 @@ export default function CheckoutForm({
 
         {error && (
           <p
+            ref={errorRef}
             role="alert"
+            tabIndex={-1}
             className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
           >
             {error}
