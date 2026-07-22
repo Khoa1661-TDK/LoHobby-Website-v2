@@ -4,11 +4,13 @@
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import type { ListItem } from '@/components/layout/search/filter';
 import FilterItem from '@/components/layout/search/filter/item';
 
 export default function FilterItemDropdown({ list }: { list: ListItem[] }): ReactElement {
+  const t = useTranslations('search');
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [openSelect, setOpenSelect] = useState(false);
@@ -29,9 +31,11 @@ export default function FilterItemDropdown({ list }: { list: ListItem[] }): Reac
   useEffect(() => {
     list.forEach((item) => {
       if ('path' in item && pathname === item.path) setActive(item.title);
-      else if ('slug' in item && searchParams.get('sort') === item.slug) setActive(item.title);
+      else if ('slug' in item && searchParams.get('sort') === item.slug) {
+        setActive(t(`sort.${item.labelKey}` as Parameters<typeof t>[0]));
+      }
     });
-  }, [pathname, list, searchParams]);
+  }, [pathname, list, searchParams, t]);
 
   const toggle = (): void => {
     setOpenSelect((wasOpen) => {

@@ -1,9 +1,11 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState, type FormEvent, type ReactElement } from 'react';
 
 export default function Facets(): ReactElement {
+  const t = useTranslations('search');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -58,10 +60,14 @@ export default function Facets(): ReactElement {
 
   return (
     <div className="hidden md:block">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400">Lọc</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400">
+        {t('filter.title')}
+      </h3>
 
       <form onSubmit={onApplyPrice} className="mt-3 space-y-2.5">
-        <label className="block text-xs text-warm-500 dark:text-warm-400">Khoảng giá (đ)</label>
+        <label className="block text-xs text-warm-500 dark:text-warm-400">
+          {t('filter.priceRange')}
+        </label>
         <div className="flex items-center gap-1.5">
           <input
             type="number"
@@ -69,7 +75,7 @@ export default function Facets(): ReactElement {
             inputMode="numeric"
             value={priceMin}
             onChange={(e) => setPriceMin(e.target.value)}
-            placeholder="Từ"
+            placeholder={t('filter.from')}
             className="w-full rounded-lg border border-warm-200/80 bg-white px-2.5 py-1.5 text-xs text-warm-700 placeholder:text-warm-400 transition-colors focus:border-terracotta-400 focus:outline-none dark:border-warm-800/60 dark:bg-warm-900 dark:text-warm-300 dark:placeholder:text-warm-600"
           />
           <span className="text-warm-400 text-xs">–</span>
@@ -79,7 +85,7 @@ export default function Facets(): ReactElement {
             inputMode="numeric"
             value={priceMax}
             onChange={(e) => setPriceMax(e.target.value)}
-            placeholder="Đến"
+            placeholder={t('filter.to')}
             className="w-full rounded-lg border border-warm-200/80 bg-white px-2.5 py-1.5 text-xs text-warm-700 placeholder:text-warm-400 transition-colors focus:border-terracotta-400 focus:outline-none dark:border-warm-800/60 dark:bg-warm-900 dark:text-warm-300 dark:placeholder:text-warm-600"
           />
         </div>
@@ -87,7 +93,7 @@ export default function Facets(): ReactElement {
           type="submit"
           className="w-full rounded-lg bg-warm-900 px-2.5 py-1.5 text-xs font-semibold text-warm-50 transition-colors hover:bg-warm-800 dark:bg-warm-100 dark:text-warm-900 dark:hover:bg-warm-200"
         >
-          Áp dụng
+          {t('filter.apply')}
         </button>
       </form>
 
@@ -98,7 +104,7 @@ export default function Facets(): ReactElement {
           onChange={toggleInStock}
           className="h-4 w-4 rounded border-warm-300 text-terracotta-500 focus:ring-terracotta-400 dark:border-warm-700 dark:bg-warm-900"
         />
-        Chỉ còn hàng
+        {t('filter.inStockOnly')}
       </label>
 
       {hasActive ? (
@@ -107,7 +113,7 @@ export default function Facets(): ReactElement {
           onClick={clearAll}
           className="mt-3 text-xs text-terracotta-600 transition-colors hover:text-terracotta-700 dark:text-terracotta-400 dark:hover:text-terracotta-300"
         >
-          Xóa bộ lọc
+          {t('filter.clear')}
         </button>
       ) : null}
     </div>

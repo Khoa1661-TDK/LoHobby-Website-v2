@@ -1,13 +1,13 @@
 // lib/constants.ts
 export type SortFilterItem = {
-  title: string;
+  labelKey: string;
   slug: string | null;
   sortKey: 'RELEVANCE' | 'BEST_SELLING' | 'CREATED_AT' | 'PRICE';
   reverse: boolean;
 };
 
 export const defaultSort: SortFilterItem = {
-  title: 'Liên quan',
+  labelKey: 'relevance',
   slug: null,
   sortKey: 'RELEVANCE',
   reverse: false,
@@ -15,10 +15,10 @@ export const defaultSort: SortFilterItem = {
 
 export const sorting: SortFilterItem[] = [
   defaultSort,
-  { title: 'Bán chạy', slug: 'trending-desc', sortKey: 'BEST_SELLING', reverse: false },
-  { title: 'Hàng mới về', slug: 'latest-desc', sortKey: 'CREATED_AT', reverse: true },
-  { title: 'Giá: Thấp đến cao', slug: 'price-asc', sortKey: 'PRICE', reverse: false },
-  { title: 'Giá: Cao đến thấp', slug: 'price-desc', sortKey: 'PRICE', reverse: true },
+  { labelKey: 'bestSelling', slug: 'trending-desc', sortKey: 'BEST_SELLING', reverse: false },
+  { labelKey: 'newest', slug: 'latest-desc', sortKey: 'CREATED_AT', reverse: true },
+  { labelKey: 'priceAsc', slug: 'price-asc', sortKey: 'PRICE', reverse: false },
+  { labelKey: 'priceDesc', slug: 'price-desc', sortKey: 'PRICE', reverse: true },
 ];
 
 export const HIDDEN_PRODUCT_TAG = 'hidden';

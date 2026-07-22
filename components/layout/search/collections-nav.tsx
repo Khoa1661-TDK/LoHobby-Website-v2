@@ -4,6 +4,7 @@ import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { Link } from '@/i18n/navigation';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 export type CategoryNavItem = {
@@ -12,6 +13,7 @@ export type CategoryNavItem = {
 };
 
 export default function CollectionsNav({ items }: { items: CategoryNavItem[] }): ReactElement {
+  const t = useTranslations('search');
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -29,9 +31,9 @@ export default function CollectionsNav({ items }: { items: CategoryNavItem[] }):
   }, []);
 
   return (
-    <nav aria-label="Danh mục sản phẩm">
+    <nav aria-label={t('filter.categoriesAria')}>
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400">
-        Danh mục
+        {t('filter.categories')}
       </h3>
 
       <div className="relative md:hidden" ref={ref}>
@@ -40,7 +42,7 @@ export default function CollectionsNav({ items }: { items: CategoryNavItem[] }):
           onClick={() => setOpen(!open)}
           className="flex w-full items-center justify-between rounded-xl border border-warm-200/80 bg-white px-4 py-2.5 text-sm dark:border-warm-800/60 dark:bg-warm-900"
         >
-          <span className="truncate text-warm-700 dark:text-warm-300">{activeItem?.title ?? 'Danh mục'}</span>
+          <span className="truncate text-warm-700 dark:text-warm-300">{activeItem?.title ?? t('filter.categories')}</span>
           <ChevronDownIcon className={clsx('h-4 w-4 shrink-0 text-warm-400 transition', open && 'rotate-180')} />
         </button>
         {open ? (

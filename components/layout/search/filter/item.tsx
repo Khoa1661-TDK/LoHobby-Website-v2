@@ -8,6 +8,7 @@ import clsx from 'clsx';
 // again — producing /vi/vi/search/... and breaking every sort/filter link.
 import { Link, usePathname } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import type { SortFilterItem } from '@/lib/constants';
 import { createUrl } from '@/lib/utils';
@@ -34,6 +35,7 @@ function PathItem({ item }: { item: PathFilterItem }): ReactElement {
 }
 
 function SortItem({ item }: { item: SortFilterItem }): ReactElement {
+  const t = useTranslations('search');
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const active = searchParams.get('sort') === item.slug;
@@ -56,7 +58,7 @@ function SortItem({ item }: { item: SortFilterItem }): ReactElement {
           { underline: active },
         )}
       >
-        {item.title}
+        {t(`sort.${item.labelKey}` as Parameters<typeof t>[0])}
       </Link>
     </li>
   );

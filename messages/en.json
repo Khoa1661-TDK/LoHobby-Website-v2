@@ -486,7 +486,26 @@
     "faqHeading": "FAQs about {title}",
     "breadcrumbHome": "Home",
     "breadcrumbStore": "Store",
-    "breadcrumbSearch": "Search"
+    "breadcrumbSearch": "Search",
+    "sort": {
+      "relevance": "Relevance",
+      "bestSelling": "Best selling",
+      "newest": "Newest",
+      "priceAsc": "Price: low to high",
+      "priceDesc": "Price: high to low"
+    },
+    "filter": {
+      "title": "Filter",
+      "priceRange": "Price range (₫)",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "inStockOnly": "In stock only",
+      "clear": "Clear filters",
+      "sortTitle": "Sort",
+      "categories": "Categories",
+      "categoriesAria": "Product categories"
+    }
   },
   "home": {
     "heroCarouselSubtitle": "Latest from the collection",

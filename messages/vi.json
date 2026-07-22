@@ -486,7 +486,26 @@
     "faqHeading": "Câu hỏi thường gặp về {title}",
     "breadcrumbHome": "Trang chủ",
     "breadcrumbStore": "Cửa hàng",
-    "breadcrumbSearch": "Tìm kiếm"
+    "breadcrumbSearch": "Tìm kiếm",
+    "sort": {
+      "relevance": "Liên quan",
+      "bestSelling": "Bán chạy",
+      "newest": "Hàng mới về",
+      "priceAsc": "Giá: Thấp đến cao",
+      "priceDesc": "Giá: Cao đến thấp"
+    },
+    "filter": {
+      "title": "Lọc",
+      "priceRange": "Khoảng giá (đ)",
+      "from": "Từ",
+      "to": "Đến",
+      "apply": "Áp dụng",
+      "inStockOnly": "Chỉ còn hàng",
+      "clear": "Xóa bộ lọc",
+      "sortTitle": "Sắp xếp",
+      "categories": "Danh mục",
+      "categoriesAria": "Danh mục sản phẩm"
+    }
   },
   "home": {
     "heroCarouselSubtitle": "Mới nhất từ bộ sưu tập",
