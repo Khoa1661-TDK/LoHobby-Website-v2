@@ -7,6 +7,15 @@ vi.mock('@/lib/prisma', () => ({
     purchaseEvent: { create: vi.fn() },
   },
 }));
+// The route handler is server-side, where next-intl's `getTranslations` is valid.
+// Under vitest, next-intl resolves to its client build, whose `getTranslations`
+// throws "not supported in Client Components". Shim it with a key-echoing
+// translator so the gate test exercises the real route without loading the RSC
+// build — the assertion below checks the returned error KEY, copy-independent.
+vi.mock('next-intl/server', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next-intl/server')>()),
+  getTranslations: async () => (key: string) => key,
+}));
 
 import { POST } from '@/app/api/checkout/route';
 import { auth } from '@/auth';
@@ -62,6 +71,6 @@ describe('POST /api/checkout — authorization gate', () => {
     const res = await POST(post({}) as never);
 
     expect(res.status).toBe(400);
-    await expect(res.json()).resolves.toEqual({ error: 'Dữ liệu thanh toán không hợp lệ' });
+    await expect(res.json()).resolves.toEqual({ error: 'invalidPayload' });
   });
 });
