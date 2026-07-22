@@ -66,12 +66,20 @@ const nextConfig = {
       // server-side-fetch any attacker-supplied URL, including cloud instance
       // metadata endpoints and internal service ports).
       { protocol: 'https', hostname: 'cf.shopee.vn' },
-      // YouTube thumbnails derived by `youtubeThumbnail()` in lib/reel-embed.ts
-      // and rendered through next/image by components/blocks/ReelCarousel.client.tsx
-      // when a reel has no hand-uploaded poster. An un-allowed hostname makes
-      // next/image THROW during render rather than just failing the image, so
-      // omitting this 500s any page carrying a posterless reel — including the
-      // seeded homepage. Pinned to the exact host for the same SSRF reason as above.
+      // Two YouTube-owned image hosts, both reached through next/image. An
+      // un-allowed hostname makes next/image THROW during render rather than
+      // merely failing the image, so either one missing 500s the whole page.
+      //
+      // yt3.ggpht.com — channel avatars from the YouTube Data API
+      // (lib/youtube-stats.ts -> components/blocks/YouTubeChannel.tsx). This is
+      // the one that was actually firing: the seeded homepage carries a
+      // YouTubeChannel block, and it threw on every render.
+      { protocol: 'https', hostname: 'yt3.ggpht.com' },
+      // i.ytimg.com — video thumbnails derived by youtubeThumbnail() in
+      // lib/reel-embed.ts and rendered by ReelCarousel.client.tsx when a reel
+      // has no hand-uploaded poster. Latent rather than observed: no reel on
+      // the current seed lacks a poster, so this had not fired yet. Included
+      // because the code path exists and fails identically when it does.
       { protocol: 'https', hostname: 'i.ytimg.com' },
       // Dev-only: Payload builds media URLs from the request host, so browsing
       // the store over http via a LAN IP (e.g. http://192.168.1.3:3000 from a
