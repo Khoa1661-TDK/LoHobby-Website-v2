@@ -442,7 +442,29 @@
     "cancelConfirm": "Confirm cancellation",
     "cancelDismiss": "Keep order",
     "cancelSuccess": "Order canceled.",
-    "cancelPending": "Canceling..."
+    "cancelPending": "Canceling...",
+    "orderDetail": {
+      "metaTitle": "Order details",
+      "backToOrders": "Order history",
+      "orderNumberPrefix": "Order #",
+      "orderedAtPrefix": "Ordered at",
+      "stageOrdered": "Ordered",
+      "stagePayment": "Payment",
+      "stageDelivery": "Delivery",
+      "stageDone": "Complete",
+      "itemsHeading": "Items",
+      "total": "Total",
+      "qtyAbbrev": "Qty",
+      "preparingShipment": "Your order is being prepared. Shipping details will appear once it's handed to the carrier.",
+      "shippingHeading": "Shipping address",
+      "paymentHeading": "Payment method",
+      "deliveryHeading": "Delivery method",
+      "deliveryShipment": "Home delivery",
+      "deliveryPickup": "Store pickup",
+      "paymentCod": "Cash on delivery",
+      "paymentBankTransfer": "Bank transfer",
+      "paymentOnline": "Online payment"
+    }
   },
   "search": {
     "placeholder": "Search keychains, models, figures…",

@@ -442,7 +442,29 @@
     "cancelConfirm": "Xác nhận hủy",
     "cancelDismiss": "Giữ đơn hàng",
     "cancelSuccess": "Đã hủy đơn hàng.",
-    "cancelPending": "Đang hủy..."
+    "cancelPending": "Đang hủy...",
+    "orderDetail": {
+      "metaTitle": "Chi tiết đơn hàng",
+      "backToOrders": "Lịch sử đơn hàng",
+      "orderNumberPrefix": "Đơn #",
+      "orderedAtPrefix": "Đặt lúc",
+      "stageOrdered": "Đặt hàng",
+      "stagePayment": "Thanh toán",
+      "stageDelivery": "Giao hàng",
+      "stageDone": "Hoàn tất",
+      "itemsHeading": "Sản phẩm",
+      "total": "Tổng cộng",
+      "qtyAbbrev": "SL",
+      "preparingShipment": "Đơn hàng đang được chuẩn bị. Thông tin vận chuyển sẽ hiển thị khi shop giao cho đơn vị vận chuyển.",
+      "shippingHeading": "Địa chỉ giao hàng",
+      "paymentHeading": "Phương thức thanh toán",
+      "deliveryHeading": "Hình thức giao hàng",
+      "deliveryShipment": "Giao tận nhà",
+      "deliveryPickup": "Nhận tại cửa hàng",
+      "paymentCod": "Thanh toán khi nhận hàng",
+      "paymentBankTransfer": "Chuyển khoản ngân hàng",
+      "paymentOnline": "Thanh toán online"
+    }
   },
   "search": {
     "placeholder": "Tìm móc khóa, mô hình, figure…",
