@@ -10,6 +10,8 @@ import { cancelOrder } from '@/lib/order-fulfillment';
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
+type ReorderResult = { ok: true; added: number; skipped: number } | { ok: false; error: string };
+
 const MAX_NAME = 120;
 const MAX_URL = 2048;
 const MAX_PHONE = 32;
@@ -172,7 +174,7 @@ export async function deleteAddressAction(addressId: string): Promise<ActionResu
   return { ok: true };
 }
 
-export async function reorderAction(orderId: string): Promise<ActionResult> {
+export async function reorderAction(orderId: string): Promise<ReorderResult> {
   const session = await auth();
   if (!session?.user?.id) {
     return { ok: false, error: 'Bạn cần đăng nhập.' };
@@ -202,18 +204,26 @@ export async function reorderAction(orderId: string): Promise<ActionResult> {
 
   const lineItems = Array.isArray(doc.lineItems) ? doc.lineItems : [];
   let added = 0;
+  let skipped = 0;
   for (const raw of lineItems) {
-    if (typeof raw !== 'object' || raw === null) continue;
+    if (typeof raw !== 'object' || raw === null) {
+      skipped += 1;
+      continue;
+    }
     const item = raw as Record<string, unknown>;
     const productId = typeof item.productId === 'string' ? item.productId : '';
     const variantSku = typeof item.variantSku === 'string' ? item.variantSku : null;
     const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
-    if (!productId) continue;
+    if (!productId) {
+      skipped += 1;
+      continue;
+    }
     try {
       await addToCart(productId, quantity, variantSku, session.user.id);
       added += 1;
     } catch {
       // Skip products that are no longer purchasable; keep adding the rest.
+      skipped += 1;
     }
   }
 
@@ -222,7 +232,7 @@ export async function reorderAction(orderId: string): Promise<ActionResult> {
   }
 
   revalidatePath('/', 'layout');
-  return { ok: true };
+  return { ok: true, added, skipped };
 }
 
 export async function setDefaultAddressAction(addressId: string): Promise<ActionResult> {

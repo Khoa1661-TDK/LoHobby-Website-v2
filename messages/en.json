@@ -354,6 +354,8 @@
     "removedFromWishlist": "Removed from wishlist",
     "unsave": "Unsave",
     "reorderSuccess": "Items added to cart.",
+    "reorderAllAdded": "Added {count} items to your cart.",
+    "reorderPartial": "Added {added} of {total} items — {skipped} are no longer available.",
     "reorderAdding": "Adding…",
     "reorder": "Reorder",
     "cancelOrder": "Cancel order",

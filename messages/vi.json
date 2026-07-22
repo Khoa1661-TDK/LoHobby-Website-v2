@@ -354,6 +354,8 @@
     "removedFromWishlist": "Đã bỏ khỏi yêu thích",
     "unsave": "Bỏ lưu",
     "reorderSuccess": "Đã thêm sản phẩm vào giỏ hàng.",
+    "reorderAllAdded": "Đã thêm {count} sản phẩm vào giỏ.",
+    "reorderPartial": "Đã thêm {added}/{total} sản phẩm — {skipped} sản phẩm không còn bán.",
     "reorderAdding": "Đang thêm…",
     "reorder": "Mua lại",
     "cancelOrder": "Hủy đơn hàng",

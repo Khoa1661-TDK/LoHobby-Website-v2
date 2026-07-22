@@ -22,7 +22,17 @@ export default function ReorderButton({ orderId }: { orderId: string }): ReactEl
             toast.error(result.error);
             return;
           }
-          toast.success(t('reorderSuccess'));
+          if (result.skipped > 0) {
+            toast.warning(
+              t('reorderPartial', {
+                added: result.added,
+                total: result.added + result.skipped,
+                skipped: result.skipped,
+              }),
+            );
+          } else {
+            toast.success(t('reorderAllAdded', { count: result.added }));
+          }
           router.refresh();
         })
       }
