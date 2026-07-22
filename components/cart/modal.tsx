@@ -165,6 +165,13 @@ export default function CartModal({ cart, freeShippingThresholdVnd }: Props): Re
                   >
                     {t('checkout')}
                   </Link>
+                  <Link
+                    href="/cart"
+                    onClick={closeCart}
+                    className="mt-3 block w-full text-center text-sm font-medium text-warm-600 underline-offset-4 hover:underline dark:text-warm-400"
+                  >
+                    {t('viewFullCart')}
+                  </Link>
                 </div>
               )}
             </Dialog.Panel>
