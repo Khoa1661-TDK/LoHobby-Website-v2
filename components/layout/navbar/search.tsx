@@ -177,11 +177,11 @@ export default function Search(): ReactElement {
         </button>
       </form>
 
-      {/* Announces only the result count. The zero-results case is conveyed
-          by the "no results" row inside the listbox itself, so the live
-          region doesn't duplicate that exact text into a second DOM node. */}
+      {/* Announces the result count, or the "no results" message when the
+          search has run and returned zero matches, so screen-reader users
+          get feedback even on an empty result set. */}
       <span aria-live="polite" className="sr-only">
-        {overlayVisible && hasSuggestions ? t('suggestionCount', { count: suggestions.length }) : ''}
+        {overlayVisible ? (hasSuggestions ? t('suggestionCount', { count: suggestions.length }) : t('noResults')) : ''}
       </span>
 
       {overlayVisible ? (
@@ -230,7 +230,11 @@ export default function Search(): ReactElement {
               </li>
             ))
           ) : (
-            <li className="px-4 py-3 text-sm text-warm-500 dark:text-warm-400">
+            <li
+              role="option"
+              aria-disabled={true}
+              className="px-4 py-3 text-sm text-warm-500 dark:text-warm-400"
+            >
               {t('noResults')}
             </li>
           )}

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import Search from '@/components/layout/navbar/search';
@@ -137,6 +137,8 @@ describe('Search combobox', () => {
     const user = userEvent.setup();
     renderSearch();
     await user.type(screen.getByRole('combobox'), 'zzzz');
-    await waitFor(() => expect(screen.getByText('No results found.')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(within(screen.getByRole('listbox')).getByText('No results found.')).toBeInTheDocument(),
+    );
   });
 });
