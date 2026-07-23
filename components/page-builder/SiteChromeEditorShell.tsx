@@ -36,7 +36,15 @@ export default function SiteChromeEditorShell({
 }: SiteChromeEditorProps): ReactElement {
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
   const [docs, setDocs] = useState(initialDocs);
-  const [status, setStatus] = useState<SaveStatus>('idle');
+  // Tracked per-slug: three globals can autosave concurrently on independent timers, and a
+  // single shared status would let whichever save resolves LAST clobber an earlier failure
+  // with "saved". Keeping one entry per slug means a failed save stays visible until that
+  // slug is retried, regardless of what other slugs do.
+  const [statuses, setStatuses] = useState<Record<ChromeGlobalSlug, SaveStatus>>({
+    'site-header': 'idle',
+    'store-settings': 'idle',
+    navigation: 'idle',
+  });
   const [panelOpen, setPanelOpen] = useState(true);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -52,15 +60,15 @@ export default function SiteChromeEditorShell({
 
   const scheduleSave = useCallback(
     (slug: ChromeGlobalSlug) => {
-      setStatus('saving');
+      setStatuses((prev) => ({ ...prev, [slug]: 'saving' }));
       if (timers.current[slug]) clearTimeout(timers.current[slug]);
       timers.current[slug] = setTimeout(() => {
         saveChromeGlobal(slug, docsRef.current[slug])
           .then(() => {
-            setStatus('saved');
+            setStatuses((prev) => ({ ...prev, [slug]: 'saved' }));
             reloadPreview();
           })
-          .catch(() => setStatus('error'));
+          .catch(() => setStatuses((prev) => ({ ...prev, [slug]: 'error' })));
       }, 800);
     },
     [reloadPreview],
@@ -82,6 +90,17 @@ export default function SiteChromeEditorShell({
   );
 
   const current = tabs.find((t) => t.id === activeTab) ?? tabs[0];
+
+  // Worst-of across slugs so a lingering error is never masked by a different slug's
+  // later success: error beats saving beats saved beats idle.
+  const statusValues = Object.values(statuses);
+  const status: SaveStatus = statusValues.includes('error')
+    ? 'error'
+    : statusValues.includes('saving')
+      ? 'saving'
+      : statusValues.includes('saved')
+        ? 'saved'
+        : 'idle';
 
   return (
     <div className="flex h-screen">
