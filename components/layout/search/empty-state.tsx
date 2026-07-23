@@ -5,8 +5,10 @@ import { getStoreCategories } from '@/lib/shopify';
 
 export default async function SearchEmptyState({
   query,
+  hasActiveFilters,
 }: {
   query?: string;
+  hasActiveFilters?: boolean;
 }): Promise<ReactElement> {
   const t = await getTranslations('search');
   const categories = (await getStoreCategories()).slice(0, 8);
@@ -27,11 +29,20 @@ export default async function SearchEmptyState({
         </svg>
       </div>
       <h2 className="mt-6 text-xl font-bold text-warm-900 dark:text-warm-100">
-        {query ? `${t('metaTitleWithQuery', { query })}` : t('noResults')}
+        {t('noResults')}
       </h2>
       <p className="mt-2 max-w-md text-sm text-warm-500 dark:text-warm-400">
-        {t('tryAdjustingFilter')}
+        {hasActiveFilters ? t('noFilterResults') : t('tryAdjustingFilter')}
       </p>
+
+      {hasActiveFilters ? (
+        <Link
+          href={query ? `/search?q=${encodeURIComponent(query)}` : '/search'}
+          className="mt-4 text-sm font-medium text-terracotta-600 underline-offset-4 hover:underline dark:text-terracotta-400"
+        >
+          {t('filter.clear')}
+        </Link>
+      ) : null}
 
       {categories.length > 0 ? (
         <ul className="mt-6 flex flex-wrap justify-center gap-2">

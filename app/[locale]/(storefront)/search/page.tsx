@@ -10,6 +10,7 @@ import { getSiteName } from '@/lib/brand';
 import { defaultSort, sorting } from '@/lib/constants';
 import { paginateList } from '@/lib/listing-pagination';
 import { applyProductFilters, parseProductFilters } from '@/lib/product-filters';
+import { hasActiveSearchFilters } from '@/lib/search-filters-active';
 import { getProducts } from '@/lib/shopify';
 import { absoluteUrl } from '@/lib/utils';
 
@@ -81,6 +82,7 @@ export default async function SearchPage(props: {
   );
 
   const trimmedQuery = query?.trim();
+  const filtersActive = hasActiveSearchFilters(searchParams);
 
   return (
     <>
@@ -113,7 +115,7 @@ export default async function SearchPage(props: {
           <Pagination currentPage={currentPage} totalPages={totalPages} />
         </>
       ) : (
-        <SearchEmptyState query={trimmedQuery} />
+        <SearchEmptyState query={trimmedQuery} hasActiveFilters={filtersActive} />
       )}
     </>
   );
