@@ -17,6 +17,7 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,6 +26,10 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setError(null);
+    if (isRegister && password !== confirmPassword) {
+      setError(t('passwordMismatch'));
+      return;
+    }
     setLoading(true);
     try {
       if (isRegister) {
@@ -152,7 +157,31 @@ export default function AuthForm({ callbackUrl = '/' }: Props): ReactElement {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-warm-200/80 bg-white px-3 py-2.5 text-sm text-warm-900 shadow-soft-sm transition-colors placeholder:text-warm-400 focus:border-terracotta-400 focus:outline-none focus:ring-2 focus:ring-terracotta-400/20 dark:border-warm-800/60 dark:bg-warm-950 dark:text-warm-100 dark:placeholder:text-warm-600"
           />
+          {isRegister && (
+            <p className="mt-1.5 text-xs text-warm-500 dark:text-warm-400">{t('passwordRule')}</p>
+          )}
         </div>
+
+        {isRegister && (
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400"
+            >
+              {t('confirmPasswordLabel')}
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full rounded-xl border border-warm-200/80 bg-white px-3 py-2.5 text-sm text-warm-900 shadow-soft-sm transition-colors placeholder:text-warm-400 focus:border-terracotta-400 focus:outline-none focus:ring-2 focus:ring-terracotta-400/20 dark:border-warm-800/60 dark:bg-warm-950 dark:text-warm-100 dark:placeholder:text-warm-600"
+            />
+          </div>
+        )}
 
         {error && (
           <p

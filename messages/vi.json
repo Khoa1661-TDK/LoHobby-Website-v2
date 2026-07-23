@@ -309,6 +309,8 @@
     "nameLabel": "Họ tên",
     "emailLabel": "Email",
     "passwordLabel": "Mật khẩu",
+    "passwordRule": "Tối thiểu 8 ký tự.",
+    "passwordMismatch": "Mật khẩu nhập lại không khớp.",
     "submitLogin": "Đăng nhập",
     "submitRegister": "Tạo tài khoản",
     "submitLoading": "Vui lòng đợi…",

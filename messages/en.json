@@ -309,6 +309,8 @@
     "nameLabel": "Full name",
     "emailLabel": "Email",
     "passwordLabel": "Password",
+    "passwordRule": "At least 8 characters.",
+    "passwordMismatch": "Passwords do not match.",
     "submitLogin": "Sign in",
     "submitRegister": "Create account",
     "submitLoading": "Please wait…",
