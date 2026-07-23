@@ -2,6 +2,7 @@
 import config from '@payload-config';
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical';
 import { revalidateTag, unstable_cache } from 'next/cache';
+import { getLocale } from 'next-intl/server';
 import { getPayload, type Where } from 'payload';
 import { logger } from '@/lib/logger';
 import { toStoreCategory, type StoreCategory } from '@/lib/categories';
@@ -470,6 +471,19 @@ async function getPayloadClient() {
   return getPayload({ config });
 }
 
+/** Payload content locales (Products/Categories/ProductVariants localized fields). */
+type PayloadLocale = 'en' | 'vi';
+
+/**
+ * Resolve the active next-intl request locale, narrowed to a Payload content
+ * locale. Anything other than 'en' falls back to the default 'vi' so the URL
+ * prefix ('/vi' | '/en') drives which localized values Payload returns.
+ */
+async function resolveLocale(): Promise<PayloadLocale> {
+  const locale = await getLocale();
+  return locale === 'en' ? 'en' : 'vi';
+}
+
 function isVisibleProduct(product: Product): boolean {
   return !product.tags.includes(HIDDEN_PRODUCT_TAG);
 }
@@ -527,6 +541,7 @@ export async function getPayloadProductBySlug(slug: string): Promise<Product | u
   const trimmed = slug?.trim();
   if (!trimmed) return undefined;
 
+  const locale = await resolveLocale();
   const payload = await getPayloadClient();
   const result = await payload.find({
     collection: 'products',
@@ -534,6 +549,7 @@ export async function getPayloadProductBySlug(slug: string): Promise<Product | u
     depth: 2,
     limit: 1,
     pagination: false,
+    locale,
   });
 
   const doc = pickFirstDoc<PayloadProductDoc>(result);
@@ -549,11 +565,13 @@ export async function getPayloadProductById(id: string): Promise<Product | undef
   if (!trimmed) return undefined;
 
   try {
+    const locale = await resolveLocale();
     const payload = await getPayloadClient();
     const doc = await payload.findByID({
       collection: 'products',
       id: trimmed,
       depth: 2,
+      locale,
     });
     if (!doc || typeof doc !== 'object') return undefined;
     const product = mapPayloadProductToCommerceProduct(doc as PayloadProductDoc);
@@ -564,12 +582,15 @@ export async function getPayloadProductById(id: string): Promise<Product | undef
   }
 }
 
-async function fetchPayloadProducts(opts?: {
-  query?: string;
-  reverse?: boolean;
-  sortKey?: SortKey;
-  limit?: number;
-}): Promise<Product[]> {
+async function fetchPayloadProducts(
+  opts?: {
+    query?: string;
+    reverse?: boolean;
+    sortKey?: SortKey;
+    limit?: number;
+  },
+  locale?: PayloadLocale,
+): Promise<Product[]> {
   const payload = await getPayloadClient();
   const where: Where = buildProductSearchWhere(opts?.query);
 
@@ -580,6 +601,7 @@ async function fetchPayloadProducts(opts?: {
     limit: opts?.limit ?? CATALOG_NO_LIMIT,
     sort: opts?.sortKey === 'PRICE' ? 'price' : '-updatedAt',
     pagination: false,
+    locale,
   });
 
   const products = pickDocs<PayloadProductDoc>(result)
@@ -609,16 +631,18 @@ export async function getPayloadProducts(opts?: {
   sortKey?: SortKey;
   limit?: number;
 }): Promise<Product[]> {
+  const locale = await resolveLocale();
   return unstable_cache(
-    () => fetchPayloadProducts(opts),
-    ['payload-products', catalogProductsCacheKey(opts)],
-    { revalidate: CATALOG_REVALIDATE, tags: ['catalog', 'products'] },
-  )();
+    (loc: PayloadLocale) => fetchPayloadProducts(opts, loc),
+    ['payload-products', catalogProductsCacheKey(opts), locale],
+    { revalidate: CATALOG_REVALIDATE, tags: ['catalog', 'products', `products:${locale}`] },
+  )(locale);
 }
 
 async function findCategoryBySlug(
   payload: Awaited<ReturnType<typeof getPayloadClient>>,
   slug: string,
+  locale?: PayloadLocale,
 ): Promise<CategoryDoc | null> {
   const trimmed = slug.trim();
   if (!trimmed) return null;
@@ -634,6 +658,7 @@ async function findCategoryBySlug(
       depth: 0,
       limit: 1,
       pagination: false,
+      locale,
     });
     const categoryDoc = pickFirstDoc<CategoryDoc>(categoryResult);
     if (categoryDoc) return categoryDoc;
@@ -645,12 +670,13 @@ async function findCategoryBySlug(
 async function fetchPayloadProductsByCategorySlug(
   slug: string,
   opts?: { reverse?: boolean; sortKey?: SortKey },
+  locale?: PayloadLocale,
 ): Promise<Product[]> {
   const categorySlug = slug.trim();
   if (!categorySlug) return getPayloadProducts(opts);
 
   const payload = await getPayloadClient();
-  const categoryDoc = await findCategoryBySlug(payload, categorySlug);
+  const categoryDoc = await findCategoryBySlug(payload, categorySlug, locale);
   if (!categoryDoc) return [];
 
   const canonicalSlug = canonicalCategorySlug(categoryDoc.slug);
@@ -662,6 +688,7 @@ async function fetchPayloadProductsByCategorySlug(
     depth: 2,
     limit: 200,
     pagination: false,
+    locale,
   });
 
   let products = pickDocs<PayloadProductDoc>(result)
@@ -670,7 +697,7 @@ async function fetchPayloadProductsByCategorySlug(
 
   // Fallback when the DB adapter does not match relationship arrays (e.g. legacy data).
   if (products.length === 0) {
-    const all = await fetchPayloadProducts({ ...opts, limit: 200 });
+    const all = await fetchPayloadProducts({ ...opts, limit: 200 }, locale);
     products = all.filter(
       (product) =>
         product.categorySlugs.includes(canonicalSlug) ||
@@ -686,6 +713,7 @@ export async function getPayloadProductsByCategorySlug(
   opts?: { reverse?: boolean; sortKey?: SortKey },
 ): Promise<Product[]> {
   const categorySlug = slug.trim();
+  const locale = await resolveLocale();
   const cacheKey = JSON.stringify({
     slug: categorySlug,
     reverse: opts?.reverse ?? false,
@@ -693,16 +721,20 @@ export async function getPayloadProductsByCategorySlug(
   });
 
   return unstable_cache(
-    () => fetchPayloadProductsByCategorySlug(categorySlug, opts),
-    ['payload-products-by-category-v2', cacheKey],
-    { revalidate: CATALOG_REVALIDATE, tags: ['catalog', 'products', `category:${categorySlug}`] },
-  )();
+    (loc: PayloadLocale) => fetchPayloadProductsByCategorySlug(categorySlug, opts, loc),
+    ['payload-products-by-category-v2', cacheKey, locale],
+    {
+      revalidate: CATALOG_REVALIDATE,
+      tags: ['catalog', 'products', `category:${categorySlug}`, `products:${locale}`],
+    },
+  )(locale);
 }
 
 export async function getPayloadProductRecommendations(
   slug: string,
   categoryIds: Array<string | number> = [],
 ): Promise<Product[]> {
+  const locale = await resolveLocale();
   const payload = await getPayloadClient();
   const where: Where =
     categoryIds.length > 0
@@ -724,6 +756,7 @@ export async function getPayloadProductRecommendations(
     limit: 4,
     sort: '-updatedAt',
     pagination: false,
+    locale,
   });
 
   return pickDocs<PayloadProductDoc>(result)
@@ -732,7 +765,10 @@ export async function getPayloadProductRecommendations(
     .slice(0, 3);
 }
 
-async function fetchPayloadProductDoc(trimmedSlug: string): Promise<PayloadProductDoc | null> {
+async function fetchPayloadProductDoc(
+  trimmedSlug: string,
+  locale?: PayloadLocale,
+): Promise<PayloadProductDoc | null> {
   const payload = await getPayloadClient();
   const result = await payload.find({
     collection: 'products',
@@ -740,6 +776,7 @@ async function fetchPayloadProductDoc(trimmedSlug: string): Promise<PayloadProdu
     depth: 2,
     limit: 1,
     pagination: false,
+    locale,
   });
 
   const doc = pickFirstDoc<PayloadProductDoc>(result);
@@ -760,14 +797,15 @@ export async function loadPayloadProductDoc(slug: string): Promise<PayloadProduc
   const trimmed = slug?.trim();
   if (!trimmed) return null;
 
+  const locale = await resolveLocale();
   return unstable_cache(
-    () => fetchPayloadProductDoc(trimmed),
-    ['payload-product-doc', trimmed],
-    { revalidate: CATALOG_REVALIDATE, tags: ['catalog', 'products'] },
-  )();
+    (loc: PayloadLocale) => fetchPayloadProductDoc(trimmed, loc),
+    ['payload-product-doc', trimmed, locale],
+    { revalidate: CATALOG_REVALIDATE, tags: ['catalog', 'products', `products:${locale}`] },
+  )(locale);
 }
 
-async function fetchPayloadCollections(): Promise<Collection[]> {
+async function fetchPayloadCollections(locale?: PayloadLocale): Promise<Collection[]> {
   const payload = await getPayloadClient();
   const categoryResult = await payload.find({
     collection: 'categories',
@@ -776,6 +814,7 @@ async function fetchPayloadCollections(): Promise<Collection[]> {
     pagination: false,
     // depth 1 hydrates the SEO meta image relationship for social-share cards.
     depth: 1,
+    locale,
   });
 
   const all: Collection = {
@@ -832,10 +871,14 @@ async function fetchPayloadCollections(): Promise<Collection[]> {
   return collections;
 }
 
-export const getPayloadCollections = unstable_cache(fetchPayloadCollections, ['payload-collections'], {
-  revalidate: CATALOG_REVALIDATE,
-  tags: ['catalog', 'collections'],
-});
+export async function getPayloadCollections(): Promise<Collection[]> {
+  const locale = await resolveLocale();
+  return unstable_cache(
+    (loc: PayloadLocale) => fetchPayloadCollections(loc),
+    ['payload-collections', locale],
+    { revalidate: CATALOG_REVALIDATE, tags: ['catalog', 'collections', `collections:${locale}`] },
+  )(locale);
+}
 
 export async function getPayloadStoreCategories(): Promise<StoreCategory[]> {
   const collections = await getPayloadCollections();
@@ -849,6 +892,7 @@ export async function getPayloadProductsByIds(
   const unique = Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)));
   if (unique.length === 0) return [];
 
+  const locale = await resolveLocale();
   const payload = await getPayloadClient();
   const result = await payload.find({
     collection: 'products',
@@ -856,6 +900,7 @@ export async function getPayloadProductsByIds(
     depth: 2,
     limit: unique.length,
     pagination: false,
+    locale,
   });
 
   const filter = options.requirePurchasable ? isPurchasableProduct : isVisibleProduct;
@@ -877,6 +922,7 @@ export async function loadPayloadProductDocsByIds(
   const unique = Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)));
   if (unique.length === 0) return [];
 
+  const locale = await resolveLocale();
   const payload = await getPayloadClient();
   const result = await payload.find({
     collection: 'products',
@@ -884,6 +930,7 @@ export async function loadPayloadProductDocsByIds(
     depth: 2,
     limit: unique.length,
     pagination: false,
+    locale,
   });
 
   const docs = pickDocs<PayloadProductDoc>(result);
