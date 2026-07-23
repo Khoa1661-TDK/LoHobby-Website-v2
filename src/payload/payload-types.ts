@@ -5719,7 +5719,7 @@ export interface StoreSetting {
   footerCredit?: string | null;
   footerShowNewsletter?: boolean | null;
   /**
-   * Shown as icon links in the footer. Leave empty to use env defaults.
+   * Shown as icon links in the footer.
    */
   socialLinks?:
     | {

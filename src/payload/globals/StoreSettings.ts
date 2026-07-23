@@ -1,5 +1,5 @@
 // src/payload/globals/StoreSettings.ts
-import type { GlobalAfterChangeHook, GlobalConfig } from 'payload';
+import type { Field, GlobalAfterChangeHook, GlobalConfig } from 'payload';
 import { payloadAdminAccess } from '@/lib/payload-access';
 import { revalidateStoreSettingsCache } from '@/lib/store-settings';
 import { FONT_PRESET_VALUES, FONT_PRESETS } from '@/lib/store-fonts';
@@ -12,6 +12,112 @@ const invalidateOnChange: GlobalAfterChangeHook = ({ doc }) => {
   }
   return doc;
 };
+
+// Flat field groups shared with the visual Site editor (/build/header). Exported so
+// describeFieldsAsSchema can drive the page-builder FieldRenderer from these exact
+// definitions (single source of truth). Kept FLAT — describeField does not recurse
+// `row`, so the admin tabs below wrap subsets in rows for layout instead.
+export const brandingIdentityFields: Field[] = [
+  {
+    name: 'storeName',
+    type: 'text',
+    label: 'Store name',
+    admin: {
+      hidden: true,
+      description: 'Used in navbar, SEO, and hero when no custom hero title is set.',
+    },
+  },
+  {
+    name: 'storeSubtitle',
+    type: 'text',
+    label: 'Store subtitle',
+    admin: {
+      hidden: true,
+      description: 'Optional line shown under the logo on marketing pages.',
+    },
+  },
+  { name: 'logo', type: 'upload', relationTo: 'media', label: 'Logo', admin: { hidden: true } },
+  {
+    name: 'logoDark',
+    type: 'upload',
+    relationTo: 'media',
+    label: 'Logo (dark mode)',
+    admin: { hidden: true, description: 'Optional. Falls back to main logo with invert filter.' },
+  },
+  { name: 'favicon', type: 'upload', relationTo: 'media', label: 'Favicon', admin: { hidden: true } },
+  {
+    name: 'storeDescription',
+    type: 'textarea',
+    label: 'SEO description',
+    admin: { hidden: true },
+  },
+  {
+    name: 'storeDescriptionShort',
+    type: 'text',
+    label: 'Short description',
+    admin: { hidden: true, description: 'PWA manifest, welcome toast, and compact UI.' },
+  },
+];
+
+export const footerContentFields: Field[] = [
+  { name: 'footerTagline', type: 'text', label: 'Footer tagline', admin: { hidden: true } },
+  {
+    name: 'brandOrigin',
+    type: 'text',
+    label: 'Origin / badge line',
+    admin: { hidden: true, description: 'Small uppercase line in the footer (e.g. "Made in Vietnam").' },
+  },
+  {
+    name: 'footerDescription',
+    type: 'textarea',
+    label: 'Footer description',
+    admin: {
+      hidden: true,
+      description: 'Short blurb in the footer about column. Falls back to short store description.',
+    },
+  },
+  {
+    name: 'footerCredit',
+    type: 'text',
+    label: 'Footer credit line',
+    admin: { hidden: true, description: 'Optional small print at the bottom (e.g. agency credit).' },
+  },
+  {
+    name: 'footerShowNewsletter',
+    type: 'checkbox',
+    label: 'Show newsletter signup',
+    defaultValue: true,
+    admin: { hidden: true },
+  },
+  {
+    name: 'contactEmail',
+    type: 'email',
+    label: 'Contact email',
+    admin: { hidden: true },
+  },
+  {
+    name: 'contactPhone',
+    type: 'text',
+    label: 'Contact phone',
+    admin: { hidden: true },
+  },
+  {
+    name: 'contactAddress',
+    type: 'textarea',
+    label: 'Contact / business address',
+    admin: { hidden: true },
+  },
+  {
+    name: 'socialLinks',
+    type: 'array',
+    label: 'Social profiles',
+    admin: { hidden: true, description: 'Shown as icon links in the footer.' },
+    fields: [
+      { name: 'label', type: 'text', required: true, label: 'Platform' },
+      { name: 'url', type: 'text', required: true, label: 'URL' },
+    ],
+  },
+];
 
 export const StoreSettings: GlobalConfig = {
   slug: 'store-settings',
@@ -34,65 +140,20 @@ export const StoreSettings: GlobalConfig = {
       tabs: [
         {
           label: 'Logo',
+          description: 'Store name, logo, favicon, and SEO text are edited in the visual Site editor (Build → Header → Branding).',
           fields: [
-            {
-              name: 'storeName',
-              type: 'text',
-              label: 'Store name',
-              admin: {
-                description: 'Used in navbar, SEO, and hero when no custom hero title is set.',
-              },
-            },
-            {
-              name: 'storeSubtitle',
-              type: 'text',
-              label: 'Store subtitle',
-              admin: {
-                description: 'Optional line shown under the logo on marketing pages.',
-              },
-            },
+            brandingIdentityFields[0]!, // storeName
+            brandingIdentityFields[1]!, // storeSubtitle
             {
               type: 'row',
               fields: [
-                {
-                  name: 'logo',
-                  type: 'upload',
-                  relationTo: 'media',
-                  label: 'Logo',
-                  admin: { width: '33%' },
-                },
-                {
-                  name: 'logoDark',
-                  type: 'upload',
-                  relationTo: 'media',
-                  label: 'Logo (dark mode)',
-                  admin: {
-                    width: '33%',
-                    description: 'Optional. Falls back to main logo with invert filter.',
-                  },
-                },
-                {
-                  name: 'favicon',
-                  type: 'upload',
-                  relationTo: 'media',
-                  label: 'Favicon',
-                  admin: { width: '33%' },
-                },
+                { ...brandingIdentityFields[2]!, admin: { ...brandingIdentityFields[2]!.admin, width: '33%' } } as Field,
+                { ...brandingIdentityFields[3]!, admin: { ...brandingIdentityFields[3]!.admin, width: '33%' } } as Field,
+                { ...brandingIdentityFields[4]!, admin: { ...brandingIdentityFields[4]!.admin, width: '33%' } } as Field,
               ],
             },
-            {
-              name: 'storeDescription',
-              type: 'textarea',
-              label: 'SEO description',
-            },
-            {
-              name: 'storeDescriptionShort',
-              type: 'text',
-              label: 'Short description',
-              admin: {
-                description: 'PWA manifest, welcome toast, and compact UI.',
-              },
-            },
+            brandingIdentityFields[5]!, // storeDescription
+            brandingIdentityFields[6]!, // storeDescriptionShort
           ],
         },
         {
@@ -223,86 +284,26 @@ export const StoreSettings: GlobalConfig = {
         },
         {
           label: 'Footer',
-          fields: [
-            {
-              name: 'footerTagline',
-              type: 'text',
-              label: 'Footer tagline',
-            },
-            {
-              name: 'brandOrigin',
-              type: 'text',
-              label: 'Origin / badge line',
-              admin: {
-                description: 'Small uppercase line in the footer (e.g. "Made in Vietnam").',
-              },
-            },
-            {
-              name: 'footerDescription',
-              type: 'textarea',
-              label: 'Footer description',
-              admin: {
-                description: 'Short blurb in the footer about column. Falls back to short store description.',
-              },
-            },
-            {
-              name: 'footerCredit',
-              type: 'text',
-              label: 'Footer credit line',
-              admin: {
-                description: 'Optional small print at the bottom (e.g. agency credit).',
-              },
-            },
-            {
-              name: 'footerShowNewsletter',
-              type: 'checkbox',
-              label: 'Show newsletter signup',
-              defaultValue: true,
-            },
-          ],
+          description: 'Footer text is edited in the visual Site editor (Build → Header → Footer).',
+          fields: footerContentFields.slice(0, 5),
         },
         {
           label: 'Social links',
-          fields: [
-            {
-              name: 'socialLinks',
-              type: 'array',
-              label: 'Social profiles',
-              admin: {
-                description: 'Shown as icon links in the footer. Leave empty to use env defaults.',
-              },
-              fields: [
-                { name: 'label', type: 'text', required: true, label: 'Platform' },
-                { name: 'url', type: 'text', required: true, label: 'URL' },
-              ],
-            },
-          ],
+          description: 'Social profiles are edited in the visual Site editor (Build → Header → Footer).',
+          fields: [footerContentFields[8]!], // socialLinks
         },
         {
           label: 'Contact & checkout',
+          description: 'Email, phone, and address are edited in the visual Site editor (Build → Header → Footer); other fields remain here.',
           fields: [
             {
               type: 'row',
               fields: [
-                {
-                  name: 'contactEmail',
-                  type: 'email',
-                  label: 'Contact email',
-                  admin: { width: '50%' },
-                },
-                {
-                  name: 'contactPhone',
-                  type: 'text',
-                  label: 'Contact phone',
-                  admin: { width: '50%' },
-                },
+                { ...footerContentFields[5]!, admin: { ...footerContentFields[5]!.admin, width: '50%' } } as Field, // contactEmail
+                { ...footerContentFields[6]!, admin: { ...footerContentFields[6]!.admin, width: '50%' } } as Field, // contactPhone
               ],
             },
-            {
-              name: 'contactAddress',
-              type: 'textarea',
-              label: 'Contact / business address',
-            },
+            footerContentFields[7]!, // contactAddress
             {
               name: 'currencyCode',
               type: 'text',

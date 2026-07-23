@@ -21,6 +21,7 @@ export default defineConfig({
             'app/**/__tests__/**/*.test.ts',
             'components/**/__tests__/**/*.test.ts',
             'scripts/__tests__/**/*.test.ts',
+            'src/**/__tests__/**/*.test.ts',
           ],
           setupFiles: ['lib/__tests__/vitest-setup.ts'],
         },
