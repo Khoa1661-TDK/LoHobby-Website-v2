@@ -5595,7 +5595,7 @@ export interface SiteHeader {
 export interface Navigation {
   id: number;
   /**
-   * Link columns rendered in the storefront footer (e.g. Support, Policies).
+   * Footer link columns are edited in the visual Site editor (Build → Header → Footer).
    */
   footerMenu?:
     | {
