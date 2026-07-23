@@ -15,6 +15,7 @@ import { type Locale } from '@/i18n/routing';
 import { Navbar } from '@/components/layout/navbar';
 import Footer from '@/components/layout/footer';
 import Providers from '@/components/providers';
+import AnnouncementBanner from '@/components/layout/announcement-banner';
 
 type Props = { params: Promise<{ locale: Locale }> };
 
@@ -40,6 +41,7 @@ export default async function ChromePreviewPage(props: Props): Promise<ReactElem
       <Providers branding={branding}>
         <div className="flex min-h-screen flex-col bg-white">
           <Navbar />
+          <AnnouncementBanner />
           <div className="flex flex-1 items-center justify-center px-6 py-24 text-center text-sm text-warm-400">
             Storefront content renders here. Edit the header and footer in the panel →
           </div>
