@@ -37,6 +37,13 @@ export default function FilterItemDropdown({ list }: { list: ListItem[] }): Reac
     });
   }, [pathname, list, searchParams, t]);
 
+  const first = list[0];
+  const firstLabel = first
+    ? 'path' in first
+      ? first.title
+      : t(`sort.${first.labelKey}` as Parameters<typeof t>[0])
+    : '';
+
   const toggle = (): void => {
     setOpenSelect((wasOpen) => {
       if (wasOpen) return false;
@@ -54,7 +61,7 @@ export default function FilterItemDropdown({ list }: { list: ListItem[] }): Reac
         onClick={toggle}
         className="flex w-full items-center justify-between rounded-xl border border-warm-200/80 bg-white px-4 py-2.5 text-sm text-warm-700 transition-all duration-200 hover:border-warm-300/80 hover:shadow-soft-sm dark:border-warm-800/60 dark:bg-warm-900 dark:text-warm-300 dark:hover:border-warm-700/60"
       >
-        <span>{active}</span>
+        <span>{active || firstLabel}</span>
         <ChevronDownIcon
           className={clsx(
             'h-4 text-warm-400 transition-transform duration-200 ease-smooth',
