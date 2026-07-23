@@ -2,15 +2,15 @@
 // Postgres-backed binary store for Payload media uploads. The shared DB is the
 // source of truth for media bytes; Payload's `media` collection keeps metadata.
 //
-// This module is reachable from payload.config.ts (via the storage adapter), so
-// it runs under plain tsx — `payload generate:importmap`, `payload migrate`, and
-// every seed in scripts/ — not just inside Next. Importing 'server-only' throws
-// everywhere except under Next's `react-server` condition, so this module must
-// reach Prisma through './prisma-client' (unguarded) rather than './prisma'.
-// Importing it lazily is NOT enough: a lazy import still loads 'server-only'
-// when the function is first called, which turned every media upload during
-// `scripts/seed-shopee-catalog.ts` into "This module cannot be imported from a
-// Client Component module" and left the catalog seeded with zero products.
+// Talks to Postgres directly via `pg` (no Prisma). The media path is being kept
+// off Prisma deliberately, so this module owns a small `pg.Pool` on DATABASE_URL
+// rather than reaching into the Prisma client. It stays free of any
+// `import 'server-only'` (directly or transitively): it is reachable from
+// payload.config.ts through the storage adapter, so it runs under plain tsx —
+// `payload generate:importmap`, `payload migrate`, and every seed in scripts/ —
+// not just inside Next, and `server-only` throws everywhere except under Next's
+// `react-server` condition.
+import { Pool } from 'pg';
 
 export const MAX_MEDIA_FILE_BYTES = 25 * 1024 * 1024;
 
@@ -21,9 +21,20 @@ export interface StoredMediaFile {
   data: Uint8Array;
 }
 
-async function db() {
-  const { prisma } = await import('./prisma-client');
-  return prisma;
+// Reuse a single pool across HMR reloads / repeated script imports so we don't
+// leak connections (mirrors the Prisma singleton pattern this replaced).
+const globalForPool = globalThis as unknown as { mediaFilePool?: Pool };
+
+function pool(): Pool {
+  if (globalForPool.mediaFilePool) return globalForPool.mediaFilePool;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is not set');
+  }
+  // Small pool: this store handles occasional media reads/writes, not hot paths.
+  const created = new Pool({ connectionString, max: 4 });
+  globalForPool.mediaFilePool = created;
+  return created;
 }
 
 export async function upsertMediaFile(input: {
@@ -36,34 +47,47 @@ export async function upsertMediaFile(input: {
       `Media file "${input.filename}" is ${input.data.byteLength} bytes; the database store caps files at ${MAX_MEDIA_FILE_BYTES} bytes`,
     );
   }
-  // Prisma 7 types Bytes as Uint8Array<ArrayBuffer>; copy once so Buffer-backed
-  // inputs (ArrayBufferLike) satisfy it without casting. Inputs are ≤ 25 MB.
-  const bytes = new Uint8Array(input.data);
-  const prisma = await db();
-  await prisma.mediaFile.upsert({
-    where: { filename: input.filename },
-    create: {
-      filename: input.filename,
-      mimeType: input.mimeType,
-      size: input.data.byteLength,
-      data: bytes,
-    },
-    update: {
-      mimeType: input.mimeType,
-      size: input.data.byteLength,
-      data: bytes,
-    },
-  });
+  // pg maps a Buffer to bytea. "updatedAt" is NOT NULL with no DB default (it was
+  // Prisma's @updatedAt), so set it explicitly on both insert and update.
+  const buffer = Buffer.from(input.data);
+  await pool().query(
+    `INSERT INTO "MediaFile" (filename, "mimeType", size, data, "updatedAt")
+     VALUES ($1, $2, $3, $4, now())
+     ON CONFLICT (filename) DO UPDATE SET
+       "mimeType" = EXCLUDED."mimeType",
+       size       = EXCLUDED.size,
+       data       = EXCLUDED.data,
+       "updatedAt" = now()`,
+    [input.filename, input.mimeType, input.data.byteLength, buffer],
+  );
 }
 
 export async function deleteMediaFile(filename: string): Promise<void> {
-  const prisma = await db();
-  await prisma.mediaFile.deleteMany({ where: { filename } });
+  await pool().query(`DELETE FROM "MediaFile" WHERE filename = $1`, [filename]);
 }
 
 export async function getMediaFile(filename: string): Promise<StoredMediaFile | null> {
-  const prisma = await db();
-  const row = await prisma.mediaFile.findUnique({ where: { filename } });
+  const { rows } = await pool().query<{
+    filename: string;
+    mimeType: string;
+    size: number;
+    data: Buffer;
+  }>(`SELECT filename, "mimeType", size, data FROM "MediaFile" WHERE filename = $1`, [filename]);
+  const row = rows[0];
   if (!row) return null;
-  return { filename: row.filename, mimeType: row.mimeType, size: row.size, data: row.data };
+  return {
+    filename: row.filename,
+    mimeType: row.mimeType,
+    size: row.size,
+    data: new Uint8Array(row.data),
+  };
+}
+
+// Cheap existence check (no bytes fetched) — used by the media-binary backfill
+// to skip rows already restored without loading their data.
+export async function hasMediaFile(filename: string): Promise<boolean> {
+  const { rowCount } = await pool().query(`SELECT 1 FROM "MediaFile" WHERE filename = $1`, [
+    filename,
+  ]);
+  return (rowCount ?? 0) > 0;
 }

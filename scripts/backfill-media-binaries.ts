@@ -100,8 +100,7 @@ async function main(): Promise<void> {
   console.log(`[media] ${media.length} media records`);
 
   // 3. Match each media row to a source URL; download + upsert the bytes.
-  const { upsertMediaFile } = await import('@/lib/media-file-store');
-  const { prisma } = await import('@/lib/prisma-client');
+  const { upsertMediaFile, hasMediaFile } = await import('@/lib/media-file-store');
 
   const matched: { filename: string; mimeType: string; url: string }[] = [];
   const unmatchedNames: string[] = [];
@@ -122,11 +121,7 @@ async function main(): Promise<void> {
       await Promise.all(
         batch.map(async (m) => {
           // Cheap idempotency: skip rows already backfilled (safe to re-run).
-          const present = await prisma.mediaFile.findUnique({
-            where: { filename: m.filename },
-            select: { filename: true },
-          });
-          if (present) {
+          if (await hasMediaFile(m.filename)) {
             already += 1;
             return;
           }
