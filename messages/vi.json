@@ -96,6 +96,8 @@
     "viewVideoAria": "Xem video sản phẩm",
     "viewImageAria": "Xem ảnh sản phẩm",
     "viewDetails": "Xem chi tiết",
+    "badgeNew": "Mới",
+    "badgeSoldOut": "Hết hàng",
     "recentlyViewed": "Đã xem gần đây",
     "reviewsHeading": "Đánh giá",
     "reviewsRating": "{average} / 5 · {count, plural, =0 {} one {# đánh giá} other {# đánh giá}}",

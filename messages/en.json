@@ -96,6 +96,8 @@
     "viewVideoAria": "View product video",
     "viewImageAria": "View product image",
     "viewDetails": "View details",
+    "badgeNew": "New",
+    "badgeSoldOut": "Sold out",
     "recentlyViewed": "Recently viewed",
     "reviewsHeading": "Reviews",
     "reviewsRating": "{average} / 5 · {count, plural, =0 {} one {# review} other {# reviews}}",

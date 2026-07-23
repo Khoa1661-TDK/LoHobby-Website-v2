@@ -64,11 +64,6 @@ export function getProductBadge(tags: string[]): ProductBadge | null {
   return null;
 }
 
-export const BADGE_LABELS: Record<ProductBadge, string> = {
-  new: 'Mới',
-  'sold-out': 'Hết hàng',
-};
-
 export const BADGE_STYLES: Record<ProductBadge, string> = {
   new: 'bg-orange-500 text-white',
   'sold-out': 'bg-neutral-500 text-white',

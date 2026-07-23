@@ -7,7 +7,6 @@ import Price from '@/components/price';
 import WishlistButton from '@/components/wishlist/wishlist-button';
 import ProductCardTracker from '@/components/product/product-card-tracker';
 import {
-  BADGE_LABELS,
   BADGE_STYLES,
   getDiscountPercent,
   getProductBadge,
@@ -19,14 +18,6 @@ type Props = {
   product: Product;
   priority?: boolean;
   index?: number;
-};
-
-const BADGE_CLASSES: Record<string, string> = {
-  'new-arrival': 'bg-warm-900 text-warm-50 dark:bg-warm-100 dark:text-warm-900',
-  'best-seller': 'bg-warm-900 text-warm-50 dark:bg-warm-100 dark:text-warm-900',
-  'limited-edition': 'bg-warm-800 text-warm-100 dark:bg-warm-200 dark:text-warm-900',
-  'pre-order': 'bg-warm-600 text-white dark:bg-warm-300 dark:text-warm-900',
-  'sold-out': 'bg-warm-400 text-white dark:bg-warm-700 dark:text-warm-300',
 };
 
 export default function ProductCard({ product, priority, index = 0 }: Props): ReactElement {
@@ -70,11 +61,9 @@ export default function ProductCard({ product, priority, index = 0 }: Props): Re
         {/* Product badge */}
         {badge && !discountPercent ? (
           <span
-            className={`absolute left-3 top-3 z-10 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider shadow-sm ${
-              BADGE_CLASSES[badge] ?? 'bg-warm-200 text-warm-700'
-            }`}
+            className={`absolute left-3 top-3 z-10 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider shadow-sm ${BADGE_STYLES[badge]}`}
           >
-            {BADGE_LABELS[badge]}
+            {t(badge === 'new' ? 'badgeNew' : 'badgeSoldOut')}
           </span>
         ) : null}
 
