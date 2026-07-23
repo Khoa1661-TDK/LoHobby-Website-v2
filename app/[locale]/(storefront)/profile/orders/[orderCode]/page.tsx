@@ -123,7 +123,9 @@ export default async function OrderDetailPage(props: { params: Params }): Promis
               ? 'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200'
               : order.orderStatus === 'delivered'
                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200'
-                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200'
+                : order.orderStatus === 'shipped'
+                  ? 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-200'
+                  : 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200'
           }`}
         >
           {ts(orderStatusLabelKey(status))}
