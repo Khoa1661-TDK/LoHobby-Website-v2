@@ -26,6 +26,13 @@ export type ShippingQuote = {
 
 type DeliveryMethod = 'SHIPMENT' | 'PICKUP';
 
+/** Error shape for {@link computeShippingQuote}. `code` maps to `checkout.apiErrors`. */
+export type ShippingQuoteError = {
+  /** Vietnamese fallback / log message; the checkout route localizes via `code`. */
+  error: string;
+  code: 'pickupUnavailable' | 'shipmentUnavailable';
+};
+
 export function extractShippingRegion(address: string | null | undefined): string | null {
   if (typeof address !== 'string' || address.trim().length === 0) return null;
   const parts = address
@@ -78,10 +85,10 @@ export function computeShippingQuote(
   deliveryMethod: DeliveryMethod,
   subtotalVnd: number,
   shippingRegion?: string | null,
-): ShippingQuote | { error: string } {
+): ShippingQuote | ShippingQuoteError {
   if (deliveryMethod === 'PICKUP') {
     if (!settings.pickupEnabled) {
-      return { error: 'Nhận tại cửa hàng hiện không khả dụng.' };
+      return { error: 'Nhận tại cửa hàng hiện không khả dụng.', code: 'pickupUnavailable' };
     }
     return {
       shippingAmount: 0,
@@ -92,7 +99,7 @@ export function computeShippingQuote(
   }
 
   if (!settings.shipmentEnabled) {
-    return { error: 'Giao hàng tận nhà hiện không khả dụng.' };
+    return { error: 'Giao hàng tận nhà hiện không khả dụng.', code: 'shipmentUnavailable' };
   }
 
   const rates = resolveRates(settings, shippingRegion);

@@ -9,7 +9,21 @@ export type CouponValidationResult =
       discountAmount: number;
       normalizedCode: string;
     }
-  | { ok: false; message: string };
+  | {
+      ok: false;
+      /** Vietnamese fallback / log message; the checkout route localizes via `code`. */
+      message: string;
+      /** Stable key under the `checkout.apiErrors` namespace for locale-aware display. */
+      code:
+        | 'couponEmpty'
+        | 'couponInvalid'
+        | 'couponExpired'
+        | 'couponMaxUses'
+        | 'couponMinOrder'
+        | 'couponNotApplicable';
+      /** ICU values for the localized message (e.g. `couponMinOrder`'s `amount`). */
+      params?: Record<string, string | number>;
+    };
 
 function normalizeCode(code: string): string {
   return code.trim().toUpperCase();
@@ -25,7 +39,7 @@ export async function validateCoupon(
 ): Promise<CouponValidationResult> {
   const normalizedCode = normalizeCode(rawCode);
   if (normalizedCode.length === 0) {
-    return { ok: false, message: 'Vui lòng nhập mã giảm giá.' };
+    return { ok: false, message: 'Vui lòng nhập mã giảm giá.', code: 'couponEmpty' };
   }
 
   const coupon = await prisma.coupon.findUnique({
@@ -33,27 +47,30 @@ export async function validateCoupon(
   });
 
   if (!coupon || !coupon.enabled) {
-    return { ok: false, message: 'Mã giảm giá không hợp lệ hoặc đã hết hạn.' };
+    return { ok: false, message: 'Mã giảm giá không hợp lệ hoặc đã hết hạn.', code: 'couponInvalid' };
   }
 
   if (coupon.expiresAt && coupon.expiresAt < new Date()) {
-    return { ok: false, message: 'Mã giảm giá đã hết hạn.' };
+    return { ok: false, message: 'Mã giảm giá đã hết hạn.', code: 'couponExpired' };
   }
 
   if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
-    return { ok: false, message: 'Mã giảm giá đã được sử dụng hết lượt.' };
+    return { ok: false, message: 'Mã giảm giá đã được sử dụng hết lượt.', code: 'couponMaxUses' };
   }
 
   if (subtotalVnd < coupon.minOrderAmount) {
+    const amount = `${coupon.minOrderAmount.toLocaleString('vi-VN')}₫`;
     return {
       ok: false,
-      message: `Đơn tối thiểu ${coupon.minOrderAmount.toLocaleString('vi-VN')}₫ để dùng mã này.`,
+      message: `Đơn tối thiểu ${amount} để dùng mã này.`,
+      code: 'couponMinOrder',
+      params: { amount },
     };
   }
 
   const discountAmount = computeDiscountAmount(coupon, subtotalVnd);
   if (discountAmount <= 0) {
-    return { ok: false, message: 'Mã giảm giá không áp dụng cho đơn này.' };
+    return { ok: false, message: 'Mã giảm giá không áp dụng cho đơn này.', code: 'couponNotApplicable' };
   }
 
   return { ok: true, coupon, discountAmount, normalizedCode };

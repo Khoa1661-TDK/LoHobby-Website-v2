@@ -171,11 +171,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
-  const gate = await requireVerifiedCheckoutUser(userId);
-  if (!gate.ok) {
-    return NextResponse.json({ error: gate.error }, { status: gate.status });
-  }
-
   const raw: unknown = await req.json().catch(() => null);
   const rawLocale =
     typeof raw === 'object' && raw !== null
@@ -183,6 +178,14 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
       : undefined;
   const locale = typeof rawLocale === 'string' ? rawLocale : 'vi';
   const te = await getTranslations({ locale, namespace: 'checkout.apiErrors' });
+
+  const gate = await requireVerifiedCheckoutUser(userId);
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: te(gate.code as Parameters<typeof te>[0]) },
+      { status: gate.status },
+    );
+  }
 
   const body = parseBody(raw);
   if (!body) {
@@ -211,7 +214,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
     shippingRegion,
   );
   if ('error' in shippingQuote) {
-    return NextResponse.json({ error: shippingQuote.error }, { status: 400 });
+    return NextResponse.json(
+      { error: te(shippingQuote.code as Parameters<typeof te>[0]) },
+      { status: 400 },
+    );
   }
 
   if (body.deliveryMethod === 'SHIPMENT' && shippingAddress.length === 0) {
@@ -270,7 +276,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
     shippingRegion,
   );
   if ('error' in shippingRecalc) {
-    return NextResponse.json({ error: shippingRecalc.error }, { status: 400 });
+    return NextResponse.json(
+      { error: te(shippingRecalc.code as Parameters<typeof te>[0]) },
+      { status: 400 },
+    );
   }
   const shippingAmount = shippingRecalc.shippingAmount;
 
@@ -281,7 +290,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
   if (body.couponCode) {
     const couponResult = await validateCoupon(body.couponCode, subtotal);
     if (!couponResult.ok) {
-      return NextResponse.json({ error: couponResult.message }, { status: 400 });
+      return NextResponse.json(
+        { error: te(couponResult.code as Parameters<typeof te>[0], couponResult.params) },
+        { status: 400 },
+      );
     }
     discountAmount = couponResult.discountAmount;
     couponCode = couponResult.normalizedCode;
@@ -302,7 +314,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckoutRespo
     }
     const giftResult = await validateGiftCard(body.giftCardCode, totalBeforeGiftCard);
     if (!giftResult.ok) {
-      return NextResponse.json({ error: giftResult.message }, { status: 400 });
+      return NextResponse.json(
+        { error: te(giftResult.code as Parameters<typeof te>[0]) },
+        { status: 400 },
+      );
     }
     giftCardAmount = giftResult.appliedAmount;
     giftCardCode = giftResult.normalizedCode;

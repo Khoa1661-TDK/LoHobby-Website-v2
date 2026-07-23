@@ -295,7 +295,22 @@
       "paymentUnavailable": "Hình thức thanh toán không khả dụng.",
       "gatewayNotConfigured": "Cổng thanh toán chưa được cấu hình.",
       "linkFailed": "Không thể tạo liên kết thanh toán.",
-      "orderCodeFailed": "Không thể tạo mã đơn hàng"
+      "orderCodeFailed": "Không thể tạo mã đơn hàng",
+      "authRequired": "Vui lòng đăng nhập để thanh toán.",
+      "emailUnverified": "Vui lòng xác minh email trước khi thanh toán.",
+      "pickupUnavailable": "Nhận tại cửa hàng hiện không khả dụng.",
+      "shipmentUnavailable": "Giao hàng tận nhà hiện không khả dụng.",
+      "couponEmpty": "Vui lòng nhập mã giảm giá.",
+      "couponInvalid": "Mã giảm giá không hợp lệ hoặc đã hết hạn.",
+      "couponExpired": "Mã giảm giá đã hết hạn.",
+      "couponMaxUses": "Mã giảm giá đã được sử dụng hết lượt.",
+      "couponMinOrder": "Đơn tối thiểu {amount} để dùng mã này.",
+      "couponNotApplicable": "Mã giảm giá không áp dụng cho đơn này.",
+      "giftCardInvalid": "Mã thẻ quà tặng không hợp lệ.",
+      "giftCardDisabled": "Thẻ quà tặng không hợp lệ hoặc đã bị vô hiệu hóa.",
+      "giftCardExpired": "Thẻ quà tặng đã hết hạn.",
+      "giftCardNoBalance": "Thẻ quà tặng đã hết số dư.",
+      "giftCardNotApplicable": "Thẻ quà tặng không áp dụng cho đơn này."
     }
   },
   "auth": {

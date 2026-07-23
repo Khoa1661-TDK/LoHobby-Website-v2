@@ -11,7 +11,18 @@ export type GiftCardValidationResult =
       appliedAmount: number;
       normalizedCode: string;
     }
-  | { ok: false; message: string };
+  | {
+      ok: false;
+      /** Vietnamese fallback / log message; the checkout route localizes via `code`. */
+      message: string;
+      /** Stable key under the `checkout.apiErrors` namespace for locale-aware display. */
+      code:
+        | 'giftCardInvalid'
+        | 'giftCardDisabled'
+        | 'giftCardExpired'
+        | 'giftCardNoBalance'
+        | 'giftCardNotApplicable';
+    };
 
 function normalizeCode(code: string): string {
   return code.trim().toUpperCase().replace(/\s+/g, '');
@@ -27,7 +38,7 @@ export async function validateGiftCard(
 ): Promise<GiftCardValidationResult> {
   const normalizedCode = normalizeCode(rawCode);
   if (normalizedCode.length < 4) {
-    return { ok: false, message: 'Mã thẻ quà tặng không hợp lệ.' };
+    return { ok: false, message: 'Mã thẻ quà tặng không hợp lệ.', code: 'giftCardInvalid' };
   }
 
   const giftCard = await prisma.giftCard.findUnique({
@@ -35,25 +46,29 @@ export async function validateGiftCard(
   });
 
   if (!giftCard || !giftCard.enabled) {
-    return { ok: false, message: 'Thẻ quà tặng không hợp lệ hoặc đã bị vô hiệu hóa.' };
+    return {
+      ok: false,
+      message: 'Thẻ quà tặng không hợp lệ hoặc đã bị vô hiệu hóa.',
+      code: 'giftCardDisabled',
+    };
   }
 
   if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
-    return { ok: false, message: 'Thẻ quà tặng đã hết hạn.' };
+    return { ok: false, message: 'Thẻ quà tặng đã hết hạn.', code: 'giftCardExpired' };
   }
 
   if (giftCard.balance <= 0) {
-    return { ok: false, message: 'Thẻ quà tặng đã hết số dư.' };
+    return { ok: false, message: 'Thẻ quà tặng đã hết số dư.', code: 'giftCardNoBalance' };
   }
 
   const payable = Math.max(0, Math.round(orderTotalBeforeGiftCardVnd));
   if (payable <= 0) {
-    return { ok: false, message: 'Thẻ quà tặng không áp dụng cho đơn này.' };
+    return { ok: false, message: 'Thẻ quà tặng không áp dụng cho đơn này.', code: 'giftCardNotApplicable' };
   }
 
   const appliedAmount = Math.min(giftCard.balance, payable);
   if (appliedAmount <= 0) {
-    return { ok: false, message: 'Thẻ quà tặng không áp dụng cho đơn này.' };
+    return { ok: false, message: 'Thẻ quà tặng không áp dụng cho đơn này.', code: 'giftCardNotApplicable' };
   }
 
   return { ok: true, giftCard, appliedAmount, normalizedCode };

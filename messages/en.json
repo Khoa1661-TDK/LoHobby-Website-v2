@@ -295,7 +295,22 @@
       "paymentUnavailable": "That payment method is unavailable.",
       "gatewayNotConfigured": "The payment gateway is not configured.",
       "linkFailed": "Could not create the payment link.",
-      "orderCodeFailed": "Could not generate an order code."
+      "orderCodeFailed": "Could not generate an order code.",
+      "authRequired": "Please sign in to check out.",
+      "emailUnverified": "Please verify your email before checking out.",
+      "pickupUnavailable": "In-store pickup is currently unavailable.",
+      "shipmentUnavailable": "Home delivery is currently unavailable.",
+      "couponEmpty": "Please enter a discount code.",
+      "couponInvalid": "This discount code is invalid or has expired.",
+      "couponExpired": "This discount code has expired.",
+      "couponMaxUses": "This discount code has reached its usage limit.",
+      "couponMinOrder": "Minimum order {amount} to use this code.",
+      "couponNotApplicable": "This discount code doesn't apply to this order.",
+      "giftCardInvalid": "This gift card code is invalid.",
+      "giftCardDisabled": "This gift card is invalid or has been disabled.",
+      "giftCardExpired": "This gift card has expired.",
+      "giftCardNoBalance": "This gift card has no remaining balance.",
+      "giftCardNotApplicable": "This gift card doesn't apply to this order."
     }
   },
   "auth": {

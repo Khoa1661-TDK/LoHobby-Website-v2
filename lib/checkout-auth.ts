@@ -2,7 +2,16 @@
 import { isEmailVerificationRequired } from '@/lib/feature-flags';
 import { prisma } from '@/lib/prisma';
 
-export type CheckoutAuthResult = { ok: true } | { ok: false; status: 401 | 403; error: string };
+export type CheckoutAuthResult =
+  | { ok: true }
+  | {
+      ok: false;
+      status: 401 | 403;
+      /** Vietnamese fallback / log message; the checkout route localizes via `code`. */
+      error: string;
+      /** Stable key under the `checkout.apiErrors` namespace for locale-aware display. */
+      code: 'authRequired' | 'emailUnverified';
+    };
 
 /**
  * Enforces the checkout authorization boundary: a session is required, and
@@ -13,7 +22,7 @@ export type CheckoutAuthResult = { ok: true } | { ok: false; status: 401 | 403; 
  */
 export async function requireVerifiedCheckoutUser(userId: string | null): Promise<CheckoutAuthResult> {
   if (!userId) {
-    return { ok: false, status: 401, error: 'Vui lòng đăng nhập để thanh toán.' };
+    return { ok: false, status: 401, error: 'Vui lòng đăng nhập để thanh toán.', code: 'authRequired' };
   }
 
   if (!isEmailVerificationRequired()) {
@@ -22,7 +31,12 @@ export async function requireVerifiedCheckoutUser(userId: string | null): Promis
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true } });
   if (!user?.emailVerified) {
-    return { ok: false, status: 403, error: 'Vui lòng xác minh email trước khi thanh toán.' };
+    return {
+      ok: false,
+      status: 403,
+      error: 'Vui lòng xác minh email trước khi thanh toán.',
+      code: 'emailUnverified',
+    };
   }
 
   return { ok: true };
