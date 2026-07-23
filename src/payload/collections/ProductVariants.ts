@@ -85,6 +85,7 @@ export const ProductVariants: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+      localized: true,
       admin: {
         placeholder: 'e.g. Black / Linear switch',
         description: 'Label on the variant selector button.',

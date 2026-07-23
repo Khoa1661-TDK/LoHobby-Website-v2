@@ -70,6 +70,7 @@ export const Categories: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'slug',
@@ -92,6 +93,7 @@ export const Categories: CollectionConfig = {
     {
       name: 'subtitle',
       type: 'textarea',
+      localized: true,
       admin: {
         description: 'Short line shown on the homepage and category page heading.',
       },

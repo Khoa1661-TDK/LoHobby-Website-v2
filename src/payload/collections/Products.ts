@@ -358,6 +358,7 @@ export const Products: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'category',
@@ -437,6 +438,7 @@ export const Products: CollectionConfig = {
     {
       name: 'description',
       type: 'textarea',
+      localized: true,
     },
     {
       name: 'available',
