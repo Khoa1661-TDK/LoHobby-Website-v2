@@ -513,6 +513,7 @@
     },
     "filter": {
       "title": "Lọc",
+      "toggle": "Bộ lọc",
       "priceRange": "Khoảng giá (đ)",
       "from": "Từ",
       "to": "Đến",

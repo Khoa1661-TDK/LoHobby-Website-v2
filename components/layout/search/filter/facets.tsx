@@ -1,5 +1,6 @@
 'use client';
 
+import clsx from 'clsx';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState, type FormEvent, type ReactElement } from 'react';
@@ -10,6 +11,7 @@ export default function Facets(): ReactElement {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [priceMin, setPriceMin] = useState(searchParams.get('price_min') ?? '');
   const [priceMax, setPriceMax] = useState(searchParams.get('price_max') ?? '');
   const inStock = searchParams.get('in_stock') === '1';
@@ -59,7 +61,18 @@ export default function Facets(): ReactElement {
     inStock || Boolean(searchParams.get('price_min')) || Boolean(searchParams.get('price_max'));
 
   return (
-    <div className="hidden md:block">
+    <div>
+      <button
+        type="button"
+        aria-expanded={mobileOpen}
+        onClick={() => setMobileOpen((open) => !open)}
+        className="mb-3 flex w-full items-center justify-between rounded-xl border border-warm-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-warm-700 md:hidden dark:border-warm-800/60 dark:bg-warm-900 dark:text-warm-300"
+      >
+        {t('filter.toggle')}
+        <span aria-hidden>{mobileOpen ? '–' : '+'}</span>
+      </button>
+
+      <div className={clsx(mobileOpen ? 'block' : 'hidden', 'md:block')}>
       <h3 className="text-xs font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-400">
         {t('filter.title')}
       </h3>
@@ -116,6 +129,7 @@ export default function Facets(): ReactElement {
           {t('filter.clear')}
         </button>
       ) : null}
+      </div>
     </div>
   );
 }

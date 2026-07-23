@@ -513,6 +513,7 @@
     },
     "filter": {
       "title": "Filter",
+      "toggle": "Filters",
       "priceRange": "Price range (₫)",
       "from": "From",
       "to": "To",
