@@ -95,18 +95,9 @@ export default async function SearchPage(props: {
       <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100 sm:text-3xl">
         {trimmedQuery ? t('resultsCount', { count: filtered.length }) + ` "${trimmedQuery}"` : t('allProducts')}
       </h1>
-      {filtered.length > 0 ? (
+      {filtered.length > 0 && !trimmedQuery ? (
         <p className="mb-5 text-sm text-warm-500 dark:text-warm-400">
-          {trimmedQuery ? (
-            <>
-              {t('resultsCount', { count: filtered.length })}{' '}
-              <span className="font-semibold text-warm-900 dark:text-warm-100">
-                &quot;{trimmedQuery}&quot;
-              </span>
-            </>
-          ) : (
-            t('productCount', { count: filtered.length })
-          )}
+          {t('productCount', { count: filtered.length })}
         </p>
       ) : null}
       {filtered.length > 0 ? (
