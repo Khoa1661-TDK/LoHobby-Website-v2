@@ -24,6 +24,7 @@ import {
   createAddressAction,
   deleteAddressAction,
   setDefaultAddressAction,
+  updateAddressAction,
 } from '@/app/[locale]/(storefront)/profile/actions';
 import type { ProfileAddress } from '@/app/[locale]/(storefront)/profile/types';
 
@@ -35,24 +36,40 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
   const t = useTranslations('profile');
   const router = useRouter();
   const [open, setOpen] = useState<boolean>(false);
+  const [editing, setEditing] = useState<ProfileAddress | null>(null);
   const [creating, startCreate] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
 
   function close(): void {
     if (creating) return;
     setOpen(false);
+    setEditing(null);
   }
 
-  function handleCreate(event: FormEvent<HTMLFormElement>): void {
+  function openCreate(): void {
+    setEditing(null);
+    setOpen(true);
+  }
+
+  function openEdit(address: ProfileAddress): void {
+    setEditing(address);
+    setOpen(true);
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const isEdit = editing !== null;
     startCreate(async () => {
-      const result = await createAddressAction(formData);
+      const result = isEdit
+        ? await updateAddressAction(formData)
+        : await createAddressAction(formData);
       if (result.ok) {
         toast.success(t('addressSaved'));
         form.reset();
         setOpen(false);
+        setEditing(null);
         router.refresh();
       } else {
         toast.error(result.error);
@@ -97,7 +114,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
         </div>
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={openCreate}
           className="inline-flex items-center gap-2 rounded-full bg-filament-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-filament-600"
         >
           <PlusIcon className="h-4 w-4" aria-hidden="true" />
@@ -161,6 +178,14 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                 </p>
 
                 <div className="mt-auto flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(address)}
+                    disabled={busy}
+                    className="rounded-full border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
+                  >
+                    {t('editAddress')}
+                  </button>
                   {!address.isDefault && (
                     <button
                       type="button"
@@ -213,7 +238,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
               <DialogPanel className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-neutral-950">
                 <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
                   <DialogTitle className="text-base font-semibold">
-                    {t('newAddressTitle')}
+                    {editing ? t('editAddressTitle') : t('newAddressTitle')}
                   </DialogTitle>
                   <button
                     type="button"
@@ -225,13 +250,21 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                   </button>
                 </div>
 
-                <form onSubmit={handleCreate} className="space-y-4 p-6">
+                <form
+                  key={editing?.id ?? 'new'}
+                  onSubmit={handleSubmit}
+                  className="space-y-4 p-6"
+                >
+                  {editing ? (
+                    <input type="hidden" name="addressId" defaultValue={editing.id} />
+                  ) : null}
                   <DialogField label={t('labelField')} htmlFor="address-title">
                     <input
                       id="address-title"
                       name="title"
                       type="text"
                       required
+                      defaultValue={editing?.title ?? ''}
                       placeholder={t('labelPlaceholder')}
                       className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                     />
@@ -244,6 +277,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                         name="fullName"
                         type="text"
                         required
+                        defaultValue={editing?.fullName ?? ''}
                         autoComplete="name"
                         className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                       />
@@ -254,6 +288,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                         name="phone"
                         type="tel"
                         required
+                        defaultValue={editing?.phone ?? ''}
                         autoComplete="tel"
                         className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                       />
@@ -266,6 +301,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                       name="addressLine"
                       type="text"
                       required
+                      defaultValue={editing?.addressLine ?? ''}
                       autoComplete="street-address"
                       className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                     />
@@ -277,6 +313,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                         id="address-ward"
                         name="ward"
                         type="text"
+                        defaultValue={editing?.ward ?? ''}
                         className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                       />
                     </DialogField>
@@ -285,6 +322,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                         id="address-district"
                         name="district"
                         type="text"
+                        defaultValue={editing?.district ?? ''}
                         className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                       />
                     </DialogField>
@@ -294,6 +332,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                         name="city"
                         type="text"
                         required
+                        defaultValue={editing?.city ?? ''}
                         autoComplete="address-level2"
                         className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                       />
@@ -305,7 +344,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                       id="address-country"
                       name="country"
                       type="text"
-                      defaultValue="Việt Nam"
+                      defaultValue={editing?.country ?? 'Việt Nam'}
                       className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-filament-500 focus:outline-none focus:ring-2 focus:ring-filament-500/30 dark:border-neutral-700 dark:bg-neutral-900"
                     />
                   </DialogField>
@@ -314,6 +353,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                     <input
                       type="checkbox"
                       name="isDefault"
+                      defaultChecked={editing?.isDefault ?? false}
                       className="h-4 w-4 rounded border-neutral-300 text-filament-500 focus:ring-filament-500 dark:border-neutral-600 dark:bg-neutral-900"
                     />
                     {t('setAsDefaultCheckbox')}
@@ -333,7 +373,7 @@ export default function AddressesPanel({ addresses }: Props): ReactElement {
                       disabled={creating}
                       className="rounded-full bg-filament-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-filament-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {creating ? t('saving') : t('saveAddress')}
+                      {creating ? t('saving') : editing ? t('saveChanges') : t('saveAddress')}
                     </button>
                   </div>
                 </form>

@@ -421,6 +421,8 @@
     "processing": "Đang xử lý…",
     "deleteAddress": "Xóa",
     "newAddressTitle": "Thêm địa chỉ mới",
+    "editAddressTitle": "Sửa địa chỉ",
+    "editAddress": "Sửa",
     "close": "Đóng",
     "labelField": "Nhãn",
     "labelPlaceholder": "Nhà riêng, Văn phòng, Studio…",

@@ -147,6 +147,62 @@ export async function createAddressAction(formData: FormData): Promise<ActionRes
   return { ok: true };
 }
 
+export async function updateAddressAction(formData: FormData): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ok: false, error: 'Bạn cần đăng nhập.' };
+  }
+
+  const addressId = trimString(formData.get('addressId'), 64);
+  if (!addressId) return { ok: false, error: 'Địa chỉ không hợp lệ.' };
+
+  const title = trimString(formData.get('title'), MAX_TITLE);
+  const fullName = trimString(formData.get('fullName'), MAX_NAME);
+  const phone = trimString(formData.get('phone'), MAX_PHONE);
+  const addressLine = trimString(formData.get('addressLine'), MAX_TEXT);
+  const city = trimString(formData.get('city'), MAX_TEXT);
+  const ward = optionalString(formData.get('ward'), MAX_TEXT);
+  const district = optionalString(formData.get('district'), MAX_TEXT);
+  const country = trimString(formData.get('country'), MAX_TEXT) || 'Vietnam';
+  const isDefault = formData.get('isDefault') === 'on' || formData.get('isDefault') === 'true';
+
+  if (!title) return { ok: false, error: 'Vui lòng nhập nhãn địa chỉ.' };
+  if (!fullName) return { ok: false, error: 'Vui lòng nhập tên người nhận.' };
+  if (!phone) return { ok: false, error: 'Vui lòng nhập số điện thoại.' };
+  if (!addressLine) return { ok: false, error: 'Vui lòng nhập địa chỉ.' };
+  if (!city) return { ok: false, error: 'Vui lòng nhập tỉnh / thành phố.' };
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Ownership check: scope the update to this user's rows.
+      const owned = await tx.userAddress.findFirst({
+        where: { id: addressId, userId: session.user.id },
+        select: { id: true },
+      });
+      if (!owned) throw new Error('NOT_FOUND');
+
+      if (isDefault) {
+        await tx.userAddress.updateMany({
+          where: { userId: session.user.id, isDefault: true },
+          data: { isDefault: false },
+        });
+      }
+
+      await tx.userAddress.update({
+        where: { id: addressId },
+        data: { title, fullName, phone, addressLine, ward, district, city, country, isDefault },
+      });
+    });
+  } catch (error) {
+    logger.error({ err: error }, '[profile.updateAddressAction] failed');
+    return { ok: false, error: 'Không thể lưu địa chỉ.' };
+  }
+
+  revalidatePath('/profile');
+  revalidatePath('/checkout');
+  return { ok: true };
+}
+
 export async function deleteAddressAction(addressId: string): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user?.id) {

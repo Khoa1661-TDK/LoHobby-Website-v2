@@ -421,6 +421,8 @@
     "processing": "Processing…",
     "deleteAddress": "Delete",
     "newAddressTitle": "New address",
+    "editAddressTitle": "Edit address",
+    "editAddress": "Edit",
     "close": "Close",
     "labelField": "Label",
     "labelPlaceholder": "Home, Office, Studio…",
