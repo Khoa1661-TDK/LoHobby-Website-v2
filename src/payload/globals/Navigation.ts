@@ -1,5 +1,5 @@
 // src/payload/globals/Navigation.ts
-import type { GlobalAfterChangeHook, GlobalConfig } from 'payload';
+import type { Field, GlobalAfterChangeHook, GlobalConfig } from 'payload';
 import { payloadAdminAccess } from '@/lib/payload-access';
 import { revalidateNavigationCache } from '@/lib/navigation';
 
@@ -75,6 +75,21 @@ function columnMenuField(name: string, label: string, description: string) {
   };
 }
 
+// Exported for the visual Site editor (Build → Header → Footer). Hidden from the admin
+// form so the builder is the single editing surface; mobileMenu stays admin-editable.
+export const footerMenuField = {
+  ...columnMenuField(
+    'footerMenu',
+    'Footer menu',
+    'Link columns rendered in the storefront footer (e.g. Support, Policies).',
+  ),
+  admin: {
+    hidden: true,
+    initCollapsed: true,
+    description: 'Footer link columns are edited in the visual Site editor (Build → Header → Footer).',
+  },
+} as Field;
+
 export const Navigation: GlobalConfig = {
   slug: 'navigation',
   label: 'Navigation',
@@ -91,11 +106,7 @@ export const Navigation: GlobalConfig = {
     afterChange: [invalidateNavigationOnChange],
   },
   fields: [
-    columnMenuField(
-      'footerMenu',
-      'Footer menu',
-      'Link columns rendered in the storefront footer (e.g. Support, Policies).',
-    ),
+    footerMenuField,
     columnMenuField(
       'mobileMenu',
       'Mobile menu',
