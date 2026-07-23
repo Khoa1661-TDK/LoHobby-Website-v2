@@ -309,6 +309,7 @@ export default function VariantSelector({
       <div
         ref={stickyBarRef}
         aria-hidden={!showStickyBar}
+        inert={!showStickyBar}
         className={clsx(
           'fixed inset-x-0 bottom-0 z-30 border-t border-warm-200/80 bg-warm-50/95 px-4 py-3 backdrop-blur-xl transition-transform duration-300 lg:hidden dark:border-warm-800/50 dark:bg-warm-950/95',
           'pb-[max(0.75rem,env(safe-area-inset-bottom))]',
