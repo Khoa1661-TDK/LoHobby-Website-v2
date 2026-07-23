@@ -8,6 +8,7 @@ import {
   normalizeVariantDocs,
   type PayloadProductDoc,
 } from '@/lib/payload-products';
+import { CartStockError } from '@/lib/cart-error-messages';
 
 export type InventoryLine = {
   productId: string;
@@ -73,7 +74,10 @@ function buildVariantRows(doc: PayloadProductDoc): VariantRow[] {
  */
 export async function resolveCheckoutLines(
   lines: InventoryLine[],
-): Promise<{ ok: true; rows: ResolvedLinePrice[] } | { ok: false; message: string }> {
+): Promise<
+  | { ok: true; rows: ResolvedLinePrice[] }
+  | { ok: false; code: string; message: string; params?: { name?: string; stock?: number } }
+> {
   const productIds = [...new Set(lines.map((l) => l.productId))];
   const docs = await loadPayloadProductDocsByIds(productIds);
   const docMap = new Map(docs.map((d) => [String(d.id), d]));
@@ -83,7 +87,11 @@ export async function resolveCheckoutLines(
   for (const line of lines) {
     const doc = docMap.get(line.productId);
     if (!doc) {
-      return { ok: false, message: 'Một sản phẩm trong giỏ hàng không còn tồn tại.' };
+      return {
+        ok: false,
+        code: 'PRODUCT_NOT_FOUND',
+        message: 'Một sản phẩm trong giỏ hàng không còn tồn tại.',
+      };
     }
 
     const variants = buildVariantRows(doc);
@@ -96,20 +104,34 @@ export async function resolveCheckoutLines(
       if (!sku) {
         return {
           ok: false,
+          code: 'VARIANT_REQUIRED',
           message: `Vui lòng chọn biến thể cho "${title}".`,
+          params: { name: title },
         };
       }
       const match = variants.find((v) => v.sku === sku);
       if (!match) {
-        return { ok: false, message: `Biến thể không hợp lệ cho "${title}".` };
-      }
-      if (match.stock < qty) {
         return {
           ok: false,
-          message:
-            match.stock <= 0
-              ? `"${match.name}" đã hết hàng.`
-              : `"${match.name}" chỉ còn ${match.stock} sản phẩm.`,
+          code: 'INVALID_VARIANT',
+          message: `Biến thể không hợp lệ cho "${title}".`,
+          params: { name: title },
+        };
+      }
+      if (match.stock < qty) {
+        if (match.stock <= 0) {
+          return {
+            ok: false,
+            code: 'OUT_OF_STOCK',
+            message: `"${match.name}" đã hết hàng.`,
+            params: { name: match.name },
+          };
+        }
+        return {
+          ok: false,
+          code: 'INSUFFICIENT_STOCK',
+          message: `"${match.name}" chỉ còn ${match.stock} sản phẩm.`,
+          params: { name: match.name, stock: match.stock },
         };
       }
       resolved.push({
@@ -123,16 +145,28 @@ export async function resolveCheckoutLines(
       });
     } else {
       if (doc.available === false) {
-        return { ok: false, message: `"${title}" hiện không còn bán.` };
+        return {
+          ok: false,
+          code: 'PRODUCT_UNAVAILABLE',
+          message: `"${title}" hiện không còn bán.`,
+          params: { name: title },
+        };
       }
       const productStock = resolveProductStock(doc);
       if (productStock !== null && productStock < qty) {
+        if (productStock <= 0) {
+          return {
+            ok: false,
+            code: 'OUT_OF_STOCK',
+            message: `"${title}" đã hết hàng.`,
+            params: { name: title },
+          };
+        }
         return {
           ok: false,
-          message:
-            productStock <= 0
-              ? `"${title}" đã hết hàng.`
-              : `"${title}" chỉ còn ${productStock} sản phẩm.`,
+          code: 'INSUFFICIENT_STOCK',
+          message: `"${title}" chỉ còn ${productStock} sản phẩm.`,
+          params: { name: title, stock: productStock },
         };
       }
       const { price } = computeSalePrice(doc.price, doc);
@@ -163,7 +197,7 @@ export async function assertCartLineStock(
     { productId, variantSku: variantSku ?? null, quantity },
   ]);
   if (!result.ok) {
-    throw new Error(result.message);
+    throw new CartStockError(result.code, result.params);
   }
 }
 

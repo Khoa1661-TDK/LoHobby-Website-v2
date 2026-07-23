@@ -12,7 +12,7 @@ import {
 } from '@/lib/cart';
 import { mergeGuestCartIntoPersisted } from '@/lib/persisted-cart';
 import { syncStoreCustomerForUser } from '@/lib/store-customer-sync';
-import { cartErrorMessageKey } from '@/lib/cart-error-messages';
+import { cartErrorParams } from '@/lib/cart-error-messages';
 import { getTranslations } from 'next-intl/server';
 
 type ActionError = { error: string };
@@ -24,11 +24,8 @@ async function toUserError(
   error: unknown,
   fallbackKey: string,
 ): Promise<string> {
-  if (error instanceof Error) {
-    const key = cartErrorMessageKey(error.message);
-    if (key) return t(`errors.${key}`);
-    // Unknown code: never surface the raw Error message to the shopper.
-  }
+  const resolved = cartErrorParams(error);
+  if (resolved) return t(`errors.${resolved.key}`, resolved.params);
   return t(fallbackKey);
 }
 
