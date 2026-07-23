@@ -101,6 +101,12 @@ export default function ReviewForm({
         className="mt-3 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
       />
 
+      {rating === 0 ? (
+        <p className="mt-4 text-xs text-neutral-500 dark:text-neutral-400">
+          {t('reviewNeedsRating')}
+        </p>
+      ) : null}
+
       <button
         type="submit"
         disabled={isPending || rating === 0}

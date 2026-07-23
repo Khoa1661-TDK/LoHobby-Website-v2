@@ -116,6 +116,7 @@
     "reviewBodyPlaceholder": "Share your thoughts about the product…",
     "reviewSubmitting": "Submitting…",
     "reviewSubmit": "Submit review",
+    "reviewNeedsRating": "Select a star rating to post your review.",
     "reviewUpdateBtn": "Update",
     "starsAria": "{rating} out of 5 stars",
     "variantLabel": "Variant:",
