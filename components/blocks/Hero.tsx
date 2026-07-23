@@ -260,6 +260,7 @@ export default function HeroBlock(props: Props): ReactElement {
                       fill
                       className="object-cover"
                       sizes="(max-width: 1024px) 50vw, 25vw"
+                      priority={i < 2}
                     />
                   ) : (
                     <span
