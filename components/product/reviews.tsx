@@ -1,19 +1,16 @@
 import { Link } from '@/i18n/navigation';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import type { ReactElement } from 'react';
 import { auth } from '@/auth';
 import ReviewForm from '@/components/product/review-form';
 import Stars from '@/components/product/stars';
+import { formatReviewDate } from '@/lib/review-date';
 import {
   getApprovedReviews,
   getOwnReview,
   getReviewSummary,
   hasPurchasedProduct,
 } from '@/lib/reviews';
-
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString('vi-VN', { dateStyle: 'medium' });
-}
 
 export default async function ProductReviews({
   productId,
@@ -33,6 +30,7 @@ export default async function ProductReviews({
   ]);
 
   const t = await getTranslations('product');
+  const locale = await getLocale();
 
   return (
     <section className="py-8" aria-labelledby="reviews-heading">
@@ -67,7 +65,9 @@ export default async function ProductReviews({
                     <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                       {review.author}
                     </span>
-                    <span className="text-xs text-neutral-400">{formatDate(review.createdAt)}</span>
+                    <span className="text-xs text-neutral-400">
+                      {formatReviewDate(review.createdAt, locale)}
+                    </span>
                   </div>
                   <Stars rating={review.rating} className="mt-1" />
                   {review.title ? (
