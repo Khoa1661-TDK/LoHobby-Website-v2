@@ -239,6 +239,18 @@ describe('validateToolCall — read_block', () => {
     }
   });
 
+  it('should coerce an integer-valued string index to a number', () => {
+    const r = validateToolCall('read_block', { index: '3', locale: 'en' });
+    expect(r).toEqual({ ok: true, read: { index: 3, locale: 'en' } });
+  });
+
+  it('should reject a non-integer string index', () => {
+    const r = validateToolCall('read_block', { index: '2.5' });
+    expect(r.ok).toBe(false);
+    const r2 = validateToolCall('read_block', { index: 'first' });
+    expect(r2.ok).toBe(false);
+  });
+
   it('should reject a missing integer index', () => {
     const r = validateToolCall('read_block', { locale: 'vi' });
     expect(r.ok).toBe(false);

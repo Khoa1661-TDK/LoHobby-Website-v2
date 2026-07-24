@@ -33,7 +33,14 @@ function asRecord(input: unknown): Record<string, unknown> {
 }
 
 function asInt(value: unknown): number | null {
-  return typeof value === 'number' && Number.isInteger(value) ? value : null;
+  if (typeof value === 'number' && Number.isInteger(value)) return value;
+  // Some models emit numeric tool-call arguments as strings ("3"); accept an
+  // integer-valued string so a stray pair of quotes doesn't abort the tool call.
+  // Non-integer input (floats, words, empty) still returns null.
+  if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) {
+    return Number.parseInt(value.trim(), 10);
+  }
+  return null;
 }
 
 /** Validate an optional locale tag on update_block. Returns an error string or null. */
