@@ -4,7 +4,6 @@
 // which cannot run in the Edge middleware runtime. Consume it from Server
 // Components, route handlers, or `after()` hooks — never import it into
 // `middleware.ts`. Middleware obtains the resolved map over HTTP instead.
-import config from '@payload-config';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { getPayload } from 'payload';
 import { logger } from '@/lib/logger';
@@ -39,6 +38,11 @@ function resolveRule(raw: RawRedirect): RedirectRule | null {
 }
 
 async function fetchValidRedirects(): Promise<RedirectRule[]> {
+  // Loaded lazily (not a top-level import) to avoid a circular dependency: the
+  // Redirects collection registered in @payload-config imports this module, so a
+  // static `import config from '@payload-config'` here would close the cycle and
+  // throw a temporal-dead-zone error during module init on every Payload route.
+  const { default: config } = await import('@payload-config');
   const payload = await getPayload({ config });
 
   try {
