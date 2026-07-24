@@ -11,15 +11,55 @@ import FieldRenderer from './FieldRenderer';
 
 export type ChromeGlobalSlug = 'site-header' | 'store-settings' | 'navigation';
 
+// Serializable descriptor of how a panel reads/writes its slice of a global doc.
+// Replaces the previous `get`/`set` closures, which cannot be passed from the
+// server component to this client component across the RSC boundary.
+//   - 'whole'  — the panel edits top-level fields directly on the doc
+//   - 'nested' — the panel edits fields nested under doc[field]
+//   - 'array'  — the panel replaces the whole doc[field] array (name ignored)
+export type ChromeAccessor =
+  | { kind: 'whole' }
+  | { kind: 'nested'; field: string }
+  | { kind: 'array'; field: string };
+
 export type ChromePanel = {
   key: string;
   slug: ChromeGlobalSlug;
   schema: BlockSchema;
-  get: (doc: Record<string, unknown>) => Record<string, unknown>;
-  set: (doc: Record<string, unknown>, name: string, value: unknown) => Record<string, unknown>;
+  accessor: ChromeAccessor;
 };
 
 export type ChromeTab = { id: string; label: string; panels: ChromePanel[] };
+
+const asRecord = (v: unknown): Record<string, unknown> =>
+  v && typeof v === 'object' ? (v as Record<string, unknown>) : {};
+
+function readPanel(accessor: ChromeAccessor, doc: Record<string, unknown>): Record<string, unknown> {
+  switch (accessor.kind) {
+    case 'whole':
+      return doc;
+    case 'nested':
+      return asRecord(doc[accessor.field]);
+    case 'array':
+      return { [accessor.field]: Array.isArray(doc[accessor.field]) ? doc[accessor.field] : [] };
+  }
+}
+
+function writePanel(
+  accessor: ChromeAccessor,
+  doc: Record<string, unknown>,
+  name: string,
+  value: unknown,
+): Record<string, unknown> {
+  switch (accessor.kind) {
+    case 'whole':
+      return { ...doc, [name]: value };
+    case 'nested':
+      return { ...doc, [accessor.field]: { ...asRecord(doc[accessor.field]), [name]: value } };
+    case 'array':
+      return { ...doc, [accessor.field]: value };
+  }
+}
 
 export type SiteChromeEditorProps = {
   locale: string;
@@ -83,7 +123,10 @@ export default function SiteChromeEditorShell({
 
   const onPanelChange = useCallback(
     (panel: ChromePanel, name: string, value: unknown) => {
-      setDocs((prev) => ({ ...prev, [panel.slug]: panel.set(prev[panel.slug], name, value) }));
+      setDocs((prev) => ({
+        ...prev,
+        [panel.slug]: writePanel(panel.accessor, prev[panel.slug], name, value),
+      }));
       scheduleSave(panel.slug);
     },
     [scheduleSave],
@@ -170,7 +213,7 @@ export default function SiteChromeEditorShell({
               <FieldRenderer
                 key={panel.key}
                 schema={panel.schema}
-                values={panel.get(docs[panel.slug])}
+                values={readPanel(panel.accessor, docs[panel.slug])}
                 onChange={(name, value) => onPanelChange(panel, name, value)}
               />
             ))}
