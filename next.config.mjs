@@ -18,9 +18,11 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https:",
-  // Same-origin only: the page-builder preview iframe at /build/*/preview is
-  // same-origin server-rendered HTML, so 'self' is sufficient.
-  "frame-src 'self'",
+  // 'self' covers the same-origin page-builder preview iframe at
+  // /build/*/preview. The explicit hosts are the video/reel embed players
+  // (VideoEmbed, ReelCarousel) — without them the enforcing CSP blocks every
+  // cross-origin <iframe>, so YouTube shorts and video embeds render blank.
+  "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.tiktok.com https://www.facebook.com https://player.vimeo.com",
   "frame-ancestors 'self'",
   "form-action 'self' https:",
   "base-uri 'self'",
