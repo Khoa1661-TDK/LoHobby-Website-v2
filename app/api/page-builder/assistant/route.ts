@@ -217,10 +217,17 @@ export async function POST(request: Request): Promise<Response> {
         en: [...layouts.en],
       };
 
+      // Render the current working layouts as the compact index/blockType/field snapshot the
+      // model targets by index. Reused for the initial user message AND echoed back after every
+      // applied mutation so the model always sees ground-truth indices (see the "Index drift"
+      // open risk in docs/superpowers/specs/2026-06-26-ai-page-builder-assistant-design.md).
+      const snapshotText = (state: LocaleLayouts): string =>
+        LOCALES.map((loc) => `[${loc}]\n${JSON.stringify(serializeLayout(state[loc]))}`).join('\n');
+
       const promptText = prompt || 'Build a page based on the attached image(s).';
-      const userText = `You are editing: ${activeLocale}.\nBlock structure and order are shared across locales; copy is per-locale.\nCurrent layouts (index, blockType, key fields; long strings truncated — use read_block for full values):\n${LOCALES.map(
-        (loc) => `[${loc}]\n${JSON.stringify(serializeLayout(working[loc]))}`,
-      ).join('\n')}\n\nRequest: ${promptText}`;
+      const userText = `You are editing: ${activeLocale}.\nBlock structure and order are shared across locales; copy is per-locale.\nCurrent layouts (index, blockType, key fields; long strings truncated — use read_block for full values):\n${snapshotText(
+        working,
+      )}\n\nRequest: ${promptText}`;
 
       // Plain string when text-only; a content-part array when images are attached, so the
       // vision-capable model sees both the instructions and the reference image(s).
@@ -391,7 +398,15 @@ export async function POST(request: Request): Promise<Response> {
             working.vi = nextWorking.vi;
             working.en = nextWorking.en;
             send({ type: 'mutation', mutation, locales });
-            messages.push({ role: 'tool', tool_call_id: call.id, content: 'applied' });
+            // Echo the post-mutation layout back to the model. Every add/remove/move shifts the
+            // indices of the blocks after it; without this the model reasons against the stale
+            // one-time snapshot and mis-targets later edits (e.g. removing "index 1" after an
+            // insert deletes the hero instead). This is the design's index-drift mitigation.
+            messages.push({
+              role: 'tool',
+              tool_call_id: call.id,
+              content: `Applied. Indices have now shifted — the current layout is:\n${snapshotText(working)}`,
+            });
           }
         }
       } catch (err) {

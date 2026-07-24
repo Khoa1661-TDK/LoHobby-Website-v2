@@ -2,7 +2,9 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // A shared holder the mocked OpenAI client reads scripted responses from.
-const llm = vi.hoisted(() => ({ responses: [] as unknown[], calls: 0 }));
+// `seenMessages` records the `messages` array passed to each create() call so tests can
+// assert what the route fed the model on follow-up turns (e.g. the echoed layout).
+const llm = vi.hoisted(() => ({ responses: [] as unknown[], calls: 0, seenMessages: [] as unknown[][] }));
 
 // Mock the heavy deps before importing the route.
 vi.mock('payload', () => ({ getPayload: vi.fn(async () => ({ auth: vi.fn() })) }));
@@ -12,7 +14,10 @@ vi.mock('openai', () => ({
   default: class {
     chat = {
       completions: {
-        create: async () => llm.responses[llm.calls++],
+        create: async (args: { messages?: unknown[] }) => {
+          llm.seenMessages.push((args?.messages ?? []) as unknown[]);
+          return llm.responses[llm.calls++];
+        },
       },
     };
   },
@@ -105,6 +110,7 @@ describe('POST /api/page-builder/assistant — dual-locale mutation stream', () 
     vi.clearAllMocks();
     llm.responses = [];
     llm.calls = 0;
+    llm.seenMessages = [];
     process.env.ASSISTANT_LLM_API_KEY = 'test-key';
     (isAuthorizedAdmin as ReturnType<typeof vi.fn>).mockResolvedValue(true);
   });
@@ -168,6 +174,45 @@ describe('POST /api/page-builder/assistant — dual-locale mutation stream', () 
       expect(update.mutation.kind).toBe('update');
       expect(update.locales).toEqual(['en']);
     }
+  });
+
+  it('should echo the post-mutation layout back to the model on the next turn (index-drift fix)', async () => {
+    // Start with a hero at index 0. The model inserts a marquee at the top; the hero must now
+    // appear at index 1 in what the model sees on its second turn — otherwise it would keep
+    // targeting the stale index 0 and mangle the wrong block.
+    llm.responses = [
+      assistantTurn([
+        toolCall('c1', 'add_block', { blockType: 'marquee', index: 0, fields: {} }),
+      ]),
+      finalTurn('Added a marquee at the top.'),
+    ];
+
+    const res = await POST(
+      req({
+        prompt: 'add a marquee on top',
+        layouts: {
+          vi: [{ blockType: 'hero', blockKey: 'hero-1' }],
+          en: [{ blockType: 'hero', blockKey: 'hero-1' }],
+        },
+        activeLocale: 'vi',
+      }),
+    );
+    await readEvents(res); // drain the stream so the loop completes
+
+    // The second create() call is the follow-up turn. Its message list must contain a tool
+    // result echoing the shifted layout: marquee at 0, hero at 1.
+    const followUp = llm.seenMessages[1];
+    expect(followUp).toBeTruthy();
+    const toolMsg = (followUp ?? []).find(
+      (m): m is { role: string; content: string } =>
+        !!m && typeof m === 'object' && (m as { role?: string }).role === 'tool',
+    );
+    expect(toolMsg).toBeTruthy();
+    const content = toolMsg!.content;
+    const viJson = content.slice(content.indexOf('[vi]') + '[vi]\n'.length).split('\n[en]')[0] ?? '';
+    const snapshot = JSON.parse(viJson) as Array<{ index: number; blockType: string }>;
+    expect(snapshot.map((b) => b.blockType)).toEqual(['marquee', 'hero']);
+    expect(snapshot[1]).toMatchObject({ index: 1, blockType: 'hero' });
   });
 
   it('should keep structural mutations tagged for both locales across move and remove', async () => {
