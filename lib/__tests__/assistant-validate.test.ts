@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { validateToolCall, validateUpdateFields, coerceFieldsForBlock } from '@/lib/page-builder/assistant/validate';
+import {
+  validateToolCall,
+  validateUpdateFields,
+  validateRowFields,
+  coerceFieldsForBlock,
+} from '@/lib/page-builder/assistant/validate';
 import type { BlockSchema } from '@/lib/page-builder/block-schemas';
 
 // Synthetic block schema for the "id key written into a row" regression guard below.
@@ -626,5 +631,71 @@ describe('validateToolCall — row tools', () => {
 
   it('should reject a non-integer rowIndex', () => {
     expect(validateToolCall('remove_row', { index: 0, field: 'items', rowIndex: 'x' }).ok).toBe(false);
+  });
+});
+
+describe('validateRowFields', () => {
+  // validateRowFields is the sole gatekeeper on the add_row / update_row route paths
+  // (app/api/page-builder/assistant/route.ts). Nothing else in this file calls it directly —
+  // the row-tool tests above only exercise validateToolCall, which builds the mutation shape
+  // but never runs the target block's row-field schema check. That check happens later in the
+  // route once the real block type is known, via validateRowFields.
+
+  it('should reject an id key written into a row (synthetic HIDDEN_FIELD_NAMES regression guard)', () => {
+    // Same synthetic schema as the add_block regression guard above, routed through
+    // validateRowFields instead. Real blocks never declare a literal `id` sub-field in
+    // source (see the comment on syntheticIdGuardSchema) — Payload only injects one at
+    // runtime via getPayload() sanitization, which is mocked away under vitest. So this
+    // must use the synthetic schema, not a real block, to actually exercise the stripping
+    // in contentFields() rather than a coincidental "never was a field" rejection.
+    const err = validateRowFields(SYNTHETIC_ID_GUARD_SLUG, 'items', { id: 7, question: 'Q' });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/items\.id/);
+  });
+
+  it('should reject a blockKey key written into a row (synthetic HIDDEN_FIELD_NAMES regression guard)', () => {
+    const err = validateRowFields(SYNTHETIC_ID_GUARD_SLUG, 'items', { blockKey: 'abc', question: 'Q' });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/items\.blockKey/);
+  });
+
+  it('should reject an unknown field inside the row', () => {
+    // faq.items only declares question/answer — 'bogus' is not a field on the row.
+    const err = validateRowFields('faq', 'items', { question: 'Q', bogus: 'x' });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/items\.bogus/);
+  });
+
+  it('should reject a field name that is not an array field on the block', () => {
+    // hero.headline exists but is a text field, not an array — add_row/update_row against
+    // it must be rejected before checkFields ever runs.
+    const err = validateRowFields('hero', 'headline', { anything: 'x' });
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/headline.*not an array/i);
+  });
+
+  it('should reject a field name the block does not define at all', () => {
+    const err = validateRowFields('hero', 'nonexistentField', {});
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/hero.*nonexistentField/);
+  });
+
+  it('should reject an unknown block type', () => {
+    const err = validateRowFields('nonexistent_block_xyz', 'items', {});
+    expect(err).not.toBeNull();
+    expect(err).toMatch(/unknown block/i);
+  });
+
+  it('should accept a well-formed row and return null', () => {
+    const err = validateRowFields('faq', 'items', { question: 'Q', answer: 'A' });
+    expect(err).toBeNull();
+  });
+
+  it('should coerce a Markdown richText value inside the row to Lexical JSON in place', () => {
+    const values: Record<string, unknown> = { question: 'Q', answer: 'Hello **world**' };
+    const err = validateRowFields('faq', 'items', values);
+    expect(err).toBeNull();
+    expect(values.answer).not.toBe('Hello **world**');
+    expect((values.answer as { root?: unknown }).root).toBeTypeOf('object');
   });
 });
