@@ -430,7 +430,7 @@ git commit -m "feat(page-builder): render code fields as a monospace textarea"
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `BLOCK_ICON_NAMES: readonly string[]` (all 64), `BLOCK_ICON_OPTIONS: { label: string; value: string }[]` (grouped, for Payload selects), `type BlockIconName`. Task 5 (`BlockIcon`) and Task 6 (icon fields) both consume these. `lib/page-builder/feature-icons.ts` keeps exporting `FEATURE_ICON_NAMES` and `FEATURE_ICON_OPTIONS` unchanged in content and order.
+- Produces: `BLOCK_ICON_NAMES` — an array whose element type is the **literal union** of every name (63 after validation against the installed lucide), `BLOCK_ICON_OPTIONS: { label: string; value: string }[]` (grouped, for Payload selects), `type BlockIconName` (that union), and `LEGACY_ICON_ALIASES`. Task 5 (`BlockIcon`) and Task 6 (icon fields) both consume these. Do not annotate or cast `BLOCK_ICON_NAMES` to `readonly string[]` — that erases the union and makes `BlockIconName` equivalent to `string`. `lib/page-builder/feature-icons.ts` keeps exporting `FEATURE_ICON_NAMES` and `FEATURE_ICON_OPTIONS` unchanged in content and order.
 
 **Why lucide-free:** Payload block schemas import the option list. Importing `lucide-react` there would pull the icon bundle into the Payload config and the server build.
 
@@ -522,7 +522,10 @@ export const BLOCK_ICON_GROUPS = {
   ],
 } as const satisfies Record<string, readonly string[]>;
 
-export const BLOCK_ICON_NAMES = Object.values(BLOCK_ICON_GROUPS).flat() as readonly string[];
+// No `as readonly string[]` cast here — it would erase the literal union and make
+// BlockIconName equivalent to plain `string`, defeating the compile-time key checking
+// that Task 5's icon map relies on.
+export const BLOCK_ICON_NAMES = Object.values(BLOCK_ICON_GROUPS).flat();
 
 export type BlockIconName = (typeof BLOCK_ICON_NAMES)[number];
 
@@ -671,9 +674,13 @@ import {
   TrendingUp, Truck, User, Users, Verified, Video, Wallet, Wand, Wrench, Zap,
 } from 'lucide-react';
 import type { ReactElement } from 'react';
+import type { BlockIconName } from '@/lib/page-builder/icons';
 import { LEGACY_ICON_ALIASES } from '@/lib/page-builder/icons';
 
-export const ICON_COMPONENTS: Record<string, (props: LucideProps) => ReactElement> = {
+// Typed against the literal union, NOT Record<string, …>: this is what makes the compiler
+// reject a missing or misspelled key, so a name added to icons.ts without an import here
+// is a build error rather than a silently absent icon at runtime.
+export const ICON_COMPONENTS: Record<BlockIconName, (props: LucideProps) => ReactElement> = {
   'truck': Truck, 'package': Package, 'box': Box, 'tag': Tag,
   'shopping-cart': ShoppingCart, 'shopping-bag': ShoppingBag, 'credit-card': CreditCard,
   'receipt': Receipt, 'gift': Gift, 'percent': Percent, 'store': Store, 'wallet': Wallet,
@@ -706,7 +713,9 @@ type Props = {
 export default function BlockIcon({ name, className, size = 24 }: Props): ReactElement | null {
   if (!name) return null;
   const resolved = LEGACY_ICON_ALIASES[name] ?? name;
-  const Icon = ICON_COMPONENTS[resolved];
+  // `resolved` is untrusted input (a stored field value), so widen for the lookup only —
+  // the map itself stays exhaustively typed above.
+  const Icon = (ICON_COMPONENTS as Record<string, ((props: LucideProps) => ReactElement) | undefined>)[resolved];
   if (!Icon) return null;
   return <Icon className={className} size={size} aria-hidden />;
 }
