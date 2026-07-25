@@ -787,6 +787,7 @@ export interface Page {
         | SpotlightBlock
         | YouTubeChannelBlock
         | ReelCarouselBlock
+        | CustomHtmlBlock
       )[]
     | null;
   meta?: {
@@ -4241,6 +4242,80 @@ export interface ReelCarouselBlock {
   blockType: 'reelCarousel';
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CustomHtmlBlock".
+ */
+export interface CustomHtmlBlock {
+  /**
+   * Editor-only name for this section, shown in the layers list.
+   */
+  label?: string | null;
+  /**
+   * Markup for this section. Scripts, iframes, forms and event handlers are removed when the page renders.
+   */
+  html: string;
+  /**
+   * Optional CSS. Every selector is automatically scoped to this section, so a rule here cannot affect the rest of the page. Not localized — styling is shared across languages.
+   */
+  css?: string | null;
+  /**
+   * Background mode for this section.
+   */
+  background?: ('theme' | 'light' | 'dark' | 'custom') | null;
+  /**
+   * Hex color, e.g. #f5f0eb.
+   */
+  backgroundCustom?: string | null;
+  /**
+   * Dark-theme background hex. Leave empty to reuse the light color.
+   */
+  backgroundCustomDark?: string | null;
+  /**
+   * Max content width for this section.
+   */
+  containerWidth?: ('narrow' | 'normal' | 'wide' | 'full' | 'custom') | null;
+  /**
+   * Vertical padding for the section.
+   */
+  paddingY?: ('compact' | 'base' | 'spacious' | 'none') | null;
+  /**
+   * Custom max content width in pixels, e.g. 720.
+   */
+  maxWidthCustom?: string | null;
+  /**
+   * Horizontal alignment of the section content.
+   */
+  contentAlign?: ('left' | 'center' | 'right') | null;
+  /**
+   * Corner radius for the section.
+   */
+  rounded?: ('none' | 'sm' | 'md' | 'lg' | 'xl') | null;
+  /**
+   * Show a thin border around the section.
+   */
+  border?: boolean | null;
+  /**
+   * Animation when the section scrolls into view. "Default" follows the block type; "None" renders instantly.
+   */
+  scrollAnimation?:
+    | (
+        | 'default'
+        | 'none'
+        | 'fade-up'
+        | 'fade-in'
+        | 'slide-right'
+        | 'scale-in'
+        | 'stagger-cards'
+        | 'stagger-list'
+        | 'hero-entrance'
+      )
+    | null;
+  blockKey?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'customHtml';
+}
+/**
  * Map legacy or retired paths to their new destination. Matched in middleware before authentication.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4890,6 +4965,7 @@ export interface PagesSelect<T extends boolean = true> {
         spotlight?: T | SpotlightBlockSelect<T>;
         youtubeChannel?: T | YouTubeChannelBlockSelect<T>;
         reelCarousel?: T | ReelCarouselBlockSelect<T>;
+        customHtml?: T | CustomHtmlBlockSelect<T>;
       };
   meta?:
     | T
@@ -5935,6 +6011,28 @@ export interface ReelCarouselBlockSelect<T extends boolean = true> {
         views?: T;
         id?: T;
       };
+  background?: T;
+  backgroundCustom?: T;
+  backgroundCustomDark?: T;
+  containerWidth?: T;
+  paddingY?: T;
+  maxWidthCustom?: T;
+  contentAlign?: T;
+  rounded?: T;
+  border?: T;
+  scrollAnimation?: T;
+  blockKey?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CustomHtmlBlock_select".
+ */
+export interface CustomHtmlBlockSelect<T extends boolean = true> {
+  label?: T;
+  html?: T;
+  css?: T;
   background?: T;
   backgroundCustom?: T;
   backgroundCustomDark?: T;

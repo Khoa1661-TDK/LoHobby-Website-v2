@@ -46,7 +46,9 @@ describe('getBlockSchemas', () => {
     expect(slugs).toEqual(expect.arrayContaining(['marquee', 'spotlight']));
     // The social blocks added a YouTube channel card and a reel carousel.
     expect(slugs).toEqual(expect.arrayContaining(['youtubeChannel', 'reelCarousel']));
-    expect(slugs).toHaveLength(37);
+    // The page-builder-foundations plan added the customHtml escape hatch.
+    expect(slugs).toEqual(expect.arrayContaining(['customHtml']));
+    expect(slugs).toHaveLength(38);
   });
 
   it('should describe hero text and select fields with options', () => {

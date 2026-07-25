@@ -36,3 +36,4 @@ export { Marquee } from './Marquee';
 export { Spotlight } from './Spotlight';
 export { YouTubeChannel } from './YouTubeChannel';
 export { ReelCarousel } from './ReelCarousel';
+export { CustomHtml } from './CustomHtml';

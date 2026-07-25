@@ -40,6 +40,7 @@ import {
   Spotlight,
   YouTubeChannel,
   ReelCarousel,
+  CustomHtml,
 } from '@/src/payload/blocks';
 import { blockKeyField } from '@/src/payload/blocks/_identity';
 
@@ -118,6 +119,7 @@ const REGISTERED_BLOCKS: Block[] = [
   Spotlight,
   YouTubeChannel,
   ReelCarousel,
+  CustomHtml,
 ];
 
 /** Probe a Payload `admin.condition` fn against synthetic siblingData to recover the

@@ -40,6 +40,7 @@ import MarqueeBlock from './Marquee';
 import SpotlightBlock from './Spotlight';
 import YouTubeChannelBlock from './YouTubeChannel';
 import ReelCarouselBlock from './ReelCarousel';
+import CustomHtmlBlock from './CustomHtml';
 
 type Props = {
   blocks: PageBlock[];
@@ -171,6 +172,8 @@ function renderInner(block: PageBlock): ReactElement | null {
       return <YouTubeChannelBlock {...asProps<ComponentProps<typeof YouTubeChannelBlock>>(block)} />;
     case 'reelCarousel':
       return <ReelCarouselBlock {...asProps<ComponentProps<typeof ReelCarouselBlock>>(block)} />;
+    case 'customHtml':
+      return <CustomHtmlBlock {...asProps<ComponentProps<typeof CustomHtmlBlock>>(block)} />;
     default:
       return null;
   }
