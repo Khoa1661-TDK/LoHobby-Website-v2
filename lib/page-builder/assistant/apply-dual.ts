@@ -19,7 +19,7 @@ function otherLocale(locale: Locale): Locale {
 /** Which locale copies a validated mutation touches. Structure is always both; an
  *  `update` follows its `locale` tag (default = active), and `both` fans out to both. */
 export function resolveLocales(mutation: Mutation, activeLocale: Locale): Locale[] {
-  if (mutation.kind === 'update') {
+  if (mutation.kind === 'update' || mutation.kind === 'updateRow') {
     const tag = mutation.locale ?? activeLocale;
     return tag === 'both' ? [...LOCALES] : [tag];
   }
@@ -51,7 +51,22 @@ export function applyDualMutation(
     return next;
   }
 
-  // move / remove / duplicate — structural, apply to both copies.
+  if (mutation.kind === 'addRow') {
+    const other = otherLocale(activeLocale);
+    next[activeLocale] = applyMutation(next[activeLocale], mutation);
+    const otherValues = mutation.valuesOther ?? structuredClone(mutation.values);
+    next[other] = applyMutation(next[other], { ...mutation, values: otherValues });
+    return next;
+  }
+
+  if (mutation.kind === 'updateRow') {
+    for (const loc of resolveLocales(mutation, activeLocale)) {
+      next[loc] = applyMutation(next[loc], mutation);
+    }
+    return next;
+  }
+
+  // move / remove / duplicate / removeRow — structural, apply to both copies.
   next.vi = applyMutation(next.vi, mutation);
   next.en = applyMutation(next.en, mutation);
   return next;

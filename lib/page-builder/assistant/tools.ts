@@ -137,6 +137,67 @@ export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'add_row',
+      description:
+        'Add one row to an array field on a block (FAQ items, stats, cards, gallery images). Affects BOTH locales so row counts stay aligned. Use this to fill a block rather than rewriting the whole array with update_block.',
+      parameters: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          index: { type: 'integer', description: 'Index of the block that owns the array.' },
+          field: { type: 'string', description: 'Name of the array field, e.g. "items".' },
+          values: { type: 'object', description: 'Row values in the ACTIVE locale.' },
+          valuesOther: { type: 'object', description: 'Optional translated row values for the OTHER locale.' },
+          at: { type: 'integer', description: 'Optional position; appends when omitted.' },
+        },
+        required: ['index', 'field', 'values'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'update_row',
+      description:
+        'Patch the named fields of one row in an array field, leaving the other rows and the row\'s other fields untouched.',
+      parameters: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          index: { type: 'integer', description: 'Index of the block that owns the array.' },
+          field: { type: 'string', description: 'Name of the array field.' },
+          rowIndex: { type: 'integer', description: 'Zero-based index of the row to patch.' },
+          values: { type: 'object', description: 'Row field values to set.' },
+          locale: {
+            type: 'string',
+            enum: ['vi', 'en', 'both'],
+            description: 'Which locale copy to update. Defaults to the active locale.',
+          },
+        },
+        required: ['index', 'field', 'rowIndex', 'values'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'remove_row',
+      description: 'Delete one row from an array field. Affects BOTH locales so row counts stay aligned.',
+      parameters: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          index: { type: 'integer' },
+          field: { type: 'string' },
+          rowIndex: { type: 'integer' },
+        },
+        required: ['index', 'field', 'rowIndex'],
+      },
+    },
+  },
 ];
 
 // Real relationship targets, keyed by the collection slug a field relates to (e.g.

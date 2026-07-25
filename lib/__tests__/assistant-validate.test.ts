@@ -572,3 +572,59 @@ describe('checkFields — nested validation', () => {
     if (!r.ok) expect(r.error).toMatch(/contact\.bogus/);
   });
 });
+
+describe('validateToolCall — row tools', () => {
+  it('should produce an addRow mutation', () => {
+    const r = validateToolCall('add_row', {
+      index: 1,
+      field: 'items',
+      values: { question: 'Q', answer: 'A' },
+    });
+    expect(r).toEqual({
+      ok: true,
+      mutation: { kind: 'addRow', index: 1, field: 'items', values: { question: 'Q', answer: 'A' } },
+    });
+  });
+
+  it('should carry an explicit position and the other-locale values', () => {
+    const r = validateToolCall('add_row', {
+      index: 0,
+      field: 'items',
+      values: { question: 'Q' },
+      valuesOther: { question: 'Câu hỏi' },
+      at: 0,
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'addRow') {
+      expect(r.mutation.at).toBe(0);
+      expect(r.mutation.valuesOther).toEqual({ question: 'Câu hỏi' });
+    }
+  });
+
+  it('should produce an updateRow mutation with a locale tag', () => {
+    const r = validateToolCall('update_row', {
+      index: 1,
+      field: 'items',
+      rowIndex: 2,
+      values: { answer: 'A' },
+      locale: 'en',
+    });
+    expect(r).toEqual({
+      ok: true,
+      mutation: { kind: 'updateRow', index: 1, field: 'items', rowIndex: 2, values: { answer: 'A' }, locale: 'en' },
+    });
+  });
+
+  it('should produce a removeRow mutation', () => {
+    const r = validateToolCall('remove_row', { index: 1, field: 'items', rowIndex: 0 });
+    expect(r).toEqual({ ok: true, mutation: { kind: 'removeRow', index: 1, field: 'items', rowIndex: 0 } });
+  });
+
+  it('should reject a row tool with a missing field name', () => {
+    expect(validateToolCall('add_row', { index: 0, values: {} }).ok).toBe(false);
+  });
+
+  it('should reject a non-integer rowIndex', () => {
+    expect(validateToolCall('remove_row', { index: 0, field: 'items', rowIndex: 'x' }).ok).toBe(false);
+  });
+});

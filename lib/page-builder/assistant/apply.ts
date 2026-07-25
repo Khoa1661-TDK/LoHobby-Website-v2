@@ -5,6 +5,9 @@ import {
   moveBlock,
   deleteBlock,
   duplicateBlock,
+  addRow,
+  updateRow,
+  removeRow,
 } from '@/lib/page-builder/layout-reducer';
 import type { Mutation } from './validate';
 
@@ -25,5 +28,11 @@ export function applyMutation(layout: PageBlock[], mutation: Mutation): PageBloc
       return deleteBlock(layout, mutation.index);
     case 'duplicate':
       return duplicateBlock(layout, mutation.index);
+    case 'addRow':
+      return addRow(layout, mutation.index, mutation.field, mutation.values, mutation.at);
+    case 'updateRow':
+      return updateRow(layout, mutation.index, mutation.field, mutation.rowIndex, mutation.values);
+    case 'removeRow':
+      return removeRow(layout, mutation.index, mutation.field, mutation.rowIndex);
   }
 }

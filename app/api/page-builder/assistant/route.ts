@@ -17,7 +17,13 @@ import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 import { serializeLayout } from '@/lib/page-builder/assistant/snapshot';
 import { ASSISTANT_TOOLS, buildSystemPrompt } from '@/lib/page-builder/assistant/tools';
 import { describeBlockSpec } from '@/lib/page-builder/assistant/contract';
-import { validateToolCall, validateUpdateFields, coerceFieldsForBlock, type Mutation } from '@/lib/page-builder/assistant/validate';
+import {
+  validateToolCall,
+  validateUpdateFields,
+  validateRowFields,
+  coerceFieldsForBlock,
+  type Mutation,
+} from '@/lib/page-builder/assistant/validate';
 import { applyDualMutation, resolveLocales, type LocaleLayouts } from '@/lib/page-builder/assistant/apply-dual';
 import { type Locale } from '@/i18n/routing';
 
@@ -350,6 +356,39 @@ export async function POST(request: Request): Promise<Response> {
               // Normalize richText Markdown → Lexical JSON now that the block type is
               // known, so the eventual page save does not 400 on a bare string.
               coerceFieldsForBlock(target!.blockType, mutation.fields);
+            }
+
+            if (
+              mutation.kind === 'addRow' ||
+              mutation.kind === 'updateRow' ||
+              mutation.kind === 'removeRow'
+            ) {
+              const target = working[activeLocale][mutation.index];
+              let rowErr: string | null = target ? null : `No block at index ${mutation.index}.`;
+
+              // A row index past the end would make the reducer a silent no-op: the model
+              // would be told "Applied" while nothing changed, and would move on none the
+              // wiser. Reject it with the real row count instead.
+              if (!rowErr && (mutation.kind === 'updateRow' || mutation.kind === 'removeRow')) {
+                const existing = (target as Record<string, unknown>)[mutation.field];
+                const count = Array.isArray(existing) ? existing.length : 0;
+                if (mutation.rowIndex < 0 || mutation.rowIndex >= count) {
+                  rowErr = `No row ${mutation.rowIndex} in "${mutation.field}" (block ${mutation.index} has ${count} rows).`;
+                }
+              }
+
+              if (!rowErr && (mutation.kind === 'addRow' || mutation.kind === 'updateRow')) {
+                rowErr = validateRowFields(target!.blockType, mutation.field, mutation.values);
+              }
+              if (!rowErr && mutation.kind === 'addRow' && mutation.valuesOther) {
+                rowErr = validateRowFields(target!.blockType, mutation.field, mutation.valuesOther);
+              }
+
+              if (rowErr) {
+                send({ type: 'error', error: rowErr });
+                messages.push({ role: 'tool', tool_call_id: call.id, content: `ERROR: ${rowErr}` });
+                continue;
+              }
             }
 
             // A newly added block gets a shared blockKey so its two locale copies stay

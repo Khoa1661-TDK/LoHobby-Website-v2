@@ -104,6 +104,18 @@ function describeMutation(
       const label = prettifyBlockType(beforeLayout[mutation.index]?.blockType);
       return { symbol: '⧉', label: `${label} duplicated`, index: mutation.index, locales: suffix };
     }
+    case 'addRow': {
+      const label = prettifyBlockType(beforeLayout[mutation.index]?.blockType);
+      return { symbol: '+', label: `${label} row added (${mutation.field})`, index: mutation.index, locales: suffix };
+    }
+    case 'updateRow': {
+      const label = prettifyBlockType(beforeLayout[mutation.index]?.blockType);
+      return { symbol: '~', label: `${label} row updated (${mutation.field})`, index: mutation.index, locales: suffix };
+    }
+    case 'removeRow': {
+      const label = prettifyBlockType(beforeLayout[mutation.index]?.blockType);
+      return { symbol: '✕', label: `${label} row removed (${mutation.field})`, index: mutation.index, locales: suffix };
+    }
   }
 }
 
@@ -166,6 +178,18 @@ export default function AssistantPanel({
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [messages, busy]);
+
+  // Auto-grow the prompt textarea to fit its content so multi-line input stays
+  // fully visible instead of scrolling the first lines out of a one-row box.
+  // Reset to 'auto' first so it can also shrink; CSS max-h caps it, after which
+  // it scrolls. Runs on every prompt change — typing, chip fills, and clearing
+  // after send all reset the height correctly.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [prompt]);
 
   async function addFiles(files: FileList | File[]): Promise<void> {
     const incoming = Array.from(files).filter((f) => ACCEPTED.test(f.type) && f.size <= MAX_IMAGE_BYTES);
@@ -463,7 +487,7 @@ export default function AssistantPanel({
           </button>
           <textarea
             ref={textareaRef}
-            className="max-h-32 min-h-6 w-full resize-none bg-transparent text-sm text-gemini-text placeholder:text-gemini-muted focus:outline-none"
+            className="max-h-32 min-h-6 w-full resize-none overflow-y-auto bg-transparent text-sm text-gemini-text placeholder:text-gemini-muted focus:outline-none"
             rows={1}
             placeholder="Describe the page or change you want…"
             value={prompt}

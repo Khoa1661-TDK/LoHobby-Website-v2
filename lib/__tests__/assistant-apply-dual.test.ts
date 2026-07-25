@@ -108,3 +108,62 @@ describe('applyDualMutation — field edits are per-locale', () => {
     expect((next.en[0] as { backgroundCustom?: string }).backgroundCustom).toBe('#fff');
   });
 });
+
+describe('applyDualMutation — rows', () => {
+  const layouts = {
+    vi: [{ blockType: 'faq', items: [{ question: 'Vi' }] }],
+    en: [{ blockType: 'faq', items: [{ question: 'En' }] }],
+  } as unknown as LocaleLayouts;
+
+  it('should add a row to both locales, using valuesOther for the other locale', () => {
+    const next = applyDualMutation(
+      layouts,
+      { kind: 'addRow', index: 0, field: 'items', values: { question: 'Mới' }, valuesOther: { question: 'New' } },
+      'vi',
+    );
+    const vi = (next.vi[0] as { items: Array<{ question: string }> }).items;
+    const en = (next.en[0] as { items: Array<{ question: string }> }).items;
+    expect(vi.map((r) => r.question)).toEqual(['Vi', 'Mới']);
+    expect(en.map((r) => r.question)).toEqual(['En', 'New']);
+  });
+
+  it('should clone the active values when valuesOther is omitted', () => {
+    const next = applyDualMutation(
+      layouts,
+      { kind: 'addRow', index: 0, field: 'items', values: { question: 'Mới' } },
+      'vi',
+    );
+    const en = (next.en[0] as { items: Array<{ question: string }> }).items;
+    expect(en[1]?.question).toBe('Mới');
+  });
+
+  it('should remove a row from both locales so counts stay aligned', () => {
+    const next = applyDualMutation(layouts, { kind: 'removeRow', index: 0, field: 'items', rowIndex: 0 }, 'vi');
+    expect((next.vi[0] as { items: unknown[] }).items).toHaveLength(0);
+    expect((next.en[0] as { items: unknown[] }).items).toHaveLength(0);
+  });
+
+  it('should update a row in only the tagged locale', () => {
+    const next = applyDualMutation(
+      layouts,
+      { kind: 'updateRow', index: 0, field: 'items', rowIndex: 0, values: { question: 'Changed' }, locale: 'en' },
+      'vi',
+    );
+    expect((next.vi[0] as { items: Array<{ question: string }> }).items[0]?.question).toBe('Vi');
+    expect((next.en[0] as { items: Array<{ question: string }> }).items[0]?.question).toBe('Changed');
+  });
+});
+
+describe('resolveLocales — rows', () => {
+  it('should treat addRow and removeRow as structural', () => {
+    expect(resolveLocales({ kind: 'addRow', index: 0, field: 'items', values: {} }, 'vi').sort()).toEqual(['en', 'vi']);
+    expect(resolveLocales({ kind: 'removeRow', index: 0, field: 'items', rowIndex: 0 }, 'vi').sort()).toEqual(['en', 'vi']);
+  });
+
+  it('should treat updateRow as copy, following its locale tag', () => {
+    expect(resolveLocales({ kind: 'updateRow', index: 0, field: 'items', rowIndex: 0, values: {} }, 'vi')).toEqual(['vi']);
+    expect(
+      resolveLocales({ kind: 'updateRow', index: 0, field: 'items', rowIndex: 0, values: {}, locale: 'both' }, 'vi').sort(),
+    ).toEqual(['en', 'vi']);
+  });
+});

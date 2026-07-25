@@ -258,4 +258,25 @@ describe('POST /api/page-builder/assistant — dual-locale mutation stream', () 
     ) as { content?: string } | undefined;
     expect(toolMessage?.content).toContain('items: array of rows, each:');
   });
+
+  it('should reject a row index past the end instead of silently no-opping', async () => {
+    vi.mocked(isAuthorizedAdmin).mockResolvedValue(true);
+    llm.responses = [
+      assistantTurn([toolCall('c1', 'remove_row', { index: 0, field: 'items', rowIndex: 4 })]),
+      finalTurn('Could not remove that row.'),
+    ];
+
+    const layouts = { vi: [{ blockType: 'faq', items: [{ question: 'A' }] }], en: [{ blockType: 'faq', items: [{ question: 'A' }] }] };
+    const res = await POST(
+      new Request('http://x/api/page-builder/assistant', {
+        method: 'POST',
+        body: JSON.stringify({ prompt: 'remove the fifth faq', layouts }),
+      }),
+    );
+    const events = await readEvents(res);
+
+    expect(events.some((e) => e.type === 'mutation')).toBe(false);
+    const error = events.find((e) => e.type === 'error') as { error?: string } | undefined;
+    expect(error?.error).toMatch(/has 1 rows/);
+  });
 });

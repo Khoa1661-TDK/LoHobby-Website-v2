@@ -18,7 +18,24 @@ export type Mutation =
   | { kind: 'update'; index: number; fields: Record<string, unknown>; locale?: LocaleTag }
   | { kind: 'move'; from: number; to: number }
   | { kind: 'remove'; index: number }
-  | { kind: 'duplicate'; index: number };
+  | { kind: 'duplicate'; index: number }
+  | {
+      kind: 'addRow';
+      index: number;
+      field: string;
+      values: Record<string, unknown>;
+      at?: number;
+      valuesOther?: Record<string, unknown>;
+    }
+  | {
+      kind: 'updateRow';
+      index: number;
+      field: string;
+      rowIndex: number;
+      values: Record<string, unknown>;
+      locale?: LocaleTag;
+    }
+  | { kind: 'removeRow'; index: number; field: string; rowIndex: number };
 
 /** A read-only tool request. Server-side only: the route answers these with a `tool`
  *  message and emits no client mutation. */
@@ -46,11 +63,12 @@ function asInt(value: unknown): number | null {
   return null;
 }
 
-/** Validate an optional locale tag on update_block. Returns an error string or null. */
+/** Validate an optional locale tag on update_block / update_row. Returns an error string
+ * or null. */
 function checkLocaleTag(value: unknown): string | null {
   if (value === undefined || value === null) return null;
   if (value === 'vi' || value === 'en' || value === 'both') return null;
-  return 'update_block locale must be one of: vi, en, both.';
+  return 'locale must be one of: vi, en, both.';
 }
 
 /** An unbound relationship — Payload accepts these and renders the block unconfigured. */
@@ -282,6 +300,39 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
       if (index === null) return { ok: false, error: 'duplicate_block requires an integer index.' };
       return { ok: true, mutation: { kind: 'duplicate', index } };
     }
+    case 'add_row': {
+      const index = asInt(args.index);
+      const field = typeof args.field === 'string' ? args.field : '';
+      if (index === null) return { ok: false, error: 'add_row requires an integer index.' };
+      if (!field) return { ok: false, error: 'add_row requires the array field name.' };
+      const mutation: Mutation = { kind: 'addRow', index, field, values: asRecord(args.values) };
+      const at = asInt(args.at);
+      if (at !== null) mutation.at = at;
+      if (args.valuesOther !== undefined) mutation.valuesOther = asRecord(args.valuesOther);
+      return { ok: true, mutation };
+    }
+    case 'update_row': {
+      const index = asInt(args.index);
+      const rowIndex = asInt(args.rowIndex);
+      const field = typeof args.field === 'string' ? args.field : '';
+      if (index === null) return { ok: false, error: 'update_row requires an integer index.' };
+      if (!field) return { ok: false, error: 'update_row requires the array field name.' };
+      if (rowIndex === null) return { ok: false, error: 'update_row requires an integer rowIndex.' };
+      const localeErr = checkLocaleTag(args.locale);
+      if (localeErr) return { ok: false, error: localeErr };
+      const mutation: Mutation = { kind: 'updateRow', index, field, rowIndex, values: asRecord(args.values) };
+      if (typeof args.locale === 'string') mutation.locale = args.locale as LocaleTag;
+      return { ok: true, mutation };
+    }
+    case 'remove_row': {
+      const index = asInt(args.index);
+      const rowIndex = asInt(args.rowIndex);
+      const field = typeof args.field === 'string' ? args.field : '';
+      if (index === null) return { ok: false, error: 'remove_row requires an integer index.' };
+      if (!field) return { ok: false, error: 'remove_row requires the array field name.' };
+      if (rowIndex === null) return { ok: false, error: 'remove_row requires an integer rowIndex.' };
+      return { ok: true, mutation: { kind: 'removeRow', index, field, rowIndex } };
+    }
     default:
       return { ok: false, error: `Unknown tool "${name}".` };
   }
@@ -293,6 +344,25 @@ export function validateUpdateFields(blockType: string, fields: Record<string, u
   const schema = getBlockSchema(blockType);
   if (!schema) return `Unknown block type "${blockType}".`;
   return checkFields(schema.fields, fields);
+}
+
+/** Validate row values against a block's array-field row schema, and coerce any Markdown
+ * richText inside them. Returns an error string or null. Used by the route once the target
+ * block type is known from the working layout. */
+export function validateRowFields(
+  blockType: string,
+  field: string,
+  values: Record<string, unknown>,
+): string | null {
+  const schema = getBlockSchema(blockType);
+  if (!schema) return `Unknown block type "${blockType}".`;
+  const descriptor = schema.fields.find((f) => f.name === field);
+  if (!descriptor) return `Block "${blockType}" has no field "${field}".`;
+  if (descriptor.type !== 'array') return `Field "${field}" on "${blockType}" is not an array.`;
+  const err = checkFields(descriptor.fields ?? [], values, field);
+  if (err) return err;
+  coerceRichText(descriptor.fields ?? [], values);
+  return null;
 }
 
 // Cache the union of all field names across all blocks for update_block validation.
