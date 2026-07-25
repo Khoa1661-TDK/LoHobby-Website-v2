@@ -28,6 +28,9 @@ describe('buildBlockIndex', () => {
   it('should never expose id or blockKey', () => {
     const index = buildBlockIndex(schemas);
     expect(index).not.toContain('blockKey');
+    // Match "id" as a complete word (not as a substring in "width", "hidden", "grid", "solid", "video")
+    // to catch leaked field names in the comma-separated field list
+    expect(index).not.toMatch(/\bid\b/);
   });
 
   it('should stay well under the full contract size', () => {
@@ -46,5 +49,12 @@ describe('buildAppearanceDoc', () => {
   it('should state the condition gating custom background', () => {
     const doc = buildAppearanceDoc(schemas);
     expect(doc).toMatch(/backgroundCustom[\s\S]*background="custom"/);
+  });
+
+  it('should never expose id or blockKey', () => {
+    const doc = buildAppearanceDoc(schemas);
+    expect(doc).not.toContain('blockKey');
+    // Match "id" as a complete word in the field descriptor lines (e.g., "  id: type")
+    expect(doc).not.toMatch(/\bid\b/);
   });
 });
