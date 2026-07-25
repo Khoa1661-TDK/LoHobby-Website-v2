@@ -564,6 +564,18 @@ function Field({
             onChange={(e) => set(e.target.value)}
           />
         );
+      case 'code':
+        return (
+          <textarea
+            id={id}
+            className="rounded border border-warm-300 bg-warm-50 px-2 py-1 font-mono text-xs text-warm-900 dark:border-warm-700 dark:bg-warm-900 dark:text-warm-100"
+            rows={12}
+            value={typeof value === 'string' ? value : ''}
+            disabled={disabled}
+            onChange={(e) => set(e.target.value)}
+            spellCheck={false}
+          />
+        );
       case 'select':
         return (
           <select
