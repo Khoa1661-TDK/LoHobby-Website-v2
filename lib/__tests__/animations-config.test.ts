@@ -6,6 +6,7 @@ import {
   reduceMotion,
 } from '@/lib/animations/config';
 import { BLOCK_DEFAULTS, resolveBlockPreset } from '@/lib/animations/block-defaults';
+import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
 
 describe('animation presets (config.ts)', () => {
   it('should define all 7 spec presets with keyframes, duration and easing', () => {
@@ -98,5 +99,14 @@ describe('resolveBlockPreset (block-defaults.ts)', () => {
 
   it('should fall back to fade-up for an unknown block type', () => {
     expect(resolveBlockPreset('mysteryBlock', 'default')).toBe('fade-up');
+  });
+
+  it('should give every registered block a BLOCK_DEFAULTS entry', () => {
+    // resolveBlockPreset silently falls back to 'fade-up' for any slug missing here, so a
+    // forgotten registration never crashes and never surfaces on its own — this closes that
+    // gap by asserting coverage directly instead of relying on someone noticing.
+    const slugs = getBlockSchemas().map((s) => s.slug);
+    const missing = slugs.filter((slug) => !(slug in BLOCK_DEFAULTS));
+    expect(missing).toEqual([]);
   });
 });

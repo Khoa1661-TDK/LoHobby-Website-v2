@@ -47,6 +47,10 @@ export const BLOCK_DEFAULTS: Record<string, PresetName> = {
   spotlight: 'fade-up',
   youtubeChannel: 'scale-in',
   reelCarousel: 'stagger-cards',
+  // Arbitrary author-supplied markup — same rationale as richText/text: a plain fade-up
+  // reveal works for any content shape, unlike stagger/scale presets that assume a known
+  // internal structure (cards, a single hero image) this block can't guarantee.
+  customHtml: 'fade-up',
 };
 
 /** Resolve the effective preset for a block.

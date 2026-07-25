@@ -8,18 +8,33 @@ import { sanitizeBlockHtml, scopeBlockCss } from '@/lib/page-builder/sanitize-ht
 
 type Props = {
   id?: string | null;
+  blockKey?: string | null;
   html?: string | null;
   css?: string | null;
 } & BlockAppearance;
 
+/** Payload's own block `id` is stripped on every locale save and is absent entirely on a
+ *  freshly-added, not-yet-saved block (src/payload/blocks/_identity.ts) — so it cannot be
+ *  trusted as the CSS-scoping identity. `blockKey` is the field that exists specifically to
+ *  survive that stripping, so it takes priority. If a row somehow has neither (content
+ *  authored outside the builder, predating the blockKey field), fall back to a fresh random
+ *  token rather than a shared literal — two such blocks must still scope to different
+ *  selectors instead of one's CSS bleeding into the other's markup. */
+function randomScopeId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `custom-html-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export default function CustomHtmlBlock(props: Props): ReactElement | null {
-  const { id, html, css } = props;
+  const { blockKey, id, html, css } = props;
   const { section, container, style } = blockAppearanceClasses(props);
 
   const cleanHtml = sanitizeBlockHtml(html ?? '');
   if (!cleanHtml.trim()) return null;
 
-  const scopeId = id ?? 'custom-html';
+  const scopeId = blockKey || id || randomScopeId();
   const cleanCss = css ? scopeBlockCss(css, scopeId) : '';
 
   return (
