@@ -5,6 +5,9 @@ import {
   duplicateBlock,
   deleteBlock,
   insertBlock,
+  addRow,
+  updateRow,
+  removeRow,
 } from '@/lib/page-builder/layout-reducer';
 import type { PageBlock } from '@/lib/page-builder';
 
@@ -59,5 +62,58 @@ describe('insertBlock', () => {
     const block = { blockType: 'newsletter' } as unknown as PageBlock;
     const next = insertBlock(layout, 1, block);
     expect(next.map((b) => b.blockType)).toEqual(['hero', 'newsletter', 'divider', 'faq']);
+  });
+});
+
+describe('row reducers', () => {
+  const layout = [
+    { blockType: 'faq', items: [{ question: 'A' }, { question: 'B' }] },
+  ] as unknown as PageBlock[];
+
+  it('should append a row when no position is given', () => {
+    const next = addRow(layout, 0, 'items', { question: 'C' });
+    expect((next[0] as { items: unknown[] }).items).toHaveLength(3);
+    expect((next[0] as { items: Array<{ question: string }> }).items[2]?.question).toBe('C');
+  });
+
+  it('should insert a row at an explicit position', () => {
+    const next = addRow(layout, 0, 'items', { question: 'C' }, 0);
+    expect((next[0] as { items: Array<{ question: string }> }).items[0]?.question).toBe('C');
+  });
+
+  it('should create the array when the field is empty', () => {
+    const empty = [{ blockType: 'faq' }] as unknown as PageBlock[];
+    const next = addRow(empty, 0, 'items', { question: 'A' });
+    expect((next[0] as { items: unknown[] }).items).toHaveLength(1);
+  });
+
+  it('should patch only the named fields of the target row', () => {
+    const seeded = [
+      { blockType: 'faq', items: [{ question: 'A', answer: 'x' }] },
+    ] as unknown as PageBlock[];
+    const next = updateRow(seeded, 0, 'items', 0, { answer: 'y' });
+    const row = (next[0] as { items: Array<Record<string, unknown>> }).items[0];
+    expect(row).toEqual({ question: 'A', answer: 'y' });
+  });
+
+  it('should remove the row at the given index', () => {
+    const next = removeRow(layout, 0, 'items', 0);
+    const items = (next[0] as { items: Array<{ question: string }> }).items;
+    expect(items).toHaveLength(1);
+    expect(items[0]?.question).toBe('B');
+  });
+
+  it('should return the layout unchanged for an out-of-range row index', () => {
+    expect(updateRow(layout, 0, 'items', 9, { question: 'X' })).toBe(layout);
+    expect(removeRow(layout, 0, 'items', 9)).toBe(layout);
+  });
+
+  it('should return the layout unchanged for an out-of-range block index', () => {
+    expect(addRow(layout, 5, 'items', { question: 'X' })).toBe(layout);
+  });
+
+  it('should not mutate the input layout', () => {
+    addRow(layout, 0, 'items', { question: 'C' });
+    expect((layout[0] as { items: unknown[] }).items).toHaveLength(2);
   });
 });
