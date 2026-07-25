@@ -45,8 +45,8 @@ describe('page-builder history', () => {
 
   it('should not grow the past stack past the limit across an undo/redo cycle', () => {
     let h = emptyHistory<number>();
-    for (let i = 0; i < 50; i += 1) h = recordHistory(h, i, 50);
-    const undone = undoHistory(h, 50)!;
+    for (let i = 0; i < 60; i += 1) h = recordHistory(h, i, 50);
+    const undone = undoHistory(h, 60)!;
     const redone = redoHistory(undone.history, undone.present)!;
     expect(redone.history.past.length).toBeLessThanOrEqual(50);
   });
