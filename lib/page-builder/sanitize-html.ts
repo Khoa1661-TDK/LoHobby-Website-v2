@@ -269,69 +269,89 @@ function escapeStyleTagBreakout(css: string): string {
   return css.replace(/<\/style/gi, '<\\/style').replace(/<!--/g, '<\\!--');
 }
 
+/** `blockId` is interpolated directly into the scope attribute selector and into the
+ *  renamed `@keyframes` name. Today it's always an auto-generated `blockKey`, but this
+ *  function has no way to enforce that from its own signature — an identifier containing
+ *  `"] , * {display:none} [x="` closes the attribute selector early and appends a
+ *  completely unscoped rule. Keep only characters that are always safe inside a CSS
+ *  identifier/attribute-selector value; if nothing safe remains, refuse outright rather
+ *  than emit a scope built from an empty string. */
+function sanitizeBlockId(blockId: string): string {
+  return blockId.replace(/[^\w-]/g, '');
+}
+
 /** Prefix every selector with the block's data attribute so a rule cannot match outside
  *  its own section, and neutralise the declarations that can still escape it visually. */
 export function scopeBlockCss(css: string, blockId: string): string {
   if (!css) return '';
-  const scope = `[data-html-block="${blockId}"]`;
+  const safeBlockId = sanitizeBlockId(blockId);
+  if (!safeBlockId) return '';
+  const scope = `[data-html-block="${safeBlockId}"]`;
 
-  let root: postcss.Root;
+  // The whole transform — parse, every walk, and the final stringify — is one try/catch.
+  // postcss.parse succeeding is not enough: postcss's stringifier recurses once per
+  // nesting level, so several thousand levels of nested @media (something postcss.parse
+  // itself handles fine) overflows the call stack inside `root.toString()`, well after
+  // the original, too-narrow `try` around `postcss.parse` alone had already exited. This
+  // mirrors the shape `hasUnsafeUrlReference` and `sanitizeStyleAttribute` already use:
+  // one guard around the entire operation, not one enumerated per known cause.
   try {
-    root = postcss.parse(css);
-  } catch {
-    // Malformed CSS from an import or a hand edit — drop it rather than emitting garbage.
-    return '';
-  }
+    const root = postcss.parse(css);
 
-  // 1. Drop every at-rule outside the reviewed allowlist (case-insensitively — see
-  //    ALLOWED_AT_RULES above). This is what actually removes @import in any casing.
-  root.walkAtRules((rule) => {
-    if (!ALLOWED_AT_RULES.has(atRuleName(rule))) rule.remove();
-  });
+    // 1. Drop every at-rule outside the reviewed allowlist (case-insensitively — see
+    //    ALLOWED_AT_RULES above). This is what actually removes @import in any casing.
+    root.walkAtRules((rule) => {
+      if (!ALLOWED_AT_RULES.has(atRuleName(rule))) rule.remove();
+    });
 
-  // 2. Namespace @keyframes so two custom blocks on one page cannot collide.
-  const renamedKeyframes = new Map<string, string>();
-  root.walkAtRules((rule) => {
-    if (atRuleName(rule) !== 'keyframes') return;
-    const original = rule.params.trim();
-    const renamed = `${original}-${blockId}`;
-    renamedKeyframes.set(original, renamed);
-    rule.params = renamed;
-  });
+    // 2. Namespace @keyframes so two custom blocks on one page cannot collide.
+    const renamedKeyframes = new Map<string, string>();
+    root.walkAtRules((rule) => {
+      if (atRuleName(rule) !== 'keyframes') return;
+      const original = rule.params.trim();
+      const renamed = `${original}-${safeBlockId}`;
+      renamedKeyframes.set(original, renamed);
+      rule.params = renamed;
+    });
 
-  // 3. Scope every selector. `postcss.parse` tokenizes plenty of selector text that
-  //    `postcss-selector-parser` cannot (e.g. an unmatched paren) — catch per-rule so one
-  //    malformed selector degrades to "drop that rule," not an uncaught render-time throw.
-  root.walkRules((rule) => {
-    // Selectors inside @keyframes are percentages/from/to, not element selectors.
-    if (rule.parent?.type === 'atrule' && atRuleName(rule.parent as postcss.AtRule) === 'keyframes') {
-      return;
-    }
-    try {
-      const scoped = prefixSelector(rule.selector, scope);
-      if (scoped === null) {
-        rule.remove();
+    // 3. Scope every selector. `postcss.parse` tokenizes plenty of selector text that
+    //    `postcss-selector-parser` cannot (e.g. an unmatched paren) — catch per-rule so
+    //    one malformed selector degrades to "drop that rule" before it can ever reach
+    //    the outer catch-all.
+    root.walkRules((rule) => {
+      // Selectors inside @keyframes are percentages/from/to, not element selectors.
+      if (rule.parent?.type === 'atrule' && atRuleName(rule.parent as postcss.AtRule) === 'keyframes') {
         return;
       }
-      rule.selector = scoped;
-    } catch {
-      rule.remove();
-    }
-  });
+      try {
+        const scoped = prefixSelector(rule.selector, scope);
+        if (scoped === null) {
+          rule.remove();
+          return;
+        }
+        rule.selector = scoped;
+      } catch {
+        rule.remove();
+      }
+    });
 
-  // 4. Neutralise escaping declarations (shared with the inline `style` attribute path).
-  root.walkDecls((decl) => {
-    neutralizeDecl(decl);
-    if (decl.parent === undefined) return; // decl.remove() already detached it above
-    const renamed = renamedKeyframes.get(decl.value.split(/\s+/)[0] ?? '');
-    // Property name comparison, lowercased — `ANIMATION: fade 1s` is exactly as live a
-    // reference to the `fade` keyframe as `animation: fade 1s`, and must be rewritten to
-    // the namespaced name just the same, or it keeps pointing at the un-renamed keyframe.
-    const prop = decl.prop.toLowerCase();
-    if ((prop === 'animation' || prop === 'animation-name') && renamed) {
-      decl.value = decl.value.replace(/^\S+/, renamed);
-    }
-  });
+    // 4. Neutralise escaping declarations (shared with the inline `style` attribute path).
+    root.walkDecls((decl) => {
+      neutralizeDecl(decl);
+      if (decl.parent === undefined) return; // decl.remove() already detached it above
+      const renamed = renamedKeyframes.get(decl.value.split(/\s+/)[0] ?? '');
+      // Property name comparison, lowercased — `ANIMATION: fade 1s` is exactly as live a
+      // reference to the `fade` keyframe as `animation: fade 1s`, and must be rewritten
+      // to the namespaced name just the same, or it keeps pointing at the un-renamed
+      // keyframe.
+      const prop = decl.prop.toLowerCase();
+      if ((prop === 'animation' || prop === 'animation-name') && renamed) {
+        decl.value = decl.value.replace(/^\S+/, renamed);
+      }
+    });
 
-  return escapeStyleTagBreakout(root.toString());
+    return escapeStyleTagBreakout(root.toString());
+  } catch {
+    return '';
+  }
 }

@@ -291,8 +291,36 @@ describe('scopeBlockCss', () => {
   // Also close, since Finding 3 said "throughout" — `decl.prop === 'animation'` was still
   // compared raw, so an uppercase ANIMATION declaration kept pointing at the un-renamed
   // keyframe name after @keyframes itself was namespaced.
+  //
+  // `toContain('fade-abc')` alone does not discriminate: the renamed `@keyframes fade-abc`
+  // rule supplies that substring regardless of whether the ANIMATION declaration itself
+  // got rewritten. Assert on the declaration's own text so the buggy behavior (prop
+  // comparison left un-lowercased, so `ANIMATION: fade 1s` is never touched) fails this.
   it('should rewrite an ANIMATION reference to the namespaced keyframe name regardless of property casing', () => {
     const out = scopeBlockCss('@keyframes fade { to { opacity: 1 } } .x{ANIMATION: fade 1s}', 'abc');
-    expect(out).toContain('fade-abc');
+    expect(out).toContain('ANIMATION: fade-abc');
+  });
+
+  // Deferred `blockId` interpolation, now confirmed reachable in principle: `blockId` is
+  // spliced directly into `[data-html-block="..."]` and into the renamed @keyframes name.
+  // A crafted id can close the attribute selector early and append a fully unscoped rule.
+  // Not reachable today (blockId comes from an auto-generated blockKey), but one line
+  // fixes it, so it shouldn't sit open.
+  it('should not let a malicious blockId escape the attribute selector', () => {
+    const malicious = '"] , * {display:none} [x="';
+    const out = scopeBlockCss('.a{color:red}', malicious);
+    expect(out).not.toContain('*');
+    expect(out).not.toMatch(/display:\s*none/);
+  });
+
+  // Important — `scopeBlockCss`'s own body was still only guarded around `postcss.parse`.
+  // `postcss.parse` succeeds on CSS nested thousands of `@media` levels deep; it's
+  // `root.toString()` — postcss's stringifier recurses once per nesting level — that
+  // overflows the call stack, well outside the original try/catch. Depth 3000 reliably
+  // throws in this environment (1000 is fine); picked with margin above that threshold.
+  it('should not throw on CSS nested thousands of levels deep (stringifier stack overflow)', () => {
+    const depth = 3000;
+    const deeplyNested = '@media (min-width:1px){'.repeat(depth) + '.a{color:red}' + '}'.repeat(depth);
+    expect(() => scopeBlockCss(deeplyNested, 'abc')).not.toThrow();
   });
 });
