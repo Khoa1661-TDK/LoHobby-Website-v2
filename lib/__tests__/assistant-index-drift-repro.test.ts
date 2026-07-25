@@ -54,15 +54,15 @@ describe('BUG REPRO — index drift deletes the wrong block', () => {
   });
 });
 
-describe('BUG REPRO — the marquee items array is invisible to the model', () => {
-  it('drops the items array from the snapshot, so edits cannot preserve it', () => {
+describe('FIXED (Task 9) — the marquee items array is now visible as a row count', () => {
+  it('reports the row count in the snapshot instead of dropping the array', () => {
     const layouts = homepage();
     const snapshot = serializeLayout(layouts.vi);
     const marquee = snapshot.find((b) => b.blockType === 'marquee')!;
-    // serializeLayout keeps only non-empty string fields; arrays/objects are dropped.
-    // The model literally cannot see the two marquee phrases, so any update_block it writes
-    // to the marquee has no way to round-trip them.
-    expect('items' in marquee.summary).toBe(false);
+    // serializeLayout now collapses arrays to a row count rather than dropping them, so the
+    // model can see the marquee has 2 rows and knows to use read_block / row tools rather
+    // than blindly overwriting the array via update_block.
+    expect(marquee.summary.items).toBe('2 rows');
   });
 
   it('wholesale-replaces the items array on update, stripping existing phrases', () => {

@@ -265,6 +265,31 @@ describe('POST /api/page-builder/assistant — dual-locale mutation stream', () 
     expect(toolMessage?.content).toContain('items: array of rows, each:');
   });
 
+  it('should still be running the tool loop on turn 20, past the old 16-turn cap', async () => {
+    vi.mocked(isAuthorizedAdmin).mockResolvedValue(true);
+    // 20 read-only turns followed by a final answer. Under the old MAX_TURNS = 16 the loop
+    // would stop after the 16th completion call and never reach the final turn, so llm.calls
+    // would be 16 and no summary event would ever be emitted.
+    const TURNS = 20;
+    llm.responses = [
+      ...Array.from({ length: TURNS }, (_, i) =>
+        assistantTurn([toolCall(`c${i}`, 'describe_block', { blockType: 'faq' })]),
+      ),
+      finalTurn('Done after a long tool loop.'),
+    ];
+
+    const res = await POST(
+      new Request('http://x/api/page-builder/assistant', {
+        method: 'POST',
+        body: JSON.stringify({ prompt: 'describe faq 20 times', layouts: { vi: [], en: [] } }),
+      }),
+    );
+    const events = await readEvents(res);
+
+    expect(llm.calls).toBe(TURNS + 1);
+    expect(events.some((e) => e.type === 'summary' && e.text === 'Done after a long tool loop.')).toBe(true);
+  });
+
   it('should answer search_media as a tool message reflecting the search result, without emitting a mutation', async () => {
     vi.mocked(isAuthorizedAdmin).mockResolvedValue(true);
     payloadMock.find.mockResolvedValueOnce({

@@ -33,9 +33,10 @@ export const runtime = 'nodejs';
 // Gemini's OpenAI-compatible endpoint + a cheap, tool-calling-capable default.
 const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/';
 const DEFAULT_MODEL = 'gemini-2.5-flash';
-// Dual-locale copy + read_block round-trips mean more calls per build than the
-// single-locale flow, so allow a deeper tool loop.
-const MAX_TURNS = 16;
+// Dual-locale copy, describe_block lookups, resource searches, and one-structural-edit-
+// at-a-time mean a full page build runs long. At 16 the loop stopped mid-build, leaving a
+// half-finished page.
+const MAX_TURNS = 28;
 const MAX_TOKENS = 8192;
 
 function newBlockKey(): string {
