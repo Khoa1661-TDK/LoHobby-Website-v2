@@ -10,9 +10,10 @@ the page builder, and have the assistant rebuild it as a real CMS page — mappe
 editable blocks wherever a block fits, preserved verbatim as sanitized custom HTML
 wherever none does.
 
-Three supporting pieces make that possible: a `customHtml` block as the escape hatch,
-six new block types so fewer sections fall through to HTML, and one shared icon registry
-so blocks that should show an icon can.
+Four supporting pieces make that possible: a `customHtml` block as the escape hatch, six
+new block types so fewer sections fall through to HTML, one shared icon registry so
+blocks that should show an icon can, and redo in the editor so a large import is safe to
+step back and forth over.
 
 Claude the product is **not** integrated anywhere. The HTML is user-supplied input, the
 same way an attached screenshot is today.
@@ -275,18 +276,49 @@ blocks. Every column in one migration.
 
 ---
 
-## 5. Sequencing
+## 5. Editor history — redo
 
-Four phases, each independently shippable, each with its own generated migration:
+`EditorShell` already has undo (`EditorShell.tsx:96–108`): a `past` stack of
+`LocaleLayouts`, capped at 50, snapshotted by `record()` before every mutation — manual
+edits and assistant turns alike. There is no redo, so an accidental undo is unrecoverable.
 
-1. **Icons** — registry, `BlockIcon`, `icon` fields on eight existing blocks, migration.
-   Smallest, no new surfaces, immediately useful to the existing assistant.
-2. **New blocks** — six blocks, renderers, tests, migration.
-3. **`customHtml`** — sanitizer, block, renderer, picker entry, migration.
-4. **Importer** — parser, tools, route, dialog, image pipeline.
+Redo is the mirror stack:
+
+- `const [future, setFuture] = useState<LocaleLayouts[]>([])`.
+- `record()` pushes onto `past` **and clears `future`** — a fresh edit invalidates the
+  redo branch, the standard behaviour.
+- `undoLastChange` additionally pushes the current layouts onto `future` before restoring.
+- `redoLastChange` pops `future`, pushes current onto `past`, restores, and clears the
+  selection — exactly symmetric with undo.
+
+Surfaced the same two places undo already is: a `↷ Redo` button beside `↶ Undo` in the
+toolbar (disabled when `future` is empty), and `redoAvailable` / `onRedo` props on
+`AssistantPanel` alongside the existing `undoAvailable` / `onUndo`.
+
+Keyboard shortcuts for both, bound on the editor root: `Cmd/Ctrl+Z` for undo,
+`Cmd/Ctrl+Shift+Z` and `Ctrl+Y` for redo. Suppressed while focus is inside a text input,
+textarea, or the rich-text editor, so they don't fight native field-level undo.
+
+This matters more once import exists: an import is a single large mutation, so undo/redo
+becomes the way to compare an imported layout against the previous one.
+
+No schema change, no migration — client state only.
+
+## 6. Sequencing
+
+Five phases, each independently shippable; phases 2–4 each carry a generated migration:
+
+1. **Redo** — `future` stack, two buttons, keyboard shortcuts. Client-only, no migration.
+2. **Icons** — registry, `BlockIcon`, `icon` fields on eight existing blocks, migration.
+   Small, no new surfaces, immediately useful to the existing assistant.
+3. **New blocks** — six blocks, renderers, tests, migration.
+4. **`customHtml`** — sanitizer, block, renderer, picker entry, migration.
+5. **Importer** — parser, tools, route, dialog, image pipeline.
 
 The importer is last because it wants the widest set of mapping targets; running it
-before phases 1–3 would drop far more sections into HTML fallback than necessary.
+before phases 2–4 would drop far more sections into HTML fallback than necessary. Redo is
+first because it is independent of everything else and makes the later phases safer to
+try out.
 
 ## Testing
 
@@ -298,6 +330,7 @@ before phases 1–3 would drop far more sections into HTML fallback than necessa
 | Image pipeline | Non-image content-type rejected; oversized rejected; failure leaves the field unset rather than writing a string URL; success writes a numeric id. |
 | Block schemas | Each new block: required fields present, enum values match the renderer's switch, `appearanceFields` merged without name collision. |
 | Icons | Every name in the registry resolves in `BlockIcon`; `FEATURE_ICON_NAMES` re-export is unchanged in content and order. |
+| Redo | Undo then redo restores the exact prior layouts; a new edit after undo clears the redo stack; redo is unavailable at the head of history; the `past` cap of 50 is not exceeded by an undo/redo cycle. |
 
 Test files must `import { describe, expect, it } from 'vitest'` explicitly — `globals: true`
 is runtime-only and `tsc --noEmit` fails without the import.
