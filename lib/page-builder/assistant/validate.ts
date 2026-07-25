@@ -1,6 +1,7 @@
 // lib/page-builder/assistant/validate.ts — second-pass per-blockType validation.
-import { getBlockSchema, getBlockSchemas, type BlockSchema, type FieldDescriptor } from '@/lib/page-builder/block-schemas';
+import { getBlockSchema, getBlockSchemas, type FieldDescriptor } from '@/lib/page-builder/block-schemas';
 import { markdownToLexical } from '@/lib/page-builder/lexical-markdown';
+import { contentFields } from '@/lib/page-builder/assistant/schema-tree';
 
 /** Which locale copy a field-level mutation targets. Structure (add/move/remove/
  *  duplicate) is always shared across both locales, so only `update` carries a tag. */
@@ -61,15 +62,15 @@ function isUnbound(value: unknown): boolean {
  * (or an array of integers for hasMany). The LLM has no real ids and tends to fabricate
  * strings like "placeholder-collection-id-3"; those must be rejected before they reach
  * Payload, which 400s the whole page save on an invalid relationship. */
-function checkRelationship(field: FieldDescriptor, value: unknown): string | null {
+function checkRelationship(field: FieldDescriptor, value: unknown, path: string): string | null {
   if (isUnbound(value)) return null; // omitting a relationship is allowed
   const values = Array.isArray(value) ? value : [value];
   for (const v of values) {
     if (isUnbound(v)) continue;
     if (typeof v !== 'number' || !Number.isInteger(v)) {
-      return `Field "${field.name}" is a relationship to "${field.relationTo ?? 'a collection'}" and must be a numeric id (got ${JSON.stringify(
+      return `Field "${path}" is a relationship to "${field.relationTo ?? 'a collection'}" and must be a numeric id (got ${JSON.stringify(
         v,
-      )}). Use one of the valid ids listed in the contract, or omit it to leave the block unbound.`;
+      )}). Call search_catalog for a valid id, or omit it to leave the block unbound.`;
     }
   }
   return null;
@@ -78,36 +79,88 @@ function checkRelationship(field: FieldDescriptor, value: unknown): string | nul
 /** Reject numeric values that fall outside a field's configured min/max bounds. The LLM
  * frequently emits out-of-range numbers (e.g. a negative `limit`), which pass name/enum
  * checks but make Payload 400 the whole page save. Returns an error string or null. */
-function checkNumberBounds(field: FieldDescriptor, value: unknown): string | null {
+function checkNumberBounds(field: FieldDescriptor, value: unknown, path: string): string | null {
   if (typeof value !== 'number' || Number.isNaN(value)) return null; // non-numbers handled elsewhere
   if (typeof field.min === 'number' && value < field.min) {
-    return `Field "${field.name}" must be at least ${field.min} (got ${value}).`;
+    return `Field "${path}" must be at least ${field.min} (got ${value}).`;
   }
   if (typeof field.max === 'number' && value > field.max) {
-    return `Field "${field.name}" must be at most ${field.max} (got ${value}).`;
+    return `Field "${path}" must be at most ${field.max} (got ${value}).`;
   }
   return null;
 }
 
-/** Reject any field not declared by the block, any enum value out of range, any
- * relationship value that is not a numeric id, and any number outside its min/max bounds. */
-function checkFields(schema: BlockSchema, fields: Record<string, unknown>): string | null {
-  const byName = new Map<string, FieldDescriptor>(schema.fields.map((f) => [f.name, f]));
-  for (const [key, value] of Object.entries(fields)) {
+/** Payload's default ID type here is numeric, so an upload value must be an integer media
+ * id. The model tends to emit filenames or URLs, which Payload rejects with a 400 on the
+ * whole page save. */
+function checkUpload(field: FieldDescriptor, value: unknown, path: string): string | null {
+  if (isUnbound(value)) return null;
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    return `Field "${path}" needs a numeric media id (got ${JSON.stringify(
+      value,
+    )}). Call search_media to find one, or omit the field to leave the image unset.`;
+  }
+  return null;
+}
+
+/** Validate a set of values against a field-descriptor list, recursing into array rows and
+ * groups. `path` accumulates the dotted/bracketed location so a nested failure tells the
+ * model exactly where to fix it (e.g. `items[2].layout`). Returns an error string or null. */
+function checkFields(
+  fields: FieldDescriptor[],
+  values: Record<string, unknown>,
+  path = '',
+): string | null {
+  const visible = contentFields(fields);
+  const byName = new Map<string, FieldDescriptor>(visible.map((f) => [f.name, f]));
+
+  for (const [key, value] of Object.entries(values)) {
+    const at = path ? `${path}.${key}` : key;
     const field = byName.get(key);
-    if (!field) return `Block "${schema.slug}" has no field "${key}".`;
+    if (!field) {
+      return `Unknown field "${at}". Call describe_block to see the fields this block defines.`;
+    }
+
+    if (field.type === 'array') {
+      if (!Array.isArray(value)) {
+        return `Field "${at}" must be an array of row objects.`;
+      }
+      for (let i = 0; i < value.length; i++) {
+        const row = value[i];
+        if (!row || typeof row !== 'object' || Array.isArray(row)) {
+          return `Field "${at}[${i}]" must be an object with the row's fields.`;
+        }
+        const rowErr = checkFields(field.fields ?? [], row as Record<string, unknown>, `${at}[${i}]`);
+        if (rowErr) return rowErr;
+      }
+      continue;
+    }
+
+    if (field.type === 'group') {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return `Field "${at}" must be an object.`;
+      }
+      const groupErr = checkFields(field.fields ?? [], value as Record<string, unknown>, at);
+      if (groupErr) return groupErr;
+      continue;
+    }
+
     if (field.options && typeof value === 'string') {
       const allowed = field.options.map((o) => o.value);
       if (!allowed.includes(value)) {
-        return `Field "${key}" must be one of: ${allowed.join(', ')} (got "${value}").`;
+        return `Field "${at}" must be one of: ${allowed.join(', ')} (got "${value}").`;
       }
     }
     if (field.type === 'relationship') {
-      const relErr = checkRelationship(field, value);
+      const relErr = checkRelationship(field, value, at);
       if (relErr) return relErr;
     }
+    if (field.type === 'upload') {
+      const upErr = checkUpload(field, value, at);
+      if (upErr) return upErr;
+    }
     if (field.type === 'number') {
-      const numErr = checkNumberBounds(field, value);
+      const numErr = checkNumberBounds(field, value, at);
       if (numErr) return numErr;
     }
   }
@@ -158,7 +211,7 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
       const schema = getBlockSchema(blockType);
       if (!schema) return { ok: false, error: `Unknown block type "${blockType}".` };
       if (index === null) return { ok: false, error: 'add_block requires an integer index.' };
-      const fieldErr = checkFields(schema, fields);
+      const fieldErr = checkFields(schema.fields, fields);
       if (fieldErr) return { ok: false, error: fieldErr };
       // richText fields arrive as Markdown strings; store them as Lexical JSON so the
       // page save does not 400 (see coerceRichText).
@@ -169,7 +222,7 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
       let blockOther: Record<string, unknown> | undefined;
       if (args.fieldsOther !== undefined) {
         const fieldsOther = asRecord(args.fieldsOther);
-        const otherErr = checkFields(schema, fieldsOther);
+        const otherErr = checkFields(schema.fields, fieldsOther);
         if (otherErr) return { ok: false, error: otherErr };
         const merged = { ...fields, ...fieldsOther };
         coerceRichText(schema.fields, merged);
@@ -239,7 +292,7 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
 export function validateUpdateFields(blockType: string, fields: Record<string, unknown>): string | null {
   const schema = getBlockSchema(blockType);
   if (!schema) return `Unknown block type "${blockType}".`;
-  return checkFields(schema, fields);
+  return checkFields(schema.fields, fields);
 }
 
 // Cache the union of all field names across all blocks for update_block validation.

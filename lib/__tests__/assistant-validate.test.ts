@@ -355,3 +355,139 @@ describe('validateUpdateFields', () => {
     expect(validateUpdateFields('featuredCollection', { limit: 8 })).toBeNull();
   });
 });
+
+describe('checkFields — nested validation', () => {
+  it('should reject an unknown field inside an array row', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'faq',
+      index: 0,
+      fields: { items: [{ question: 'Q', bogus: 'x' }] },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/items\[0\]\.bogus/);
+  });
+
+  it('should accept a well-formed array row', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'faq',
+      index: 0,
+      fields: { items: [{ question: 'Q', answer: 'A' }] },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('should reject a non-array value for an array field', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'faq',
+      index: 0,
+      fields: { items: 'not an array' },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/must be an array/i);
+  });
+
+  it('should reject a row that is not an object', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'faq',
+      index: 0,
+      fields: { items: ['just a string'] },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/items\[0\]/);
+  });
+
+  it('should reject an id key written into a row', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'faq',
+      index: 0,
+      fields: { items: [{ id: 7, question: 'Q' }] },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/items\[0\]\.id/);
+  });
+
+  it('should reject a non-integer media id on an upload field', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'hero',
+      index: 0,
+      fields: { image: 'media/hero.jpg' },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/numeric media id/i);
+  });
+
+  it('should accept an integer media id on an upload field', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'hero',
+      index: 0,
+      fields: { image: 412 },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('should reject an out-of-range enum inside an array row', () => {
+    // featureGrid.items[].icon is a select over a fixed icon set.
+    const r = validateToolCall('add_block', {
+      blockType: 'featureGrid',
+      index: 0,
+      fields: { items: [{ icon: 'rocket' }] },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/items\[0\]\.icon/);
+  });
+
+  it('should accept a valid enum inside an array row', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'featureGrid',
+      index: 0,
+      fields: { items: [{ icon: 'printer' }] },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('should reject a non-integer relationship id inside an array row', () => {
+    // spotlight.deals[].product is a relationship to products.
+    const r = validateToolCall('add_block', {
+      blockType: 'spotlight',
+      index: 0,
+      fields: { deals: [{ product: 'product-slug-here' }] },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/numeric id/i);
+  });
+
+  it('should reject a number outside its bounds inside an array row', () => {
+    // testimonials.entries[].rating is bounded 1–5.
+    const r = validateToolCall('add_block', {
+      blockType: 'testimonials',
+      index: 0,
+      fields: { entries: [{ quote: 'Great', rating: 9 }] },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/at most 5/);
+  });
+
+  it('should reject a non-integer media id inside an array row', () => {
+    // cardGrid.cards[].image is an upload to media.
+    const r = validateToolCall('add_block', {
+      blockType: 'cardGrid',
+      index: 0,
+      fields: { cards: [{ title: 'Card', image: 'cards/one.jpg' }] },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/numeric media id/i);
+  });
+
+  it('should coerce a Markdown richText value inside an array row to Lexical', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'faq',
+      index: 0,
+      fields: { items: [{ question: 'Q', answer: 'Hello **world**' }] },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok && 'mutation' in r && r.mutation.kind === 'add') {
+      const rows = r.mutation.block.items as Array<Record<string, unknown>>;
+      expect(typeof rows[0]?.answer).toBe('object');
+    }
+  });
+});
