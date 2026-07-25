@@ -1,21 +1,10 @@
 // components/blocks/FeatureGrid.tsx — icon + title + text grid, or linked image cards.
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
-import type { ComponentType, ReactElement, ReactNode } from 'react';
-import type { LucideProps } from 'lucide-react';
-import {
-  Zap, Truck, Shield, Star, Box, Layers, Printer, Sparkles,
-  Heart, Clock, Award, Package, Wrench, Ruler, Palette, ThumbsUp,
-} from 'lucide-react';
+import type { ReactElement, ReactNode } from 'react';
+import BlockIcon from '@/components/blocks/_icon';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
-
-const ICONS: Record<string, ComponentType<LucideProps>> = {
-  zap: Zap, truck: Truck, shield: Shield, star: Star,
-  box: Box, layers: Layers, printer: Printer, sparkles: Sparkles,
-  heart: Heart, clock: Clock, award: Award, package: Package,
-  wrench: Wrench, ruler: Ruler, palette: Palette, thumbsUp: ThumbsUp,
-};
 
 type Item = {
   icon?: string | null;
@@ -123,12 +112,12 @@ export default function FeatureGridBlock(props: Props): ReactElement | null {
                       </span>
                     );
                   }
-                  const Icon = it.icon ? ICONS[it.icon] : undefined;
-                  return Icon ? (
+                  if (!it.icon) return null;
+                  return (
                     <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-card-sm bg-surface-raised text-accent">
-                      <Icon className="h-5 w-5" aria-hidden="true" />
+                      <BlockIcon name={it.icon} className="h-5 w-5" />
                     </span>
-                  ) : null;
+                  );
                 })()}
                 {it.title ? <h3 className="font-display text-base font-semibold text-ink">{it.title}</h3> : null}
                 {it.caption ? (
