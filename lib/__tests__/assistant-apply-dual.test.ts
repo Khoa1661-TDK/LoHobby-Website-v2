@@ -121,8 +121,8 @@ describe('applyDualMutation — rows', () => {
       { kind: 'addRow', index: 0, field: 'items', values: { question: 'Mới' }, valuesOther: { question: 'New' } },
       'vi',
     );
-    const vi = (next.vi[0] as { items: Array<{ question: string }> }).items;
-    const en = (next.en[0] as { items: Array<{ question: string }> }).items;
+    const vi = (next.vi[0] as unknown as { items: Array<{ question: string }> }).items;
+    const en = (next.en[0] as unknown as { items: Array<{ question: string }> }).items;
     expect(vi.map((r) => r.question)).toEqual(['Vi', 'Mới']);
     expect(en.map((r) => r.question)).toEqual(['En', 'New']);
   });
@@ -133,14 +133,14 @@ describe('applyDualMutation — rows', () => {
       { kind: 'addRow', index: 0, field: 'items', values: { question: 'Mới' } },
       'vi',
     );
-    const en = (next.en[0] as { items: Array<{ question: string }> }).items;
+    const en = (next.en[0] as unknown as { items: Array<{ question: string }> }).items;
     expect(en[1]?.question).toBe('Mới');
   });
 
   it('should remove a row from both locales so counts stay aligned', () => {
     const next = applyDualMutation(layouts, { kind: 'removeRow', index: 0, field: 'items', rowIndex: 0 }, 'vi');
-    expect((next.vi[0] as { items: unknown[] }).items).toHaveLength(0);
-    expect((next.en[0] as { items: unknown[] }).items).toHaveLength(0);
+    expect((next.vi[0] as unknown as { items: unknown[] }).items).toHaveLength(0);
+    expect((next.en[0] as unknown as { items: unknown[] }).items).toHaveLength(0);
   });
 
   it('should update a row in only the tagged locale', () => {
@@ -149,8 +149,8 @@ describe('applyDualMutation — rows', () => {
       { kind: 'updateRow', index: 0, field: 'items', rowIndex: 0, values: { question: 'Changed' }, locale: 'en' },
       'vi',
     );
-    expect((next.vi[0] as { items: Array<{ question: string }> }).items[0]?.question).toBe('Vi');
-    expect((next.en[0] as { items: Array<{ question: string }> }).items[0]?.question).toBe('Changed');
+    expect((next.vi[0] as unknown as { items: Array<{ question: string }> }).items[0]?.question).toBe('Vi');
+    expect((next.en[0] as unknown as { items: Array<{ question: string }> }).items[0]?.question).toBe('Changed');
   });
 });
 

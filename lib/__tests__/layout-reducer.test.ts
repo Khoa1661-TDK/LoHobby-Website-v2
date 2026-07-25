@@ -72,19 +72,19 @@ describe('row reducers', () => {
 
   it('should append a row when no position is given', () => {
     const next = addRow(layout, 0, 'items', { question: 'C' });
-    expect((next[0] as { items: unknown[] }).items).toHaveLength(3);
-    expect((next[0] as { items: Array<{ question: string }> }).items[2]?.question).toBe('C');
+    expect((next[0] as unknown as { items: unknown[] }).items).toHaveLength(3);
+    expect((next[0] as unknown as { items: Array<{ question: string }> }).items[2]?.question).toBe('C');
   });
 
   it('should insert a row at an explicit position', () => {
     const next = addRow(layout, 0, 'items', { question: 'C' }, 0);
-    expect((next[0] as { items: Array<{ question: string }> }).items[0]?.question).toBe('C');
+    expect((next[0] as unknown as { items: Array<{ question: string }> }).items[0]?.question).toBe('C');
   });
 
   it('should create the array when the field is empty', () => {
     const empty = [{ blockType: 'faq' }] as unknown as PageBlock[];
     const next = addRow(empty, 0, 'items', { question: 'A' });
-    expect((next[0] as { items: unknown[] }).items).toHaveLength(1);
+    expect((next[0] as unknown as { items: unknown[] }).items).toHaveLength(1);
   });
 
   it('should patch only the named fields of the target row', () => {
@@ -92,13 +92,13 @@ describe('row reducers', () => {
       { blockType: 'faq', items: [{ question: 'A', answer: 'x' }] },
     ] as unknown as PageBlock[];
     const next = updateRow(seeded, 0, 'items', 0, { answer: 'y' });
-    const row = (next[0] as { items: Array<Record<string, unknown>> }).items[0];
+    const row = (next[0] as unknown as { items: Array<Record<string, unknown>> }).items[0];
     expect(row).toEqual({ question: 'A', answer: 'y' });
   });
 
   it('should remove the row at the given index', () => {
     const next = removeRow(layout, 0, 'items', 0);
-    const items = (next[0] as { items: Array<{ question: string }> }).items;
+    const items = (next[0] as unknown as { items: Array<{ question: string }> }).items;
     expect(items).toHaveLength(1);
     expect(items[0]?.question).toBe('B');
   });
@@ -114,6 +114,6 @@ describe('row reducers', () => {
 
   it('should not mutate the input layout', () => {
     addRow(layout, 0, 'items', { question: 'C' });
-    expect((layout[0] as { items: unknown[] }).items).toHaveLength(2);
+    expect((layout[0] as unknown as { items: unknown[] }).items).toHaveLength(2);
   });
 });
