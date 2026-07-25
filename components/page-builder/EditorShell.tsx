@@ -19,6 +19,13 @@ import { highlight, setLayout as setLayoutMsg, setTheme, isPreviewToParent } fro
 import { routing, type Locale } from '@/i18n/routing';
 import type { LocaleLayouts } from '@/lib/page-builder/assistant/apply-dual';
 import { isStructurallyAligned, syncFromActive } from '@/lib/page-builder/mirror/structure-sync';
+import type { History } from '@/lib/page-builder/history';
+import {
+  emptyHistory,
+  recordHistory,
+  redoHistory,
+  undoHistory,
+} from '@/lib/page-builder/history';
 
 type Props = {
   locale: string;
@@ -45,7 +52,9 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
-  const [undoSnapshot, setUndoSnapshot] = useState<LocaleLayouts | null>(null);
+  // Undo/redo history. A snapshot is pushed before every mutation — manual structural and
+  // field edits, and each AI turn — so one Undo reverts the last change and Redo replays it.
+  const [history, setHistory] = useState<History<LocaleLayouts>>(() => emptyHistory());
   const [assistantOpen, setAssistantOpen] = useState(false);
   // Float (default) vs dock-as-right-column, plus the docked column width. Both are a UI
   // preference persisted globally (not per page) in localStorage.
@@ -84,12 +93,61 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
     window.addEventListener('pointerup', onUp);
   }, []);
 
+  // Latest committed layouts, read by `record` at mutation time to snapshot the pre-edit state
+  // without a stale closure or re-created callbacks.
+  const layoutsRef = useRef(layouts);
+  useEffect(() => {
+    layoutsRef.current = layouts;
+  }, [layouts]);
+
+  // Push the current layouts onto the undo stack just before a mutation is applied.
+  const record = useCallback((): void => {
+    setHistory((h) => recordHistory(h, layoutsRef.current));
+  }, []);
+
+  const undoAvailable = history.past.length > 0;
+  const redoAvailable = history.future.length > 0;
+
+  // Read `history` from state (not inside the setHistory updater) so setLayouts/setSelectedIndex
+  // aren't called while React is applying another component's state update.
   const undoLastChange = useCallback((): void => {
-    if (undoSnapshot) {
-      setLayouts(undoSnapshot);
-      setUndoSnapshot(null);
-    }
-  }, [undoSnapshot]);
+    const stepped = undoHistory(history, layoutsRef.current);
+    if (!stepped) return;
+    setHistory(stepped.history);
+    setLayouts(stepped.present);
+    setSelectedIndex(null);
+  }, [history]);
+
+  const redoLastChange = useCallback((): void => {
+    const stepped = redoHistory(history, layoutsRef.current);
+    if (!stepped) return;
+    setHistory(stepped.history);
+    setLayouts(stepped.present);
+    setSelectedIndex(null);
+  }, [history]);
+
+  // Cmd/Ctrl+Z undo, Cmd/Ctrl+Shift+Z or Ctrl+Y redo. Suppressed while focus is in a text
+  // control so they don't fight the browser's native field-level undo.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (!e.metaKey && !e.ctrlKey) return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
+
+      const key = e.key.toLowerCase();
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undoLastChange();
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault();
+        redoLastChange();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [undoLastChange, redoLastChange]);
+
   const togglePanelMode = useCallback(
     () => setPanelMode((m) => (m === 'float' ? 'dock' : 'float')),
     [],
@@ -98,15 +156,17 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
   // Apply a reducer to only the active locale's layout (field edits).
   const setActiveLayout = useCallback(
     (fn: (blocks: PageBlock[]) => PageBlock[]): void => {
+      record();
       setLayouts((prev) => ({ ...prev, [activeLocale]: fn(prev[activeLocale]) }));
     },
-    [activeLocale],
+    [activeLocale, record],
   );
 
   // Apply the same structural reducer to BOTH locales, keeping indices in lockstep.
   const applyStructural = useCallback((fn: (blocks: PageBlock[]) => PageBlock[]): void => {
+    record();
     setLayouts((prev) => ({ vi: fn(prev.vi), en: fn(prev.en) }));
-  }, []);
+  }, [record]);
 
   // Structural guard: lockstep edits are index-based, so they only stay correct while the two
   // locale layouts are aligned (same length + blockKey at each position). A page whose locales
@@ -118,6 +178,7 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
     [layouts.vi, layouts.en],
   );
   const syncStructure = useCallback((): void => {
+    record();
     setLayouts((prev) => {
       const { active, other } = syncFromActive(prev[activeLocale], prev[otherLocale]);
       const next: LocaleLayouts = { ...prev };
@@ -125,7 +186,7 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
       next[otherLocale] = other;
       return next;
     });
-  }, [activeLocale, otherLocale]);
+  }, [activeLocale, otherLocale, record]);
 
   // If the page loads misaligned with the assistant somehow open, close it — its mutations are
   // index-based and unsafe until structure is synced.
@@ -182,6 +243,7 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
       // linked. The other locale gets a clone (same key) — same default copy until localized
       // (accepted trade-off; the assistant writes proper per-locale copy directly).
       const at = addAt;
+      record();
       setLayouts((prev) => ({
         vi: insertBlock(prev.vi, at, activeLocale === 'vi' ? block : (structuredClone(block) as PageBlock)),
         en: insertBlock(prev.en, at, activeLocale === 'en' ? block : (structuredClone(block) as PageBlock)),
@@ -263,7 +325,25 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
         >
           Edit header &amp; nav
         </a>
-        <span className="ml-auto text-xs text-warm-400">
+        <button
+          type="button"
+          onClick={undoLastChange}
+          disabled={!undoAvailable}
+          title="Undo last change"
+          className="ml-auto rounded border border-warm-200 px-3 py-1 text-sm text-warm-600 transition-colors hover:bg-warm-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          ↶ Undo
+        </button>
+        <button
+          type="button"
+          onClick={redoLastChange}
+          disabled={!redoAvailable}
+          title="Redo last undone change"
+          className="rounded border border-warm-200 px-3 py-1 text-sm text-warm-600 transition-colors hover:bg-warm-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          ↷ Redo
+        </button>
+        <span className="text-xs text-warm-400">
           {status === 'saving' && 'Saving...'}
           {status === 'saved' && 'All changes saved'}
           {status === 'error' && 'Save failed -- retry'}
@@ -345,14 +425,16 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
               layouts={layouts}
               activeLocale={activeLocale}
               onApply={setLayouts}
-              onBeforeRun={() => setUndoSnapshot(layouts)}
+              onBeforeRun={record}
               pageId={page.id}
               onSelectBlock={setSelectedIndex}
               onClose={() => setAssistantOpen(false)}
               mode="dock"
               onToggleMode={togglePanelMode}
-              undoAvailable={undoSnapshot !== null}
+              undoAvailable={undoAvailable}
               onUndo={undoLastChange}
+              redoAvailable={redoAvailable}
+              onRedo={redoLastChange}
             />
           </div>
         )}
@@ -372,14 +454,16 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
             layouts={layouts}
             activeLocale={activeLocale}
             onApply={setLayouts}
-            onBeforeRun={() => setUndoSnapshot(layouts)}
+            onBeforeRun={record}
             pageId={page.id}
             onSelectBlock={setSelectedIndex}
             onClose={() => setAssistantOpen(false)}
             mode="float"
             onToggleMode={togglePanelMode}
-            undoAvailable={undoSnapshot !== null}
+            undoAvailable={undoAvailable}
             onUndo={undoLastChange}
+            redoAvailable={redoAvailable}
+            onRedo={redoLastChange}
           />
         </div>
       )}

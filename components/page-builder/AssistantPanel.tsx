@@ -34,6 +34,8 @@ type Props = {
   onToggleMode?: () => void;
   undoAvailable?: boolean;
   onUndo?: () => void;
+  redoAvailable?: boolean;
+  onRedo?: () => void;
 };
 
 // Mirror of the server caps (route.ts) so we reject oversized/wrong-type files before
@@ -152,6 +154,8 @@ export default function AssistantPanel({
   onToggleMode,
   undoAvailable,
   onUndo,
+  redoAvailable,
+  onRedo,
 }: Props): ReactElement {
   const [prompt, setPrompt] = useState('');
   const [busy, setBusy] = useState(false);
@@ -333,6 +337,16 @@ export default function AssistantPanel({
               className="rounded-md border border-gemini-border px-2 py-0.5 text-xs text-gemini-muted transition-colors hover:bg-gemini-raised hover:text-gemini-text"
             >
               Undo
+            </button>
+          )}
+          {redoAvailable && onRedo && (
+            <button
+              type="button"
+              onClick={onRedo}
+              aria-label="Redo"
+              className="rounded-md border border-gemini-border px-2 py-0.5 text-xs text-gemini-muted transition-colors hover:bg-gemini-raised hover:text-gemini-text"
+            >
+              Redo
             </button>
           )}
           <button
