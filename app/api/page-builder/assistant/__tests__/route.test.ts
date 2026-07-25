@@ -236,4 +236,26 @@ describe('POST /api/page-builder/assistant — dual-locale mutation stream', () 
       if (m.type === 'mutation') expect(m.locales.slice().sort()).toEqual(['en', 'vi']);
     }
   });
+
+  it('should answer describe_block as a tool message without emitting a mutation', async () => {
+    vi.mocked(isAuthorizedAdmin).mockResolvedValue(true);
+    llm.responses = [
+      assistantTurn([toolCall('c1', 'describe_block', { blockType: 'faq' })]),
+      finalTurn('Described the FAQ block.'),
+    ];
+
+    const res = await POST(
+      new Request('http://x/api/page-builder/assistant', {
+        method: 'POST',
+        body: JSON.stringify({ prompt: 'what fields does faq have', layouts: { vi: [], en: [] } }),
+      }),
+    );
+    const events = await readEvents(res);
+
+    expect(events.some((e) => e.type === 'mutation')).toBe(false);
+    const toolMessage = llm.seenMessages.at(-1)?.find(
+      (m) => (m as { role?: string }).role === 'tool',
+    ) as { content?: string } | undefined;
+    expect(toolMessage?.content).toContain('items: array of rows, each:');
+  });
 });

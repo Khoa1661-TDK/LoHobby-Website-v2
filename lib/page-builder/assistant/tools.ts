@@ -82,6 +82,22 @@ export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
   {
     type: 'function',
     function: {
+      name: 'describe_block',
+      description:
+        'Get the full field spec for one block type: every field with its type, allowed enum values, default, whether a condition gates it, and the row shape of any array field. Call this before using a block type for the first time. Returns data only; it changes nothing.',
+      parameters: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          blockType: { type: 'string', description: 'Slug of a block from the index, e.g. "faq".' },
+        },
+        required: ['blockType'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'move_block',
       description: 'Move the block at index `from` to position `to`.',
       parameters: {

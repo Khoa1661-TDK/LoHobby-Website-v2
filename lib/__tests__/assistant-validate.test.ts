@@ -226,40 +226,52 @@ describe('validateToolCall — update_block locale', () => {
 });
 
 describe('validateToolCall — read_block', () => {
-  it('should produce a read request with index and locale', () => {
+  it('should produce a read query with index and locale', () => {
     const r = validateToolCall('read_block', { index: 2, locale: 'en' });
-    expect(r).toEqual({ ok: true, read: { index: 2, locale: 'en' } });
+    expect(r).toEqual({ ok: true, query: { kind: 'read', index: 2, locale: 'en' } });
   });
 
-  it('should omit the locale when not provided (caller defaults to active)', () => {
+  it('should default the locale to undefined when omitted', () => {
     const r = validateToolCall('read_block', { index: 0 });
     expect(r.ok).toBe(true);
-    if (r.ok && 'read' in r) {
-      expect(r.read).toEqual({ index: 0 });
+    if (r.ok && 'query' in r) {
+      expect(r.query).toEqual({ kind: 'read', index: 0 });
     }
   });
 
-  it('should coerce an integer-valued string index to a number', () => {
+  it('should accept an integer-valued string index', () => {
     const r = validateToolCall('read_block', { index: '3', locale: 'en' });
-    expect(r).toEqual({ ok: true, read: { index: 3, locale: 'en' } });
+    expect(r).toEqual({ ok: true, query: { kind: 'read', index: 3, locale: 'en' } });
   });
 
-  it('should reject a non-integer string index', () => {
-    const r = validateToolCall('read_block', { index: '2.5' });
-    expect(r.ok).toBe(false);
-    const r2 = validateToolCall('read_block', { index: 'first' });
-    expect(r2.ok).toBe(false);
+  it('should reject a non-integer index', () => {
+    expect(validateToolCall('read_block', { index: '2.5' }).ok).toBe(false);
+    expect(validateToolCall('read_block', { index: 'first' }).ok).toBe(false);
   });
 
-  it('should reject a missing integer index', () => {
-    const r = validateToolCall('read_block', { locale: 'vi' });
-    expect(r.ok).toBe(false);
+  it('should reject a missing index', () => {
+    expect(validateToolCall('read_block', { locale: 'vi' }).ok).toBe(false);
   });
 
-  it('should reject an invalid locale', () => {
-    const r = validateToolCall('read_block', { index: 0, locale: 'de' });
+  it('should reject an unknown locale', () => {
+    expect(validateToolCall('read_block', { index: 0, locale: 'de' }).ok).toBe(false);
+  });
+});
+
+describe('validateToolCall — describe_block', () => {
+  it('should produce a describe query for a known block slug', () => {
+    const r = validateToolCall('describe_block', { blockType: 'faq' });
+    expect(r).toEqual({ ok: true, query: { kind: 'describe', slug: 'faq' } });
+  });
+
+  it('should reject an unknown block slug', () => {
+    const r = validateToolCall('describe_block', { blockType: 'nope' });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toMatch(/locale/i);
+    if (!r.ok) expect(r.error).toMatch(/unknown block/i);
+  });
+
+  it('should reject a missing block slug', () => {
+    expect(validateToolCall('describe_block', {}).ok).toBe(false);
   });
 });
 

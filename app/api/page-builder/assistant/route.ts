@@ -12,10 +12,11 @@ import type {
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import type { PageBlock } from '@/lib/page-builder';
-import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
+import { getBlockSchemas, getBlockSchema } from '@/lib/page-builder/block-schemas';
 import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 import { serializeLayout } from '@/lib/page-builder/assistant/snapshot';
 import { ASSISTANT_TOOLS, buildSystemPrompt } from '@/lib/page-builder/assistant/tools';
+import { describeBlockSpec } from '@/lib/page-builder/assistant/contract';
 import { validateToolCall, validateUpdateFields, coerceFieldsForBlock, type Mutation } from '@/lib/page-builder/assistant/validate';
 import { applyDualMutation, resolveLocales, type LocaleLayouts } from '@/lib/page-builder/assistant/apply-dual';
 import { type Locale } from '@/i18n/routing';
@@ -303,20 +304,32 @@ export async function POST(request: Request): Promise<Response> {
               continue;
             }
 
-            // read_block: answer with the full, untruncated block values as a tool message.
-            // No client mutation is emitted.
-            if ('read' in result) {
-              const readLocale: Locale = result.read.locale ?? activeLocale;
-              const block = working[readLocale][result.read.index];
+            // Read-only tools: answered as a tool message, no client mutation emitted.
+            if ('query' in result) {
+              const query = result.query;
+              if (query.kind === 'describe') {
+                const schema = getBlockSchema(query.slug);
+                messages.push({
+                  role: 'tool',
+                  tool_call_id: call.id,
+                  content: schema ? describeBlockSpec(schema) : `Unknown block type "${query.slug}".`,
+                });
+                continue;
+              }
+              const readLocale: Locale = query.locale ?? activeLocale;
+              const block = working[readLocale][query.index];
               if (!block) {
-                const err = `No block at index ${result.read.index} in ${readLocale}.`;
-                messages.push({ role: 'tool', tool_call_id: call.id, content: `ERROR: ${err}` });
+                messages.push({
+                  role: 'tool',
+                  tool_call_id: call.id,
+                  content: `ERROR: No block at index ${query.index} in ${readLocale}.`,
+                });
                 continue;
               }
               messages.push({
                 role: 'tool',
                 tool_call_id: call.id,
-                content: JSON.stringify({ index: result.read.index, locale: readLocale, block }),
+                content: JSON.stringify({ index: query.index, locale: readLocale, block }),
               });
               continue;
             }

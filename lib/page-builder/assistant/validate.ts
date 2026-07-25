@@ -19,13 +19,15 @@ export type Mutation =
   | { kind: 'remove'; index: number }
   | { kind: 'duplicate'; index: number };
 
-/** A read_block request. Server-side only: the route answers it with the full,
- *  untruncated block values as a tool message; it emits no client mutation. */
-export type ReadRequest = { index: number; locale?: 'vi' | 'en' };
+/** A read-only tool request. Server-side only: the route answers these with a `tool`
+ *  message and emits no client mutation. */
+export type QueryRequest =
+  | { kind: 'read'; index: number; locale?: 'vi' | 'en' }
+  | { kind: 'describe'; slug: string };
 
 export type ValidateResult =
   | { ok: true; mutation: Mutation }
-  | { ok: true; read: ReadRequest }
+  | { ok: true; query: QueryRequest }
   | { ok: false; error: string };
 
 function asRecord(input: unknown): Record<string, unknown> {
@@ -202,9 +204,14 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
       if (args.locale !== undefined && args.locale !== 'vi' && args.locale !== 'en') {
         return { ok: false, error: 'read_block locale must be "vi" or "en".' };
       }
-      const read: ReadRequest = { index };
-      if (args.locale === 'vi' || args.locale === 'en') read.locale = args.locale;
-      return { ok: true, read };
+      const query: QueryRequest = { kind: 'read', index };
+      if (args.locale === 'vi' || args.locale === 'en') query.locale = args.locale;
+      return { ok: true, query };
+    }
+    case 'describe_block': {
+      const slug = typeof args.blockType === 'string' ? args.blockType : '';
+      if (!getBlockSchema(slug)) return { ok: false, error: `Unknown block type "${slug}".` };
+      return { ok: true, query: { kind: 'describe', slug } };
     }
     case 'move_block': {
       const from = asInt(args.from);

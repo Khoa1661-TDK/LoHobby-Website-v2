@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildBlockIndex, buildAppearanceDoc } from '@/lib/page-builder/assistant/contract';
-import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
+import { buildBlockIndex, buildAppearanceDoc, describeBlockSpec } from '@/lib/page-builder/assistant/contract';
+import { getBlockSchemas, getBlockSchema } from '@/lib/page-builder/block-schemas';
 
 const schemas = getBlockSchemas();
 
@@ -56,5 +56,50 @@ describe('buildAppearanceDoc', () => {
     expect(doc).not.toContain('blockKey');
     // Match "id" as a complete word in the field descriptor lines (e.g., "  id: type")
     expect(doc).not.toMatch(/\bid\b/);
+  });
+});
+
+describe('describeBlockSpec', () => {
+  it('should expand array row shapes', () => {
+    const spec = describeBlockSpec(getBlockSchema('faq')!);
+    expect(spec).toContain('items: array of rows, each:');
+    expect(spec).toContain('question');
+    expect(spec).toContain('answer');
+  });
+
+  it('should list enum options and defaults', () => {
+    const spec = describeBlockSpec(getBlockSchema('faq')!);
+    expect(spec).toContain('accordion');
+    expect(spec).toContain('twoCol');
+    expect(spec).toContain('[default "accordion"]');
+  });
+
+  it('should surface admin descriptions', () => {
+    const spec = describeBlockSpec(getBlockSchema('hero')!);
+    expect(spec).toMatch(/headlineHighlight[\s\S]*match the headline/i);
+  });
+
+  it('should point upload fields at search_media', () => {
+    const spec = describeBlockSpec(getBlockSchema('hero')!);
+    expect(spec).toMatch(/image: numeric media id[\s\S]*search_media/);
+  });
+
+  it('should omit appearance fields and id', () => {
+    const spec = describeBlockSpec(getBlockSchema('faq')!);
+    expect(spec).not.toContain('backgroundCustomDark');
+    expect(spec).not.toContain('blockKey');
+  });
+
+  it('should never leak an id or blockKey row field inside an array field (faq.items)', () => {
+    // faq.items is an array with row sub-fields (question, answer) — the exact shape
+    // Payload's getPayload() mutates in place by injecting an `id` field into. A bare
+    // `.not.toMatch(/\bid\b/)` is unsafe here because describeBlockSpec renders prose
+    // (e.g. relationship/upload field lines say "numeric id of a …", "search_media") that
+    // legitimately contains the word "id". Anchor instead to how describeFieldLine actually
+    // renders a field line — `${indent}${field.name}: ` at the start of a line — so this
+    // only matches an actual "id" FIELD, never the word "id" inside a sentence.
+    const spec = describeBlockSpec(getBlockSchema('faq')!);
+    expect(spec).not.toMatch(/^\s+id:/m);
+    expect(spec).not.toContain('blockKey');
   });
 });
