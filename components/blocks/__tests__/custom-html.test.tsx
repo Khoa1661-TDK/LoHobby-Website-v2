@@ -40,20 +40,46 @@ describe('CustomHtml block', () => {
     expect(container.querySelector('style')).toBeNull();
   });
 
-  it('should scope two id-less blocks to different selectors instead of colliding', () => {
-    // Payload's block `id` is stripped on every locale save (src/payload/blocks/_identity.ts)
-    // and is absent entirely on a freshly-added, not-yet-saved block — so two customHtml
-    // blocks in the same render can both lack `id`. Falling back to a shared literal would
-    // make one block's CSS bleed into the other's markup.
+  it('should prefer blockKey over id when both are present, scoping two blocks to different selectors', () => {
+    // `blockKey` takes priority over Payload's `id` (see the scopeId comment in
+    // CustomHtml.tsx): it survives the per-locale-save stripping that `id` doesn't. Two
+    // distinct `blockKey`s here, both with an `id` also present, exercise that precedence —
+    // not the random fallback (neither block reaches it, since both have a `blockKey`).
     const first = render(
-      <CustomHtmlBlock blockKey="block-one" html="<p>a</p>" css=".x { color: red }" />,
+      <CustomHtmlBlock id="shared-id" blockKey="block-one" html="<p>a</p>" css=".x { color: red }" />,
     );
     const second = render(
-      <CustomHtmlBlock blockKey="block-two" html="<p>b</p>" css=".x { color: blue }" />,
+      <CustomHtmlBlock id="shared-id" blockKey="block-two" html="<p>b</p>" css=".x { color: blue }" />,
     );
 
     const firstWrapper = first.container.querySelector('[data-html-block]');
     const secondWrapper = second.container.querySelector('[data-html-block]');
+    expect(firstWrapper?.getAttribute('data-html-block')).toBe('block-one');
+    expect(secondWrapper?.getAttribute('data-html-block')).toBe('block-two');
+    expect(firstWrapper?.getAttribute('data-html-block')).not.toBe(
+      secondWrapper?.getAttribute('data-html-block'),
+    );
+
+    const firstStyle = first.container.querySelector('style')?.textContent ?? '';
+    const secondStyle = second.container.querySelector('style')?.textContent ?? '';
+    expect(firstStyle).not.toBe(secondStyle);
+    expect(firstStyle).not.toContain(secondWrapper?.getAttribute('data-html-block') ?? '\0');
+    expect(secondStyle).not.toContain(firstWrapper?.getAttribute('data-html-block') ?? '\0');
+  });
+
+  it('should scope two blocks with neither blockKey nor id to different selectors instead of colliding', () => {
+    // Payload's block `id` is stripped on every locale save (src/payload/blocks/_identity.ts)
+    // and is absent entirely on a freshly-added, not-yet-saved block — so two customHtml
+    // blocks in the same render can both lack `id` *and* `blockKey`. This is the actual
+    // random-fallback path: falling back to a shared literal would make one block's CSS
+    // bleed into the other's markup.
+    const first = render(<CustomHtmlBlock html="<p>a</p>" css=".x { color: red }" />);
+    const second = render(<CustomHtmlBlock html="<p>b</p>" css=".x { color: blue }" />);
+
+    const firstWrapper = first.container.querySelector('[data-html-block]');
+    const secondWrapper = second.container.querySelector('[data-html-block]');
+    expect(firstWrapper?.getAttribute('data-html-block')).toBeTruthy();
+    expect(secondWrapper?.getAttribute('data-html-block')).toBeTruthy();
     expect(firstWrapper?.getAttribute('data-html-block')).not.toBe(
       secondWrapper?.getAttribute('data-html-block'),
     );

@@ -28,13 +28,6 @@ describe('FeatureGridBlock', () => {
     expect(html).toContain('<svg');
   });
 
-  it('should skip an unknown icon name without crashing', () => {
-    const html = renderToStaticMarkup(
-      <FeatureGridBlock items={[{ icon: 'nonsense', title: 'Still ok' }]} />,
-    );
-    expect(html).toContain('Still ok');
-  });
-
   it('should render no icon wrapper at all for an unresolvable icon name', () => {
     const html = renderToStaticMarkup(
       <FeatureGridBlock items={[{ icon: 'nonsense', title: 'Still ok' }]} />,

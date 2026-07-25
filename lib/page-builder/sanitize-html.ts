@@ -148,7 +148,7 @@ function sanitizeStyleAttribute(value: string): string {
     rule.walkDecls(neutralizeDecl);
     return rule.nodes
       .filter((node): node is postcss.Declaration => node.type === 'decl')
-      .map((decl) => `${decl.prop}: ${decl.value}`)
+      .map((decl) => `${decl.prop}: ${decl.value}${decl.important ? ' !important' : ''}`)
       .join('; ');
   } catch {
     return '';
@@ -215,8 +215,12 @@ export function sanitizeBlockHtml(html: string): string {
 
 /** Document-level selectors that must collapse to the scope itself rather than become a
  *  descendant of it — `body { … }` scoped naively would never match anything. Compared
- *  lowercase: `BODY {}` is exactly as effective as `body {}`. */
-const ROOT_SELECTORS = new Set(['html', 'body', ':root', '*']);
+ *  lowercase: `BODY {}` is exactly as effective as `body {}`. `*` is deliberately NOT here:
+ *  a universal selector is not a document-level selector, and collapsing it to the bare
+ *  scope narrows a reset rule (`* { box-sizing: border-box }`) to match only the wrapper
+ *  element instead of every element inside the block — see the `*`-specific handling in
+ *  `prefixSelector` below. */
+const ROOT_SELECTORS = new Set(['html', 'body', ':root']);
 
 /** Prefix each comma-separated selector with the scope. Returns `null` if every selector
  *  in the list had to be dropped — the caller removes the whole rule in that case.
@@ -242,7 +246,13 @@ function prefixSelector(selector: string, scope: string): string | null {
 
   if (parts.length === 0) return null;
   return parts
-    .map((part) => (ROOT_SELECTORS.has(part.toLowerCase()) ? scope : `${scope} ${part}`))
+    .map((part) => {
+      const lower = part.toLowerCase();
+      // `*` must still reach every element inside the block, not just the wrapper itself —
+      // `${scope} *` alone would exclude the wrapper element, so match both.
+      if (lower === '*') return `${scope}, ${scope} *`;
+      return ROOT_SELECTORS.has(lower) ? scope : `${scope} ${part}`;
+    })
     .join(', ');
 }
 
@@ -323,6 +333,15 @@ export function scopeBlockCss(css: string, blockId: string): string {
       if (rule.parent?.type === 'atrule' && atRuleName(rule.parent as postcss.AtRule) === 'keyframes') {
         return;
       }
+      // Native CSS nesting (`.a { &:hover { … } }`): the rule's parent is itself a rule,
+      // which is already scoped. Prefixing the nested rule too would produce
+      // `${scope} .a { ${scope} &:hover { … } }` — invalid (a selector can't contain a
+      // bare compound-attribute prefix before `&`), so browsers drop the nested rule
+      // outright while the outer rule's own styles still apply. No scoping is needed here:
+      // the nesting itself already keeps it inside the parent's (scoped) selector.
+      if (rule.parent?.type === 'rule') {
+        return;
+      }
       try {
         const scoped = prefixSelector(rule.selector, scope);
         if (scoped === null) {
@@ -339,14 +358,20 @@ export function scopeBlockCss(css: string, blockId: string): string {
     root.walkDecls((decl) => {
       neutralizeDecl(decl);
       if (decl.parent === undefined) return; // decl.remove() already detached it above
-      const renamed = renamedKeyframes.get(decl.value.split(/\s+/)[0] ?? '');
       // Property name comparison, lowercased — `ANIMATION: fade 1s` is exactly as live a
       // reference to the `fade` keyframe as `animation: fade 1s`, and must be rewritten
       // to the namespaced name just the same, or it keeps pointing at the un-renamed
       // keyframe.
       const prop = decl.prop.toLowerCase();
-      if ((prop === 'animation' || prop === 'animation-name') && renamed) {
-        decl.value = decl.value.replace(/^\S+/, renamed);
+      if ((prop === 'animation' || prop === 'animation-name') && renamedKeyframes.size > 0) {
+        // `animation-name`/the shorthand can list several comma-separated animations, each
+        // with several space-separated components (duration, timing-function, the name,
+        // …), and the name is not reliably the first token (`1s fade`) nor confined to the
+        // very first entry (`fade 1s, slide 2s`). Rewrite every token that matches a
+        // renamed keyframe, wherever it falls, instead of only the value's first token.
+        // A function replacer (not a string) avoids `$&`/`` $` `` etc. in the replacement
+        // being reinterpreted as `String.replace` pattern syntax.
+        decl.value = decl.value.replace(/[^\s,]+/g, (token) => renamedKeyframes.get(token) ?? token);
       }
     });
 

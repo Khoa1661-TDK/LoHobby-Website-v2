@@ -323,4 +323,58 @@ describe('scopeBlockCss', () => {
     const deeplyNested = '@media (min-width:1px){'.repeat(depth) + '.a{color:red}' + '}'.repeat(depth);
     expect(() => scopeBlockCss(deeplyNested, 'abc')).not.toThrow();
   });
+
+  // --- Findings from the final whole-branch review ---
+
+  // Fix 1: `*` was lumped into ROOT_SELECTORS alongside `html`/`body`/`:root` and
+  // collapsed to the bare scope, narrowing a universal reset to match only the wrapper
+  // element instead of everything inside the block. `*` needs both the scope itself and
+  // every descendant, since `${scope} *` alone excludes the wrapper.
+  it('should scope a universal-selector rule to the block and its descendants, not collapse it to the wrapper alone', () => {
+    const out = scopeBlockCss('* { box-sizing: border-box; margin: 0 }', 'abc');
+    expect(out).toBe('[data-html-block="abc"], [data-html-block="abc"] * { box-sizing: border-box; margin: 0 }');
+  });
+
+  // Fix 2: a rule nested inside another rule (native CSS nesting) was still routed through
+  // the same scoping pass as its parent, so it got prefixed a second time even though its
+  // parent selector is already scoped. `[data-html-block="abc"] .a{ [data-html-block="abc"]
+  // &:hover{...} }` is an invalid selector — browsers drop the whole nested rule.
+  it('should leave a natively-nested rule unscoped since its parent selector is already scoped', () => {
+    const out = scopeBlockCss('.a{ &:hover{color:red} }', 'abc');
+    expect(out).toBe('[data-html-block="abc"] .a{ &:hover{color:red} }');
+  });
+
+  // Fix 3: renaming an `animation`/`animation-name` reference to the namespaced keyframe
+  // only rewrote the value's very first whitespace-separated token. A name that isn't
+  // first (`1s fade`) or that appears in a later comma-separated entry (`fade 1s, slide
+  // 2s`) kept pointing at the un-renamed keyframe and silently stopped animating.
+  // Asserting only that the output contains `fade-abc`/`slide-abc` would not discriminate:
+  // the renamed `@keyframes` rules themselves supply those substrings regardless of
+  // whether the `animation` declaration got rewritten — so assert on the declaration text.
+  it('should rewrite a keyframe reference that is not the first token in the animation shorthand', () => {
+    const out = scopeBlockCss(
+      '@keyframes fade { to { opacity: 1 } } .x{animation: 1s fade}',
+      'abc',
+    );
+    const declLine = out.split('\n').find((line) => line.includes('.x'));
+    expect(declLine).toContain('animation: 1s fade-abc');
+  });
+
+  it('should rewrite every entry of a comma-separated animation list, not only the first', () => {
+    const out = scopeBlockCss(
+      '@keyframes fade { to { opacity: 1 } } @keyframes slide { to { transform: none } } ' +
+        '.x{animation: fade 1s, slide 2s}',
+      'abc',
+    );
+    const declLine = out.split('\n').find((line) => line.includes('.x'));
+    expect(declLine).toContain('animation: fade-abc 1s, slide-abc 2s');
+  });
+
+  // Fix 4: the inline `style` attribute path reconstructed each declaration as
+  // `${prop}: ${value}`, discarding `!important` — the block-level CSS path preserves it,
+  // so the two halves of the sanitizer disagreed on fidelity.
+  it('should preserve !important on an inline style declaration', () => {
+    const out = sanitizeBlockHtml('<div style="color:red !important">x</div>');
+    expect(out).toContain('color:red !important');
+  });
 });

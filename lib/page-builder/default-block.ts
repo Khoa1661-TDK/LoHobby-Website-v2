@@ -2,7 +2,10 @@
 import { getBlockSchema, type FieldDescriptor } from '@/lib/page-builder/block-schemas';
 import type { PageBlock } from '@/lib/page-builder';
 
-function newBlockKey(): string {
+/** Exported so other call sites needing a fresh random id (e.g. the customHtml block's
+ *  render-time CSS-scoping fallback in components/blocks/CustomHtml.tsx) reuse this
+ *  generator instead of reimplementing it. */
+export function newBlockKey(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
