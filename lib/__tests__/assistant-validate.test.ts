@@ -1,5 +1,51 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { validateToolCall, validateUpdateFields, coerceFieldsForBlock } from '@/lib/page-builder/assistant/validate';
+import type { BlockSchema } from '@/lib/page-builder/block-schemas';
+
+// Synthetic block schema for the "id key written into a row" regression guard below.
+// Real blocks (e.g. faq.items) never declare a literal `id` sub-field in source — Payload
+// only injects one at runtime via getPayload() sanitization, which is mocked away under
+// vitest (see vitest-setup.ts's `@payload-config` mock). So a test built on a real block's
+// getBlockSchema() output can't distinguish "rejected because HIDDEN_FIELD_NAMES strips id"
+// from "rejected because id was never a field to begin with" — both look identical from the
+// outside. This synthetic schema puts a literal `id` (and `blockKey`) sub-field on the row,
+// so the only thing that can cause rejection is the stripping in
+// lib/page-builder/assistant/schema-tree.ts's `contentFields`.
+const { SYNTHETIC_ID_GUARD_SLUG, syntheticIdGuardSchema } = vi.hoisted(() => {
+  const SYNTHETIC_ID_GUARD_SLUG = '__idGuardTest__';
+  const syntheticIdGuardSchema: {
+    slug: string;
+    label: string;
+    fields: Array<{ name: string; type: string; fields?: Array<{ name: string; type: string }> }>;
+  } = {
+    slug: SYNTHETIC_ID_GUARD_SLUG,
+    label: 'Id Guard Test',
+    fields: [
+      {
+        name: 'items',
+        type: 'array',
+        fields: [
+          { name: 'id', type: 'text' },
+          { name: 'blockKey', type: 'text' },
+          { name: 'question', type: 'text' },
+        ],
+      },
+    ],
+  };
+  return { SYNTHETIC_ID_GUARD_SLUG, syntheticIdGuardSchema };
+});
+
+// Partial-mock block-schemas: every real slug resolves normally; only the synthetic slug
+// above is served from the fixture. This lets validateToolCall's real checkFields/
+// contentFields pipeline run unmodified against a schema real blocks can't provide.
+vi.mock('@/lib/page-builder/block-schemas', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof import('@/lib/page-builder/block-schemas');
+  return {
+    ...actual,
+    getBlockSchema: (slug: string): BlockSchema | null =>
+      slug === SYNTHETIC_ID_GUARD_SLUG ? (syntheticIdGuardSchema as BlockSchema) : actual.getBlockSchema(slug),
+  };
+});
 
 describe('validateToolCall', () => {
   it('should accept a valid add_block and produce an add mutation with blockType set', () => {
@@ -396,9 +442,13 @@ describe('checkFields — nested validation', () => {
     if (!r.ok) expect(r.error).toMatch(/items\[0\]/);
   });
 
-  it('should reject an id key written into a row', () => {
+  it('should reject an id key written into a row (synthetic HIDDEN_FIELD_NAMES regression guard)', () => {
+    // Uses the synthetic schema above, whose row fields literally include `id` and
+    // `blockKey`. Only HIDDEN_FIELD_NAMES stripping in contentFields() can cause this to be
+    // rejected as "unknown" — the field genuinely exists in the descriptor, unlike faq.items
+    // in the real (unsanitized-under-vitest) schema.
     const r = validateToolCall('add_block', {
-      blockType: 'faq',
+      blockType: SYNTHETIC_ID_GUARD_SLUG,
       index: 0,
       fields: { items: [{ id: 7, question: 'Q' }] },
     });
@@ -453,7 +503,11 @@ describe('checkFields — nested validation', () => {
       fields: { deals: [{ product: 'product-slug-here' }] },
     });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toMatch(/numeric id/i);
+    // Pins the nested path, not just the generic "numeric id" phrase — a phrase that
+    // also appears in the pre-existing top-level-only relationship error. If checkRelationship
+    // regressed to using field.name instead of the accumulated path, this would still say
+    // "numeric id" but drop the "deals[0]." prefix, and a weaker assertion wouldn't catch it.
+    if (!r.ok) expect(r.error).toMatch(/deals\[0\]\.product/);
   });
 
   it('should reject a number outside its bounds inside an array row', () => {
@@ -464,7 +518,9 @@ describe('checkFields — nested validation', () => {
       fields: { entries: [{ quote: 'Great', rating: 9 }] },
     });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toMatch(/at most 5/);
+    // Pins the nested path — see the comment on the relationship test above for why a bare
+    // "at most 5" match (also produced by a top-level-only bounds error) isn't enough.
+    if (!r.ok) expect(r.error).toMatch(/entries\[0\]\.rating/);
   });
 
   it('should reject a non-integer media id inside an array row', () => {
@@ -475,7 +531,9 @@ describe('checkFields — nested validation', () => {
       fields: { cards: [{ title: 'Card', image: 'cards/one.jpg' }] },
     });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toMatch(/numeric media id/i);
+    // Pins the nested path — see the comment on the relationship test above; "numeric media
+    // id" alone is also produced by the pre-existing top-level-only upload error.
+    if (!r.ok) expect(r.error).toMatch(/cards\[0\]\.image/);
   });
 
   it('should coerce a Markdown richText value inside an array row to Lexical', () => {
@@ -489,5 +547,28 @@ describe('checkFields — nested validation', () => {
       const rows = r.mutation.block.items as Array<Record<string, unknown>>;
       expect(typeof rows[0]?.answer).toBe('object');
     }
+  });
+
+  it('should accept a well-formed group value (infoSection.contact)', () => {
+    // infoSection.contact is a real `group` field (heading/address/phone/email) —
+    // the only real coverage of checkFields' `field.type === 'group'` branch.
+    const r = validateToolCall('add_block', {
+      blockType: 'infoSection',
+      index: 0,
+      fields: {
+        contact: { heading: 'Contact', address: '123 Main St', phone: '555-1234', email: 'hi@example.com' },
+      },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('should reject an unknown key inside a group field (infoSection.contact)', () => {
+    const r = validateToolCall('add_block', {
+      blockType: 'infoSection',
+      index: 0,
+      fields: { contact: { heading: 'Contact', bogus: 'x' } },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/contact\.bogus/);
   });
 });
