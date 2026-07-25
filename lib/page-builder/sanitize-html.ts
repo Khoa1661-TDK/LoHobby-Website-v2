@@ -36,21 +36,34 @@ const URL_BEARING_FUNCTIONS = new Set(['url', 'image-set', '-webkit-image-set', 
 
 /** Decode CSS escape sequences (`\68` → `h`, consuming the optional single trailing
  *  whitespace terminator) so a value like `url(\68 ttps://evil.test/x.png)` is judged on
- *  what it actually resolves to (`https://evil.test/x.png`), not its literal source text. */
+ *  what it actually resolves to (`https://evil.test/x.png`), not its literal source text.
+ *
+ *  A 1-6 hex digit escape can encode a value above U+10FFFF (the top of the Unicode
+ *  range) — `String.fromCodePoint` throws a `RangeError` for those rather than clamping.
+ *  Per CSS Syntax §4.3.7, an out-of-range escape resolves to U+FFFD REPLACEMENT
+ *  CHARACTER, not a parse failure, so that's what this returns instead of throwing. This
+ *  function must never throw: it runs inside a sanitizer, at render time, over
+ *  attacker-influenced input. */
 function decodeCssEscapes(raw: string): string {
-  return raw.replace(/\\([0-9a-fA-F]{1,6})[ \t\n\r\f]?|\\(.)/g, (_match, hex: string, char: string) =>
-    hex ? String.fromCodePoint(parseInt(hex, 16)) : char,
-  );
+  return raw.replace(/\\([0-9a-fA-F]{1,6})[ \t\n\r\f]?|\\(.)/g, (_match, hex: string, char: string) => {
+    if (!hex) return char;
+    const codePoint = parseInt(hex, 16);
+    return codePoint > 0x10ffff ? String.fromCharCode(0xfffd) : String.fromCodePoint(codePoint);
+  });
 }
 
-/** The only URL shape this module trusts: a single leading `/` (root-relative on this
- *  origin). Protocol-relative (`//`), any scheme (`https:`, `data:`, …), and anything we
- *  can't resolve statically are all rejected — allowlisting the shape rather than trying
- *  to enumerate every dangerous scheme/syntax combination. */
-function isRootRelative(rawArgument: string): boolean {
+/** The only URL shapes this module trusts: a single leading `/` (root-relative on this
+ *  origin), or a same-document fragment (`#...`, used by `fill: url(#gradient-id)` /
+ *  `filter: url(#blur)` — routine with the inline `<svg>` this module's HTML half
+ *  explicitly supports). A fragment can't leave the document, so it carries none of the
+ *  off-origin/beacon risk the `/` restriction exists for. Protocol-relative (`//`), any
+ *  scheme (`https:`, `data:`, …), and anything we can't resolve statically are all
+ *  rejected — allowlisting the shape rather than trying to enumerate every dangerous
+ *  scheme/syntax combination. */
+function isSafeUrlShape(rawArgument: string): boolean {
   const unquoted = rawArgument.trim().replace(/^['"]|['"]$/g, '');
   const decoded = decodeCssEscapes(unquoted).trim();
-  return decoded.startsWith('/') && !decoded.startsWith('//');
+  return (decoded.startsWith('/') && !decoded.startsWith('//')) || decoded.startsWith('#');
 }
 
 /** Inspect one `url()`/`image-set()`/-prefixed/`src()` function node and collect its
@@ -78,25 +91,29 @@ function collectPathCandidates(fnNode: valueParser.FunctionNode): { resolvable: 
 /** Replaces the old `url\(...\)` regex, which only recognized the literal `url(` token
  *  and missed `image-set()`, a CSS-escape-encoded scheme inside `url()`, and a URL parked
  *  behind an unresolvable `var()` reference. Parses the declaration value and rejects any
- *  url-bearing function whose argument isn't a verified root-relative path. */
+ *  url-bearing function whose argument isn't a verified safe shape (see `isSafeUrlShape`).
+ *
+ *  The whole body — parsing *and* walking — is one try/catch. `decodeCssEscapes` (reached
+ *  via `isSafeUrlShape` during the walk) previously could throw on an out-of-range escape,
+ *  and only the parse step was guarded, so that throw escaped uncaught. Catching the
+ *  entire operation means this function can never throw for *any* reason, known or not —
+ *  the no-throw contract holds structurally, not by enumerating every cause. */
 function hasUnsafeUrlReference(value: string): boolean {
-  let parsed: ReturnType<typeof valueParser>;
   try {
-    parsed = valueParser(value);
+    const parsed = valueParser(value);
+    let unsafe = false;
+    parsed.walk((node) => {
+      if (node.type !== 'function') return;
+      if (!URL_BEARING_FUNCTIONS.has(node.value.toLowerCase())) return;
+      const { resolvable, paths } = collectPathCandidates(node);
+      if (!resolvable || paths.length === 0 || !paths.every(isSafeUrlShape)) {
+        unsafe = true;
+      }
+    });
+    return unsafe;
   } catch {
     return true; // can't verify it statically — fail closed
   }
-
-  let unsafe = false;
-  parsed.walk((node) => {
-    if (node.type !== 'function') return;
-    if (!URL_BEARING_FUNCTIONS.has(node.value.toLowerCase())) return;
-    const { resolvable, paths } = collectPathCandidates(node);
-    if (!resolvable || paths.length === 0 || !paths.every(isRootRelative)) {
-      unsafe = true;
-    }
-  });
-  return unsafe;
 }
 
 /** Shared by the inline `style` attribute and the block-level `<style>`/CSS field: neither
@@ -116,21 +133,26 @@ function neutralizeDecl(decl: postcss.Declaration): void {
 /** Run an inline `style="..."` attribute value through the same declaration-level rules as
  *  `scopeBlockCss`. Without this, `style="position:fixed"` on a single element would bypass
  *  every protection the CSS-field scoping builds in. Returns '' (attribute dropped) on
- *  unparseable input, same failure mode as `scopeBlockCss`. */
+ *  unparseable input, same failure mode as `scopeBlockCss`.
+ *
+ *  The whole body is one try/catch, not just the parse. `rule.walkDecls(neutralizeDecl)`
+ *  reaches `hasUnsafeUrlReference`/`decodeCssEscapes`, which previously could throw on a
+ *  malformed or out-of-range escape while only the parse step was guarded — the throw
+ *  reached `sanitizeBlockHtml`'s caller uncaught. Attribute dropped on any failure here,
+ *  same fail-closed outcome as an unparseable value. */
 function sanitizeStyleAttribute(value: string): string {
-  let root: postcss.Root;
   try {
-    root = postcss.parse(`a{${value}}`);
+    const root = postcss.parse(`a{${value}}`);
+    const rule = root.first;
+    if (!rule || rule.type !== 'rule') return '';
+    rule.walkDecls(neutralizeDecl);
+    return rule.nodes
+      .filter((node): node is postcss.Declaration => node.type === 'decl')
+      .map((decl) => `${decl.prop}: ${decl.value}`)
+      .join('; ');
   } catch {
     return '';
   }
-  const rule = root.first;
-  if (!rule || rule.type !== 'rule') return '';
-  rule.walkDecls(neutralizeDecl);
-  return rule.nodes
-    .filter((node): node is postcss.Declaration => node.type === 'decl')
-    .map((decl) => `${decl.prop}: ${decl.value}`)
-    .join('; ');
 }
 
 /** Strip everything that can execute, phone home, or break out of the block. */
@@ -302,7 +324,11 @@ export function scopeBlockCss(css: string, blockId: string): string {
     neutralizeDecl(decl);
     if (decl.parent === undefined) return; // decl.remove() already detached it above
     const renamed = renamedKeyframes.get(decl.value.split(/\s+/)[0] ?? '');
-    if ((decl.prop === 'animation' || decl.prop === 'animation-name') && renamed) {
+    // Property name comparison, lowercased — `ANIMATION: fade 1s` is exactly as live a
+    // reference to the `fade` keyframe as `animation: fade 1s`, and must be rewritten to
+    // the namespaced name just the same, or it keeps pointing at the un-renamed keyframe.
+    const prop = decl.prop.toLowerCase();
+    if ((prop === 'animation' || prop === 'animation-name') && renamed) {
       decl.value = decl.value.replace(/^\S+/, renamed);
     }
   });

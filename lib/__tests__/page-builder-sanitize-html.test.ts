@@ -229,4 +229,70 @@ describe('scopeBlockCss', () => {
     const out = scopeBlockCss('.a::after{content:"</style><img src=x onerror=alert(1)>"}', 'x');
     expect(out.toLowerCase()).not.toContain('</style');
   });
+
+  // --- Findings from the 2026-07-26 re-review ---
+
+  // Still open — Important 5: the Finding-4 fix introduced a new throw path.
+  // `decodeCssEscapes` called `String.fromCodePoint` on a 1-6 hex digit escape, which
+  // can encode a value above U+10FFFF — a RangeError that escaped uncaught because only
+  // `valueParser(value)` was wrapped in try/catch, not the `.walk()` that reaches
+  // `decodeCssEscapes`. Every repro below must not throw, through both exports.
+  it('should not throw for a url() containing an out-of-range hex escape', () => {
+    expect(() => scopeBlockCss('.a{background:url(\\ffffff)}', 'abc')).not.toThrow();
+  });
+
+  it('should not throw for a quoted url() argument with an out-of-range escape one past the boundary', () => {
+    // 0x110000 is exactly one past U+10FFFF, the top of the Unicode range.
+    expect(() => scopeBlockCss('.a{background:url("\\110000")}', 'abc')).not.toThrow();
+  });
+
+  it('should not throw for an out-of-range escape embedded mid-path in an otherwise-valid url()', () => {
+    expect(() => scopeBlockCss('.a{background:url(/x\\ffffff.png)}', 'abc')).not.toThrow();
+  });
+
+  it('should not throw for an out-of-range escape inside a custom property', () => {
+    expect(() => scopeBlockCss('.a{--x: url(\\ffffff)}', 'abc')).not.toThrow();
+  });
+
+  it('should not throw for an out-of-range escape inside an image-set() string argument', () => {
+    expect(() => scopeBlockCss('.a{background:image-set("\\ffffff" 1x)}', 'abc')).not.toThrow();
+  });
+
+  it('should not throw for an out-of-range escape reached via an inline style attribute', () => {
+    expect(() =>
+      sanitizeBlockHtml('<div style="background:url(\\ffffff)">x</div>'),
+    ).not.toThrow();
+  });
+
+  // New regression — fragment URLs (`url(#...)`) were silently dropped. A fragment can't
+  // leave the document, so it carries none of the off-origin risk the root-relative
+  // restriction exists for — and sanitizeBlockHtml explicitly keeps inline <svg>, whose
+  // fill/stroke/filter routinely reference a same-document gradient/mask/filter by id.
+  it('should keep a url(#...) fragment reference in a filter declaration', () => {
+    const out = scopeBlockCss('.a{filter:url(#blur)}', 'abc');
+    expect(out).toContain('#blur');
+  });
+
+  it('should keep a url(#...) fragment reference in a clip-path declaration', () => {
+    const out = scopeBlockCss('.a{clip-path:url(#mask)}', 'abc');
+    expect(out).toContain('#mask');
+  });
+
+  it('should keep a quoted url("#...") fragment reference in a fill declaration', () => {
+    const out = scopeBlockCss('.a{fill:url("#grad")}', 'abc');
+    expect(out).toContain('#grad');
+  });
+
+  it('should keep an inline SVG style attribute that references a same-document fragment', () => {
+    const out = sanitizeBlockHtml('<svg><path style="fill:url(#g)" d="M0 0h24"/></svg>');
+    expect(out).toContain('fill:url(#g)');
+  });
+
+  // Also close, since Finding 3 said "throughout" — `decl.prop === 'animation'` was still
+  // compared raw, so an uppercase ANIMATION declaration kept pointing at the un-renamed
+  // keyframe name after @keyframes itself was namespaced.
+  it('should rewrite an ANIMATION reference to the namespaced keyframe name regardless of property casing', () => {
+    const out = scopeBlockCss('@keyframes fade { to { opacity: 1 } } .x{ANIMATION: fade 1s}', 'abc');
+    expect(out).toContain('fade-abc');
+  });
 });
