@@ -136,4 +136,97 @@ describe('scopeBlockCss', () => {
   it('should return an empty string for unparseable css rather than throwing', () => {
     expect(scopeBlockCss('.a { color: ', 'abc')).toBe('');
   });
+
+  // --- Findings from the 2026-07-26 security review ---
+
+  // Finding 1: CSS at-rule names are ASCII case-insensitive; `@IMPORT` is exactly as
+  // effective as `@import`. The fix moved from denylisting `import` to allowlisting the
+  // at-rules this module has reviewed, so the comparison itself must be non-canonical here.
+  it('should drop an @import rule regardless of case', () => {
+    const out = scopeBlockCss('@IMPORT url("https://evil.test/x.css"); .a { color: red }', 'abc');
+    expect(out.toLowerCase()).not.toContain('@import');
+    expect(out).not.toContain('evil.test');
+  });
+
+  it('should drop at-rules outside the reviewed allowlist (e.g. @page)', () => {
+    const out = scopeBlockCss('@page { margin: 0 } .a { color: red }', 'abc');
+    expect(out).not.toContain('@page');
+    expect(out).toContain('[data-html-block="abc"] .a');
+  });
+
+  // Finding 2: a selector beginning with a sibling/adjacent combinator is invalid at the
+  // top level of a stylesheet, but postcss's tokenizer accepts it anyway. Naively
+  // prefixing `~ *` as `${scope} ~ *` manufactures a *valid* selector that hides every
+  // sibling following the block. Only a leading `>` is safe to keep (it stays inside the
+  // block); any other leading combinator must drop that selector, not get scoped.
+  it('should drop a rule whose selector opens with a sibling combinator', () => {
+    const out = scopeBlockCss('~ * { display: none } .safe { color: red }', 'abc');
+    expect(out).not.toContain('~');
+    expect(out).not.toMatch(/display:\s*none/);
+    expect(out).toContain('[data-html-block="abc"] .safe');
+  });
+
+  it('should drop a rule whose selector opens with an adjacent-sibling combinator', () => {
+    const out = scopeBlockCss('+ footer { display: none }', 'abc');
+    expect(out).toBe('');
+  });
+
+  // Finding 3: `position`/`fixed`/`behavior` are CSS keywords and property names, which
+  // are ASCII case-insensitive; `POSITION: Fixed` must be rewritten exactly like
+  // `position: fixed`. Likewise an uppercase `BODY` selector must collapse to the scope
+  // exactly like lowercase `body` (this is what let `BODY { display: none }` through).
+  it('should rewrite position:fixed to absolute regardless of casing', () => {
+    const out = scopeBlockCss('.a { POSITION: Fixed; top: 0 }', 'abc');
+    expect(out.toLowerCase()).toContain('position: absolute');
+    expect(out.toLowerCase()).not.toContain('fixed');
+  });
+
+  it('should collapse an uppercase BODY selector to the scope like lowercase body', () => {
+    const out = scopeBlockCss('BODY { display: none; }', 'abc');
+    // Must collapse to the bare scope, identically to `body { … }` — not become
+    // `[data-html-block="abc"] BODY`, a descendant selector that (case-insensitively,
+    // per CSS) still matches the real page <body> and never matches inside the block.
+    expect(out).toBe(scopeBlockCss('body { display: none; }', 'abc'));
+  });
+
+  // Finding 4: the old off-origin check only recognized the literal `url(` token, so it
+  // missed `image-set()`, a CSS-escape-encoded scheme inside `url()`, and a URL parked
+  // behind a `var()` reference it cannot resolve statically. The fix parses the value
+  // and allowlists the root-relative shape rather than denylisting known-bad syntax.
+  it('should drop a background using image-set() instead of url()', () => {
+    const out = scopeBlockCss('.a { background: image-set("https://evil.test/x.png" 1x) }', 'abc');
+    expect(out).not.toContain('evil.test');
+  });
+
+  it('should drop a url() whose CSS escape decodes to an off-origin scheme', () => {
+    const out = scopeBlockCss('.a { background: url(\\68 ttps://evil.test/x.png) }', 'abc');
+    expect(out).not.toContain('evil.test');
+  });
+
+  it('should drop an image-set() argument that cannot be resolved statically (var())', () => {
+    const out = scopeBlockCss('.a { background: image-set(var(--u) 1x) }', 'abc');
+    expect(out).not.toContain('var(--u)');
+  });
+
+  it('should keep a root-relative url() reference', () => {
+    const out = scopeBlockCss('.a { background: url(/media/x.png) }', 'abc');
+    expect(out).toContain('/media/x.png');
+  });
+
+  // Finding 5: `postcss.parse` succeeds on selector text that `postcss-selector-parser`
+  // cannot tokenize (e.g. an unmatched paren) — the try/catch around `postcss.parse`
+  // alone doesn't cover this, so it threw at render time instead of degrading safely.
+  it('should not throw, and should drop the offending rule, when a selector confuses the selector parser', () => {
+    expect(() => scopeBlockCss('.a) { color: red }', 'abc')).not.toThrow();
+    expect(scopeBlockCss('.a) { color: red }', 'abc')).toBe('');
+  });
+
+  // Finding 6: this output is inlined into a literal <style> element by the renderer.
+  // postcss's own stringifier happens to escape characters that would otherwise close
+  // that tag early, but that guarantee lives in a devDependency semver range, not in
+  // anything this module asserts — belt-and-braces it explicitly.
+  it('should not allow </style> to survive in content that would close the wrapping <style> tag', () => {
+    const out = scopeBlockCss('.a::after{content:"</style><img src=x onerror=alert(1)>"}', 'x');
+    expect(out.toLowerCase()).not.toContain('</style');
+  });
 });
