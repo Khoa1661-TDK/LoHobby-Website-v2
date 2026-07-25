@@ -5,9 +5,15 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 // `seenMessages` records the `messages` array passed to each create() call so tests can
 // assert what the route fed the model on follow-up turns (e.g. the echoed layout).
 const llm = vi.hoisted(() => ({ responses: [] as unknown[], calls: 0, seenMessages: [] as unknown[][] }));
+// Shared `payload.find` stub so search_media/search_catalog tests can script Payload's
+// response and assert exactly what collection/where/limit the route passed through.
+const payloadMock = vi.hoisted(() => ({
+  auth: vi.fn(),
+  find: vi.fn(async () => ({ docs: [] as unknown[] })),
+}));
 
 // Mock the heavy deps before importing the route.
-vi.mock('payload', () => ({ getPayload: vi.fn(async () => ({ auth: vi.fn() })) }));
+vi.mock('payload', () => ({ getPayload: vi.fn(async () => payloadMock) }));
 vi.mock('@payload-config', () => ({ default: {} }));
 vi.mock('@/lib/page-builder/admin-guard', () => ({ isAuthorizedAdmin: vi.fn() }));
 vi.mock('openai', () => ({
@@ -257,6 +263,93 @@ describe('POST /api/page-builder/assistant — dual-locale mutation stream', () 
       (m) => (m as { role?: string }).role === 'tool',
     ) as { content?: string } | undefined;
     expect(toolMessage?.content).toContain('items: array of rows, each:');
+  });
+
+  it('should answer search_media as a tool message reflecting the search result, without emitting a mutation', async () => {
+    vi.mocked(isAuthorizedAdmin).mockResolvedValue(true);
+    payloadMock.find.mockResolvedValueOnce({
+      docs: [{ id: 412, filename: 'bambu-a1-mini.jpg', alt: 'Bambu A1 Mini on desk', width: 1600, height: 1067 }],
+    });
+    llm.responses = [
+      assistantTurn([toolCall('c1', 'search_media', { query: 'bambu', limit: 5 })]),
+      finalTurn('Found a media match.'),
+    ];
+
+    const res = await POST(
+      new Request('http://x/api/page-builder/assistant', {
+        method: 'POST',
+        body: JSON.stringify({ prompt: 'find a bambu image', layouts: { vi: [], en: [] } }),
+      }),
+    );
+    const events = await readEvents(res);
+
+    // Read-only: no mutation emitted.
+    expect(events.some((e) => e.type === 'mutation')).toBe(false);
+    // Wiring: the route called `payload.find` on the `media` collection with the model's
+    // query mapped into a filename/alt `like` search and the requested limit.
+    expect(payloadMock.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'media',
+        limit: 5,
+        where: { or: [{ filename: { like: 'bambu' } }, { alt: { like: 'bambu' } }] },
+      }),
+    );
+    // The tool message pushed back to the model reflects the actual search result.
+    const toolMessage = llm.seenMessages.at(-1)?.find(
+      (m) => (m as { role?: string }).role === 'tool',
+    ) as { content?: string } | undefined;
+    expect(JSON.parse(toolMessage?.content ?? '[]')).toEqual([
+      { id: 412, filename: 'bambu-a1-mini.jpg', alt: 'Bambu A1 Mini on desk', width: 1600, height: 1067 },
+    ]);
+    // The loop continued past the tool call to get the model's final reply, rather than
+    // terminating the turn on the read-only branch.
+    expect(llm.calls).toBe(2);
+    expect(events.some((e) => e.type === 'summary' && e.text === 'Found a media match.')).toBe(true);
+  });
+
+  it('should answer search_catalog as a tool message reflecting the search result, without emitting a mutation', async () => {
+    vi.mocked(isAuthorizedAdmin).mockResolvedValue(true);
+    payloadMock.find.mockResolvedValueOnce({
+      docs: [{ id: 7, title: 'Filament PLA' }],
+    });
+    llm.responses = [
+      assistantTurn([toolCall('c1', 'search_catalog', { collection: 'products', query: 'pla', limit: 5 })]),
+      finalTurn('Found a product match.'),
+    ];
+
+    const res = await POST(
+      new Request('http://x/api/page-builder/assistant', {
+        method: 'POST',
+        body: JSON.stringify({
+          prompt: 'find a pla product',
+          layouts: { vi: [], en: [] },
+          activeLocale: 'en',
+        }),
+      }),
+    );
+    const events = await readEvents(res);
+
+    // Read-only: no mutation emitted.
+    expect(events.some((e) => e.type === 'mutation')).toBe(false);
+    // Wiring: collection, query→where mapping, limit, and activeLocale all land correctly in
+    // the searchCatalog(payload, collection, query, limit, locale) call.
+    expect(payloadMock.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'products',
+        limit: 5,
+        locale: 'en',
+        where: { title: { like: 'pla' } },
+      }),
+    );
+    // The tool message pushed back to the model reflects the actual search result.
+    const toolMessage = llm.seenMessages.at(-1)?.find(
+      (m) => (m as { role?: string }).role === 'tool',
+    ) as { content?: string } | undefined;
+    expect(JSON.parse(toolMessage?.content ?? '[]')).toEqual([{ id: 7, title: 'Filament PLA' }]);
+    // The loop continued past the tool call to get the model's final reply, rather than
+    // terminating the turn on the read-only branch.
+    expect(llm.calls).toBe(2);
+    expect(events.some((e) => e.type === 'summary' && e.text === 'Found a product match.')).toBe(true);
   });
 
   it('should reject a row index past the end instead of silently no-opping', async () => {

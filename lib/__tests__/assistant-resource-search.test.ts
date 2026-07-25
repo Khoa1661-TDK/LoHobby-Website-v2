@@ -23,6 +23,22 @@ describe('searchMedia', () => {
     ]);
   });
 
+  it('should query the media collection', async () => {
+    let seen: FindArgs | undefined;
+    const payload = fakePayload([], (a) => { seen = a; });
+    await searchMedia(payload, 'x', 10);
+    expect(seen?.collection).toBe('media');
+  });
+
+  it('should target filename and alt via a `like` OR clause when the query is non-empty', async () => {
+    let seen: FindArgs | undefined;
+    const payload = fakePayload([], (a) => { seen = a; });
+    await searchMedia(payload, 'bambu', 10);
+    expect(seen?.where).toEqual({
+      or: [{ filename: { like: 'bambu' } }, { alt: { like: 'bambu' } }],
+    });
+  });
+
   it('should omit the where clause when the query is empty, returning recent uploads', async () => {
     let seen: FindArgs | undefined;
     const payload = fakePayload([], (a) => { seen = a; });
@@ -41,6 +57,12 @@ describe('searchMedia', () => {
     await searchMedia(payload, 'x', 999);
     expect(seen?.limit).toBeLessThanOrEqual(50);
   });
+
+  it('should coerce a missing alt, width, and height to empty string / null', async () => {
+    const payload = fakePayload([{ id: 9, filename: 'no-meta.jpg' }]);
+    const out = await searchMedia(payload, 'x', 10);
+    expect(out).toEqual([{ id: 9, filename: 'no-meta.jpg', alt: '', width: null, height: null }]);
+  });
 });
 
 describe('searchCatalog', () => {
@@ -57,8 +79,21 @@ describe('searchCatalog', () => {
     expect(seen?.collection).toBe('categories');
   });
 
+  it('should target title via a `like` clause when the query is non-empty', async () => {
+    let seen: FindArgs | undefined;
+    const payload = fakePayload([], (a) => { seen = a; });
+    await searchCatalog(payload, 'products', 'pla', 10, 'vi');
+    expect(seen?.where).toEqual({ title: { like: 'pla' } });
+  });
+
   it('should return an empty array when the lookup throws', async () => {
     const payload = { find: vi.fn(async () => { throw new Error('db down'); }) } as unknown as Parameters<typeof searchCatalog>[0];
     await expect(searchCatalog(payload, 'products', 'x', 10, 'vi')).resolves.toEqual([]);
+  });
+
+  it('should fall back to "#id" when a doc is missing a title', async () => {
+    const payload = fakePayload([{ id: 55 }]);
+    const out = await searchCatalog(payload, 'products', 'x', 10, 'vi');
+    expect(out).toEqual([{ id: 55, title: '#55' }]);
   });
 });
