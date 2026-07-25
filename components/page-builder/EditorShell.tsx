@@ -19,13 +19,7 @@ import { highlight, setLayout as setLayoutMsg, setTheme, isPreviewToParent } fro
 import { routing, type Locale } from '@/i18n/routing';
 import type { LocaleLayouts } from '@/lib/page-builder/assistant/apply-dual';
 import { isStructurallyAligned, syncFromActive } from '@/lib/page-builder/mirror/structure-sync';
-import type { History } from '@/lib/page-builder/history';
-import {
-  emptyHistory,
-  recordHistory,
-  redoHistory,
-  undoHistory,
-} from '@/lib/page-builder/history';
+import { useLayoutHistory } from './use-layout-history';
 
 type Props = {
   locale: string;
@@ -52,9 +46,6 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
-  // Undo/redo history. A snapshot is pushed before every mutation — manual structural and
-  // field edits, and each AI turn — so one Undo reverts the last change and Redo replays it.
-  const [history, setHistory] = useState<History<LocaleLayouts>>(() => emptyHistory());
   const [assistantOpen, setAssistantOpen] = useState(false);
   // Float (default) vs dock-as-right-column, plus the docked column width. Both are a UI
   // preference persisted globally (not per page) in localStorage.
@@ -93,60 +84,17 @@ export default function EditorShell({ locale, page, otherLocale, otherLayout, sc
     window.addEventListener('pointerup', onUp);
   }, []);
 
-  // Latest committed layouts, read by `record` at mutation time to snapshot the pre-edit state
-  // without a stale closure or re-created callbacks.
-  const layoutsRef = useRef(layouts);
-  useEffect(() => {
-    layoutsRef.current = layouts;
-  }, [layouts]);
-
-  // Push the current layouts onto the undo stack just before a mutation is applied.
-  const record = useCallback((): void => {
-    setHistory((h) => recordHistory(h, layoutsRef.current));
-  }, []);
-
-  const undoAvailable = history.past.length > 0;
-  const redoAvailable = history.future.length > 0;
-
-  // Read `history` from state (not inside the setHistory updater) so setLayouts/setSelectedIndex
-  // aren't called while React is applying another component's state update.
-  const undoLastChange = useCallback((): void => {
-    const stepped = undoHistory(history, layoutsRef.current);
-    if (!stepped) return;
-    setHistory(stepped.history);
-    setLayouts(stepped.present);
-    setSelectedIndex(null);
-  }, [history]);
-
-  const redoLastChange = useCallback((): void => {
-    const stepped = redoHistory(history, layoutsRef.current);
-    if (!stepped) return;
-    setHistory(stepped.history);
-    setLayouts(stepped.present);
-    setSelectedIndex(null);
-  }, [history]);
-
-  // Cmd/Ctrl+Z undo, Cmd/Ctrl+Shift+Z or Ctrl+Y redo. Suppressed while focus is in a text
-  // control so they don't fight the browser's native field-level undo.
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent): void => {
-      if (!e.metaKey && !e.ctrlKey) return;
-      const target = e.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
-
-      const key = e.key.toLowerCase();
-      if (key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        undoLastChange();
-      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
-        e.preventDefault();
-        redoLastChange();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [undoLastChange, redoLastChange]);
+  // Undo/redo history. A snapshot is pushed before every mutation — manual structural and
+  // field edits, and each AI turn — so one Undo reverts the last change and Redo replays it.
+  // Extracted to a hook (see use-layout-history.ts) so the state machine is unit-testable
+  // without mounting this whole component; it also owns the Cmd/Ctrl+Z / Shift+Z / Y bindings.
+  const {
+    record,
+    undo: undoLastChange,
+    redo: redoLastChange,
+    undoAvailable,
+    redoAvailable,
+  } = useLayoutHistory(layouts, setLayouts, () => setSelectedIndex(null));
 
   const togglePanelMode = useCallback(
     () => setPanelMode((m) => (m === 'float' ? 'dock' : 'float')),
