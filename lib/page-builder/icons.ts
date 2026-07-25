@@ -31,7 +31,7 @@ export const BLOCK_ICON_GROUPS = {
   ],
 } as const satisfies Record<string, readonly string[]>;
 
-export const BLOCK_ICON_NAMES = Object.values(BLOCK_ICON_GROUPS).flat() as readonly string[];
+export const BLOCK_ICON_NAMES = Object.values(BLOCK_ICON_GROUPS).flat();
 
 export type BlockIconName = (typeof BLOCK_ICON_NAMES)[number];
 
