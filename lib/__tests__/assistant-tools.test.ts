@@ -8,7 +8,8 @@ describe('assistant tools', () => {
     expect(ASSISTANT_TOOLS.map((t) => t.function.name).sort()).toEqual(
       [
         'add_block', 'add_row', 'describe_block', 'duplicate_block', 'move_block',
-        'read_block', 'remove_block', 'remove_row', 'update_block', 'update_row',
+        'read_block', 'remove_block', 'remove_row', 'search_catalog', 'search_media',
+        'update_block', 'update_row',
       ].sort(),
     );
   });

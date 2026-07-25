@@ -17,6 +17,7 @@ import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 import { serializeLayout } from '@/lib/page-builder/assistant/snapshot';
 import { ASSISTANT_TOOLS, buildSystemPrompt } from '@/lib/page-builder/assistant/tools';
 import { describeBlockSpec } from '@/lib/page-builder/assistant/contract';
+import { searchMedia, searchCatalog } from '@/lib/page-builder/assistant/resource-search';
 import {
   validateToolCall,
   validateUpdateFields,
@@ -319,6 +320,24 @@ export async function POST(request: Request): Promise<Response> {
                   role: 'tool',
                   tool_call_id: call.id,
                   content: schema ? describeBlockSpec(schema) : `Unknown block type "${query.slug}".`,
+                });
+                continue;
+              }
+              if (query.kind === 'searchMedia') {
+                const results = await searchMedia(payload, query.query, query.limit);
+                messages.push({
+                  role: 'tool',
+                  tool_call_id: call.id,
+                  content: JSON.stringify(results),
+                });
+                continue;
+              }
+              if (query.kind === 'searchCatalog') {
+                const results = await searchCatalog(payload, query.collection, query.query, query.limit, activeLocale);
+                messages.push({
+                  role: 'tool',
+                  tool_call_id: call.id,
+                  content: JSON.stringify(results),
                 });
                 continue;
               }

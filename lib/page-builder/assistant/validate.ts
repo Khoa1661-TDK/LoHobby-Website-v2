@@ -41,7 +41,9 @@ export type Mutation =
  *  message and emits no client mutation. */
 export type QueryRequest =
   | { kind: 'read'; index: number; locale?: 'vi' | 'en' }
-  | { kind: 'describe'; slug: string };
+  | { kind: 'describe'; slug: string }
+  | { kind: 'searchMedia'; query: string; limit: number }
+  | { kind: 'searchCatalog'; collection: 'products' | 'categories'; query: string; limit: number };
 
 export type ValidateResult =
   | { ok: true; mutation: Mutation }
@@ -283,6 +285,20 @@ export function validateToolCall(name: string, input: unknown): ValidateResult {
       const slug = typeof args.blockType === 'string' ? args.blockType : '';
       if (!getBlockSchema(slug)) return { ok: false, error: `Unknown block type "${slug}".` };
       return { ok: true, query: { kind: 'describe', slug } };
+    }
+    case 'search_media': {
+      const query = typeof args.query === 'string' ? args.query : '';
+      const limit = asInt(args.limit) ?? 10;
+      return { ok: true, query: { kind: 'searchMedia', query, limit } };
+    }
+    case 'search_catalog': {
+      const collection = args.collection === 'categories' ? 'categories' : args.collection === 'products' ? 'products' : null;
+      if (!collection) {
+        return { ok: false, error: 'search_catalog collection must be "products" or "categories".' };
+      }
+      const query = typeof args.query === 'string' ? args.query : '';
+      const limit = asInt(args.limit) ?? 10;
+      return { ok: true, query: { kind: 'searchCatalog', collection, query, limit } };
     }
     case 'move_block': {
       const from = asInt(args.from);

@@ -198,12 +198,42 @@ export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'search_media',
+      description:
+        'Find images in the media library by filename or alt text, returning their numeric ids. Call this to fill any upload field (hero image, gallery rows, card images). An empty query returns the most recent uploads. Returns data only; it changes nothing.',
+      parameters: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          query: { type: 'string', description: 'Text to match against filename and alt text. Empty for recent uploads.' },
+          limit: { type: 'integer', description: 'Maximum results (default 10, max 50).' },
+        },
+        required: ['query'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'search_catalog',
+      description:
+        'Find products or categories by title, returning their numeric ids for relationship fields. Never invent an id — always look it up here. Returns data only; it changes nothing.',
+      parameters: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          collection: { type: 'string', enum: ['products', 'categories'] },
+          query: { type: 'string', description: 'Text to match against the title. Empty to list some.' },
+          limit: { type: 'integer', description: 'Maximum results (default 10, max 50).' },
+        },
+        required: ['collection', 'query'],
+      },
+    },
+  },
 ];
-
-// Real relationship targets, keyed by the collection slug a field relates to (e.g.
-// `categories`). Injected into the contract so the model picks an existing numeric id
-// instead of fabricating one — a fabricated id makes Payload 400 the whole page save.
-export type RelationshipOptions = Record<string, Array<{ id: number | string; label: string }>>;
 
 export function buildSystemPrompt(schemas: BlockSchema[]): string {
   return [
