@@ -35,6 +35,8 @@
 - `src/payload/blocks/CustomHtml.ts` — block schema.
 - `components/blocks/CustomHtml.tsx` — renderer.
 - `components/blocks/__tests__/custom-html.test.tsx` — renderer test (jsdom).
+- `components/page-builder/use-layout-history.ts` — the undo/redo callbacks and keyboard-shortcut effect, extracted from `EditorShell` so the state machine is testable without mounting the editor's full dependency tree. *(Added during Task 2; not in the original plan.)*
+- `components/page-builder/__tests__/use-layout-history.test.tsx` — its tests.
 
 **Modified:**
 - `components/page-builder/EditorShell.tsx` — wire history module, redo button, keyboard shortcuts.
