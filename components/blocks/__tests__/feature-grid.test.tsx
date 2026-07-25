@@ -35,6 +35,17 @@ describe('FeatureGridBlock', () => {
     expect(html).toContain('Still ok');
   });
 
+  it('should render no icon wrapper at all for an unresolvable icon name', () => {
+    const html = renderToStaticMarkup(
+      <FeatureGridBlock items={[{ icon: 'nonsense', title: 'Still ok' }]} />,
+    );
+    // Old behavior: the icon slot's <span> wrapper only rendered when the icon name
+    // resolved to a component. An unresolvable name must render neither the wrapper
+    // nor an <svg> — not just "the title still shows up".
+    expect(html).not.toContain('<svg');
+    expect(html).not.toContain('h-11 w-11');
+  });
+
   it('should render an item image in the list variant', () => {
     const html = renderToStaticMarkup(
       <FeatureGridBlock

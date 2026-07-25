@@ -42,6 +42,20 @@ export const ICON_COMPONENTS: Record<BlockIconName, ComponentType<LucideProps>> 
   'image': ImageIcon, 'video': Video, 'file-text': FileText, 'book-open': BookOpen,
 };
 
+/**
+ * Resolve a stored icon name (current or legacy) to its component, or null when the
+ * name is absent or unresolvable. The single place alias-resolution + lookup happens —
+ * both `BlockIcon` and any caller that needs to know "would this render anything?"
+ * (e.g. FeatureGrid deciding whether to render its icon-slot wrapper) go through this.
+ */
+export function resolveIcon(name?: string | null): ComponentType<LucideProps> | null {
+  if (!name) return null;
+  const resolved = LEGACY_ICON_ALIASES[name] ?? name;
+  // `resolved` is untrusted input (a stored field value), so widen for the lookup only —
+  // the map itself stays exhaustively typed above.
+  return (ICON_COMPONENTS as Record<string, ComponentType<LucideProps> | undefined>)[resolved] ?? null;
+}
+
 type Props = {
   name?: string | null;
   className?: string;
@@ -50,11 +64,7 @@ type Props = {
 
 /** Render a registry icon by name. Unknown or absent names render nothing. */
 export default function BlockIcon({ name, className, size = 24 }: Props): ReactElement | null {
-  if (!name) return null;
-  const resolved = LEGACY_ICON_ALIASES[name] ?? name;
-  // `resolved` is untrusted input (a stored field value), so widen for the lookup only —
-  // the map itself stays exhaustively typed above.
-  const Icon = (ICON_COMPONENTS as Record<string, ComponentType<LucideProps> | undefined>)[resolved];
+  const Icon = resolveIcon(name);
   if (!Icon) return null;
   return <Icon className={className} size={size} aria-hidden />;
 }

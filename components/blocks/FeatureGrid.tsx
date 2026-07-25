@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import type { ReactElement, ReactNode } from 'react';
-import BlockIcon from '@/components/blocks/_icon';
+import BlockIcon, { resolveIcon } from '@/components/blocks/_icon';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 
@@ -112,12 +112,12 @@ export default function FeatureGridBlock(props: Props): ReactElement | null {
                       </span>
                     );
                   }
-                  if (!it.icon) return null;
-                  return (
+                  const Icon = resolveIcon(it.icon);
+                  return Icon ? (
                     <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-card-sm bg-surface-raised text-accent">
                       <BlockIcon name={it.icon} className="h-5 w-5" />
                     </span>
-                  );
+                  ) : null;
                 })()}
                 {it.title ? <h3 className="font-display text-base font-semibold text-ink">{it.title}</h3> : null}
                 {it.caption ? (
