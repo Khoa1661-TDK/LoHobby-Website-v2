@@ -1201,7 +1201,15 @@ export default function CustomHtmlBlock(props: Props): ReactElement | null {
   const cleanCss = css ? scopeBlockCss(css, scopeId) : '';
 
   return (
-    <section className={section} style={style} data-html-block={scopeId}>
+    // `relative` and `isolate` are load-bearing, not cosmetic: sanitize-html.ts rewrites
+    // `position: fixed` to `absolute`, which only contains the element if this wrapper is a
+    // containing block. Without them, `position:absolute; inset:0; width:100vw` inside the
+    // block is still a full-page overlay — i.e. the clickjacking defense is worth nothing.
+    <section
+      className={`relative isolate ${section}`}
+      style={style}
+      data-html-block={scopeId}
+    >
       {cleanCss ? <style>{cleanCss}</style> : null}
       <div className={container} dangerouslySetInnerHTML={{ __html: cleanHtml }} />
     </section>
@@ -1280,14 +1288,19 @@ Also confirm the `Pages` collection picks blocks up from the shared list rather 
 Run: `node_modules/.bin/payload generate:types`
 Expected: no error, and `CustomHtmlBlock` appears in `src/payload/payload-types.ts`. A name collision between `label`/`html`/`css` and an appearance field surfaces only here.
 
-- [ ] **Step 8: Create and apply the migration**
+- [ ] **Step 8: Create the migration — expect this to need the controller**
 
-Run: `node_modules/.bin/payload migrate:create custom_html_block`
-Review the generated `up` — it should only create the new block table. Then: `yes | node_modules/.bin/payload migrate`
+`payload migrate:create` is **interactive** in this project: it prompts per new enum ("created or renamed from another enum?") and offers to rename an unrelated existing enum into the new one. Piping input does not work — the prompt needs a real TTY, and a piped run exits 0 while writing no file.
+
+Worse, the dev database the CLI points at is stale, so the generated migration bundles the statements you actually want with unrelated destructive ones (`DROP TABLE`, `DROP COLUMN` against products/categories/spotlight). Task 6 hit exactly this.
+
+So: **do not attempt to generate or apply this migration yourself.** Run everything else in this task, commit the code, and report the migration as outstanding with a note of which tables/enums it will need. The controller coordinates generation with the user and hand-trims the result to the additive statements, as it did for Task 6's `20260725_183829_block_icon_fields`.
+
+If you believe you have a way to generate it safely, say so in your report and stop — do not apply it.
 
 - [ ] **Step 9: Verify end to end in the app**
 
-Start the dev server. In `/build/<a page>`: add a Custom HTML section from the picker; paste `<section><h2>Hello</h2><p>From imported markup</p></section>` into the HTML field and `h2 { color: crimson }` into the CSS field; confirm the field editors are monospace textareas (Task 3), the preview renders the heading in crimson, and the storefront page renders it too. Then paste `<script>alert(1)</script>` and confirm nothing executes.
+Start the dev server if the database is reachable. In `/build/<a page>`: add a Custom HTML section from the picker; paste `<section><h2>Hello</h2><p>From imported markup</p></section>` into the HTML field and `h2 { color: crimson }` into the CSS field; confirm the field editors are monospace textareas (Task 3), the preview renders the heading in crimson, and the storefront page renders it too. Then paste `<script>alert(1)</script>` and confirm nothing executes.
 
 - [ ] **Step 10: Run the full suite and typecheck**
 
