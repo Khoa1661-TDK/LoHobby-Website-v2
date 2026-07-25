@@ -12,7 +12,7 @@
 
 - **`pnpm <script>` fails in this environment** via `runDepsStatusCheck`. Call binaries directly: `node_modules/.bin/vitest`, `node_modules/.bin/payload`, `node_modules/.bin/tsc`.
 - **Every new Payload block or field requires a generated migration**, or the storefront throws Postgres error `42P01` at runtime. Create with `node_modules/.bin/payload migrate:create <name>`; apply with `yes | node_modules/.bin/payload migrate` (it blocks on an un-suppressable dev-mode y/N prompt).
-- **Payload 3.84 blocks have no `admin.description`** and no field-level `RowLabel`. Use `admin.components.Label` on the block for row labelling.
+- **Payload 3.84 *blocks* have no `admin.description`**, and there is no field-level `RowLabel`. Use `admin.components.Label` on the block for row labelling. Individual *fields* do support `admin.description` — `src/payload/blocks/FeatureGrid.ts` uses it — and this plan relies on that.
 - **A new field name must not collide with any name in `src/payload/blocks/_appearance.ts`.** Only `node_modules/.bin/payload generate:types` catches a collision; `tsc --noEmit` does not.
 - **Test files must import their globals explicitly** — `import { describe, expect, it } from 'vitest'` — even though `globals: true` is set. `tsc --noEmit` fails without the import.
 - **Vitest projects:** `.test.ts` under `lib/__tests__/`, `components/**/__tests__/`, `app/**/__tests__/`, `src/**/__tests__/` run in **node**; `.test.tsx` under `components/**/__tests__/` runs in **jsdom**.
