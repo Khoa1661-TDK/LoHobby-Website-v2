@@ -211,7 +211,8 @@ describe('describeField — admin.description', () => {
 
   it('should carry descriptions on nested array sub-fields', () => {
     const gallery = getBlockSchema('gallery');
-    const items = gallery?.fields.find((f) => f.type === 'array');
-    expect(Array.isArray(items?.fields)).toBe(true);
+    const images = gallery?.fields.find((f) => f.name === 'images') as FieldDescriptor;
+    const href = images?.fields?.find((f) => f.name === 'href');
+    expect(href?.description).toMatch(/link/i);
   });
 });
