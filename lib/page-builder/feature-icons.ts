@@ -1,5 +1,6 @@
-// lib/page-builder/feature-icons.ts — curated icon names for the Feature List block.
-// Kept lucide-free so the Payload schema can import the options without bundling icons.
+// lib/page-builder/feature-icons.ts — legacy alias for the Feature List block's icon set.
+// Superseded by lib/page-builder/icons.ts. Kept so the FeatureGrid schema and stored rows
+// keep working without a data migration; new blocks should import BLOCK_ICON_OPTIONS.
 export const FEATURE_ICON_NAMES = [
   'zap', 'truck', 'shield', 'star',
   'box', 'layers', 'printer', 'sparkles',
