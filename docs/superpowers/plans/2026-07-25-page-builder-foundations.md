@@ -115,8 +115,8 @@ describe('page-builder history', () => {
     // the .slice(-limit) removed from redoHistory, so it would pin down nothing.
     let h = emptyHistory<number>();
     for (let i = 0; i < 60; i += 1) h = recordHistory(h, i, 50);
-    const undone = undoHistory(h, 60, 50)!;
-    const redone = redoHistory(undone.history, undone.present, 50)!;
+    const undone = undoHistory(h, 60)!;
+    const redone = redoHistory(undone.history, undone.present)!;
     expect(redone.history.past.length).toBeLessThanOrEqual(50);
   });
 });
