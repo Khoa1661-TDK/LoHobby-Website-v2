@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildBlockIndex, buildAppearanceDoc, describeBlockSpec } from '@/lib/page-builder/assistant/contract';
 import { getBlockSchemas, getBlockSchema } from '@/lib/page-builder/block-schemas';
+import type { BlockSchema } from '@/lib/page-builder/block-schemas';
 
 const schemas = getBlockSchemas();
 
@@ -90,14 +91,52 @@ describe('describeBlockSpec', () => {
     expect(spec).not.toContain('blockKey');
   });
 
-  it('should never leak an id or blockKey row field inside an array field (faq.items)', () => {
-    // faq.items is an array with row sub-fields (question, answer) — the exact shape
-    // Payload's getPayload() mutates in place by injecting an `id` field into. A bare
-    // `.not.toMatch(/\bid\b/)` is unsafe here because describeBlockSpec renders prose
-    // (e.g. relationship/upload field lines say "numeric id of a …", "search_media") that
-    // legitimately contains the word "id". Anchor instead to how describeFieldLine actually
-    // renders a field line — `${indent}${field.name}: ` at the start of a line — so this
-    // only matches an actual "id" FIELD, never the word "id" inside a sentence.
+  it('should never leak an id or blockKey row field inside an array field', () => {
+    // Under vitest, `@payload-config` is mocked to `{}` (lib/__tests__/vitest-setup.ts), so
+    // getPayload() never actually runs — and it's getPayload() that mutates Payload's shared
+    // Block definitions to inject an `id` field into every array at runtime. That means
+    // getBlockSchema('faq') here returns the raw FAQ source fields, which never had an `id`
+    // sub-field to begin with: there is nothing for contentFields to strip, so asserting
+    // against it can't tell an intact HIDDEN_FIELD_NAMES from a broken one.
+    //
+    // To actually exercise the guard, build a synthetic BlockSchema whose array row shape
+    // carries `id` and `blockKey` literally, the way getPayload() would produce it in
+    // production. A bare `.not.toMatch(/\bid\b/)` would still be unsafe here because
+    // describeBlockSpec renders prose (e.g. relationship/upload field lines say "numeric id
+    // of a …", "search_media") that legitimately contains the word "id". Anchor instead to
+    // how describeFieldLine actually renders a field line — `${indent}${field.name}: ` at the
+    // start of a line — so this only matches an actual "id" FIELD, never the word "id" inside
+    // a sentence.
+    const syntheticSchema: BlockSchema = {
+      slug: 'synthetic',
+      label: 'Synthetic',
+      fields: [
+        {
+          name: 'items',
+          type: 'array',
+          fields: [
+            { name: 'id', type: 'text' },
+            { name: 'blockKey', type: 'text' },
+            { name: 'question', type: 'text' },
+            { name: 'answer', type: 'text' },
+          ],
+        },
+      ],
+    };
+    const spec = describeBlockSpec(syntheticSchema);
+    expect(spec).not.toMatch(/^\s+id:/m);
+    expect(spec).not.toContain('blockKey');
+    // Sanity: the row's real content fields must still be present — proves the array wasn't
+    // stripped wholesale (which would make the assertions above pass for the wrong reason).
+    expect(spec).toContain('question');
+    expect(spec).toContain('answer');
+  });
+
+  it('smoke test: describeBlockSpec on a real block (faq) omits id/blockKey too', () => {
+    // Not the id-leak guard (see above) — getBlockSchema('faq') under vitest has no `id`
+    // sub-field to strip in the first place, since getPayload() (which injects it at
+    // runtime) is mocked out. This just confirms describeBlockSpec runs cleanly end-to-end
+    // against a real registered block.
     const spec = describeBlockSpec(getBlockSchema('faq')!);
     expect(spec).not.toMatch(/^\s+id:/m);
     expect(spec).not.toContain('blockKey');

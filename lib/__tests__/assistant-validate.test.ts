@@ -254,7 +254,9 @@ describe('validateToolCall — read_block', () => {
   });
 
   it('should reject an unknown locale', () => {
-    expect(validateToolCall('read_block', { index: 0, locale: 'de' }).ok).toBe(false);
+    const r = validateToolCall('read_block', { index: 0, locale: 'de' });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/locale/i);
   });
 });
 
