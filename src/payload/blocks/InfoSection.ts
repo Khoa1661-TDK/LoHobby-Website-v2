@@ -3,6 +3,7 @@
 import type { Block } from 'payload';
 import { appearanceFields } from './_appearance';
 import { SOCIAL_PLATFORMS } from '@/lib/social-platforms';
+import { BLOCK_ICON_OPTIONS } from '@/lib/page-builder/icons';
 
 export const InfoSection: Block = {
   slug: 'infoSection',
@@ -27,6 +28,7 @@ export const InfoSection: Block = {
       labels: { singular: 'Quick Link', plural: 'Quick Links' },
       admin: { description: 'Quick links column (e.g. Shipping, Returns, FAQ, Privacy).' },
       fields: [
+        { name: 'icon', type: 'select', options: BLOCK_ICON_OPTIONS },
         { name: 'label', type: 'text', required: true },
         { name: 'href', type: 'text', required: true, admin: { placeholder: '/faq' } },
       ],

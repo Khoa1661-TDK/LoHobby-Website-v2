@@ -1,6 +1,7 @@
 // components/blocks/CallToAction.tsx — heading + subheading + up to two CTA buttons.
 import { Link } from '@/i18n/navigation';
 import type { ReactElement } from 'react';
+import BlockIcon from '@/components/blocks/_icon';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 import { linkAttrs } from '@/lib/page-builder/link';
@@ -15,6 +16,7 @@ type Props = {
   secondaryUrl?: string | null;
   secondaryOpenInNewTab?: boolean | null;
   align?: 'left' | 'center' | null;
+  icon?: string | null;
 } & BlockAppearance;
 
 const PRIMARY_CLASS =
@@ -33,6 +35,7 @@ export default function CallToActionBlock(props: Props): ReactElement | null {
     secondaryUrl,
     secondaryOpenInNewTab,
     align = 'center',
+    icon,
   } = props;
   const { section, container, style } = blockAppearanceClasses(props);
 
@@ -48,6 +51,9 @@ export default function CallToActionBlock(props: Props): ReactElement | null {
     <section className={section} style={style}>
       <div className={container}>
         <div className={`flex flex-col ${alignClass}`}>
+          {icon ? (
+            <BlockIcon name={icon} size={28} className="mb-4 text-accent" />
+          ) : null}
           {heading ? (
             <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">
               {heading}

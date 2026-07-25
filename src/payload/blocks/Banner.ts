@@ -1,6 +1,7 @@
 // src/payload/blocks/Banner.ts — thin full-width announcement strip.
 import type { Block } from 'payload';
 import { appearanceFields } from './_appearance';
+import { BLOCK_ICON_OPTIONS } from '@/lib/page-builder/icons';
 
 export const Banner: Block = {
   slug: 'banner',
@@ -13,6 +14,7 @@ export const Banner: Block = {
     { name: 'linkLabel', type: 'text' },
     { name: 'url', type: 'text' },
     { name: 'openInNewTab', type: 'checkbox', label: 'Open in new tab', defaultValue: false },
+    { name: 'icon', type: 'select', options: BLOCK_ICON_OPTIONS },
     ...appearanceFields,
   ],
 };

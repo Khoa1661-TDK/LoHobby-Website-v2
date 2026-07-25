@@ -1,6 +1,7 @@
 // src/payload/blocks/Tabs.ts — tabbed panels or accordion (variant toggle).
 import type { Block } from 'payload';
 import { appearanceFields } from './_appearance';
+import { BLOCK_ICON_OPTIONS } from '@/lib/page-builder/icons';
 
 export const Tabs: Block = {
   slug: 'tabs',
@@ -21,6 +22,7 @@ export const Tabs: Block = {
       name: 'items',
       type: 'array',
       fields: [
+        { name: 'icon', type: 'select', options: BLOCK_ICON_OPTIONS },
         { name: 'label', type: 'text', required: true },
         { name: 'content', type: 'richText' },
       ],

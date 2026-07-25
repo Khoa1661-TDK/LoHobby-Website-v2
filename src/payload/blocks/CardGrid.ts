@@ -1,6 +1,7 @@
 // src/payload/blocks/CardGrid.ts — responsive grid of image/title/body cards.
 import type { Block } from 'payload';
 import { appearanceFields } from './_appearance';
+import { BLOCK_ICON_OPTIONS } from '@/lib/page-builder/icons';
 
 export const CardGrid: Block = {
   slug: 'cardGrid',
@@ -24,6 +25,7 @@ export const CardGrid: Block = {
       name: 'cards',
       type: 'array',
       fields: [
+        { name: 'icon', type: 'select', options: BLOCK_ICON_OPTIONS },
         { name: 'image', type: 'upload', relationTo: 'media' },
         { name: 'title', type: 'text' },
         { name: 'body', type: 'textarea' },

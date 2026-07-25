@@ -1,6 +1,7 @@
 // src/payload/blocks/PricingTable.ts — tiered pricing cards.
 import type { Block } from 'payload';
 import { appearanceFields } from './_appearance';
+import { BLOCK_ICON_OPTIONS } from '@/lib/page-builder/icons';
 
 export const PricingTable: Block = {
   slug: 'pricingTable',
@@ -13,6 +14,7 @@ export const PricingTable: Block = {
       name: 'tiers',
       type: 'array',
       fields: [
+        { name: 'icon', type: 'select', options: BLOCK_ICON_OPTIONS },
         { name: 'name', type: 'text', required: true },
         { name: 'price', type: 'text', required: true },
         { name: 'period', type: 'text' },

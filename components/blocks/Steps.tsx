@@ -1,9 +1,11 @@
 // components/blocks/Steps.tsx — numbered how-it-works steps.
 import type { ReactElement } from 'react';
+import BlockIcon from '@/components/blocks/_icon';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 
 type Step = {
+  icon?: string | null;
   title?: string | null;
   body?: string | null;
 };
@@ -44,7 +46,10 @@ export default function StepsBlock(props: Props): ReactElement {
                 {i + 1}
               </span>
               {step.title ? (
-                <h3 className="mt-4 font-display text-lg font-semibold tracking-tight">
+                <h3 className="mt-4 flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
+                  {step.icon ? (
+                    <BlockIcon name={step.icon} size={18} className="text-filament-500" />
+                  ) : null}
                   {step.title}
                 </h3>
               ) : null}

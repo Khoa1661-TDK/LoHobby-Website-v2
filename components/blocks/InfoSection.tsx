@@ -2,11 +2,12 @@
 // quick links, and social icons. Renders nothing if every column is empty.
 import type { ReactElement } from 'react';
 import { Link } from '@/i18n/navigation';
+import BlockIcon from '@/components/blocks/_icon';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 import { SocialIcon, socialPlatformLabel } from '@/components/social/SocialIcon';
 
-type LinkItem = { label?: string | null; href?: string | null };
+type LinkItem = { icon?: string | null; label?: string | null; href?: string | null };
 type SocialItem = { platform?: string | null; url?: string | null };
 
 type Props = {
@@ -116,8 +117,9 @@ export default function InfoSectionBlock(props: Props): ReactElement | null {
                   <li key={i}>
                     <Link
                       href={l.href as string}
-                      className="text-sm text-ink/60 transition-colors hover:text-ink"
+                      className="flex items-center gap-2 text-sm text-ink/60 transition-colors hover:text-ink"
                     >
+                      {l.icon ? <BlockIcon name={l.icon} size={16} className="text-ink/50" /> : null}
                       {l.label}
                     </Link>
                   </li>

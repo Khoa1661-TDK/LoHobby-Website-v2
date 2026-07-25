@@ -2305,6 +2305,73 @@ export interface CallToActionBlock {
   secondaryUrl?: string | null;
   secondaryOpenInNewTab?: boolean | null;
   align?: ('left' | 'center') | null;
+  icon?:
+    | (
+        | 'truck'
+        | 'package'
+        | 'box'
+        | 'tag'
+        | 'shopping-cart'
+        | 'shopping-bag'
+        | 'credit-card'
+        | 'receipt'
+        | 'gift'
+        | 'percent'
+        | 'store'
+        | 'wallet'
+        | 'shield'
+        | 'shield-check'
+        | 'award'
+        | 'badge-check'
+        | 'lock'
+        | 'thumbs-up'
+        | 'star'
+        | 'heart'
+        | 'headphones'
+        | 'life-buoy'
+        | 'handshake'
+        | 'printer'
+        | 'ruler'
+        | 'layers'
+        | 'wrench'
+        | 'palette'
+        | 'scissors'
+        | 'hammer'
+        | 'recycle'
+        | 'leaf'
+        | 'sparkles'
+        | 'wand'
+        | 'brush'
+        | 'arrow-right'
+        | 'arrow-up-right'
+        | 'check'
+        | 'circle-check'
+        | 'circle-help'
+        | 'clock'
+        | 'calendar'
+        | 'mail'
+        | 'phone'
+        | 'map-pin'
+        | 'globe'
+        | 'search'
+        | 'zap'
+        | 'flame'
+        | 'trending-up'
+        | 'chart-column'
+        | 'users'
+        | 'user'
+        | 'message-circle'
+        | 'bell'
+        | 'settings'
+        | 'refresh-cw'
+        | 'download'
+        | 'play'
+        | 'image'
+        | 'video'
+        | 'file-text'
+        | 'book-open'
+      )
+    | null;
   /**
    * Background mode for this section.
    */
@@ -2370,6 +2437,73 @@ export interface StatsBlock {
   heading?: string | null;
   items?:
     | {
+        icon?:
+          | (
+              | 'truck'
+              | 'package'
+              | 'box'
+              | 'tag'
+              | 'shopping-cart'
+              | 'shopping-bag'
+              | 'credit-card'
+              | 'receipt'
+              | 'gift'
+              | 'percent'
+              | 'store'
+              | 'wallet'
+              | 'shield'
+              | 'shield-check'
+              | 'award'
+              | 'badge-check'
+              | 'lock'
+              | 'thumbs-up'
+              | 'star'
+              | 'heart'
+              | 'headphones'
+              | 'life-buoy'
+              | 'handshake'
+              | 'printer'
+              | 'ruler'
+              | 'layers'
+              | 'wrench'
+              | 'palette'
+              | 'scissors'
+              | 'hammer'
+              | 'recycle'
+              | 'leaf'
+              | 'sparkles'
+              | 'wand'
+              | 'brush'
+              | 'arrow-right'
+              | 'arrow-up-right'
+              | 'check'
+              | 'circle-check'
+              | 'circle-help'
+              | 'clock'
+              | 'calendar'
+              | 'mail'
+              | 'phone'
+              | 'map-pin'
+              | 'globe'
+              | 'search'
+              | 'zap'
+              | 'flame'
+              | 'trending-up'
+              | 'chart-column'
+              | 'users'
+              | 'user'
+              | 'message-circle'
+              | 'bell'
+              | 'settings'
+              | 'refresh-cw'
+              | 'download'
+              | 'play'
+              | 'image'
+              | 'video'
+              | 'file-text'
+              | 'book-open'
+            )
+          | null;
         value?: string | null;
         label?: string | null;
         id?: string | null;
@@ -2507,6 +2641,73 @@ export interface CardGridBlock {
   columnCount?: ('2' | '3' | '4') | null;
   cards?:
     | {
+        icon?:
+          | (
+              | 'truck'
+              | 'package'
+              | 'box'
+              | 'tag'
+              | 'shopping-cart'
+              | 'shopping-bag'
+              | 'credit-card'
+              | 'receipt'
+              | 'gift'
+              | 'percent'
+              | 'store'
+              | 'wallet'
+              | 'shield'
+              | 'shield-check'
+              | 'award'
+              | 'badge-check'
+              | 'lock'
+              | 'thumbs-up'
+              | 'star'
+              | 'heart'
+              | 'headphones'
+              | 'life-buoy'
+              | 'handshake'
+              | 'printer'
+              | 'ruler'
+              | 'layers'
+              | 'wrench'
+              | 'palette'
+              | 'scissors'
+              | 'hammer'
+              | 'recycle'
+              | 'leaf'
+              | 'sparkles'
+              | 'wand'
+              | 'brush'
+              | 'arrow-right'
+              | 'arrow-up-right'
+              | 'check'
+              | 'circle-check'
+              | 'circle-help'
+              | 'clock'
+              | 'calendar'
+              | 'mail'
+              | 'phone'
+              | 'map-pin'
+              | 'globe'
+              | 'search'
+              | 'zap'
+              | 'flame'
+              | 'trending-up'
+              | 'chart-column'
+              | 'users'
+              | 'user'
+              | 'message-circle'
+              | 'bell'
+              | 'settings'
+              | 'refresh-cw'
+              | 'download'
+              | 'play'
+              | 'image'
+              | 'video'
+              | 'file-text'
+              | 'book-open'
+            )
+          | null;
         image?: (number | null) | Media;
         title?: string | null;
         body?: string | null;
@@ -2581,6 +2782,73 @@ export interface BannerBlock {
   linkLabel?: string | null;
   url?: string | null;
   openInNewTab?: boolean | null;
+  icon?:
+    | (
+        | 'truck'
+        | 'package'
+        | 'box'
+        | 'tag'
+        | 'shopping-cart'
+        | 'shopping-bag'
+        | 'credit-card'
+        | 'receipt'
+        | 'gift'
+        | 'percent'
+        | 'store'
+        | 'wallet'
+        | 'shield'
+        | 'shield-check'
+        | 'award'
+        | 'badge-check'
+        | 'lock'
+        | 'thumbs-up'
+        | 'star'
+        | 'heart'
+        | 'headphones'
+        | 'life-buoy'
+        | 'handshake'
+        | 'printer'
+        | 'ruler'
+        | 'layers'
+        | 'wrench'
+        | 'palette'
+        | 'scissors'
+        | 'hammer'
+        | 'recycle'
+        | 'leaf'
+        | 'sparkles'
+        | 'wand'
+        | 'brush'
+        | 'arrow-right'
+        | 'arrow-up-right'
+        | 'check'
+        | 'circle-check'
+        | 'circle-help'
+        | 'clock'
+        | 'calendar'
+        | 'mail'
+        | 'phone'
+        | 'map-pin'
+        | 'globe'
+        | 'search'
+        | 'zap'
+        | 'flame'
+        | 'trending-up'
+        | 'chart-column'
+        | 'users'
+        | 'user'
+        | 'message-circle'
+        | 'bell'
+        | 'settings'
+        | 'refresh-cw'
+        | 'download'
+        | 'play'
+        | 'image'
+        | 'video'
+        | 'file-text'
+        | 'book-open'
+      )
+    | null;
   /**
    * Background mode for this section.
    */
@@ -2646,6 +2914,73 @@ export interface StepsBlock {
   heading?: string | null;
   steps?:
     | {
+        icon?:
+          | (
+              | 'truck'
+              | 'package'
+              | 'box'
+              | 'tag'
+              | 'shopping-cart'
+              | 'shopping-bag'
+              | 'credit-card'
+              | 'receipt'
+              | 'gift'
+              | 'percent'
+              | 'store'
+              | 'wallet'
+              | 'shield'
+              | 'shield-check'
+              | 'award'
+              | 'badge-check'
+              | 'lock'
+              | 'thumbs-up'
+              | 'star'
+              | 'heart'
+              | 'headphones'
+              | 'life-buoy'
+              | 'handshake'
+              | 'printer'
+              | 'ruler'
+              | 'layers'
+              | 'wrench'
+              | 'palette'
+              | 'scissors'
+              | 'hammer'
+              | 'recycle'
+              | 'leaf'
+              | 'sparkles'
+              | 'wand'
+              | 'brush'
+              | 'arrow-right'
+              | 'arrow-up-right'
+              | 'check'
+              | 'circle-check'
+              | 'circle-help'
+              | 'clock'
+              | 'calendar'
+              | 'mail'
+              | 'phone'
+              | 'map-pin'
+              | 'globe'
+              | 'search'
+              | 'zap'
+              | 'flame'
+              | 'trending-up'
+              | 'chart-column'
+              | 'users'
+              | 'user'
+              | 'message-circle'
+              | 'bell'
+              | 'settings'
+              | 'refresh-cw'
+              | 'download'
+              | 'play'
+              | 'image'
+              | 'video'
+              | 'file-text'
+              | 'book-open'
+            )
+          | null;
         title?: string | null;
         body?: string | null;
         id?: string | null;
@@ -2717,6 +3052,73 @@ export interface PricingTableBlock {
   subheading?: string | null;
   tiers?:
     | {
+        icon?:
+          | (
+              | 'truck'
+              | 'package'
+              | 'box'
+              | 'tag'
+              | 'shopping-cart'
+              | 'shopping-bag'
+              | 'credit-card'
+              | 'receipt'
+              | 'gift'
+              | 'percent'
+              | 'store'
+              | 'wallet'
+              | 'shield'
+              | 'shield-check'
+              | 'award'
+              | 'badge-check'
+              | 'lock'
+              | 'thumbs-up'
+              | 'star'
+              | 'heart'
+              | 'headphones'
+              | 'life-buoy'
+              | 'handshake'
+              | 'printer'
+              | 'ruler'
+              | 'layers'
+              | 'wrench'
+              | 'palette'
+              | 'scissors'
+              | 'hammer'
+              | 'recycle'
+              | 'leaf'
+              | 'sparkles'
+              | 'wand'
+              | 'brush'
+              | 'arrow-right'
+              | 'arrow-up-right'
+              | 'check'
+              | 'circle-check'
+              | 'circle-help'
+              | 'clock'
+              | 'calendar'
+              | 'mail'
+              | 'phone'
+              | 'map-pin'
+              | 'globe'
+              | 'search'
+              | 'zap'
+              | 'flame'
+              | 'trending-up'
+              | 'chart-column'
+              | 'users'
+              | 'user'
+              | 'message-circle'
+              | 'bell'
+              | 'settings'
+              | 'refresh-cw'
+              | 'download'
+              | 'play'
+              | 'image'
+              | 'video'
+              | 'file-text'
+              | 'book-open'
+            )
+          | null;
         name: string;
         price: string;
         period?: string | null;
@@ -2869,6 +3271,73 @@ export interface TabsBlock {
   heading?: string | null;
   items?:
     | {
+        icon?:
+          | (
+              | 'truck'
+              | 'package'
+              | 'box'
+              | 'tag'
+              | 'shopping-cart'
+              | 'shopping-bag'
+              | 'credit-card'
+              | 'receipt'
+              | 'gift'
+              | 'percent'
+              | 'store'
+              | 'wallet'
+              | 'shield'
+              | 'shield-check'
+              | 'award'
+              | 'badge-check'
+              | 'lock'
+              | 'thumbs-up'
+              | 'star'
+              | 'heart'
+              | 'headphones'
+              | 'life-buoy'
+              | 'handshake'
+              | 'printer'
+              | 'ruler'
+              | 'layers'
+              | 'wrench'
+              | 'palette'
+              | 'scissors'
+              | 'hammer'
+              | 'recycle'
+              | 'leaf'
+              | 'sparkles'
+              | 'wand'
+              | 'brush'
+              | 'arrow-right'
+              | 'arrow-up-right'
+              | 'check'
+              | 'circle-check'
+              | 'circle-help'
+              | 'clock'
+              | 'calendar'
+              | 'mail'
+              | 'phone'
+              | 'map-pin'
+              | 'globe'
+              | 'search'
+              | 'zap'
+              | 'flame'
+              | 'trending-up'
+              | 'chart-column'
+              | 'users'
+              | 'user'
+              | 'message-circle'
+              | 'bell'
+              | 'settings'
+              | 'refresh-cw'
+              | 'download'
+              | 'play'
+              | 'image'
+              | 'video'
+              | 'file-text'
+              | 'book-open'
+            )
+          | null;
         label: string;
         content?: {
           root: {
@@ -3233,6 +3702,73 @@ export interface InfoSectionBlock {
    */
   links?:
     | {
+        icon?:
+          | (
+              | 'truck'
+              | 'package'
+              | 'box'
+              | 'tag'
+              | 'shopping-cart'
+              | 'shopping-bag'
+              | 'credit-card'
+              | 'receipt'
+              | 'gift'
+              | 'percent'
+              | 'store'
+              | 'wallet'
+              | 'shield'
+              | 'shield-check'
+              | 'award'
+              | 'badge-check'
+              | 'lock'
+              | 'thumbs-up'
+              | 'star'
+              | 'heart'
+              | 'headphones'
+              | 'life-buoy'
+              | 'handshake'
+              | 'printer'
+              | 'ruler'
+              | 'layers'
+              | 'wrench'
+              | 'palette'
+              | 'scissors'
+              | 'hammer'
+              | 'recycle'
+              | 'leaf'
+              | 'sparkles'
+              | 'wand'
+              | 'brush'
+              | 'arrow-right'
+              | 'arrow-up-right'
+              | 'check'
+              | 'circle-check'
+              | 'circle-help'
+              | 'clock'
+              | 'calendar'
+              | 'mail'
+              | 'phone'
+              | 'map-pin'
+              | 'globe'
+              | 'search'
+              | 'zap'
+              | 'flame'
+              | 'trending-up'
+              | 'chart-column'
+              | 'users'
+              | 'user'
+              | 'message-circle'
+              | 'bell'
+              | 'settings'
+              | 'refresh-cw'
+              | 'download'
+              | 'play'
+              | 'image'
+              | 'video'
+              | 'file-text'
+              | 'book-open'
+            )
+          | null;
         label: string;
         href: string;
         id?: string | null;
@@ -4904,6 +5440,7 @@ export interface CallToActionBlockSelect<T extends boolean = true> {
   secondaryUrl?: T;
   secondaryOpenInNewTab?: T;
   align?: T;
+  icon?: T;
   background?: T;
   backgroundCustom?: T;
   backgroundCustomDark?: T;
@@ -4927,6 +5464,7 @@ export interface StatsBlockSelect<T extends boolean = true> {
   items?:
     | T
     | {
+        icon?: T;
         value?: T;
         label?: T;
         id?: T;
@@ -4978,6 +5516,7 @@ export interface CardGridBlockSelect<T extends boolean = true> {
   cards?:
     | T
     | {
+        icon?: T;
         image?: T;
         title?: T;
         body?: T;
@@ -5008,6 +5547,7 @@ export interface BannerBlockSelect<T extends boolean = true> {
   linkLabel?: T;
   url?: T;
   openInNewTab?: T;
+  icon?: T;
   background?: T;
   backgroundCustom?: T;
   backgroundCustomDark?: T;
@@ -5031,6 +5571,7 @@ export interface StepsBlockSelect<T extends boolean = true> {
   steps?:
     | T
     | {
+        icon?: T;
         title?: T;
         body?: T;
         id?: T;
@@ -5059,6 +5600,7 @@ export interface PricingTableBlockSelect<T extends boolean = true> {
   tiers?:
     | T
     | {
+        icon?: T;
         name?: T;
         price?: T;
         period?: T;
@@ -5122,6 +5664,7 @@ export interface TabsBlockSelect<T extends boolean = true> {
   items?:
     | T
     | {
+        icon?: T;
         label?: T;
         content?: T;
         id?: T;
@@ -5250,6 +5793,7 @@ export interface InfoSectionBlockSelect<T extends boolean = true> {
   links?:
     | T
     | {
+        icon?: T;
         label?: T;
         href?: T;
         id?: T;

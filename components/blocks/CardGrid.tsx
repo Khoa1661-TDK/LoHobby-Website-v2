@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import type { ReactElement, ReactNode } from 'react';
+import BlockIcon from '@/components/blocks/_icon';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 import { linkAttrs } from '@/lib/page-builder/link';
@@ -9,6 +10,7 @@ import { linkAttrs } from '@/lib/page-builder/link';
 type Media = { url?: string; alt?: string } | string | number | null | undefined;
 
 type Card = {
+  icon?: string | null;
   image?: Media;
   title?: string | null;
   body?: string | null;
@@ -44,6 +46,9 @@ function CardItem({ card }: { card: Card }): ReactElement {
         </div>
       ) : null}
       <div className="flex flex-1 flex-col p-5">
+        {!img && card.icon ? (
+          <BlockIcon name={card.icon} size={22} className="mb-3 text-accent" />
+        ) : null}
         {card.title ? (
           <h3 className="font-display text-lg font-semibold tracking-tight">{card.title}</h3>
         ) : null}

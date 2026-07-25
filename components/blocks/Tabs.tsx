@@ -2,13 +2,14 @@
 'use client';
 import { useState } from 'react';
 import type { ReactElement } from 'react';
+import BlockIcon from '@/components/blocks/_icon';
 import {
   type BlockAppearance,
   blockAppearanceClasses,
 } from '@/lib/page-builder-appearance';
 import { renderLexical } from './_primitives';
 
-type Item = { label?: string | null; content?: Record<string, unknown> | null };
+type Item = { icon?: string | null; label?: string | null; content?: Record<string, unknown> | null };
 type Props = {
   variant?: 'tabs' | 'accordion' | null;
   heading?: string | null;
@@ -45,7 +46,10 @@ export default function TabsBlock(props: Props): ReactElement | null {
                     onClick={() => setOpenSet((s) => ({ ...s, [i]: !s[i] }))}
                     className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left font-medium text-ink"
                   >
-                    {it.label}
+                    <span className="flex items-center gap-2">
+                      {it.icon ? <BlockIcon name={it.icon} size={16} /> : null}
+                      {it.label}
+                    </span>
                     <span aria-hidden="true" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
                       ▾
                     </span>
@@ -69,12 +73,13 @@ export default function TabsBlock(props: Props): ReactElement | null {
                   type="button"
                   aria-selected={active === i}
                   onClick={() => setActive(i)}
-                  className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition ${
+                  className={`-mb-px flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition ${
                     active === i
                       ? 'border-ink text-ink'
                       : 'border-transparent text-ink/50 hover:text-ink'
                   }`}
                 >
+                  {it.icon ? <BlockIcon name={it.icon} size={16} /> : null}
                   {it.label}
                 </button>
               ))}

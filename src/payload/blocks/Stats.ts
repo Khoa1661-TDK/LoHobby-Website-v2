@@ -1,6 +1,7 @@
 // src/payload/blocks/Stats.ts — row of big value + small label stats.
 import type { Block } from 'payload';
 import { appearanceFields } from './_appearance';
+import { BLOCK_ICON_OPTIONS } from '@/lib/page-builder/icons';
 
 export const Stats: Block = {
   slug: 'stats',
@@ -14,6 +15,7 @@ export const Stats: Block = {
       name: 'items',
       type: 'array',
       fields: [
+        { name: 'icon', type: 'select', options: BLOCK_ICON_OPTIONS },
         { name: 'value', type: 'text' },
         { name: 'label', type: 'text' },
       ],

@@ -1,12 +1,14 @@
 // components/blocks/PricingTable.tsx — tiered pricing cards.
 import type { ReactElement } from 'react';
 import Link from 'next/link';
+import BlockIcon from '@/components/blocks/_icon';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 import { linkAttrs } from '@/lib/page-builder/link';
 
 type Feature = { text?: string | null };
 type Tier = {
+  icon?: string | null;
   name?: string | null;
   price?: string | null;
   period?: string | null;
@@ -50,6 +52,9 @@ export default function PricingTableBlock(props: Props): ReactElement | null {
                 tier.highlighted ? 'border-accent shadow-soft-lg' : 'border-line'
               }`}
             >
+              {tier.icon ? (
+                <BlockIcon name={tier.icon} size={24} className="mb-3 text-accent" />
+              ) : null}
               <h3 className="font-display text-lg font-semibold text-ink">{tier.name}</h3>
               <div className="mt-3 flex items-baseline gap-1">
                 <span className="font-display text-3xl font-bold tracking-tight">{tier.price}</span>

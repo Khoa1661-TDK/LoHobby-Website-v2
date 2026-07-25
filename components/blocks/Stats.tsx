@@ -1,9 +1,11 @@
 // components/blocks/Stats.tsx — row/grid of big value + small label stats.
 import type { ReactElement } from 'react';
+import BlockIcon from '@/components/blocks/_icon';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 
 type Stat = {
+  icon?: string | null;
   value?: string | null;
   label?: string | null;
 };
@@ -32,6 +34,9 @@ export default function StatsBlock(props: Props): ReactElement | null {
           <dl className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
             {filtered.map((stat, i) => (
               <div key={i}>
+                {stat.icon ? (
+                  <BlockIcon name={stat.icon} size={22} className="mx-auto mb-2 text-accent" />
+                ) : null}
                 <dt className="font-display text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
                   {stat.value}
                 </dt>

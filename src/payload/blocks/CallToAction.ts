@@ -1,6 +1,7 @@
 // src/payload/blocks/CallToAction.ts — heading + subheading + up to two CTA buttons.
 import type { Block } from 'payload';
 import { appearanceFields } from './_appearance';
+import { BLOCK_ICON_OPTIONS } from '@/lib/page-builder/icons';
 
 export const CallToAction: Block = {
   slug: 'callToAction',
@@ -36,6 +37,7 @@ export const CallToAction: Block = {
         { label: 'Center', value: 'center' },
       ],
     },
+    { name: 'icon', type: 'select', options: BLOCK_ICON_OPTIONS },
     ...appearanceFields,
   ],
 };
