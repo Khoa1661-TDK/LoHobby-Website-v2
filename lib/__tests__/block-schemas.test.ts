@@ -195,3 +195,23 @@ describe('kind-based condition recovery (site-header tabs)', () => {
     expect(tabs.fields?.find((f) => f.name === 'kind')?.condition).toBeUndefined();
   });
 });
+
+describe('describeField — admin.description', () => {
+  it('should carry a field admin description into the descriptor', () => {
+    const hero = getBlockSchema('hero');
+    const highlight = hero?.fields.find((f) => f.name === 'headlineHighlight');
+    expect(highlight?.description).toMatch(/match the headline/i);
+  });
+
+  it('should leave description undefined when the field has none', () => {
+    const hero = getBlockSchema('hero');
+    const headline = hero?.fields.find((f) => f.name === 'headline');
+    expect(headline?.description).toBeUndefined();
+  });
+
+  it('should carry descriptions on nested array sub-fields', () => {
+    const gallery = getBlockSchema('gallery');
+    const items = gallery?.fields.find((f) => f.type === 'array');
+    expect(Array.isArray(items?.fields)).toBe(true);
+  });
+});

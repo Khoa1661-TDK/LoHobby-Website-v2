@@ -49,6 +49,11 @@ export type FieldDescriptor = {
   name: string;
   type: string;
   label?: string;
+  /** Authoring guidance from the Payload field's `admin.description`. Surfaced to the
+   * AI assistant's block contract — this is where rules like "must match the headline
+   * exactly" live, and dropping it loses them. Only plain-string descriptions are
+   * captured; Payload also allows a function/JSX form, which is not serializable. */
+  description?: string;
   required?: boolean;
   defaultValue?: unknown;
   options?: { label: string; value: string }[];
@@ -157,6 +162,10 @@ function describeField(field: Field): FieldDescriptor | null {
   };
 
   if ('label' in field && typeof field.label === 'string') base.label = field.label;
+  const adminDescription = (field as { admin?: { description?: unknown } }).admin?.description;
+  if (typeof adminDescription === 'string' && adminDescription.trim().length > 0) {
+    base.description = adminDescription.trim();
+  }
   if ('required' in field && typeof field.required === 'boolean') base.required = field.required;
   if ('defaultValue' in field && typeof field.defaultValue !== 'function') {
     base.defaultValue = field.defaultValue as unknown;
