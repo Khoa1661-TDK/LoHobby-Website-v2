@@ -23,4 +23,11 @@ describe('TabsBlock', () => {
     expect(html).toContain('aria-expanded');
     expect(html).toContain('Q1');
   });
+
+  it('should render an icon svg when a tab item has an icon', () => {
+    const html = renderToStaticMarkup(
+      <TabsBlock variant="tabs" items={[{ icon: 'zap', label: 'One' }]} />,
+    );
+    expect(html).toContain('<svg');
+  });
 });

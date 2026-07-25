@@ -21,4 +21,11 @@ describe('PricingTableBlock', () => {
     expect(html).toContain('$9');
     expect(html).toContain('Unlimited prints');
   });
+
+  it('should render an icon svg when a tier has an icon', () => {
+    const html = renderToStaticMarkup(
+      <PricingTableBlock tiers={[{ name: 'Pro', price: '$9', icon: 'zap' }]} />,
+    );
+    expect(html).toContain('<svg');
+  });
 });
