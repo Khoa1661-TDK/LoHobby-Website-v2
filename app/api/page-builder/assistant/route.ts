@@ -15,7 +15,7 @@ import type { PageBlock } from '@/lib/page-builder';
 import { getBlockSchemas } from '@/lib/page-builder/block-schemas';
 import { isAuthorizedAdmin } from '@/lib/page-builder/admin-guard';
 import { serializeLayout } from '@/lib/page-builder/assistant/snapshot';
-import { ASSISTANT_TOOLS, buildSystemPrompt, type RelationshipOptions } from '@/lib/page-builder/assistant/tools';
+import { ASSISTANT_TOOLS, buildSystemPrompt } from '@/lib/page-builder/assistant/tools';
 import { validateToolCall, validateUpdateFields, coerceFieldsForBlock, type Mutation } from '@/lib/page-builder/assistant/validate';
 import { applyDualMutation, resolveLocales, type LocaleLayouts } from '@/lib/page-builder/assistant/apply-dual';
 import { type Locale } from '@/i18n/routing';
@@ -106,48 +106,6 @@ function sanitizeImages(input: unknown): string[] {
   return out;
 }
 
-type PayloadClient = Awaited<ReturnType<typeof getPayload>>;
-
-// Cap how many of each relationship target we list in the contract so the system
-// prompt stays bounded; categories are few but products can run to the hundreds.
-const RELATIONSHIP_LIMIT = 100;
-
-// Pull the real ids the model is allowed to bind relationship fields to. Keyed by
-// collection slug (`categories`, `products`) to match each block field's relationTo.
-// Failures here are non-fatal — without options the contract just tells the model to
-// omit relationships rather than invent ids.
-async function loadRelationshipOptions(
-  payload: PayloadClient,
-  locale: string,
-): Promise<RelationshipOptions> {
-  const options: RelationshipOptions = {};
-  const targets: Array<keyof RelationshipOptions> = ['categories', 'products'];
-
-  for (const collection of targets) {
-    try {
-      const result = await payload.find({
-        collection: collection as 'categories' | 'products',
-        depth: 0,
-        limit: RELATIONSHIP_LIMIT,
-        pagination: false,
-        locale: locale as never,
-        select: { title: true },
-      });
-      options[collection] = result.docs.map((doc) => ({
-        id: doc.id as number | string,
-        label:
-          (doc as { title?: unknown }).title != null
-            ? String((doc as { title?: unknown }).title)
-            : `#${doc.id}`,
-      }));
-    } catch {
-      // Leave this target unset; the contract falls back to "omit if unknown".
-    }
-  }
-
-  return options;
-}
-
 function bad(status: number, error: string): Response {
   return new Response(JSON.stringify({ error }), {
     status,
@@ -182,11 +140,7 @@ export async function POST(request: Request): Promise<Response> {
   const client = new OpenAI({ apiKey, baseURL });
 
   const schemas = getBlockSchemas();
-  // Give the model the real category ids so it binds relationship fields (e.g.
-  // Featured Collection) to an existing category instead of fabricating an id —
-  // a fabricated id makes Payload 400 the whole page save.
-  const relationshipOptions = await loadRelationshipOptions(payload, activeLocale);
-  const system = buildSystemPrompt(schemas, relationshipOptions);
+  const system = buildSystemPrompt(schemas);
 
   const encoder = new TextEncoder();
   type StreamEvent =

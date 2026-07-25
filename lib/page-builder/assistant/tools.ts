@@ -5,7 +5,7 @@
 // (Gemini's OpenAI-compat layer does not reliably support it).
 import type { ChatCompletionFunctionTool } from 'openai/resources/chat/completions';
 import type { BlockSchema } from '@/lib/page-builder/block-schemas';
-import { THEMED_COLOR_BASES } from '@/lib/page-builder/themed-color';
+import { buildBlockIndex, buildAppearanceDoc } from '@/lib/page-builder/assistant/contract';
 
 export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
   {
@@ -128,76 +128,39 @@ export const ASSISTANT_TOOLS: ChatCompletionFunctionTool[] = [
 // instead of fabricating one — a fabricated id makes Payload 400 the whole page save.
 export type RelationshipOptions = Record<string, Array<{ id: number | string; label: string }>>;
 
-function describeFieldLine(f: BlockSchema['fields'][number], rels: RelationshipOptions): string {
-  const req = f.required ? ' [required]' : '';
-  if (f.type === 'relationship') {
-    const target = f.relationTo ?? 'a collection';
-    const choices = (f.relationTo && rels[f.relationTo]) || [];
-    if (choices.length > 0) {
-      const list = choices.map((o) => `${o.id}=${o.label}`).join(', ');
-      const many = f.hasMany ? ' (array of numeric ids)' : '';
-      return `    - ${f.name}: numeric id of a ${target}${many} — valid ids: ${list}${req}`;
-    }
-    return `    - ${f.name}: numeric id of an existing ${target} (omit if unknown — never invent one)${req}`;
-  }
-  const opts = f.options ? ` (one of: ${f.options.map((o) => o.value).join(', ')})` : '';
-  if (f.type === 'richText') {
-    return `    - ${f.name}: richText — provide a Markdown string (paragraphs, # headings, **bold**, *italic*, [text](url), - lists)${req}`;
-  }
-  let range = '';
-  if (f.type === 'number' && (typeof f.min === 'number' || typeof f.max === 'number')) {
-    if (typeof f.min === 'number' && typeof f.max === 'number') range = ` (${f.min}–${f.max})`;
-    else if (typeof f.min === 'number') range = ` (min ${f.min})`;
-    else range = ` (max ${f.max})`;
-  }
-  return `    - ${f.name}: ${f.type}${opts}${range}${req}`;
-}
-
-function describeBlock(schema: BlockSchema, rels: RelationshipOptions): string {
-  const fields = schema.fields.map((f) => describeFieldLine(f, rels)).join('\n');
-  return `  ${schema.slug} — ${schema.label}\n${fields}`;
-}
-
-/** The light/dark slot pairs the model must set together, derived from THEMED_COLOR_BASES
- *  so the prompt tracks the schema instead of hardcoding field names. */
-function themedColorPairs(): string {
-  return Array.from(THEMED_COLOR_BASES)
-    .map((base) => `${base} (light) + ${base}Dark (dark)`)
-    .join(', ');
-}
-
-export function buildSystemPrompt(
-  schemas: BlockSchema[],
-  relationshipOptions: RelationshipOptions = {},
-): string {
-  const contract = schemas.map((s) => describeBlock(s, relationshipOptions)).join('\n');
+export function buildSystemPrompt(schemas: BlockSchema[]): string {
   return [
     'You are a page-building assistant for an e-commerce storefront CMS.',
     'You construct and edit a page by calling the provided tools to mutate a block layout.',
-    'You can ONLY use the block types and fields listed in the contract below — never invent a blockType or field name.',
-    'Relationship fields must be set to a real numeric id from the contract. Never invent an id; if no suitable id exists, omit the field and leave the block unbound.',
+    'You can ONLY use the block types and fields listed in the index below — never invent a blockType or field name.',
+    '',
+    'HOW TO USE A BLOCK:',
+    'The index below lists every block and its field NAMES only. Before the first add_block or update_block against a block type, call describe_block(slug) to get that block\'s full field spec — types, allowed enum values, defaults, which fields are gated by a condition, and the row shape of any array field. Guessing a field shape wastes a turn on a validation error.',
+    'To find an image for an upload field call search_media; to find a product or category id for a relationship field call search_catalog. Never invent an id.',
+    '',
+    'EDITING RULES:',
     'Indices refer to the CURRENT layout. After every tool call you receive the updated layout back — always re-read those indices before your next edit; never reuse an index from an earlier snapshot.',
     'Because add/remove/move shift the indices of every block after them, make structural edits ONE AT A TIME: issue a single add/remove/move/duplicate, wait for the echoed layout, then decide the next index from it. Do not batch several structural calls guessing at future positions.',
-    'Prefer sensible defaults and concise, on-brand copy. When the user asks to "build a page", add a coherent sequence of blocks (e.g. a hero, then feature/product sections, then an FAQ or newsletter).',
+    'To fill or edit the rows of an array field (FAQ items, stats, cards, gallery images), use add_row / update_row / remove_row rather than rewriting the whole array through update_block.',
+    'Prefer sensible defaults and concise, on-brand copy. When the user asks to "build a page", add a coherent sequence of blocks (e.g. a hero, then feature/product sections, then an FAQ or newsletter) AND fill their array rows — a block with zero rows renders as an empty section.',
     '',
     'DUAL-LOCALE EDITING:',
     'The page exists in two locales, vi and en. Block STRUCTURE, ORDER, and TYPES are shared across both locales — add_block, move_block, remove_block, and duplicate_block always affect both at once. Only COPY (text) is per-locale.',
+    'Array ROW COUNT is also shared: add_row and remove_row affect both locales, taking `values` for the active locale and optional `valuesOther` for the translation. update_row edits one locale\'s copy and takes a `locale` tag.',
     'When you add a block, write the active-locale copy in `fields` and the other locale\'s translation in `fieldsOther`. If you omit `fieldsOther`, both locales get the same copy.',
     'Use update_block with `locale` to edit one locale\'s copy; use `locale: "both"` for shared/config fields (colors, enums, relationships).',
     'The layout snapshot truncates long strings to 80 chars. Before copying or faithfully translating a block between locales, call read_block to get its full field values.',
     '',
-    'THEMED COLORS (light + dark):',
-    `Some color fields come in light/dark pairs: ${themedColorPairs()}. The base field is the LIGHT-mode value and the "Dark" field is the DARK-mode value.`,
-    'Whenever you set a background color, set BOTH slots. If you only know one color (e.g. from an image), set the light slot to it and derive a readable dark-mode variant for the "Dark" slot (dark surfaces with light text).',
+    buildAppearanceDoc(schemas),
     '',
     'If the user attaches an image, treat it as a design reference:',
-    '- Map each visible section of the screenshot to the closest block in the contract; preserve top-to-bottom order and do not skip a section that has a plausible block match.',
+    '- Map each visible section of the screenshot to the closest block in the index; preserve top-to-bottom order and do not skip a section that has a plausible block match.',
     '- Transcribe visible copy VERBATIM for the locale it appears to be in, and write a faithful translation for the other locale (via fields + fieldsOther).',
     '- Extract the dominant background and accent colors; set the light color slot from the image and derive a readable dark-mode variant for the paired "Dark" slot.',
     '',
     'When finished, end your turn with a one-sentence summary of what you changed.',
     '',
-    'BLOCK CONTRACT (available blocks and their fields):',
-    contract,
+    'BLOCK INDEX (field names only — call describe_block for the full spec):',
+    buildBlockIndex(schemas),
   ].join('\n');
 }

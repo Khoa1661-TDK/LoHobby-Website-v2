@@ -29,4 +29,14 @@ describe('buildSystemPrompt', () => {
       expect(prompt).toContain(s.slug);
     }
   });
+
+  it('should stay under the 20000-char prompt budget', () => {
+    const prompt = buildSystemPrompt(getBlockSchemas());
+    expect(prompt.length).toBeLessThan(20000);
+  });
+
+  it('should instruct the model to call describe_block before using a block', () => {
+    const prompt = buildSystemPrompt(getBlockSchemas());
+    expect(prompt).toContain('describe_block');
+  });
 });
