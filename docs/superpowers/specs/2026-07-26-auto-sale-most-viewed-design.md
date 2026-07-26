@@ -142,9 +142,11 @@ storefront throws `42P01` at runtime. This is an explicit implementation step.
 ## Selection algorithm
 
 1. **Rank** — distinct `(productId, sessionId)` pairs from the last 7 days via
-   `prisma.productViewEvent.groupBy`, folded by `countUniqueViewers()` into
-   `{ productId, viewers }` sorted descending. `groupBy` keeps a week of a
-   high-write-volume table out of application memory.
+   `prisma.productViewEvent.groupBy({ by: ['productId', 'sessionId'], _count: true, where: { createdAt: { gte } } })`,
+   folded by `countUniqueViewers()` into `{ productId, viewers, rawViews }` sorted by
+   `viewers` descending. `viewers` is the number of pairs for that product;
+   `rawViews` is the sum of their `_count` values, used only for tie-breaking.
+   `groupBy` keeps a week of a high-write-volume table out of application memory.
 2. **Filter** — drop a product if any of:
    - fewer than `AUTO_SALE_MIN_VIEWERS` unique viewers;
    - `available === false`, or zero stock (for variant products, every variant out);

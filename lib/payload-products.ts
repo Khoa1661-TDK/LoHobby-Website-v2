@@ -174,6 +174,27 @@ const escapeHtml = (value: string): string =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] ?? char),
   );
 
+/**
+ * Product descriptions are stored as plain textarea text, so their line breaks are
+ * invisible once dropped into HTML. Turn blank-line-separated runs into paragraphs and
+ * single newlines into <br> so the text keeps the shape it was written in.
+ */
+export function plainTextToHtml(value: string): string {
+  const paragraphs = value
+    .replace(/\r\n?/g, '\n')
+    .split(/\n{2,}/)
+    .map((block) =>
+      block
+        .split('\n')
+        .map((line) => escapeHtml(line.trim()))
+        .filter(Boolean)
+        .join('<br />'),
+    )
+    .filter(Boolean);
+
+  return paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join('');
+}
+
 function toImage(
   url: string,
   alt: string,
@@ -432,7 +453,7 @@ export function mapPayloadProductToCommerceProduct(doc: PayloadProductDoc): Prod
     availableForSale,
     title,
     description,
-    descriptionHtml: description ? `<p>${escapeHtml(description)}</p>` : '',
+    descriptionHtml: description ? plainTextToHtml(description) : '',
     options: [],
     priceRange: { maxVariantPrice: price, minVariantPrice: price },
     variants: [
