@@ -372,3 +372,21 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** A domain is purchased and pointed at the VPS — set `APP_URL` to `https://<domain>` behind real TLS (Caddy/nginx + certbot), add the domain's callback URL in the Google OAuth console, and re-test Google sign-in end-to-end before relying on it for customers.
 
 ---
+
+## 2026-07-26 — Auto-sale job runs via Payload `autoRun`, in-process
+**Chosen:** Schedule the auto-sale reconciliation as a Payload jobs task with `jobs.autoRun` (Payload 3.84, `queues/config/types/index.d.ts:127`), running inside the existing long-running app container.
+**Alternatives:** A `CRON_SECRET`-protected `/api/cron/auto-sale` route driven by a host crontab or an external pinger; lazy recompute of the top-viewed set when the On Sale page renders.
+**Why:** The deployment is a single persistent Docker container on the VPS, not serverless, so an in-process cron is viable and adds no infrastructure, no new secret, and no scheduler that can drift out of sync with a deploy. It also matters for cache correctness: the job's `payload.update` calls fire the existing `afterChange` hooks that `revalidateTag('products')`, and those only reach the serving process's `unstable_cache`. A cron in a separate container would update the database and leave the storefront stale — the same trap already documented for seed scripts. Lazy recompute was rejected outright because it never writes the `onSale` flag, so `syncOnSaleCategory`, the struck-through card price, and search facets would all disagree with the sale page.
+**Trade-offs:** `autoRun` fires once per replica, so scaling past one replica duplicates the writes. The job is idempotent (it reconciles state rather than applying a delta) so the outcome stays correct, but the work is wasted. There is also no way to trigger a run by hand without an admin control.
+**Revisit if:** The app is ever scaled to multiple replicas or moved to a serverless host — both break the single-in-process-scheduler assumption.
+
+---
+
+## 2026-07-26 — Auto-sale ranks by unique viewers, not units sold
+**Chosen:** User decision: rank candidates by distinct `sessionId` per product over the last 7 days from Prisma `ProductViewEvent`, with a 5-unique-viewer eligibility floor.
+**Alternatives:** Units sold over 30 days (the original direction, via the existing `aggregateSales`/`topSellers`); raw view-event counts via `aggregateAttention`; most-viewed restricted to products with poor view-to-buy conversion (`computeViewToBuy`'s `highAttentionLowConversion`).
+**Why:** User asked for most-viewed rather than best-selling. Raw event counts were rejected because a view costs the visitor nothing — one shopper refreshing or one crawler sweeping the catalogue can outrank genuine interest, whereas a purchase is self-limiting. Distinct sessions cost nothing extra since the database does the dedupe via `groupBy(['productId','sessionId'])`, which also keeps a week of a high-write-volume table out of application memory. The 7-day window works because views accumulate far faster than sales. The `MIN_VIEWERS` floor is an added assumption, not a user requirement: without it a quiet week where three products drew one visitor each would discount all three on the strength of one page load.
+**Trade-offs:** View tracking is consent-gated, so the ranking only ever sees consented traffic and narrows if consent rates fall. On a small catalogue most-viewed overlaps heavily with best-selling, so this may still discount proven sellers — margin that would have been earned anyway. The genuinely distinct signal (high attention, low conversion) is deliberately left out of scope.
+**Revisit if:** Sale items show no lift in revenue per view on the analytics dashboard — switch the ranking to `highAttentionLowConversion`, which is already computed.
+
+---
