@@ -351,13 +351,18 @@ describe('scopeBlockCss', () => {
   // Asserting only that the output contains `fade-abc`/`slide-abc` would not discriminate:
   // the renamed `@keyframes` rules themselves supply those substrings regardless of
   // whether the `animation` declaration got rewritten — so assert on the declaration text.
+  // `out.split('\n').find(line => line.includes('.x'))` used to stand in for "narrow to the
+  // declaration", but `scopeBlockCss` preserves the single-line input raws, so that line IS
+  // the whole output — the narrowing was a no-op that only looked reassuring. Assert on the
+  // declaration text directly instead: `animation: 1s fade-abc` cannot be supplied by the
+  // renamed `@keyframes fade-abc` rule, so it still discriminates against the first-token-
+  // only bug the way the (imagined) line narrowing was meant to.
   it('should rewrite a keyframe reference that is not the first token in the animation shorthand', () => {
     const out = scopeBlockCss(
       '@keyframes fade { to { opacity: 1 } } .x{animation: 1s fade}',
       'abc',
     );
-    const declLine = out.split('\n').find((line) => line.includes('.x'));
-    expect(declLine).toContain('animation: 1s fade-abc');
+    expect(out).toContain('animation: 1s fade-abc');
   });
 
   it('should rewrite every entry of a comma-separated animation list, not only the first', () => {
@@ -366,8 +371,7 @@ describe('scopeBlockCss', () => {
         '.x{animation: fade 1s, slide 2s}',
       'abc',
     );
-    const declLine = out.split('\n').find((line) => line.includes('.x'));
-    expect(declLine).toContain('animation: fade-abc 1s, slide-abc 2s');
+    expect(out).toContain('animation: fade-abc 1s, slide-abc 2s');
   });
 
   // Fix 4: the inline `style` attribute path reconstructed each declaration as
@@ -376,5 +380,163 @@ describe('scopeBlockCss', () => {
   it('should preserve !important on an inline style declaration', () => {
     const out = sanitizeBlockHtml('<div style="color:red !important">x</div>');
     expect(out).toContain('color:red !important');
+  });
+
+  // --- Findings from the nested-selector review of the "skip nested rules" fix ---
+  //
+  // Critical: skipping every rule whose parent is a rule also routed nested rules around
+  // `prefixSelector`'s leading-combinator guard. CSS nesting makes a relative selector legal
+  // where the top-level form is rejected, so `~ *` — dropped outright at the top level —
+  // sailed through as `body { ~ * { … } }`. When the parent selector collapses to the bare
+  // scope (`html`/`body`/`:root`/`*`), `&` IS the block wrapper, and a sibling combinator
+  // walks straight out of the block. `position: fixed` → `absolute` does not contain these:
+  // the matched element sits outside the wrapper, so the wrapper is not its containing block.
+  //
+  // Every assertion below is on the emitted selector text: no sibling/adjacent combinator
+  // may survive anywhere in the output, and the escaping declaration must be gone with it.
+
+  it('should drop a nested sibling-combinator rule under a body parent', () => {
+    const out = scopeBlockCss('body{ ~ *{display:none} }', 'abc');
+    expect(out).not.toContain('~');
+    expect(out).not.toMatch(/display:\s*none/);
+  });
+
+  it('should drop an explicit `& ~ *` overlay nested under a body parent', () => {
+    const out = scopeBlockCss('body{ & ~ *{position:fixed;inset:0;z-index:99999} }', 'abc');
+    expect(out).not.toContain('~');
+    expect(out).not.toContain('z-index');
+    expect(out).not.toContain('inset');
+  });
+
+  it('should drop a nested adjacent-sibling rule under an uppercase BODY parent', () => {
+    const out = scopeBlockCss('BODY{ + *{display:none} }', 'abc');
+    expect(out).not.toContain('+');
+    expect(out).not.toMatch(/display:\s*none/);
+  });
+
+  it('should drop a nested sibling-combinator rule under a :root parent', () => {
+    const out = scopeBlockCss(':root{ & ~ *{opacity:0} }', 'abc');
+    expect(out).not.toContain('~');
+    expect(out).not.toContain('opacity');
+  });
+
+  it('should drop a nested sibling-combinator rule under a universal-selector parent', () => {
+    const out = scopeBlockCss('*{ ~ *{display:none} }', 'abc');
+    expect(out).not.toContain('~');
+    expect(out).not.toMatch(/display:\s*none/);
+    // The universal parent itself must still be scoped the way Fix 1 of the previous round
+    // established — dropping the nested rule must not disturb it.
+    expect(out).toContain('[data-html-block="abc"], [data-html-block="abc"] *');
+  });
+
+  it('should drop a nested rule that puts a compound before the sibling combinator', () => {
+    // `&:hover ~ *` — a guard that only looks at a *leading* combinator does not catch this.
+    const out = scopeBlockCss('html{ &:hover ~ *{display:none} }', 'abc');
+    expect(out).not.toContain('~');
+    expect(out).not.toMatch(/display:\s*none/);
+  });
+
+  it('should drop a nested sibling-combinator rule inside a media query', () => {
+    const out = scopeBlockCss('@media (min-width:1px){ body{ ~ *{display:none} } }', 'abc');
+    expect(out).not.toContain('~');
+    expect(out).not.toMatch(/display:\s*none/);
+    expect(out).toContain('@media');
+  });
+
+  it('should drop a sibling-combinator rule nested inside an at-rule inside a body rule', () => {
+    // The Fix 2 path: `rule.parent.type` is 'atrule' here, so the "is my parent a rule?"
+    // test only sees this once it walks up through at-rule ancestors — and the guard has
+    // to apply on that path too, or Fix 2 opens the escape Fix 1 just closed.
+    const out = scopeBlockCss('body{ @media (min-width:1px){ ~ *{display:none} } }', 'abc');
+    expect(out).not.toContain('~');
+    expect(out).not.toMatch(/display:\s*none/);
+  });
+
+  it('should drop a sibling-combinator rule nested two levels under a body rule', () => {
+    // `&` in the middle rule still resolves to the wrapper, so the innermost sibling
+    // combinator escapes exactly as it does one level up.
+    const out = scopeBlockCss('body{ & { ~ *{display:none} } }', 'abc');
+    expect(out).not.toContain('~');
+    expect(out).not.toMatch(/display:\s*none/);
+  });
+
+  // Contained, and must stay that way: `.a` is scoped to a descendant of the wrapper, so
+  // the siblings of `.a` are inside the block too. This is the case a blanket "drop every
+  // nested sibling combinator" guard would have cost.
+  it('should keep a nested sibling-combinator rule whose parent is an ordinary class', () => {
+    const out = scopeBlockCss('.a{ ~ *{color:red} }', 'abc');
+    expect(out).toBe('[data-html-block="abc"] .a{ ~ *{color:red} }');
+  });
+
+  // Ordinary nesting must still pass through unprefixed — the parent's selector already
+  // carries the scope and `&` inherits it.
+  it('should leave `& .x` nesting unprefixed', () => {
+    expect(scopeBlockCss('.a{ & .x{color:red} }', 'abc')).toBe(
+      '[data-html-block="abc"] .a{ & .x{color:red} }',
+    );
+  });
+
+  it('should leave `.x &` nesting unprefixed', () => {
+    expect(scopeBlockCss('.a{ .x &{color:red} }', 'abc')).toBe(
+      '[data-html-block="abc"] .a{ .x &{color:red} }',
+    );
+  });
+
+  it('should leave `&&` nesting unprefixed', () => {
+    expect(scopeBlockCss('.a{ &&{color:red} }', 'abc')).toBe(
+      '[data-html-block="abc"] .a{ &&{color:red} }',
+    );
+  });
+
+  it('should leave implicit-& nesting unprefixed', () => {
+    expect(scopeBlockCss('.a{ .b{color:red} }', 'abc')).toBe(
+      '[data-html-block="abc"] .a{ .b{color:red} }',
+    );
+  });
+
+  it('should leave three-level nesting unprefixed below the outermost rule', () => {
+    expect(scopeBlockCss('.a{ .b{ &:hover{color:red} } }', 'abc')).toBe(
+      '[data-html-block="abc"] .a{ .b{ &:hover{color:red} } }',
+    );
+  });
+
+  it('should leave ordinary nesting under a body parent unprefixed and scoped', () => {
+    expect(scopeBlockCss('body{ &:hover{color:red} }', 'abc')).toBe(
+      '[data-html-block="abc"]{ &:hover{color:red} }',
+    );
+    expect(scopeBlockCss('body{ > .x{color:red} }', 'abc')).toBe(
+      '[data-html-block="abc"]{ > .x{color:red} }',
+    );
+  });
+
+  // Minor: a rule nested inside an `@media` that is itself inside a rule has
+  // `parent.type === 'atrule'`, so the "parent is a rule" test missed it and the rule was
+  // prefixed a second time — `[scope] .a{ @media(…){ [scope] &:hover{…} } }`, which bolts a
+  // redundant scope ancestor onto an already-scoped nested selector.
+  it('should not prefix a nested rule a second time through an intervening at-rule', () => {
+    const out = scopeBlockCss('.a{ @media (min-width:1px){ &:hover{color:red} } }', 'abc');
+    expect(out).toBe('[data-html-block="abc"] .a{ @media (min-width:1px){ &:hover{color:red} } }');
+  });
+
+  // The no-throw contract must survive on the changed path too.
+  it('should not throw on thousands of levels of rule-in-rule nesting', () => {
+    const depth = 3000;
+    const nested = '.a{'.repeat(depth) + 'color:red' + '}'.repeat(depth);
+    expect(() => scopeBlockCss(nested, 'abc')).not.toThrow();
+    expect(scopeBlockCss(nested, 'abc')).toBe('');
+  });
+
+  it('should not throw for an unterminated rule', () => {
+    expect(() => scopeBlockCss('.a{color:red', 'abc')).not.toThrow();
+    expect(scopeBlockCss('.a{color:red', 'abc')).toBe('');
+  });
+
+  it('should not throw, and should fail closed, for an unmatched paren in a nested selector', () => {
+    // The selector parser cannot tokenize `.b)`, so the nested guard cannot verify this
+    // rule — under a wrapper-anchored parent it must drop the rule rather than pass it
+    // through, the same fail-closed choice the top-level path already makes.
+    expect(() => scopeBlockCss('body{ .b) ~ *{color:red} }', 'abc')).not.toThrow();
+    expect(scopeBlockCss('body{ .b) ~ *{color:red} }', 'abc')).not.toContain('~');
+    expect(() => scopeBlockCss('.a{ &:is(.b ~ *{color:red} }', 'abc')).not.toThrow();
   });
 });

@@ -256,6 +256,72 @@ function prefixSelector(selector: string, scope: string): string | null {
     .join(', ');
 }
 
+/** A nested rule inherits its scoping from `&`, so it only needs guarding where `&` can
+ *  resolve to the block wrapper element *itself* — from there a sibling combinator reaches
+ *  elements outside the block. `prefixSelector` produces a bare-scope part in exactly two
+ *  places: the ROOT_SELECTORS branch (`html`/`body`/`:root` → `${scope}`) and the `*` branch
+ *  (`${scope}, ${scope} *`). Every other part is `${scope} …`, a strict descendant, whose
+ *  own siblings and descendants are therefore inside the block too.
+ *
+ *  Detected by splitting the emitted list on commas: the only producer of this text is
+ *  `prefixSelector` directly above, which joins with ', ', and `scope` can never itself
+ *  contain a comma (`sanitizeBlockId` keeps only `[\w-]`). Splitting can fragment a part
+ *  further (`:is(a, b)`) but never merge two, so a part that is exactly `scope` survives
+ *  intact and no fragment of a longer part can equal the whole scope. */
+function matchesScopeItself(scopedSelector: string, scope: string): boolean {
+  return scopedSelector.split(',').some((part) => part.trim() === scope);
+}
+
+/** Combinators a nested selector may use at its own top level when `&` is (or may be) the
+ *  wrapper: descendant (postcss-selector-parser spells it `' '`) and child (`>`). Both keep
+ *  the subject inside the wrapper. Allowlisted rather than denylisting `~`/`+`, so the
+ *  column combinator (`||`) and whatever a future selector level adds are inert by default
+ *  instead of being a new hole. */
+const COMBINATORS_CONFINED_TO_SCOPE = new Set(['', '>']);
+
+/** CSS nesting makes a *relative* selector legal where the top-level form is rejected:
+ *  `~ * { … }` is dropped outright by `prefixSelector`'s leading-combinator guard, but the
+ *  same text nested inside `body { … }` never reaches that guard. Once the parent has
+ *  collapsed to the bare scope, `&` IS the wrapper and `~`/`+` walk straight out of the
+ *  block — an escape the `position: fixed` → `absolute` rewrite cannot contain, because the
+ *  matched element is outside the wrapper and so the wrapper is not its containing block.
+ *
+ *  Every top-level combinator is inspected, not just a leading one: `&:hover ~ *` and
+ *  `&.x ~ *` put a compound in front of the combinator and escape identically, so a
+ *  "leading combinator only" check is trivially bypassed. Combinators *inside* a pseudo
+ *  (`&:has(~ *)`, `:is(a ~ b)`) do not move the subject out of the wrapper — they only
+ *  qualify it — so only the selector's own top level is walked.
+ *
+ *  Throws on selector text `postcss-selector-parser` cannot tokenize; the caller treats
+ *  that as unverifiable and drops the rule, the same fail-closed choice the top-level
+ *  scoping path already makes. */
+function hasEscapingNestedCombinator(selector: string): boolean {
+  let escaping = false;
+  selectorParser((root) => {
+    root.each((sel) => {
+      for (const node of sel.nodes) {
+        if (node.type === 'combinator' && !COMBINATORS_CONFINED_TO_SCOPE.has(node.value.trim())) {
+          escaping = true;
+        }
+      }
+    });
+  }).processSync(selector);
+  return escaping;
+}
+
+/** The nearest enclosing *style rule*, looking through at-rule ancestors. A rule inside an
+ *  `@media`/`@supports` that is itself inside a rule is still a nested rule — its `&`
+ *  resolves against that outer rule — so it must neither be prefixed a second time nor slip
+ *  past the nested guard. Testing `rule.parent.type === 'rule'` alone misses exactly that
+ *  shape, since the intervening parent is the at-rule. */
+function enclosingRule(node: postcss.Node): postcss.Rule | null {
+  let parent = node.parent;
+  while (parent && parent.type === 'atrule') parent = parent.parent;
+  // `Container.type` is typed as a bare `string`, so the comparison doesn't narrow on its
+  // own — cast, exactly as the `@keyframes` parent check above already does.
+  return parent && parent.type === 'rule' ? (parent as postcss.Rule) : null;
+}
+
 /** At-rules this module has reviewed and knows how to scope safely. Everything else —
  *  `@import`, `@charset`, `@page`, `@namespace`, any at-rule feature not audited yet — is
  *  dropped. An allowlist means an at-rule we didn't anticipate is inert by default rather
@@ -328,18 +394,44 @@ export function scopeBlockCss(css: string, blockId: string): string {
     //    `postcss-selector-parser` cannot (e.g. an unmatched paren) — catch per-rule so
     //    one malformed selector degrades to "drop that rule" before it can ever reach
     //    the outer catch-all.
+
+    // Rules whose own (already-scoped) selector can match the block wrapper element itself,
+    // which is what makes a nested sibling combinator able to leave the block. `walkRules`
+    // is pre-order, so a rule's ancestors are always classified before it is reached.
+    // Per-call, so nothing leaks between blocks.
+    const wrapperAnchored = new WeakSet<postcss.Rule>();
+
     root.walkRules((rule) => {
       // Selectors inside @keyframes are percentages/from/to, not element selectors.
       if (rule.parent?.type === 'atrule' && atRuleName(rule.parent as postcss.AtRule) === 'keyframes') {
         return;
       }
-      // Native CSS nesting (`.a { &:hover { … } }`): the rule's parent is itself a rule,
-      // which is already scoped. Prefixing the nested rule too would produce
-      // `${scope} .a { ${scope} &:hover { … } }` — invalid (a selector can't contain a
-      // bare compound-attribute prefix before `&`), so browsers drop the nested rule
-      // outright while the outer rule's own styles still apply. No scoping is needed here:
-      // the nesting itself already keeps it inside the parent's (scoped) selector.
-      if (rule.parent?.type === 'rule') {
+      // Native CSS nesting (`.a { &:hover { … } }`, including through an intervening
+      // `@media`): the enclosing rule's selector already carries the scope and `&` inherits
+      // it, so prefixing again would only bolt a redundant scope ancestor onto an
+      // already-scoped selector. What skipping `prefixSelector` *does* cost is its
+      // leading-combinator guard — reinstated here, but only where a sibling combinator can
+      // actually leave the block (see `hasEscapingNestedCombinator`).
+      const parentRule = enclosingRule(rule);
+      if (parentRule) {
+        if (wrapperAnchored.has(parentRule)) {
+          let escaping: boolean;
+          try {
+            escaping = hasEscapingNestedCombinator(rule.selector);
+          } catch {
+            escaping = true; // can't verify it statically — fail closed
+          }
+          if (escaping) {
+            rule.remove();
+            return;
+          }
+          // Deliberately conservative: anything nested under a wrapper-anchored rule is
+          // treated as wrapper-anchored too. `body { .x { ~ * { … } } }` is in fact
+          // contained (`.x` is inside the block, so its siblings are), but proving that
+          // needs the whole `&` chain resolved. Over-rejecting a shape that is trivially
+          // expressible unnested is the cheaper side to err on in a security boundary.
+          wrapperAnchored.add(rule);
+        }
         return;
       }
       try {
@@ -349,6 +441,7 @@ export function scopeBlockCss(css: string, blockId: string): string {
           return;
         }
         rule.selector = scoped;
+        if (matchesScopeItself(scoped, scope)) wrapperAnchored.add(rule);
       } catch {
         rule.remove();
       }
