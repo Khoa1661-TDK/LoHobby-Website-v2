@@ -25,3 +25,22 @@ export const HIDDEN_PRODUCT_TAG = 'hidden';
 
 /** Products per page on /search and category listing routes (server-safe constant). */
 export const PAGE_SIZE = 24;
+
+// --- Auto-sale (most-viewed products) -------------------------------------
+// See docs/superpowers/specs/2026-07-26-auto-sale-most-viewed-design.md
+
+/** Maximum products the auto-sale job keeps on sale at once. */
+export const AUTO_SALE_COUNT = 5;
+
+/** Discount applied to every auto-sale product, in percent. */
+export const AUTO_SALE_PERCENT = 10;
+
+/** Rolling window of view data used to rank products, in days. */
+export const AUTO_SALE_WINDOW_DAYS = 7;
+
+/**
+ * Minimum unique viewers before a product is eligible. Without this floor, a
+ * quiet week where three products drew one visitor each would discount all
+ * three on the strength of a single page load.
+ */
+export const AUTO_SALE_MIN_VIEWERS = 5;

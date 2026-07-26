@@ -267,3 +267,55 @@ export function computeCtr(
     }))
     .sort((a, b) => b.impressions - a.impressions);
 }
+
+// ---------------------------------------------------------------------------
+// Unique-viewer ranking (auto-sale)
+// ---------------------------------------------------------------------------
+
+/** One distinct (product, session) pair with how many raw events it covered. */
+export type ViewerPair = {
+  productId: string;
+  sessionId: string;
+  _count: number;
+};
+
+export type ProductViewers = {
+  productId: string;
+  viewers: number;
+  rawViews: number;
+};
+
+/**
+ * Fold distinct (productId, sessionId) pairs into per-product unique-viewer
+ * counts, ranked descending.
+ *
+ * Distinct sessions rather than raw events: a view costs the visitor nothing,
+ * so one shopper refreshing or one crawler sweeping the catalogue would
+ * otherwise outrank genuine interest. `rawViews` is retained only to break
+ * ties deterministically.
+ *
+ * Kept separate from `aggregateAttention`, which counts raw events on purpose
+ * for the analytics dashboard's "attention" figure.
+ */
+export function countUniqueViewers(pairs: ViewerPair[]): ProductViewers[] {
+  const map = new Map<string, ProductViewers>();
+
+  for (const pair of pairs) {
+    if (!pair.productId) continue;
+    const entry = map.get(pair.productId) ?? {
+      productId: pair.productId,
+      viewers: 0,
+      rawViews: 0,
+    };
+    entry.viewers += 1;
+    entry.rawViews += Number.isFinite(pair._count) ? pair._count : 0;
+    map.set(pair.productId, entry);
+  }
+
+  return [...map.values()].sort(
+    (a, b) =>
+      b.viewers - a.viewers ||
+      b.rawViews - a.rawViews ||
+      a.productId.localeCompare(b.productId),
+  );
+}
