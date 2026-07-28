@@ -128,6 +128,7 @@ export async function runAutoSale(payload: Payload): Promise<AutoSaleRunSummary>
   } catch (error) {
     summary.error = `settings load failed: ${(error as Error).message}`;
     console.error('[auto-sale] settings load failed:', error);
+    await writeSummary(payload, summary);
     return summary;
   }
 
