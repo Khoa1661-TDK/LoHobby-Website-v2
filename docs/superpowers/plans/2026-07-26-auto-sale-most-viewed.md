@@ -1119,6 +1119,9 @@ export async function runAutoSale(payload: Payload): Promise<AutoSaleRunSummary>
   } catch (error) {
     summary.error = `settings load failed: ${(error as Error).message}`;
     console.error('[auto-sale] settings load failed:', error);
+    // Record it too — the console lives inside a container, so the admin's
+    // Last run panel is the only place the owner would see a dead night.
+    await writeSummary(payload, summary);
     return summary;
   }
 
@@ -1337,6 +1340,14 @@ If this reports 0, browse a few product pages on the dev storefront with cookie 
 
 Run: `node_modules/.bin/tsx scripts/run-auto-sale-once.ts`
 Expected: JSON summary printed with `enabledCount` between 0 and 5 and `errorCount: 0`.
+
+**Assert explicitly, do not let it pass incidentally:** `errorCount` must be `0` AND
+`enabledCount` must be greater than 0 on a database that has view data. `runAutoSale`
+passes `id: item.productId` as a **string** while this project's Payload ids are
+numeric, and this repo has previously hit failures from `String()`-ing ids on Payload
+writes. A non-zero `errorCount` with `enabledCount: 0` is the signature of that bug —
+check the logged per-product error before assuming the catalogue simply had no
+eligible products. Confirm in the report which of the two you observed.
 
 - [ ] **Step 4: Verify the effects in admin**
 
