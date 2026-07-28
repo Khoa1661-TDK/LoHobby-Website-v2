@@ -298,6 +298,10 @@ export interface Product {
    * Percentage off the price. Example: 20 turns 150,000₫ into 120,000₫.
    */
   salePercent?: number | null;
+  /**
+   * Set by the auto-sale job. Editing the sale by hand clears this and the job stops managing this product.
+   */
+  autoSaleManaged?: boolean | null;
   description?: string | null;
   /**
    * When unchecked, the product is hidden from the storefront.
@@ -4671,6 +4675,7 @@ export interface ProductsSelect<T extends boolean = true> {
   price?: T;
   onSale?: T;
   salePercent?: T;
+  autoSaleManaged?: T;
   description?: T;
   available?: T;
   stock?: T;

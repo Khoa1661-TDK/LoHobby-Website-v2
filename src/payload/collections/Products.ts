@@ -16,11 +16,13 @@ import {
   ON_SALE_CATEGORY_TITLE,
 } from '@/lib/default-categories';
 import {
+  isAutoSaleWrite,
   isMediaResync,
   isPayloadAdminRequest,
   isSnapshotBackfill,
   SNAPSHOT_BACKFILL_CONTEXT,
 } from '@/lib/payload-hooks';
+import { shouldReleaseAutoSale } from '@/lib/auto-sale/select';
 import { revalidateCatalogCache } from '@/lib/payload-products';
 import { sanitizeProductDocForAdmin } from '@/lib/admin-product-doc';
 import { buildProductSnapshotPatch, stripIncomingSnapshotFields } from '@/lib/product-snapshot-patch';
@@ -132,6 +134,28 @@ const syncOnSaleCategory: CollectionBeforeChangeHook = async ({ data, originalDo
 
   if (currentKey !== nextKey) {
     data.category = nextCategory;
+  }
+
+  return data;
+};
+
+/**
+ * Hand a product's sale back to the admin the moment they touch it by hand.
+ *
+ * The auto-sale job only ever removes sales where `autoSaleManaged` is true, so
+ * clearing the flag here is what makes a manual edit permanent.
+ */
+const releaseAutoSaleOnManualEdit: CollectionBeforeChangeHook = ({ data, originalDoc, req }) => {
+  if (!data || isMediaResync(req) || isSnapshotBackfill(req)) return data;
+
+  if (
+    shouldReleaseAutoSale({
+      incoming: data,
+      original: originalDoc,
+      isJobWrite: isAutoSaleWrite(req),
+    })
+  ) {
+    data.autoSaleManaged = false;
   }
 
   return data;
@@ -345,6 +369,7 @@ export const Products: CollectionConfig = {
     beforeChange: [
       autoSlugFromTitle,
       syncOnSaleCategory,
+      releaseAutoSaleOnManualEdit,
       normalizeCategoryIds,
       dedupeGalleryOnMainImageChange,
       stripSnapshotsFromIncomingSave,
@@ -433,6 +458,18 @@ export const Products: CollectionConfig = {
             return Math.min(99, Math.max(1, Math.round(numeric)));
           },
         ],
+      },
+    },
+    {
+      name: 'autoSaleManaged',
+      type: 'checkbox',
+      defaultValue: false,
+      label: 'Sale set automatically',
+      admin: {
+        hidden: true,
+        readOnly: true,
+        description:
+          'Set by the auto-sale job. Editing the sale by hand clears this and the job stops managing this product.',
       },
     },
     {

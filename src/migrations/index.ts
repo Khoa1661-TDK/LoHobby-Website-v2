@@ -24,6 +24,7 @@ import * as migration_20260702_100000_youtube_reel_carousel_blocks from './20260
 import * as migration_20260714_090000_users_sso_salt from './20260714_090000_users_sso_salt';
 import * as migration_20260724_120000_localize_product_category_fields from './20260724_120000_localize_product_category_fields';
 import * as migration_20260725_183829_block_icon_fields from './20260725_183829_block_icon_fields';
+import * as migration_20260726_120000_auto_sale_managed from './20260726_120000_auto_sale_managed';
 
 export const migrations = [
   {
@@ -154,6 +155,11 @@ export const migrations = [
   {
     up: migration_20260725_183829_block_icon_fields.up,
     down: migration_20260725_183829_block_icon_fields.down,
-    name: '20260725_183829_block_icon_fields'
+    name: '20260725_183829_block_icon_fields',
+  },
+  {
+    up: migration_20260726_120000_auto_sale_managed.up,
+    down: migration_20260726_120000_auto_sale_managed.down,
+    name: '20260726_120000_auto_sale_managed',
   },
 ];

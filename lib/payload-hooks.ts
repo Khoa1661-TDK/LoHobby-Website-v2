@@ -12,6 +12,9 @@ export const ORDER_INVENTORY_CONTEXT = { fromOrderInventorySync: true } as const
 /** API mark-paid handles inventory itself — skip blocking afterChange sync. */
 export const SKIP_ORDER_INVENTORY_HOOK_CONTEXT = { skipOrderInventoryHook: true } as const;
 
+/** Passed on product updates made by the auto-sale job — keeps ownership with the job. */
+export const AUTO_SALE_CONTEXT = { fromAutoSale: true } as const;
+
 export function isMediaResync(req: { context?: Record<string, unknown> }): boolean {
   return req.context?.fromMediaResync === true;
 }
@@ -26,6 +29,10 @@ export function isOrderInventorySync(req: { context?: Record<string, unknown> })
 
 export function isSkipOrderInventoryHook(req: { context?: Record<string, unknown> }): boolean {
   return req.context?.skipOrderInventoryHook === true;
+}
+
+export function isAutoSaleWrite(req: { context?: Record<string, unknown> }): boolean {
+  return req.context?.fromAutoSale === true;
 }
 
 /** True when the request is from a logged-in admin session (storefront reads have no user). */

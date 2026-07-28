@@ -99,3 +99,30 @@ export function selectAutoSale(
 
   return { toEnable, toDisable, skippedCount };
 }
+
+/**
+ * Whether a product save should hand ownership of its sale back to the admin.
+ *
+ * Any human edit to `onSale` or `salePercent` takes the product out of the
+ * job's control, so the job never silently re-applies a sale someone removed
+ * by hand. Writes made by the job itself are exempt.
+ */
+export function shouldReleaseAutoSale(args: {
+  // Index signature: callers pass the full product `data`/`originalDoc` (many
+  // other fields), and object literals in tests exercise unrelated fields too —
+  // both need to satisfy this type without an excess-property error.
+  incoming: { onSale?: unknown; salePercent?: unknown; [key: string]: unknown };
+  original:
+    | { onSale?: unknown; salePercent?: unknown; [key: string]: unknown }
+    | undefined;
+  isJobWrite: boolean;
+}): boolean {
+  const { incoming, original, isJobWrite } = args;
+  if (isJobWrite || !original) return false;
+
+  const onSaleChanged = incoming.onSale !== undefined && incoming.onSale !== original.onSale;
+  const percentChanged =
+    incoming.salePercent !== undefined && incoming.salePercent !== original.salePercent;
+
+  return onSaleChanged || percentChanged;
+}
