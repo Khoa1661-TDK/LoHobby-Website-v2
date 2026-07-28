@@ -108,5 +108,15 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'src/payload/payload-types.ts'),
   },
+  // Jobs (the nightly auto-sale task + its autoRun drain) are wired up inside
+  // `shopnexPlugins` (see `autoSaleJobsPlugin` in src/payload/plugins.ts), not
+  // here. @shopnex/import-export-plugin only registers its own
+  // `createCollectionExport` job task when `config.jobs` is still unset at the
+  // point it runs (`config.jobs = config.jobs || {...}`); setting `jobs`
+  // directly on this literal would be truthy before any plugin runs and would
+  // silently skip that registration, dropping `createCollectionExport` from
+  // the schema. Appending a plugin after `importExportPlugin` in the array
+  // lets it merge onto whatever tasks are already there instead of shadowing
+  // them.
   plugins: shopnexPlugins,
 });

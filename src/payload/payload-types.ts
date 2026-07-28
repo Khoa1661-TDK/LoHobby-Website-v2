@@ -125,6 +125,7 @@ export interface Config {
     'dropship-settings': DropshipSetting;
     'notification-settings': NotificationSetting;
     'auto-sale-settings': AutoSaleSetting;
+    'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     'site-header': SiteHeaderSelect<false> | SiteHeaderSelect<true>;
@@ -134,6 +135,7 @@ export interface Config {
     'dropship-settings': DropshipSettingsSelect<false> | DropshipSettingsSelect<true>;
     'notification-settings': NotificationSettingsSelect<false> | NotificationSettingsSelect<true>;
     'auto-sale-settings': AutoSaleSettingsSelect<false> | AutoSaleSettingsSelect<true>;
+    'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: 'vi' | 'en';
   widgets: {
@@ -143,6 +145,7 @@ export interface Config {
   jobs: {
     tasks: {
       createCollectionExport: TaskCreateCollectionExport;
+      autoSale: TaskAutoSale;
       inline: {
         input: unknown;
         output: unknown;
@@ -4453,7 +4456,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'createCollectionExport';
+        taskSlug: 'inline' | 'createCollectionExport' | 'autoSale';
         taskID: string;
         input?:
           | {
@@ -4486,10 +4489,19 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'createCollectionExport') | null;
+  taskSlug?: ('inline' | 'createCollectionExport' | 'autoSale') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -6129,6 +6141,7 @@ export interface PayloadJobsSelect<T extends boolean = true> {
   queue?: T;
   waitUntil?: T;
   processing?: T;
+  meta?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -6536,6 +6549,24 @@ export interface AutoSaleSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats".
+ */
+export interface PayloadJobsStat {
+  id: number;
+  stats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-header_select".
  */
 export interface SiteHeaderSelect<T extends boolean = true> {
@@ -6743,6 +6774,16 @@ export interface AutoSaleSettingsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats_select".
+ */
+export interface PayloadJobsStatsSelect<T extends boolean = true> {
+  stats?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -6782,6 +6823,14 @@ export interface TaskCreateCollectionExport {
   output: {
     success?: boolean | null;
   };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskAutoSale".
+ */
+export interface TaskAutoSale {
+  input?: unknown;
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

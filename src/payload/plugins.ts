@@ -64,6 +64,56 @@ const vndAnalyticsDashboardPlugin = (): Plugin => (config: Config) => {
   return config;
 };
 
+/**
+ * Registers the nightly auto-sale job task and its autoRun drain.
+ *
+ * Deliberately a plugin appended after `importExportPlugin` in the array
+ * below, rather than a static `jobs` property on the base config passed to
+ * `buildConfig`. `@shopnex/import-export-plugin` only registers its own
+ * `createCollectionExport` job task when `config.jobs` is still falsy at the
+ * point it runs (`config.jobs = config.jobs || { tasks: [...] }` in its
+ * index.ts) — if `jobs` were already set on the base config, that check would
+ * short-circuit and the plugin's task would silently vanish from the schema
+ * (verified: `payload migrate:create` then generates an enum recreation that
+ * drops `createCollectionExport`). Running after it and merging onto
+ * `config.jobs.tasks` keeps both task registrations regardless of plugin
+ * order changes upstream, as long as this stays last.
+ */
+const autoSaleJobsPlugin = (): Plugin => (config: Config) => {
+  const existingTasks = config.jobs?.tasks ?? [];
+
+  config.jobs = {
+    ...config.jobs,
+    tasks: [
+      ...existingTasks,
+      {
+        slug: 'autoSale',
+        label: 'Automatic sale (most-viewed products)',
+        // Queues itself nightly at 03:10. `autoRun` below is what drains it.
+        schedule: [{ cron: '10 3 * * *', queue: 'nightly' }],
+        retries: 0,
+        inputSchema: [],
+        outputSchema: [],
+        handler: async ({ req }) => {
+          // Dynamic import: a top-level import of lib/auto-sale/run here
+          // would pull lib/auto-sale/select.ts into the config module graph
+          // alongside Products.ts and risk the known import-cycle TDZ crash.
+          const { runAutoSale } = await import('@/lib/auto-sale/run');
+          await runAutoSale(req.payload);
+          return { output: {} };
+        },
+      },
+    ],
+    // Fires every 5 minutes: each tick first enqueues any task whose
+    // `schedule` cron is due, then runs the queue. Latency after 03:10 stays
+    // under 5 minutes.
+    autoRun: [{ cron: '*/5 * * * *', queue: 'nightly', limit: 1 }],
+    deleteJobOnComplete: true,
+  };
+
+  return config;
+};
+
 /** Custom admin routes for Prisma-backed coupons and gift cards. */
 const commerceNavPlugin = (): Plugin => (config: Config) => {
   const existing = config.admin?.components?.afterNavLinks;
@@ -138,4 +188,8 @@ export const shopnexPlugins: Plugin[] = [
       },
     },
   }),
+  // Must stay last: merges onto config.jobs.tasks after importExportPlugin
+  // has had a chance to register its own task. See the comment on
+  // autoSaleJobsPlugin above.
+  autoSaleJobsPlugin(),
 ];

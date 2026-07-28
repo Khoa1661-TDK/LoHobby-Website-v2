@@ -26,6 +26,7 @@ import * as migration_20260724_120000_localize_product_category_fields from './2
 import * as migration_20260725_183829_block_icon_fields from './20260725_183829_block_icon_fields';
 import * as migration_20260726_120000_auto_sale_managed from './20260726_120000_auto_sale_managed';
 import * as migration_20260728_130432_auto_sale_settings from './20260728_130432_auto_sale_settings';
+import * as migration_20260728_132737_payload_jobs from './20260728_132737_payload_jobs';
 
 export const migrations = [
   {
@@ -167,5 +168,10 @@ export const migrations = [
     up: migration_20260728_130432_auto_sale_settings.up,
     down: migration_20260728_130432_auto_sale_settings.down,
     name: '20260728_130432_auto_sale_settings',
+  },
+  {
+    up: migration_20260728_132737_payload_jobs.up,
+    down: migration_20260728_132737_payload_jobs.down,
+    name: '20260728_132737_payload_jobs'
   },
 ];
