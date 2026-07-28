@@ -347,7 +347,41 @@ describe('selectAutoSale', () => {
     expect(plan.toDisable).toEqual([{ productId: 'old', title: 'Old' }]);
   });
 
-  it('should under-fill rather than backfill when candidates are knocked out', () => {
+  it('should reach further down the ranking when higher candidates are knocked out', () => {
+    const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
+    const plan = selectAutoSale(
+      ids.map((id, i) => ranked(id, 100 - i)),
+      ids.map((id) => candidate({ productId: id, stock: id === 'b' ? 0 : 10 })),
+      [],
+    );
+    expect(plan.toEnable.map((e) => e.productId)).toEqual(['a', 'c', 'd', 'e', 'f']);
+  });
+
+  it('should count already-settled products against the cap', () => {
+    const settled = candidate({
+      productId: 'settled',
+      onSale: true,
+      salePercent: 10,
+      autoSaleManaged: true,
+    });
+    const fresh = ['a', 'b', 'c', 'd', 'e'];
+    const plan = selectAutoSale(
+      [ranked('settled', 100), ...fresh.map((id, i) => ranked(id, 90 - i))],
+      [settled, ...fresh.map((id) => candidate({ productId: id }))],
+      [],
+    );
+    expect(plan.toEnable).toHaveLength(4);
+    expect(plan.toDisable).toEqual([]);
+  });
+
+  it('should not touch a manual sale set below the auto rate', () => {
+    const manual = candidate({ onSale: true, salePercent: 5, autoSaleManaged: false });
+    const plan = selectAutoSale([ranked('p1')], [manual], []);
+    expect(plan.toEnable).toEqual([]);
+    expect(plan.toDisable).toEqual([]);
+  });
+
+  it('should under-fill when too few products are eligible at all', () => {
     const plan = selectAutoSale(
       [ranked('a', 90), ranked('b', 80), ranked('c', 70)],
       [
@@ -453,7 +487,7 @@ export function selectAutoSale(
   let skippedCount = 0;
 
   for (const entry of ranked) {
-    if (toEnable.length >= AUTO_SALE_COUNT) break;
+    if (chosen.size >= AUTO_SALE_COUNT) break;
     if (entry.viewers < AUTO_SALE_MIN_VIEWERS) break; // ranked descending — the rest are worse
 
     const candidate = byId.get(entry.productId);
@@ -470,8 +504,10 @@ export function selectAutoSale(
       continue;
     }
 
-    // Deliberately no backfill past AUTO_SALE_COUNT: reaching down the list
-    // whenever an item goes out of stock makes the sale set jump around.
+    // Backfill is intended: the whole ranking is filtered, so knocking out a
+    // high-ranked product lets a lower one take its slot (user decision,
+    // 2026-07-26). `chosen` — not `toEnable` — is what the cap counts, so a
+    // product already in the target state still occupies one of the slots.
     chosen.add(candidate.productId);
 
     const alreadySettled =
@@ -500,7 +536,7 @@ export function selectAutoSale(
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `node_modules/.bin/vitest run lib/__tests__/auto-sale-select.test.ts`
-Expected: PASS, 17 tests.
+Expected: PASS, 20 tests.
 
 - [ ] **Step 5: Type-check and commit**
 

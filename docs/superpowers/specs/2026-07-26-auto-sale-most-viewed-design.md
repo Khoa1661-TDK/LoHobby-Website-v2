@@ -132,9 +132,15 @@ this, un-ticking a sale by hand would be silently re-ticked that night — the m
 likely way this feature would become annoying.
 
 **Consequence:** a most-viewed product may legitimately not be on sale — excluded, out
-of stock, or manually owned. The job does not backfill from #6 to fill the slot. Top-5
-means *at most* five. Backfilling would make the sale set jump unpredictably whenever
-one item went out of stock.
+of stock, or manually owned. When that happens the job **reaches further down the
+ranking** to keep the set full: the whole ranking is filtered for eligibility and the
+first `AUTO_SALE_COUNT` survivors are taken, so if #2 sells out, #6 takes its place.
+The set under-fills only when fewer than five products are eligible at all.
+
+(User decision, 2026-07-26, correcting an earlier contradiction in this document. The
+trade-off accepted: the fifth slot can rotate as stock moves, in exchange for a sale
+section that stays consistently full. A bounded reach — backfill only within the top
+10 — was offered and declined.)
 
 **Migration required.** A new Payload field needs a generated migration or the
 storefront throws `42P01` at runtime. This is an explicit implementation step.
@@ -201,7 +207,9 @@ The selector carries the test weight, since it is pure. Table-driven cases in
 - in the exclusion list → skipped
 - manual sale (`onSale` + `autoSaleManaged === false`) → never enabled, never disabled
 - `salePercent` already above the auto rate → skipped
-- fewer than five eligible → under-filled set, no backfill
+- higher-ranked candidates knocked out → reaches further down to still fill five
+- fewer than five eligible in the whole ranking → under-filled set
+- an already-settled product counts against the five-slot cap
 - tie-breaking is deterministic
 - removal pass only touches `autoSaleManaged` products
 - a product already in the exact target state is a no-op
