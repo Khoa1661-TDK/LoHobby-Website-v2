@@ -46,6 +46,18 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "payload"."payload_jobs" ADD COLUMN "meta" jsonb;`)
 }
 
+// Rollback hazard, deliberate: the enum-recreate-and-cast pattern below is
+// the only way Postgres lets you reverse an `ALTER TYPE ... ADD VALUE`
+// (there is no `DROP VALUE`). If this migration is rolled back AFTER the
+// `autoSale` task has actually run — i.e. any row in `payload_jobs` or
+// `payload_jobs_log` already has `task_slug = 'autoSale'` — the `USING
+// "task_slug"::"payload"."enum_payload_jobs_task_slug"` cast below will fail
+// loudly, because the narrower enum being cast into no longer contains
+// 'autoSale'. That failure is correct behaviour, not a bug: it stops the
+// rollback rather than silently discarding those rows' task identity. An
+// operator hitting it must first clear/reassign the offending rows (delete
+// completed autoSale job records, or migrate them off this slug) before
+// down() can succeed.
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
    DROP TABLE "payload"."payload_jobs_stats" CASCADE;

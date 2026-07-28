@@ -24,6 +24,14 @@ export default defineConfig({
             'src/**/__tests__/**/*.test.ts',
           ],
           setupFiles: ['lib/__tests__/vitest-setup.ts'],
+          // `src/payload/__tests__/jobs-task-registration.test.ts` imports
+          // `shopnexPlugins`, which transitively imports `@shopnex/analytics-plugin`.
+          // That package's compiled `import pkg from "../package.json"` has no
+          // `with { type: 'json' }` attribute, so Node's native ESM loader
+          // (which Vitest otherwise defers to for node_modules) rejects it.
+          // Forcing these packages through Vite's transform pipeline instead
+          // resolves the JSON import correctly, same as webpack/tsx already do.
+          server: { deps: { inline: [/@shopnex\//] } },
         },
       },
       {
