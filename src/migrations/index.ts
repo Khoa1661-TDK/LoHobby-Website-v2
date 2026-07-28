@@ -25,6 +25,7 @@ import * as migration_20260714_090000_users_sso_salt from './20260714_090000_use
 import * as migration_20260724_120000_localize_product_category_fields from './20260724_120000_localize_product_category_fields';
 import * as migration_20260725_183829_block_icon_fields from './20260725_183829_block_icon_fields';
 import * as migration_20260726_120000_auto_sale_managed from './20260726_120000_auto_sale_managed';
+import * as migration_20260728_130432_auto_sale_settings from './20260728_130432_auto_sale_settings';
 
 export const migrations = [
   {
@@ -161,5 +162,10 @@ export const migrations = [
     up: migration_20260726_120000_auto_sale_managed.up,
     down: migration_20260726_120000_auto_sale_managed.down,
     name: '20260726_120000_auto_sale_managed',
+  },
+  {
+    up: migration_20260728_130432_auto_sale_settings.up,
+    down: migration_20260728_130432_auto_sale_settings.down,
+    name: '20260728_130432_auto_sale_settings',
   },
 ];

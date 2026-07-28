@@ -124,6 +124,7 @@ export interface Config {
     'shipping-settings': ShippingSetting;
     'dropship-settings': DropshipSetting;
     'notification-settings': NotificationSetting;
+    'auto-sale-settings': AutoSaleSetting;
   };
   globalsSelect: {
     'site-header': SiteHeaderSelect<false> | SiteHeaderSelect<true>;
@@ -132,6 +133,7 @@ export interface Config {
     'shipping-settings': ShippingSettingsSelect<false> | ShippingSettingsSelect<true>;
     'dropship-settings': DropshipSettingsSelect<false> | DropshipSettingsSelect<true>;
     'notification-settings': NotificationSettingsSelect<false> | NotificationSettingsSelect<true>;
+    'auto-sale-settings': AutoSaleSettingsSelect<false> | AutoSaleSettingsSelect<true>;
   };
   locale: 'vi' | 'en';
   widgets: {
@@ -6501,6 +6503,38 @@ export interface NotificationSetting {
   createdAt?: string | null;
 }
 /**
+ * A nightly job puts the 5 most-viewed products of the last 7 days on a 10% sale, and removes them when they drop off. Sales you set by hand are never touched.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "auto-sale-settings".
+ */
+export interface AutoSaleSetting {
+  id: number;
+  /**
+   * Unticking stops the job. Products already on auto-sale stay as they are.
+   */
+  enabled?: boolean | null;
+  /**
+   * Protected or low-margin products the job must skip, however popular they get.
+   */
+  excludedProducts?: (number | Product)[] | null;
+  /**
+   * Written by the job. Read-only.
+   */
+  lastRun?: {
+    ranAt?: string | null;
+    enabledCount?: number | null;
+    disabledCount?: number | null;
+    skippedCount?: number | null;
+    errorCount?: number | null;
+    enabledProducts?: string | null;
+    disabledProducts?: string | null;
+    error?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-header_select".
  */
@@ -6680,6 +6714,29 @@ export interface NotificationSettingsSelect<T extends boolean = true> {
   discordAllowedUserIds?: T;
   discordApplicationId?: T;
   discordGuildId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "auto-sale-settings_select".
+ */
+export interface AutoSaleSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  excludedProducts?: T;
+  lastRun?:
+    | T
+    | {
+        ranAt?: T;
+        enabledCount?: T;
+        disabledCount?: T;
+        skippedCount?: T;
+        errorCount?: T;
+        enabledProducts?: T;
+        disabledProducts?: T;
+        error?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

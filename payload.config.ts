@@ -19,6 +19,7 @@ import { Products } from './src/payload/collections/Products';
 import { Redirects } from './src/payload/collections/Redirects';
 import { StoreCustomers } from './src/payload/collections/StoreCustomers';
 import { Users } from './src/payload/collections/Users';
+import { AutoSaleSettings } from './src/payload/globals/AutoSaleSettings';
 import { DropshipSettings } from './src/payload/globals/DropshipSettings';
 import { Navigation } from './src/payload/globals/Navigation';
 import { NotificationSettings } from './src/payload/globals/NotificationSettings';
@@ -93,7 +94,7 @@ export default buildConfig({
     Pages,
     Redirects,
   ],
-  globals: [SiteHeader, Navigation, StoreSettings, ShippingSettings, DropshipSettings, NotificationSettings],
+  globals: [SiteHeader, Navigation, StoreSettings, ShippingSettings, DropshipSettings, NotificationSettings, AutoSaleSettings],
   db: postgresAdapter({
     pool: {
       connectionString: databaseUrl,
