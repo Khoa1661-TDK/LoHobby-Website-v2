@@ -88,6 +88,13 @@ describe('selectAutoSale', () => {
     expect(plan.toDisable).toEqual([]);
   });
 
+  it('should not touch a manual sale set below the auto rate', () => {
+    const manual = candidate({ onSale: true, salePercent: 5, autoSaleManaged: false });
+    const plan = selectAutoSale([ranked('p1')], [manual], []);
+    expect(plan.toEnable).toEqual([]);
+    expect(plan.toDisable).toEqual([]);
+  });
+
   it('should skip products already discounted deeper than the auto rate', () => {
     const plan = selectAutoSale(
       [ranked('p1')],
@@ -101,6 +108,23 @@ describe('selectAutoSale', () => {
     const settled = candidate({ onSale: true, salePercent: 10, autoSaleManaged: true });
     const plan = selectAutoSale([ranked('p1')], [settled], []);
     expect(plan.toEnable).toEqual([]);
+    expect(plan.toDisable).toEqual([]);
+  });
+
+  it('should count already-settled products against the cap', () => {
+    const settled = candidate({
+      productId: 'settled',
+      onSale: true,
+      salePercent: 10,
+      autoSaleManaged: true,
+    });
+    const fresh = ['a', 'b', 'c', 'd', 'e'].map((id) => candidate({ productId: id }));
+    const plan = selectAutoSale(
+      [ranked('settled', 100), ...['a', 'b', 'c', 'd', 'e'].map((id, i) => ranked(id, 90 - i))],
+      [settled, ...fresh],
+      [],
+    );
+    expect(plan.toEnable).toHaveLength(4);
     expect(plan.toDisable).toEqual([]);
   });
 
@@ -120,7 +144,17 @@ describe('selectAutoSale', () => {
     expect(plan.toDisable).toEqual([{ productId: 'old', title: 'Old' }]);
   });
 
-  it('should under-fill rather than backfill when candidates are knocked out', () => {
+  it('should reach further down the ranking when higher candidates are knocked out', () => {
+    const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
+    const plan = selectAutoSale(
+      ids.map((id, i) => ranked(id, 100 - i)),
+      ids.map((id) => candidate({ productId: id, stock: id === 'b' ? 0 : 10 })),
+      [],
+    );
+    expect(plan.toEnable.map((e) => e.productId)).toEqual(['a', 'c', 'd', 'e', 'f']);
+  });
+
+  it('should under-fill when too few products are eligible at all', () => {
     const plan = selectAutoSale(
       [ranked('a', 90), ranked('b', 80), ranked('c', 70)],
       [

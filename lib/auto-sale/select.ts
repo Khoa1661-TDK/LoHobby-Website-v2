@@ -57,7 +57,7 @@ export function selectAutoSale(
   let skippedCount = 0;
 
   for (const entry of ranked) {
-    if (toEnable.length >= AUTO_SALE_COUNT) break;
+    if (chosen.size >= AUTO_SALE_COUNT) break;
     if (entry.viewers < AUTO_SALE_MIN_VIEWERS) break; // ranked descending — the rest are worse
 
     const candidate = byId.get(entry.productId);
@@ -74,15 +74,15 @@ export function selectAutoSale(
       continue;
     }
 
-    // Deliberately no backfill past AUTO_SALE_COUNT: reaching down the list
-    // whenever an item goes out of stock makes the sale set jump around.
+    // Reach down the ranking when higher products are knocked out, but cap the
+    // total sale set at AUTO_SALE_COUNT (including already-settled products).
     chosen.add(candidate.productId);
 
     const alreadySettled =
       candidate.onSale &&
       candidate.autoSaleManaged &&
       candidate.salePercent === AUTO_SALE_PERCENT;
-    if (alreadySettled) continue; // no-op, but it still holds its slot
+    if (alreadySettled) continue; // settled product holds one of the capped slots
 
     toEnable.push({
       productId: candidate.productId,
