@@ -131,6 +131,27 @@ identifies its own writes with `req.context.autoSale = true`, following the exis
 this, un-ticking a sale by hand would be silently re-ticked that night — the most
 likely way this feature would become annoying.
 
+**Clearing ownership is not enough on its own — a removal needs a cooldown.**
+`autoSaleManaged` is a two-state boolean, but the domain has three states: never
+touched (`false`), job-owned (`true`), and *deliberately un-ticked by an admin*
+(`false` again — indistinguishable from never touched). So clearing the flag on a
+manual removal leaves a still-top-viewed product fully eligible, and the next run
+re-discounts it. This was reproduced end-to-end in Task 7 before the fix.
+
+**Second field on `Products`: `autoSaleReleasedAt`** — a date, stamped by the release
+hook when an admin turns OFF a sale the job owned. The selector skips any product
+released within `AUTO_SALE_COOLDOWN_DAYS` (30). The field is admin-editable so the
+owner can clear it to make a product eligible again immediately; the exclusion list
+remains the permanent opt-out.
+
+The cooldown starts only on a manual *removal* of a job-owned sale — not when an admin
+deepens a discount (the product stays `onSale`, so the manual-sale rail already covers
+it) and not when an admin puts an untouched product on sale by hand.
+
+(User decision, 2026-07-26. A permanent opt-out flag was offered and declined in favour
+of a cooldown: nothing to remember to un-set, at the cost of the product becoming
+eligible again 30 days later.)
+
 **Consequence:** a most-viewed product may legitimately not be on sale — excluded, out
 of stock, or manually owned. When that happens the job **reaches further down the
 ranking** to keep the set full: the whole ranking is filtered for eligibility and the

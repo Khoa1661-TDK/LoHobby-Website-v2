@@ -1395,3 +1395,224 @@ git commit -m "feat(auto-sale): add manual trigger script for the auto-sale job"
 The job runs in-process via `autoRun`, so it only fires while the container is up. After deploying, confirm from the VPS container logs that an `autoRun` tick occurs, and check **Settings → Automatic sale → Last run** the morning after the first 03:10 to confirm the schedule fired in production and not just in dev.
 
 The three migrations must run against the production database before the new code serves traffic, or the storefront will throw `42P01`.
+
+---
+
+### Task 8: Cooldown after a manual removal
+
+Added after Task 7 reproduced a real defect: un-ticking a job-set sale on a still-
+top-viewed product got it re-discounted on the very next run. `autoSaleManaged` cannot
+distinguish "never touched" from "admin deliberately removed it". See the spec's
+Ownership section.
+
+**Files:**
+- Modify: `lib/constants.ts` (append)
+- Modify: `lib/auto-sale/select.ts`
+- Modify: `src/payload/collections/Products.ts`
+- Modify: `lib/auto-sale/run.ts`
+- Create: `src/migrations/<timestamp>_auto_sale_released_at.ts`
+- Test: `lib/__tests__/auto-sale-select.test.ts`, `lib/__tests__/auto-sale-ownership.test.ts`
+
+**Interfaces:**
+- Consumes: everything from Tasks 1-6.
+- Produces: `AUTO_SALE_COOLDOWN_DAYS = 30`; `AutoSaleCandidate` gains
+  `releasedAt: string | null`; `selectAutoSale(ranked, candidates, excludedProductIds, nowMs: number)`
+  gains a fourth parameter; new pure predicate
+  `shouldStartAutoSaleCooldown({ incoming, original, isJobWrite }): boolean`; the
+  `autoSaleReleasedAt` date field on `products`.
+
+`nowMs` is passed in rather than read from the clock so `select.ts` stays pure and its
+tests stay deterministic.
+
+- [ ] **Step 1: Write the failing tests**
+
+Add to `lib/__tests__/auto-sale-select.test.ts` (the `candidate()` helper needs
+`releasedAt: null` added to its defaults, and every existing `selectAutoSale(...)` call
+needs the new `nowMs` argument — use a fixed constant `const NOW = Date.parse('2026-07-26T00:00:00Z')`):
+
+```ts
+  it('should skip a product released by an admin within the cooldown', () => {
+    const released = candidate({
+      releasedAt: new Date(NOW - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+    const plan = selectAutoSale([ranked('p1')], [released], [], NOW);
+    expect(plan.toEnable).toEqual([]);
+  });
+
+  it('should allow a product again once the cooldown has expired', () => {
+    const released = candidate({
+      releasedAt: new Date(NOW - 31 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+    const plan = selectAutoSale([ranked('p1')], [released], [], NOW);
+    expect(plan.toEnable.map((e) => e.productId)).toEqual(['p1']);
+  });
+
+  it('should ignore an unparseable releasedAt rather than skipping forever', () => {
+    const released = candidate({ releasedAt: 'not-a-date' });
+    const plan = selectAutoSale([ranked('p1')], [released], [], NOW);
+    expect(plan.toEnable.map((e) => e.productId)).toEqual(['p1']);
+  });
+```
+
+Add to `lib/__tests__/auto-sale-ownership.test.ts`:
+
+```ts
+describe('shouldStartAutoSaleCooldown', () => {
+  it('should start a cooldown when an admin removes a job-owned sale', () => {
+    expect(
+      shouldStartAutoSaleCooldown({
+        incoming: { onSale: false },
+        original: { onSale: true, salePercent: 10, autoSaleManaged: true },
+        isJobWrite: false,
+      }),
+    ).toBe(true);
+  });
+
+  it('should not start one when the job removes its own sale', () => {
+    expect(
+      shouldStartAutoSaleCooldown({
+        incoming: { onSale: false },
+        original: { onSale: true, salePercent: 10, autoSaleManaged: true },
+        isJobWrite: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('should not start one when an admin only deepens the discount', () => {
+    expect(
+      shouldStartAutoSaleCooldown({
+        incoming: { salePercent: 30 },
+        original: { onSale: true, salePercent: 10, autoSaleManaged: true },
+        isJobWrite: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('should not start one when an admin un-ticks a sale the job never owned', () => {
+    expect(
+      shouldStartAutoSaleCooldown({
+        incoming: { onSale: false },
+        original: { onSale: true, salePercent: 40, autoSaleManaged: false },
+        isJobWrite: false,
+      }),
+    ).toBe(false);
+  });
+});
+```
+
+- [ ] **Step 2: Run them and confirm they fail**
+
+Run: `node_modules/.bin/vitest run lib/__tests__/auto-sale-select.test.ts lib/__tests__/auto-sale-ownership.test.ts`
+
+- [ ] **Step 3: Add the constant**
+
+```ts
+/**
+ * Days a product stays ineligible after an admin removes a sale the job owned.
+ * Without this, un-ticking a still-top-viewed product re-discounts it that night.
+ */
+export const AUTO_SALE_COOLDOWN_DAYS = 30;
+```
+
+- [ ] **Step 4: Extend the selector**
+
+Add `releasedAt: string | null` to `AutoSaleCandidate`. Add a fourth parameter
+`nowMs: number` to `selectAutoSale`. Add this helper and wire it into the existing
+filter chain as one more skip condition (incrementing `skippedCount` like the others):
+
+```ts
+/** True while an admin-removed product is still inside its cooldown window. */
+export function inReleaseCooldown(candidate: AutoSaleCandidate, nowMs: number): boolean {
+  if (!candidate.releasedAt) return false;
+  const releasedMs = Date.parse(candidate.releasedAt);
+  // An unparseable stamp must not exclude a product forever.
+  if (!Number.isFinite(releasedMs)) return false;
+  return nowMs - releasedMs < AUTO_SALE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+}
+```
+
+Add the new pure predicate beside `shouldReleaseAutoSale`:
+
+```ts
+/**
+ * Whether this save should stamp a cooldown. Only a manual removal of a sale the
+ * job owned qualifies: deepening a discount leaves the product `onSale` (already
+ * covered by the manual-sale rail), and un-ticking a sale the job never owned is
+ * not the job's business.
+ */
+export function shouldStartAutoSaleCooldown(args: {
+  incoming: { onSale?: unknown; salePercent?: unknown; [key: string]: unknown };
+  original: { onSale?: unknown; salePercent?: unknown; autoSaleManaged?: unknown; [key: string]: unknown } | undefined;
+  isJobWrite: boolean;
+}): boolean {
+  const { incoming, original, isJobWrite } = args;
+  if (isJobWrite || !original) return false;
+  if (original.autoSaleManaged !== true) return false;
+  return incoming.onSale === false && original.onSale === true;
+}
+```
+
+- [ ] **Step 5: Add the field and stamp it**
+
+In `Products.ts`, add after `autoSaleManaged`:
+
+```ts
+    {
+      name: 'autoSaleReleasedAt',
+      type: 'date',
+      label: 'Auto-sale paused since',
+      admin: {
+        description:
+          'Set when you remove a sale the automatic job set. The job leaves this product alone for 30 days. Clear this field to make it eligible again straight away.',
+      },
+    },
+```
+
+Extend `releaseAutoSaleOnManualEdit` to also stamp it:
+
+```ts
+  if (shouldStartAutoSaleCooldown({ incoming: data, original: originalDoc, isJobWrite: isAutoSaleWrite(req) })) {
+    data.autoSaleReleasedAt = new Date().toISOString();
+  }
+```
+
+- [ ] **Step 6: Map it in the shell**
+
+In `lib/auto-sale/run.ts`, add `releasedAt` to the candidate mapping
+(`typeof doc.autoSaleReleasedAt === 'string' ? doc.autoSaleReleasedAt : null`) and pass
+`Date.now()` as the new fourth argument to `selectAutoSale`.
+
+- [ ] **Step 7: Regenerate types, migrate**
+
+```bash
+node_modules/.bin/payload generate:types
+node_modules/.bin/payload migrate:status
+```
+
+Hand-write the migration (one additive column, same pattern as
+`20260726_120000_auto_sale_managed.ts`):
+
+```sql
+ALTER TABLE "payload"."products" ADD COLUMN IF NOT EXISTS "auto_sale_released_at" timestamp(3) with time zone;
+```
+
+Register it in `src/migrations/index.ts`, then `yes | node_modules/.bin/payload migrate`.
+
+- [ ] **Step 8: Re-run Task 7's failing check**
+
+Using `scripts/run-auto-sale-once.ts` and Payload local-API updates (no auto-sale
+context, which is what an admin edit looks like):
+1. Run the job so a product is auto-discounted.
+2. Simulate an admin un-ticking `onSale` on it.
+3. Re-run the job.
+4. **The product must stay off sale**, and `autoSaleReleasedAt` must be stamped.
+
+This is the check that failed before; it must now pass. Report the observed values.
+
+- [ ] **Step 9: Full suite and commit**
+
+```bash
+node_modules/.bin/vitest run
+node_modules/.bin/tsc --noEmit
+git commit -m "fix(auto-sale): pause a product for 30 days after a manual removal"
+```
