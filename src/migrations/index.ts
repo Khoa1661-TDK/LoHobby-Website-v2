@@ -27,6 +27,7 @@ import * as migration_20260725_183829_block_icon_fields from './20260725_183829_
 import * as migration_20260726_120000_auto_sale_managed from './20260726_120000_auto_sale_managed';
 import * as migration_20260728_130432_auto_sale_settings from './20260728_130432_auto_sale_settings';
 import * as migration_20260728_132737_payload_jobs from './20260728_132737_payload_jobs';
+import * as migration_20260729_090000_auto_sale_released_at from './20260729_090000_auto_sale_released_at';
 
 export const migrations = [
   {
@@ -173,5 +174,10 @@ export const migrations = [
     up: migration_20260728_132737_payload_jobs.up,
     down: migration_20260728_132737_payload_jobs.down,
     name: '20260728_132737_payload_jobs'
+  },
+  {
+    up: migration_20260729_090000_auto_sale_released_at.up,
+    down: migration_20260729_090000_auto_sale_released_at.down,
+    name: '20260729_090000_auto_sale_released_at',
   },
 ];

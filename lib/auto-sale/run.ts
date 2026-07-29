@@ -92,6 +92,7 @@ async function loadCandidates(payload: Payload): Promise<AutoSaleCandidate[]> {
       onSale: doc.onSale === true,
       salePercent: toNumberOrNull(doc.salePercent),
       autoSaleManaged: doc.autoSaleManaged === true,
+      releasedAt: typeof doc.autoSaleReleasedAt === 'string' ? doc.autoSaleReleasedAt : null,
     } satisfies AutoSaleCandidate;
   });
 }
@@ -137,7 +138,7 @@ export async function runAutoSale(payload: Payload): Promise<AutoSaleRunSummary>
   let plan;
   try {
     const [ranked, candidates] = await Promise.all([rankByViewers(), loadCandidates(payload)]);
-    plan = selectAutoSale(ranked, candidates, excludedProductIds);
+    plan = selectAutoSale(ranked, candidates, excludedProductIds, Date.now());
   } catch (error) {
     summary.error = `ranking failed: ${(error as Error).message}`;
     console.error('[auto-sale] ranking failed:', error);

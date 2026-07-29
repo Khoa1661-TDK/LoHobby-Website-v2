@@ -22,7 +22,7 @@ import {
   isSnapshotBackfill,
   SNAPSHOT_BACKFILL_CONTEXT,
 } from '@/lib/payload-hooks';
-import { shouldReleaseAutoSale } from '@/lib/auto-sale/select';
+import { shouldReleaseAutoSale, shouldStartAutoSaleCooldown } from '@/lib/auto-sale/select';
 import { revalidateCatalogCache } from '@/lib/payload-products';
 import { sanitizeProductDocForAdmin } from '@/lib/admin-product-doc';
 import { buildProductSnapshotPatch, stripIncomingSnapshotFields } from '@/lib/product-snapshot-patch';
@@ -148,14 +148,20 @@ const syncOnSaleCategory: CollectionBeforeChangeHook = async ({ data, originalDo
 const releaseAutoSaleOnManualEdit: CollectionBeforeChangeHook = ({ data, originalDoc, req }) => {
   if (!data || isMediaResync(req) || isSnapshotBackfill(req)) return data;
 
+  const isJobWrite = isAutoSaleWrite(req);
+
   if (
     shouldReleaseAutoSale({
       incoming: data,
       original: originalDoc,
-      isJobWrite: isAutoSaleWrite(req),
+      isJobWrite,
     })
   ) {
     data.autoSaleManaged = false;
+  }
+
+  if (shouldStartAutoSaleCooldown({ incoming: data, original: originalDoc, isJobWrite })) {
+    data.autoSaleReleasedAt = new Date().toISOString();
   }
 
   return data;
@@ -470,6 +476,15 @@ export const Products: CollectionConfig = {
         readOnly: true,
         description:
           'Set by the auto-sale job. Editing the sale by hand clears this and the job stops managing this product.',
+      },
+    },
+    {
+      name: 'autoSaleReleasedAt',
+      type: 'date',
+      label: 'Auto-sale paused since',
+      admin: {
+        description:
+          'Set when you remove a sale the automatic job set. The job leaves this product alone for 30 days. Clear this field to make it eligible again straight away.',
       },
     },
     {

@@ -4,6 +4,7 @@
 // touching a database. See
 // docs/superpowers/specs/2026-07-26-auto-sale-most-viewed-design.md.
 import {
+  AUTO_SALE_COOLDOWN_DAYS,
   AUTO_SALE_COUNT,
   AUTO_SALE_MIN_VIEWERS,
   AUTO_SALE_PERCENT,
@@ -21,6 +22,8 @@ export type AutoSaleCandidate = {
   onSale: boolean;
   salePercent: number | null;
   autoSaleManaged: boolean;
+  /** ISO timestamp an admin removed a job-owned sale, or null. Drives the cooldown. */
+  releasedAt: string | null;
 };
 
 export type AutoSalePlan = {
@@ -44,10 +47,20 @@ function isManualSale(candidate: AutoSaleCandidate): boolean {
   return candidate.onSale && !candidate.autoSaleManaged;
 }
 
+/** True while an admin-removed product is still inside its cooldown window. */
+export function inReleaseCooldown(candidate: AutoSaleCandidate, nowMs: number): boolean {
+  if (!candidate.releasedAt) return false;
+  const releasedMs = Date.parse(candidate.releasedAt);
+  // An unparseable stamp must not exclude a product forever.
+  if (!Number.isFinite(releasedMs)) return false;
+  return nowMs - releasedMs < AUTO_SALE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+}
+
 export function selectAutoSale(
   ranked: ProductViewers[],
   candidates: AutoSaleCandidate[],
   excludedProductIds: string[],
+  nowMs: number,
 ): AutoSalePlan {
   const byId = new Map(candidates.map((c) => [c.productId, c]));
   const excluded = new Set(excludedProductIds);
@@ -68,6 +81,7 @@ export function selectAutoSale(
       !hasStock(candidate) ||
       excluded.has(candidate.productId) ||
       isManualSale(candidate) ||
+      inReleaseCooldown(candidate, nowMs) ||
       (candidate.salePercent ?? 0) > AUTO_SALE_PERCENT
     ) {
       skippedCount += 1;
@@ -125,4 +139,21 @@ export function shouldReleaseAutoSale(args: {
     incoming.salePercent !== undefined && incoming.salePercent !== original.salePercent;
 
   return onSaleChanged || percentChanged;
+}
+
+/**
+ * Whether this save should stamp a cooldown. Only a manual removal of a sale the
+ * job owned qualifies: deepening a discount leaves the product `onSale` (already
+ * covered by the manual-sale rail), and un-ticking a sale the job never owned is
+ * not the job's business.
+ */
+export function shouldStartAutoSaleCooldown(args: {
+  incoming: { onSale?: unknown; salePercent?: unknown; [key: string]: unknown };
+  original: { onSale?: unknown; salePercent?: unknown; autoSaleManaged?: unknown; [key: string]: unknown } | undefined;
+  isJobWrite: boolean;
+}): boolean {
+  const { incoming, original, isJobWrite } = args;
+  if (isJobWrite || !original) return false;
+  if (original.autoSaleManaged !== true) return false;
+  return incoming.onSale === false && original.onSale === true;
 }

@@ -1,6 +1,6 @@
 // lib/__tests__/auto-sale-ownership.test.ts
 import { describe, it, expect } from 'vitest';
-import { shouldReleaseAutoSale } from '@/lib/auto-sale/select';
+import { shouldReleaseAutoSale, shouldStartAutoSaleCooldown } from '@/lib/auto-sale/select';
 import { AUTO_SALE_CONTEXT, isAutoSaleWrite } from '@/lib/payload-hooks';
 
 describe('isAutoSaleWrite', () => {
@@ -70,6 +70,48 @@ describe('shouldReleaseAutoSale', () => {
       shouldReleaseAutoSale({
         incoming: { onSale: true, salePercent: 20 },
         original: undefined,
+        isJobWrite: false,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('shouldStartAutoSaleCooldown', () => {
+  it('should start a cooldown when an admin removes a job-owned sale', () => {
+    expect(
+      shouldStartAutoSaleCooldown({
+        incoming: { onSale: false },
+        original: { onSale: true, salePercent: 10, autoSaleManaged: true },
+        isJobWrite: false,
+      }),
+    ).toBe(true);
+  });
+
+  it('should not start one when the job removes its own sale', () => {
+    expect(
+      shouldStartAutoSaleCooldown({
+        incoming: { onSale: false },
+        original: { onSale: true, salePercent: 10, autoSaleManaged: true },
+        isJobWrite: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('should not start one when an admin only deepens the discount', () => {
+    expect(
+      shouldStartAutoSaleCooldown({
+        incoming: { salePercent: 30 },
+        original: { onSale: true, salePercent: 10, autoSaleManaged: true },
+        isJobWrite: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('should not start one when an admin un-ticks a sale the job never owned', () => {
+    expect(
+      shouldStartAutoSaleCooldown({
+        incoming: { onSale: false },
+        original: { onSale: true, salePercent: 40, autoSaleManaged: false },
         isJobWrite: false,
       }),
     ).toBe(false);

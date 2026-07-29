@@ -307,6 +307,10 @@ export interface Product {
    * Set by the auto-sale job. Editing the sale by hand clears this and the job stops managing this product.
    */
   autoSaleManaged?: boolean | null;
+  /**
+   * Set when you remove a sale the automatic job set. The job leaves this product alone for 30 days. Clear this field to make it eligible again straight away.
+   */
+  autoSaleReleasedAt?: string | null;
   description?: string | null;
   /**
    * When unchecked, the product is hidden from the storefront.
@@ -4690,6 +4694,7 @@ export interface ProductsSelect<T extends boolean = true> {
   onSale?: T;
   salePercent?: T;
   autoSaleManaged?: T;
+  autoSaleReleasedAt?: T;
   description?: T;
   available?: T;
   stock?: T;

@@ -44,3 +44,9 @@ export const AUTO_SALE_WINDOW_DAYS = 7;
  * three on the strength of a single page load.
  */
 export const AUTO_SALE_MIN_VIEWERS = 5;
+
+/**
+ * Days a product stays ineligible after an admin removes a sale the job owned.
+ * Without this, un-ticking a still-top-viewed product re-discounts it that night.
+ */
+export const AUTO_SALE_COOLDOWN_DAYS = 30;
