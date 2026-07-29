@@ -39,6 +39,7 @@
     "payload:types": "payload generate:types",
     "payload:importmap": "payload generate:importmap",
     "payload:migrate-content-pages": "tsx scripts/migrate-content-pages.ts",
+    "auto-sale:run": "tsx --conditions=react-server scripts/run-auto-sale-once.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "check-types": "tsc --noEmit",
