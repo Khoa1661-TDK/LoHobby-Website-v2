@@ -10,7 +10,8 @@ import PriceTag from '@/components/price';
 import type { BlockAppearance } from '@/lib/page-builder';
 import { blockAppearanceClasses } from '@/lib/page-builder';
 import { linkAttrs } from '@/lib/page-builder/link';
-import { getPayloadProductsByIds } from '@/lib/payload-products';
+import { SPOTLIGHT_AUTO_LIMIT } from '@/lib/constants';
+import { getPayloadOnSaleProducts, getPayloadProductsByIds } from '@/lib/payload-products';
 import { toNextImageSrc } from '@/lib/product-image-snapshot';
 import type { Product } from '@/lib/shopify/types';
 import SpotlightCountdown from './Spotlight.client';
@@ -32,6 +33,9 @@ type Deal = {
 };
 
 type Props = {
+  /** 'auto' fills the carousel from whatever is on sale; anything else (including a
+   *  legacy row saved before this field existed) uses the hand-curated `deals`. */
+  source?: 'manual' | 'auto' | null;
   eyebrow?: string | null;
   deals?: Deal[] | null;
   autoplay?: boolean | null;
@@ -193,13 +197,30 @@ function renderSlide(
 }
 
 export default async function SpotlightBlock(props: Props): Promise<ReactElement | null> {
-  const { eyebrow, deals, autoplay, autoplaySeconds } = props;
-  const dealList = Array.isArray(deals) ? deals : [];
+  const { source, eyebrow, deals, autoplay, autoplaySeconds } = props;
+  const isAuto = source === 'auto';
 
-  // Resolve every deal's product in one batched query, then index by id.
-  const ids = Array.from(new Set(dealList.map((d) => toId(d.product ?? null)).filter(Boolean)));
-  const products = ids.length ? await getPayloadProductsByIds(ids) : [];
-  const productById = new Map(products.map((p) => [String(p.id), p]));
+  // Auto mode synthesises a deal per on-sale product carrying nothing but the product
+  // reference, then reuses renderSlide untouched. Every editorial field it would have
+  // read (heading, description, prices, CTA) already falls back to product data when
+  // blank, so the two modes cannot drift apart visually. No targetDate means auto
+  // slides carry no countdown — one shared timer would imply all sales end together.
+  // A leftover `deals` array is ignored rather than cleared, so switching back to
+  // Manual restores the previous curation intact.
+  let dealList: Deal[];
+  let productById: Map<string, Product>;
+
+  if (isAuto) {
+    const onSale = await getPayloadOnSaleProducts(SPOTLIGHT_AUTO_LIMIT);
+    dealList = onSale.map((p) => ({ product: String(p.id) }));
+    productById = new Map(onSale.map((p) => [String(p.id), p]));
+  } else {
+    dealList = Array.isArray(deals) ? deals : [];
+    // Resolve every deal's product in one batched query, then index by id.
+    const ids = Array.from(new Set(dealList.map((d) => toId(d.product ?? null)).filter(Boolean)));
+    const products = ids.length ? await getPayloadProductsByIds(ids) : [];
+    productById = new Map(products.map((p) => [String(p.id), p]));
+  }
 
   const { section, container, style } = blockAppearanceClasses(props);
   // Default (Theme/unset) renders the fixed dark deal banner from the mockup. It must

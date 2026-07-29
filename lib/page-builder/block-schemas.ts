@@ -139,6 +139,10 @@ function describeCondition(field: Field): FieldCondition | undefined {
     { field: 'background', values: ['custom'] },
     { field: 'containerWidth', values: ['custom'] },
     { field: 'kind', values: ['home', 'all-products', 'category', 'custom', 'dropdown'] },
+    // Spotlight gates its hand-curated `deals` array on source === 'manual'. Note the
+    // probe below requires the condition to be FALSE for empty sibling data, so such a
+    // condition must be written as an equality, never as `!== 'auto'`.
+    { field: 'source', values: ['manual', 'auto'] },
   ];
   for (const { field: candidate, values } of probes) {
     for (const value of values) {

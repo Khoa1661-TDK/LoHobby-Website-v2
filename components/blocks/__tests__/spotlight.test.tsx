@@ -13,20 +13,27 @@ vi.mock('@/i18n/navigation', () => ({
 }));
 
 import SpotlightBlock from '@/components/blocks/Spotlight';
-import { getPayloadProductsByIds } from '@/lib/payload-products';
+import { SPOTLIGHT_AUTO_LIMIT } from '@/lib/constants';
+import { getPayloadOnSaleProducts, getPayloadProductsByIds } from '@/lib/payload-products';
 
 // Auto-fetch tests drive prices off a real product; stub the batched product loader so
 // each test can return a product with (or without) an on-sale compare-at price.
+// getPayloadOnSaleProducts is the auto-mode source and is stubbed the same way.
 vi.mock('@/lib/payload-products', () => ({
   getPayloadProductsByIds: vi.fn(async () => []),
+  getPayloadOnSaleProducts: vi.fn(async () => []),
 }));
 
 const mockedGetProducts = vi.mocked(getPayloadProductsByIds);
+const mockedGetOnSale = vi.mocked(getPayloadOnSaleProducts);
 
 // Minimal product shaped like lib/shopify/types.Product — only the fields Spotlight reads.
 function makeProduct(overrides: {
   amount: string;
   compareAtAmount?: string | null;
+  id?: string;
+  title?: string;
+  handle?: string;
 }) {
   const price = {
     amount: overrides.amount,
@@ -34,16 +41,21 @@ function makeProduct(overrides: {
     compareAtAmount: overrides.compareAtAmount ?? null,
   };
   return {
-    id: 'p1',
-    handle: 'deal-product',
+    id: overrides.id ?? 'p1',
+    handle: overrides.handle ?? 'deal-product',
     availableForSale: true,
-    title: 'Deal product',
+    title: overrides.title ?? 'Deal product',
     description: 'A featured product.',
     descriptionHtml: '',
     options: [],
     priceRange: { maxVariantPrice: price, minVariantPrice: price },
     variants: [],
-    featuredImage: { url: '/img.jpg', altText: 'Deal product', width: 1200, height: 1200 },
+    featuredImage: {
+      url: '/img.jpg',
+      altText: overrides.title ?? 'Deal product',
+      width: 1200,
+      height: 1200,
+    },
     images: [],
     seo: { title: '', description: '' },
     tags: [],
@@ -54,7 +66,12 @@ function makeProduct(overrides: {
 
 describe('SpotlightBlock', () => {
   beforeEach(() => {
+    // Clear call history too, not just the resolved value: the auto-source tests assert
+    // which loader was invoked, and vitest does not reset spies between tests here.
+    mockedGetProducts.mockClear();
+    mockedGetOnSale.mockClear();
     mockedGetProducts.mockResolvedValue([]);
+    mockedGetOnSale.mockResolvedValue([]);
   });
   it('should render null when it has no deals', async () => {
     expect(await SpotlightBlock({})).toBeNull();
@@ -235,5 +252,87 @@ describe('SpotlightBlock', () => {
     );
     expect(html).toContain('HALF PRICE');
     expect(html).not.toContain('-30%');
+  });
+
+  describe('automatic source', () => {
+    const onSaleProducts = [
+      makeProduct({ id: 'a1', title: 'Deepest deal', handle: 'deepest', amount: '600000', compareAtAmount: '1000000' }),
+      makeProduct({ id: 'a2', title: 'Shallow deal', handle: 'shallow', amount: '900000', compareAtAmount: '1000000' }),
+    ];
+
+    it('should build one slide per on-sale product with text derived from the product', async () => {
+      mockedGetOnSale.mockResolvedValue(onSaleProducts);
+      const html = renderToStaticMarkup(await SpotlightBlock({ source: 'auto' }));
+
+      // Heading, description, price and CTA href all fall back to product data — there
+      // is no per-deal row to type them into in auto mode.
+      expect(html).toContain('Deepest deal');
+      expect(html).toContain('Shallow deal');
+      expect(html).toContain('A featured product.');
+      expect(html).toContain('600.000');
+      expect(html).toContain('href="/product/deepest"');
+      expect(html).toContain('Grab the deal');
+      // The discount badge is computed from each product's own compare-at gap.
+      expect(html).toContain('-40%');
+      expect(html).toContain('-10%');
+
+      const dotCount = (html.match(/aria-label="Go to deal \d+"/g) ?? []).length;
+      expect(dotCount).toBe(2);
+    });
+
+    it('should ask for exactly SPOTLIGHT_AUTO_LIMIT products and not touch the manual loader', async () => {
+      mockedGetOnSale.mockResolvedValue(onSaleProducts);
+      await SpotlightBlock({ source: 'auto' });
+      expect(mockedGetOnSale).toHaveBeenCalledWith(SPOTLIGHT_AUTO_LIMIT);
+      expect(mockedGetProducts).not.toHaveBeenCalled();
+    });
+
+    it('should render nothing when no product is on sale', async () => {
+      // The block hides itself rather than showing an empty deal carousel.
+      mockedGetOnSale.mockResolvedValue([]);
+      expect(await SpotlightBlock({ source: 'auto' })).toBeNull();
+    });
+
+    it('should ignore a leftover deals array so switching back to manual is lossless', async () => {
+      // Switching modes does not clear `deals`; auto mode must not merge or render them.
+      mockedGetOnSale.mockResolvedValue(onSaleProducts.slice(0, 1));
+      const html = renderToStaticMarkup(
+        await SpotlightBlock({ source: 'auto', deals: [{ heading: 'Hand-curated leftover' }] }),
+      );
+      expect(html).not.toContain('Hand-curated leftover');
+      expect(html).toContain('Deepest deal');
+    });
+
+    it('should carry no countdown on auto slides', async () => {
+      // One shared timer across different products would imply all sales end together.
+      mockedGetOnSale.mockResolvedValue(onSaleProducts);
+      const html = renderToStaticMarkup(await SpotlightBlock({ source: 'auto' }));
+      expect(html).not.toContain('Days');
+      expect(html).not.toContain('Hrs');
+    });
+
+    it('should still apply the shared eyebrow and appearance in auto mode', async () => {
+      mockedGetOnSale.mockResolvedValue(onSaleProducts);
+      const html = renderToStaticMarkup(
+        await SpotlightBlock({ source: 'auto', eyebrow: 'On sale now' }),
+      );
+      expect(html.split('On sale now').length - 1).toBe(2);
+      expect(html).toContain('bg-warm-900');
+    });
+
+    it('should use the curated deals for manual and for a legacy row with no source', async () => {
+      // Rows saved before `source` existed must keep working as manual. The migration
+      // backfills them to 'manual', but the renderer does not depend on that.
+      mockedGetOnSale.mockResolvedValue(onSaleProducts);
+
+      for (const props of [{ source: 'manual' as const }, {}]) {
+        const html = renderToStaticMarkup(
+          await SpotlightBlock({ ...props, deals: [{ heading: 'Hand-picked' }] }),
+        );
+        expect(html).toContain('Hand-picked');
+        expect(html).not.toContain('Deepest deal');
+      }
+      expect(mockedGetOnSale).not.toHaveBeenCalled();
+    });
   });
 });

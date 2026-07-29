@@ -198,6 +198,26 @@ describe('kind-based condition recovery (site-header tabs)', () => {
   });
 });
 
+describe('source-based condition recovery (spotlight)', () => {
+  // Condition recovery probes a hardcoded list of candidate field names. If `source`
+  // is dropped from that list, or the field's condition is rewritten in the negated
+  // form (`!== 'auto'`, which is true for empty sibling data and so not recoverable),
+  // Payload's admin still hides the deals array while the /build panel keeps showing
+  // it. Nothing else would catch that, so it is locked here.
+  it('should recover the manual/auto gate on the spotlight deals array', () => {
+    const spotlight = getBlockSchema('spotlight');
+    const deals = spotlight?.fields.find((f) => f.name === 'deals');
+    expect(deals?.condition).toEqual({ field: 'source', equals: 'manual' });
+  });
+
+  it('should leave the source selector itself unconditional and defaulted to manual', () => {
+    const source = getBlockSchema('spotlight')?.fields.find((f) => f.name === 'source');
+    expect(source?.condition).toBeUndefined();
+    expect(source?.defaultValue).toBe('manual');
+    expect(source?.options?.map((o) => o.value)).toEqual(['manual', 'auto']);
+  });
+});
+
 describe('describeField — admin.description', () => {
   it('should carry a field admin description into the descriptor', () => {
     const hero = getBlockSchema('hero');

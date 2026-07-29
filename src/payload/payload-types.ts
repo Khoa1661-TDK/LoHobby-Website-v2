@@ -3957,6 +3957,10 @@ export interface MarqueeBlock {
  */
 export interface SpotlightBlock {
   /**
+   * Automatic fills the carousel from whatever is on sale right now — both the nightly auto-sale picks and anything you discounted by hand — deepest discount first. The block hides itself when nothing is on sale.
+   */
+  source?: ('manual' | 'auto') | null;
+  /**
    * Shared label above every deal, e.g. "Deal of the week".
    */
   eyebrow?: string | null;
@@ -5952,6 +5956,7 @@ export interface MarqueeBlockSelect<T extends boolean = true> {
  * via the `definition` "SpotlightBlock_select".
  */
 export interface SpotlightBlockSelect<T extends boolean = true> {
+  source?: T;
   eyebrow?: T;
   deals?:
     | T

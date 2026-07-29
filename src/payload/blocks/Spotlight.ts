@@ -9,6 +9,19 @@ export const Spotlight: Block = {
   labels: { singular: 'Spotlight Deal', plural: 'Spotlight Deals' },
   interfaceName: 'SpotlightBlock',
   fields: [
+    {
+      name: 'source',
+      type: 'radio',
+      defaultValue: 'manual',
+      options: [
+        { label: 'Manual — pick each deal by hand', value: 'manual' },
+        { label: 'Automatic — every product currently on sale', value: 'auto' },
+      ],
+      admin: {
+        description:
+          'Automatic fills the carousel from whatever is on sale right now — both the nightly auto-sale picks and anything you discounted by hand — deepest discount first. The block hides itself when nothing is on sale.',
+      },
+    },
     { name: 'eyebrow', type: 'text', admin: { description: 'Shared label above every deal, e.g. "Deal of the week".' } },
     {
       name: 'deals',
@@ -17,6 +30,12 @@ export const Spotlight: Block = {
       maxRows: 12,
       labels: { singular: 'Deal', plural: 'Deals' },
       admin: {
+        // Equality against 'manual', not `!== 'auto'`: the visual builder recovers
+        // conditions by probing them with empty sibling data, and the negated form
+        // returns true there so the deals array would stay visible in /build. See
+        // describeCondition in lib/page-builder/block-schemas.ts. This is also why the
+        // migration backfills existing rows to 'manual' rather than leaving them null.
+        condition: (_, siblingData) => siblingData?.source === 'manual',
         description:
           'Each deal is one slide. The carousel auto-advances through them and the shopper can also click the dots or arrows to switch.',
       },

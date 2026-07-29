@@ -660,6 +660,54 @@ export async function getPayloadProducts(opts?: {
   )(locale);
 }
 
+async function fetchPayloadOnSaleProducts(limit: number, locale?: PayloadLocale): Promise<Product[]> {
+  const payload = await getPayloadClient();
+
+  const result = await payload.find({
+    collection: 'products',
+    // `salePercent > 0` is not redundant with `onSale`. computeSalePrice treats a zero
+    // or missing percent as not discounted, so an `onSale` product without a percent
+    // would render with no struck-through price and no "-X%" badge — a slide with
+    // nothing to say. Excluding it here beats dropping it after rendering. It also
+    // keeps NULLs out of the sort, which Postgres would otherwise order first on DESC.
+    where: { and: [{ onSale: { equals: true } }, { salePercent: { greater_than: 0 } }] },
+    // Deepest discount first — the first slide is the one most shoppers see, so it
+    // should carry the strongest offer. Ties break by most recently touched.
+    sort: ['-salePercent', '-updatedAt'],
+    // Over-fetch: hidden products are filtered out after mapping, so querying exactly
+    // `limit` could return fewer than the caller asked for.
+    limit: Math.max(1, limit) * 3,
+    depth: 2,
+    pagination: false,
+    locale,
+  });
+
+  return pickDocs<PayloadProductDoc>(result)
+    .map(mapPayloadProductToCommerceProduct)
+    .filter(isVisibleProduct)
+    .slice(0, Math.max(0, limit));
+}
+
+/**
+ * Products currently discounted, deepest discount first. Sources every on-sale
+ * product — both the nightly auto-sale job's picks and anything discounted by hand —
+ * because "on sale" is the shopper-visible fact; deliberately does not read
+ * `autoSaleManaged`.
+ *
+ * Cached on the catalog tags like every other catalog read. Note the auto-sale job's
+ * writes do not reliably bust that cache (it runs without a request scope, so the
+ * afterChange revalidateTag throws and is swallowed), so a new sale surfaces within
+ * CATALOG_REVALIDATE rather than instantly.
+ */
+export async function getPayloadOnSaleProducts(limit: number): Promise<Product[]> {
+  const locale = await resolveLocale();
+  return unstable_cache(
+    (loc: PayloadLocale) => fetchPayloadOnSaleProducts(limit, loc),
+    ['payload-on-sale-products', String(limit), locale],
+    { revalidate: CATALOG_REVALIDATE, tags: ['catalog', 'products', `products:${locale}`] },
+  )(locale);
+}
+
 async function findCategoryBySlug(
   payload: Awaited<ReturnType<typeof getPayloadClient>>,
   slug: string,

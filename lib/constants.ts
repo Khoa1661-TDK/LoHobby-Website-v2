@@ -50,3 +50,10 @@ export const AUTO_SALE_MIN_VIEWERS = 5;
  * Without this, un-ticking a still-top-viewed product re-discounts it that night.
  */
 export const AUTO_SALE_COOLDOWN_DAYS = 30;
+
+/**
+ * Slides a Spotlight block shows when its source is "auto". The nightly job puts
+ * AUTO_SALE_COUNT products on sale, so this leaves room for roughly one hand-set
+ * discount on top. Past about six slides a carousel stops being rotated through.
+ */
+export const SPOTLIGHT_AUTO_LIMIT = 6;
