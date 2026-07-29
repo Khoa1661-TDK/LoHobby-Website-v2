@@ -121,6 +121,8 @@ export async function runAutoSale(payload: Payload): Promise<AutoSaleRunSummary>
     const settings = await payload.findGlobal({ slug: 'auto-sale-settings', depth: 0 });
     if (settings?.enabled === false) {
       console.info('[auto-sale] disabled in settings — skipping run');
+      summary.error = 'auto-sale is disabled in settings — this run did nothing';
+      await writeSummary(payload, summary);
       return summary;
     }
     excludedProductIds = Array.isArray(settings?.excludedProducts)
@@ -171,7 +173,12 @@ export async function runAutoSale(payload: Payload): Promise<AutoSaleRunSummary>
       await payload.update({
         collection: 'products',
         id: item.productId,
-        data: { onSale: true, salePercent: item.salePercent, autoSaleManaged: true },
+        data: {
+          onSale: true,
+          salePercent: item.salePercent,
+          autoSaleManaged: true,
+          autoSaleReleasedAt: null,
+        },
         context: { ...AUTO_SALE_CONTEXT },
         depth: 0,
       });

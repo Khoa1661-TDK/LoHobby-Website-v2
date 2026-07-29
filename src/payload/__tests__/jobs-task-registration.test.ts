@@ -53,6 +53,12 @@ describe('job task registration', () => {
     const autoSale = config.jobs.tasks.find((t: { slug: string }) => t.slug === 'autoSale');
     const scheduledQueues = autoSale.schedule.map((s: { queue: string }) => s.queue);
     const drainedQueues = config.jobs.autoRun.map((r: { queue: string }) => r.queue);
+    // Guard against a vacuous pass: if either array were ever emptied, the
+    // loop below would never run and this test would report green despite
+    // the schedule/autoRun wiring being broken — exactly the regression it
+    // exists to catch.
+    expect(scheduledQueues.length).toBeGreaterThan(0);
+    expect(drainedQueues.length).toBeGreaterThan(0);
     for (const q of scheduledQueues) {
       expect(drainedQueues).toContain(q);
     }

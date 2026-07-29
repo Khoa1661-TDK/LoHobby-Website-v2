@@ -382,6 +382,15 @@ See `rules/common/decisions.md` for the logging format and rules.
 
 ---
 
+## 2026-07-29 — Correction: in-process job does not invalidate the product cache either
+**Chosen:** Correct the record only — no code change. The 2026-07-26 "Auto-sale job runs via Payload `autoRun`, in-process" entry above is left unedited (append-only per `decisions.md`), but its claim that the in-process job's writes reach `revalidateTag('products')` is wrong and should not be relied on.
+**Alternatives:** N/A — this is a factual correction, not a decision between options.
+**Why:** `invalidateCatalogOnChange` (`src/payload/collections/Products.ts`) calls `scheduleCatalogRevalidate()`, which wraps `revalidateCatalogCache()` in `next/server`'s `after()` inside a `try {}`. `after()` requires an active request scope; called outside one it throws synchronously, and `scheduleCatalogRevalidate`'s `catch {}` swallows that throw (see the comment directly above it: "When a product is written outside a request scope ... `after()` throws"). The auto-sale job runs on a `croner` timer via Payload's job queue (`autoRun`), which is not a request — it has no `req`/`res` and no Next.js request context. So every `payload.update` the job makes still fires `afterChange`, still calls `scheduleCatalogRevalidate()`, and that call still throws-and-is-swallowed, exactly like the CLI seed-script case the comment already documents. Cache invalidation from the job is skipped on every run, not just in some edge case. There is no user-visible harm today only because `CATALOG_REVALIDATE = 60` (`lib/payload-products.ts`) gives every product-catalog cache entry a 60-second TTL regardless of tag revalidation — the storefront catches up within a minute on its own. The in-process choice itself still stands on its other, correct merits from the original entry (no new secret, no external scheduler to drift, single-container deploy) — only the cache-correctness justification was wrong.
+**Trade-offs:** None from this correction (no behavior change). The underlying gap — job writes not tag-revalidating — remains: if `CATALOG_REVALIDATE` is ever raised well above the job's cadence, or a cache path without a TTL fallback is added, stale reads after a nightly run would become visible.
+**Revisit if:** `CATALOG_REVALIDATE` changes materially, or genuine tag-based invalidation from the job is wanted — would need to call `revalidateCatalogCache()` directly (not through `after()`) from a path that knows it isn't in a request scope, e.g. an explicit branch in `scheduleCatalogRevalidate()` or the job handler calling revalidation itself after `runAutoSale` returns.
+
+---
+
 ## 2026-07-26 — Auto-sale ranks by unique viewers, not units sold
 **Chosen:** User decision: rank candidates by distinct `sessionId` per product over the last 7 days from Prisma `ProductViewEvent`, with a 5-unique-viewer eligibility floor.
 **Alternatives:** Units sold over 30 days (the original direction, via the existing `aggregateSales`/`topSellers`); raw view-event counts via `aggregateAttention`; most-viewed restricted to products with poor view-to-buy conversion (`computeViewToBuy`'s `highAttentionLowConversion`).

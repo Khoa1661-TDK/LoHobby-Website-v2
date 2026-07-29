@@ -89,8 +89,14 @@ const autoSaleJobsPlugin = (): Plugin => (config: Config) => {
       {
         slug: 'autoSale',
         label: 'Automatic sale (most-viewed products)',
-        // Queues itself nightly at 03:10. `autoRun` below is what drains it.
-        schedule: [{ cron: '10 3 * * *', queue: 'nightly' }],
+        // WARNING — this cron is in UTC, not local time. Payload's
+        // `ScheduleConfig` has no timezone option, and node runs in UTC
+        // because neither `Dockerfile` nor `Dockerfile.private` sets `TZ`.
+        // '10 20 * * *' = 20:10 UTC = 03:10 Asia/Ho_Chi_Minh (ICT, UTC+7),
+        // chosen so prices don't change while customers are browsing.
+        // If `TZ` is ever set in the container env, this value moves with
+        // it and MUST be revisited, or the job will fire at 20:10 local.
+        schedule: [{ cron: '10 20 * * *', queue: 'nightly' }],
         retries: 0,
         inputSchema: [],
         outputSchema: [],
@@ -104,10 +110,11 @@ const autoSaleJobsPlugin = (): Plugin => (config: Config) => {
         },
       },
     ],
-    // Fires every 5 minutes: each tick first enqueues any task whose
-    // `schedule` cron is due, then runs the queue. Latency after 03:10 stays
-    // under 5 minutes.
-    autoRun: [{ cron: '*/5 * * * *', queue: 'nightly', limit: 1 }],
+    // Fires every 15 minutes: each tick first enqueues any task whose
+    // `schedule` cron is due, then runs the queue. Latency after 20:10 UTC
+    // stays under 15 minutes. One nightly task doesn't need a 5-minute
+    // wakeup cadence (288 DB polls/day vs. 96).
+    autoRun: [{ cron: '*/15 * * * *', queue: 'nightly', limit: 1 }],
     deleteJobOnComplete: true,
   };
 
