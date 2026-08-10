@@ -393,7 +393,14 @@ builder (the local server does report `capabilities: ["completion","multimodal"]
 
 ## 9. Testing
 
-Vitest, colocated in `lib/admin-assistant/__tests__/` and `lib/ai/__tests__/`.
+Vitest. **Test files go in the flat `lib/__tests__/` directory**, named
+`ai-*.test.ts` and `admin-assistant-*.test.ts`. This is not a style preference:
+`vitest.config.ts` includes `lib/__tests__/**/*.test.ts`, `app/**/__tests__/**/*.test.ts`,
+`components/**/__tests__/**/*.test.ts` and `src/**/__tests__/**/*.test.ts` only. A test in
+`lib/ai/__tests__/` matches none of those patterns and is **silently skipped** — the suite
+goes green for code that never ran. Route tests belong in
+`app/api/admin-assistant/__tests__/`. Component tests are `.test.tsx` under
+`components/**/__tests__/` (jsdom project).
 
 - **Every tool file gets a test file, written by the architect before the implementation**
   (§14). Write tools are pure validators, so their tests need
