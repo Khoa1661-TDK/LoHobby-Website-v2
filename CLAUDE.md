@@ -358,3 +358,18 @@ Conventional Commit messages. (User decision, 2026-06-22.)
 
 ## Context
 <!-- Anything not obvious from the code: target platform, known constraints, current focus. -->
+
+### AI assistants — provider and admin surface
+Both AI surfaces build their LLM client through `lib/ai/provider.ts`, configured by
+`ASSISTANT_LLM_BASE_URL` / `_MODEL` / `_API_KEY`. Switching between the local Qwen
+(llama.cpp on `http://127.0.0.1:8080/v1`) and a cloud endpoint is an `.env` edit, never a
+code change. Qwen reasons by default and bills it to `max_tokens`, which returns empty
+content with `finish_reason: length` — `buildTuning()` disables it per request via
+`chat_template_kwargs`, the only override this template honours.
+
+The admin assistant (`/api/admin-assistant`, panel mounted in `app/(payload)/layout.tsx`)
+**never writes**. Its `propose_*` tools validate and stage a `Proposal`; the operator
+confirms it and `/api/admin-assistant/apply` re-validates from scratch before executing
+through the existing domain functions (`runOrderAction`, `payload.update`,
+`payload.updateGlobal`). Tools receive Payload through `ctx.payload` and must never import
+`@payload-config` — see `docs/superpowers/specs/2026-08-10-local-qwen-admin-assistant-design.md`.

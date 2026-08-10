@@ -5,6 +5,7 @@ import { handleServerFunctions, RootLayout } from '@payloadcms/next/layouts';
 import { redirect } from 'next/navigation';
 import type { ServerFunctionClient } from 'payload';
 import type { ReactElement, ReactNode } from 'react';
+import AdminAssistantLauncher from '@/components/admin-assistant/AdminAssistantLauncher';
 import { getAdminUser } from '@/lib/admin';
 import { getPayloadAdminUser } from '@/lib/payload-admin-sync';
 import { importMap } from './admin/importMap.js';
@@ -52,6 +53,9 @@ export default async function PayloadAppLayout({
       serverFunction={serverFunction}
     >
       {children}
+      {/* Mounted here rather than through admin.components so it also reaches the custom
+          Next pages under (payload)/admin (orders, coupons, reviews, …). */}
+      <AdminAssistantLauncher />
     </RootLayout>
   );
 };
