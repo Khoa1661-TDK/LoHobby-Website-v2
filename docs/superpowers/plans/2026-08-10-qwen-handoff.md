@@ -20,6 +20,17 @@ Shared rules to paste at the end of every batch message:
 > `.startsWith()` / `.split()`. Payload relationship ids are numbers, never strings.
 > Every tool exports a `const` matching the `AdminTool` type: `{ definition, run }`.
 > Return `ok(...)` / `fail(...)` from tool-kit, never throw. Error messages in Vietnamese.
+> The code must pass `tsc --noEmit`, not just the tests. Do not use `any` to silence a type
+> error — narrow through `unknown` and a `Record<string, unknown>` cast instead.
+
+### Learned from batch A
+
+Batch A passed all 13 tests on the first run but failed `tsc` in three places. Both causes
+are now guarded above: `--lint-cmd` makes Aider feed type errors back for self-correction,
+and the `any` rule closes the escape hatch the model reached for.
+
+Also note: the Products collection's `category` field is `hasMany: true`, so it is **always
+an array** of ids, never a single id.
 
 ---
 
@@ -28,6 +39,7 @@ Shared rules to paste at the end of every batch message:
 ```bash
 cd ~/Ecommerce-Web
 aider --edit-format whole --yes --auto-test \
+  --lint-cmd "node_modules/.bin/tsc --noEmit" \
   --test-cmd "node_modules/.bin/vitest run lib/__tests__/admin-assistant-order-tools.test.ts lib/__tests__/admin-assistant-product-tools.test.ts" \
   --read lib/admin-assistant/types.ts \
   --read lib/admin-assistant/tool-kit.ts \
@@ -58,6 +70,7 @@ Message:
 ```bash
 cd ~/Ecommerce-Web
 aider --edit-format whole --yes --auto-test \
+  --lint-cmd "node_modules/.bin/tsc --noEmit" \
   --test-cmd "node_modules/.bin/vitest run lib/__tests__/admin-assistant-nav-tools.test.ts lib/__tests__/admin-assistant-settings-tools.test.ts" \
   --read lib/admin-assistant/types.ts \
   --read lib/admin-assistant/tool-kit.ts \
@@ -90,6 +103,7 @@ Message:
 ```bash
 cd ~/Ecommerce-Web
 aider --edit-format whole --yes --auto-test \
+  --lint-cmd "node_modules/.bin/tsc --noEmit" \
   --test-cmd "node_modules/.bin/vitest run lib/__tests__/admin-assistant-propose-order.test.ts lib/__tests__/admin-assistant-propose-product.test.ts lib/__tests__/admin-assistant-propose-settings.test.ts" \
   --read lib/admin-assistant/types.ts \
   --read lib/admin-assistant/tool-kit.ts \
@@ -112,7 +126,7 @@ Message:
 >
 > `propose_order_action(docId, action, carrierKey?, trackingNumber?, customTrackingUrl?)` — fetch orders the same way find-orders does, map with `mapOrderToFulfillmentView`, find the matching docId. Reject unless `isOrderAction(action)` and the action is in `availableActions(view)` — the error must list what IS allowed. `ship` additionally requires carrierKey and trackingNumber, which go into `proposal.input`. Summary uses `ACTION_LABELS[action]` and the order code, all from `@/lib/order-transitions`.
 >
-> `propose_product_update(id, fields)` — accept only fields passing `isWritableProductField`; anything else fails naming the allowed list. Validate per field: title non-empty string, price number ≥ 0, stock integer ≥ 0, available/onSale boolean, salePercent integer 0-100, category integer (a string category id must fail — Payload rejects string relationship ids). Empty `fields` fails. Verify the product exists with `findByID` and use its title in the summary.
+> `propose_product_update(id, fields)` — accept only fields passing `isWritableProductField`; anything else fails naming the allowed list. Validate per field: title non-empty string, price number ≥ 0, stock integer ≥ 0, available/onSale boolean, salePercent integer 0-100. `category` is a hasMany relationship: accept an integer or an array of integers and normalise it to an array of integers in the proposal; a string id must fail, because Payload rejects string relationship ids. Empty `fields` fails. Verify the product exists with `findByID` and use its title in the summary.
 >
 > `propose_product_images(id, image?, gallery?)` — at least one of image/gallery required. `gallery` must be an array of integers. Verify the product exists, then verify every media id exists via `ctx.payload.find({collection:'media', depth:0, where:{id:{in: ids}}})` and fail listing any that are missing.
 >

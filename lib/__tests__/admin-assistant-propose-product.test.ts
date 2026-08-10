@@ -46,6 +46,16 @@ describe('proposeProductUpdateTool', () => {
     expect(outcome.content).toContain('ERROR:');
   });
 
+  it('should normalise a single category id into the hasMany array shape', async () => {
+    const outcome = await proposeProductUpdateTool.run({ id: 5, fields: { category: 2 } }, ctx());
+    expect(outcome.emit).toMatchObject({ fields: { category: [2] } });
+  });
+
+  it('should accept an array of category ids', async () => {
+    const outcome = await proposeProductUpdateTool.run({ id: 5, fields: { category: [2, 3] } }, ctx());
+    expect(outcome.emit).toMatchObject({ fields: { category: [2, 3] } });
+  });
+
   it('should reject an empty field set', async () => {
     const outcome = await proposeProductUpdateTool.run({ id: 5, fields: {} }, ctx());
     expect(outcome.content).toContain('ERROR:');

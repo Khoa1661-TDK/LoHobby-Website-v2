@@ -12,7 +12,8 @@ const productDoc = {
   available: true,
   onSale: false,
   salePercent: 0,
-  category: { id: 2, title: 'Trang trí' },
+  // `category` is hasMany on the Products collection, so it is always an array.
+  category: [{ id: 2, title: 'Trang trí' }],
   image: { id: 9, filename: 'frame.jpg' },
   gallery: [{ media: { id: 10, filename: 'frame-2.jpg' } }],
   variants: { docs: [{ id: 3, name: 'Đen', stock: 2, sku: 'F-BLK' }] },
@@ -51,7 +52,8 @@ describe('getProductTool', () => {
     const findByID = vi.fn().mockResolvedValue(productDoc);
     const outcome = await getProductTool.run({ id: 5 }, ctx(vi.fn(), findByID));
     const product = JSON.parse(outcome.content) as Record<string, unknown>;
-    expect(product).toMatchObject({ id: 5, image: 9, categoryId: 2 });
+    expect(product).toMatchObject({ id: 5, image: 9 });
+    expect(product.categoryIds).toEqual([2]);
     expect(product.gallery).toEqual([10]);
     expect(product.variants).toEqual([{ id: 3, name: 'Đen', sku: 'F-BLK', stock: 2 }]);
   });
