@@ -120,7 +120,34 @@ Message:
 
 ---
 
+## Verifying a batch
+
+**Do not trust Qwen saying "done".** Local models claim success routinely. The objective
+signal is the exit code. `--auto-test` already loops on the test command, but tests alone
+miss two things that break the app at runtime rather than in vitest: a `@payload-config`
+import (TDZ-crashes every Payload route) and a bracketed regex in `lib/` (kills the whole
+Tailwind stylesheet).
+
+Run this after each batch — it prints `BATCH OK` only if everything holds:
+
+```bash
+node_modules/.bin/vitest run lib/__tests__/admin-assistant-*.test.ts \
+  && node_modules/.bin/tsc --noEmit \
+  && ! grep -rn "from '@payload-config'" lib/admin-assistant/ \
+  && echo "BATCH OK"
+```
+
+Note `! grep` — it inverts, so the chain passes only when there is no match.
+
+The bracketed-regex rule can't be grepped cleanly (too many false positives). Eyeball the
+diff for regex literals instead; if the tools use `.includes()` / `.startsWith()` /
+`.split()` as instructed, there won't be any.
+
+`auto-commits: false` is set in your Aider config, so nothing enters git until you review
+the diff. Keep it that way.
+
 ## After all three batches
 
 Tell Claude "batches done" — remaining work is the registry, both API routes, the chat panel
-and the layout mount, plus a full-suite verification.
+and the layout mount, plus a full-suite verification. Claude re-runs the checks above
+independently, so a false "done" gets caught there too.
