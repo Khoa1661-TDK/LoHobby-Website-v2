@@ -395,7 +395,8 @@ builder (the local server does report `capabilities: ["completion","multimodal"]
 
 Vitest, colocated in `lib/admin-assistant/__tests__/` and `lib/ai/__tests__/`.
 
-- **Every tool file gets a test file.** Write tools are pure validators, so their tests need
+- **Every tool file gets a test file, written by the architect before the implementation**
+  (§14). Write tools are pure validators, so their tests need
   no Payload: feed args, assert the proposal or the error string. Read tools take a stub
   `ctx.payload` with a `find`/`findByID` fake.
 - `agent-loop.ts`: fed a fake non-streaming completion object — asserts tool dispatch order,
@@ -459,26 +460,100 @@ Layout mounting is strictly better here.
 - **llama.cpp not running.** Handled explicitly by `probeLlm` with a named error rather than
   a raw ECONNREFUSED in the chat.
 
-## 13. Task slicing
+## 13. Task slicing and division of labour
 
-Eighteen tasks, sized for a 128k window with named files only.
+The implementor is Qwen3.6-35B-A3B through Aider (~40 tok/s, `map-tokens: 0`, files named
+explicitly). That model is reliable at *writing one new self-contained file against a frozen
+interface* and unreliable at *subtle streaming state machines, multi-concern React, and
+byte-exact edits inside large existing files*. The work is split accordingly.
+
+### Tier A — architect writes (≈650 of ~2,400 lines)
+
+These four are hand-written before Qwen starts, because their failure mode is silent rather
+than loud: a plausible-looking wrong version passes a naive test.
+
+| # | Deliverable | Why not Qwen |
+|---|---|---|
+| A1 | `lib/ai/agent-loop.ts` | The streamed tool-call accumulator (id/name arrive once, `arguments` in fragments keyed by `index`) is subtle enough that a wrong version looks right |
+| A2 | `lib/admin-assistant/types.ts` | Every other task depends on this interface being exactly right |
+| A3 | `components/admin-assistant/AdminAssistantPanel.tsx` | ~500 lines mixing streaming state, abort, localStorage and confirm cards; ~3 min per generation attempt at 40 tok/s makes iteration uneconomic |
+| A4 | **Every test file for tiers B and C** | See §14 — this is the single highest-leverage split |
+
+### Tier B — Qwen implements against pre-written tests
+
+New file, frozen interface, closed loop: the task is "make
+`node_modules/.bin/vitest run <test file>` pass".
 
 | # | Deliverable | Depends on |
 |---|---|---|
-| 1 | `lib/ai/provider.ts` + tests | — |
-| 2 | `lib/ai/parse-ndjson.ts`; `parse-stream.ts` delegates to it | — |
-| 3 | `lib/ai/agent-loop.ts` + tests | 1 |
-| 4 | `lib/admin-assistant/types.ts` (types only, no logic) | — |
-| 5 | Page-builder route: provider + probe + turn env (4 edits, §3.3) | 1 |
-| 6-9 | Read tools: `find-orders`, `get-order`, `find-products`, `get-product` | 4 |
-| 10 | Read tools: `search-media`, `read-settings`, `describe-target`, `open-admin-page` | 4 |
-| 11 | `propose-order-action.ts` + tests | 4 |
-| 12 | `propose-product-update.ts` + `propose-product-images.ts` + tests | 4 |
-| 13 | `propose-settings-update.ts` + tests | 4 |
-| 14 | `registry.ts` + `system-prompt.ts` | 6-13 |
-| 15 | `apply.ts` + `app/api/admin-assistant/apply/route.ts` + tests | 11-13 |
-| 16 | `app/api/admin-assistant/route.ts` + rate-limit preset + middleware branch | 3, 14 |
-| 17 | `AdminAssistantPanel.tsx` + `AdminAssistantLauncher.tsx` + layout mount | 16 |
-| 18 | `.env.example` + `CLAUDE.md` context note | 5, 16 |
+| B1 | `lib/ai/provider.ts` | — |
+| B2 | `lib/ai/parse-ndjson.ts` | — |
+| B3 | `tools/find-orders.ts` | A2 |
+| B4 | `tools/get-order.ts` | A2 |
+| B5 | `tools/find-products.ts` | A2 |
+| B6 | `tools/get-product.ts` | A2 |
+| B7 | `tools/search-media.ts` + `tools/open-admin-page.ts` | A2 |
+| B8 | `tools/read-settings.ts` + `tools/describe-target.ts` | A2 |
+| B9 | `tools/propose-order-action.ts` | A2 |
+| B10 | `tools/propose-product-update.ts` + `tools/propose-product-images.ts` | A2 |
+| B11 | `tools/propose-settings-update.ts` | A2 |
+| B12 | `registry.ts` + `system-prompt.ts` | B3-B11 |
+| B13 | `lib/admin-assistant/apply.ts` | B9-B11 |
+| B14 | `app/api/admin-assistant/apply/route.ts` | B13 |
+| B15 | `app/api/admin-assistant/route.ts` | A1, B12 |
 
-Tasks 6-13 are mutually independent and can run in any order or in parallel.
+B3-B11 are mutually independent and may run in any order or in parallel.
+
+### Tier C — transcription tasks (verbatim edit blocks supplied)
+
+Edits inside existing files, where Aider's SEARCH block must match byte-for-byte. The plan
+carries the **literal before/after text** for each, so Qwen transcribes rather than derives.
+
+| # | File | Edit |
+|---|---|---|
+| C1 | `app/api/page-builder/assistant/route.ts` | The 4 edits in §3.3 |
+| C2 | `lib/page-builder/assistant/parse-stream.ts` | Delegate to `lib/ai/parse-ndjson.ts` |
+| C3 | `lib/rate-limit.ts` + `middleware.ts` | `adminAssistant` preset + its middleware branch |
+| C4 | `app/(payload)/layout.tsx` | Mount `AdminAssistantLauncher` beside `{children}` |
+| C5 | `.env.example` + `CLAUDE.md` | Document the local-Qwen env block |
+
+`AdminAssistantLauncher.tsx` is a ~40-line new file and rides along with C4.
+
+## 14. Implementor workflow
+
+**Tests come first and are not written by the implementor.** If the same model writes both the
+test and the code, a misread spec produces a test that agrees with the misreading — green
+suite, wrong behaviour. The architect writes every test file in tiers B and C first; Qwen's
+job is to turn it green. This is the difference between "the model wrote something plausible"
+and "the model wrote something correct".
+
+Per-task Aider procedure:
+
+1. Start `~/llama.cpp/run-qwen.sh` and confirm `curl http://127.0.0.1:8080/v1/models`.
+2. One task per Aider session. `/add` the target file and its test file only.
+3. `/read-only` `lib/admin-assistant/types.ts` plus one already-finished tool as a worked
+   example. Nothing else — this model degrades as the file set grows.
+4. Settings for the run:
+   ```yaml
+   edit-format: whole      # tiers A/B (new files); use diff only for tier C
+   auto-test: true
+   test-cmd: node_modules/.bin/vitest run
+   lint-cmd: node_modules/.bin/tsc --noEmit
+   ```
+5. Leave reasoning ON. It roughly doubles wall-clock per task but materially improves
+   adherence to a strict interface; the retries it prevents cost more than it does.
+6. `auto-commits: false` stays. Review every diff before it enters git.
+7. Tier C only: paste the SEARCH/REPLACE block from the plan verbatim rather than describing
+   the change.
+
+Expected cost: tier-B tool tasks run 2-4 minutes each including one retry.
+
+## 15. Verification gates
+
+- `node_modules/.bin/vitest run` — full suite green, including the 501 existing page-builder
+  assistant tests.
+- `node_modules/.bin/tsc --noEmit` — clean.
+- Manual drive with llama.cpp running: ask "where do I change shipping fees" (expect a link
+  card, no write), then "confirm order #<code>" (expect a proposal card, then a real status
+  change after Confirm), then stop llama.cpp and re-ask (expect the named
+  "local model is not running" error, not a raw ECONNREFUSED).
