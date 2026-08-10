@@ -1,5 +1,6 @@
 import type { Mutation } from './validate';
 import type { Locale } from '@/i18n/routing';
+import { parseNdjsonStream } from '@/lib/ai/parse-ndjson';
 
 export type AssistantEvent =
   | { type: 'mutation'; mutation: Mutation; locales: Locale[] }
@@ -11,23 +12,8 @@ export type AssistantEvent =
   | { type: 'error'; error: string }
   | { type: 'done' };
 
-export async function* parseAssistantStream(
+export function parseAssistantStream(
   body: ReadableStream<Uint8Array>,
 ): AsyncGenerator<AssistantEvent> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let nl: number;
-    while ((nl = buffer.indexOf('\n')) >= 0) {
-      const line = buffer.slice(0, nl).trim();
-      buffer = buffer.slice(nl + 1);
-      if (line) yield JSON.parse(line) as AssistantEvent;
-    }
-  }
-  const tail = buffer.trim();
-  if (tail) yield JSON.parse(tail) as AssistantEvent;
+  return parseNdjsonStream<AssistantEvent>(body);
 }

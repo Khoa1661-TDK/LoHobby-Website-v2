@@ -2,7 +2,6 @@
 // Talks to any OpenAI-compatible chat-completions endpoint. Defaults to Google
 // Gemini Flash (free AI Studio tier); point it at DeepSeek/OpenRouter/etc by
 // setting ASSISTANT_LLM_BASE_URL + ASSISTANT_LLM_MODEL with no code change.
-import OpenAI from 'openai';
 import type {
   ChatCompletionMessageParam,
   ChatCompletionContentPart,
@@ -27,16 +26,21 @@ import {
 } from '@/lib/page-builder/assistant/validate';
 import { applyDualMutation, resolveLocales, type LocaleLayouts } from '@/lib/page-builder/assistant/apply-dual';
 import { type Locale } from '@/i18n/routing';
+import {
+  LlmNotConfiguredError,
+  getLlmConfig,
+  getMaxTurns,
+  probeLlm,
+  type LlmConfig,
+} from '@/lib/ai/provider';
 
 export const runtime = 'nodejs';
 
-// Gemini's OpenAI-compatible endpoint + a cheap, tool-calling-capable default.
-const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/';
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+// Provider defaults now live in lib/ai/provider.ts so both AI surfaces share them.
 // Dual-locale copy, describe_block lookups, resource searches, and one-structural-edit-
 // at-a-time mean a full page build runs long. At 16 the loop stopped mid-build, leaving a
-// half-finished page.
-const MAX_TURNS = 28;
+// half-finished page. Overridable with ASSISTANT_LLM_MAX_TURNS for slow local models.
+const DEFAULT_MAX_TURNS = 28;
 const MAX_TOKENS = 8192;
 
 function newBlockKey(): string {
@@ -142,11 +146,15 @@ export async function POST(request: Request): Promise<Response> {
   }
   const { layouts, activeLocale } = readLayouts(body);
 
-  const apiKey = process.env.ASSISTANT_LLM_API_KEY;
-  if (!apiKey) return bad(500, 'Assistant is not configured.');
-  const baseURL = process.env.ASSISTANT_LLM_BASE_URL?.trim() || DEFAULT_BASE_URL;
-  const model = process.env.ASSISTANT_LLM_MODEL?.trim() || DEFAULT_MODEL;
-  const client = new OpenAI({ apiKey, baseURL });
+  let cfg: LlmConfig;
+  try {
+    cfg = getLlmConfig();
+  } catch (err) {
+    if (err instanceof LlmNotConfiguredError) return bad(500, err.message);
+    throw err;
+  }
+  const { client, model } = cfg;
+  const maxTurns = getMaxTurns(DEFAULT_MAX_TURNS);
 
   const schemas = getBlockSchemas();
   const system = buildSystemPrompt(schemas);
@@ -262,7 +270,12 @@ export async function POST(request: Request): Promise<Response> {
       }
 
       try {
-        for (let turn = 0; turn < MAX_TURNS; turn++) {
+        const unreachable = await probeLlm(cfg);
+        if (unreachable) {
+          send({ type: 'error', error: unreachable });
+          return;
+        }
+        for (let turn = 0; turn < maxTurns; turn++) {
           const result = await client.chat.completions.create({
             model,
             max_tokens: MAX_TOKENS,
@@ -270,6 +283,7 @@ export async function POST(request: Request): Promise<Response> {
             tool_choice: 'auto',
             messages,
             stream: true,
+            ...cfg.tuning,
           });
 
           const { content, toolCalls } = await collectResponse(result, (t) =>

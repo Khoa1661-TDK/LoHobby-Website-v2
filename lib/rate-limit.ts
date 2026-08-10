@@ -78,6 +78,9 @@ export const RATE_LIMIT_PRESETS = {
   checkout: { limit: 10, windowMs: 60_000 },
   // AI assistant makes a paid Anthropic LLM call per request — keep this tight.
   assistant: { limit: 10, windowMs: 60_000 },
+  // Admin assistant turns are short and often local; a looser bucket so triage
+  // (several quick lookups in a row) doesn't trip the limiter.
+  adminAssistant: { limit: 20, windowMs: 60_000 },
   auth: { limit: 20, windowMs: 60_000 },
   api: { limit: 60, windowMs: 60_000 },
   // Analytics beacons get their own looser bucket so they never starve the
