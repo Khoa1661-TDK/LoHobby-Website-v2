@@ -2502,21 +2502,22 @@ describe('buildFunnel', () => {
   it('should render three stages with widths and drop-offs', () => {
     const stages = buildFunnel(8204, 2610, 227);
     expect(stages).toHaveLength(3);
-    expect(stages[0].label).toBe('Lượt xem sản phẩm');
-    expect(stages[0].value).toBe('8.204');
-    expect(stages[0].width).toBe('100%');
-    expect(stages[1].label).toBe('Thêm giỏ hàng');
-    expect(stages[1].width).toBe('32%');
-    expect(stages[2].label).toBe('Mua hàng');
-    expect(stages[2].drop).toBeUndefined();
+    expect(stages.map((s) => s.label)).toEqual([
+      'Lượt xem sản phẩm',
+      'Thêm giỏ hàng',
+      'Mua hàng',
+    ]);
+    expect(stages.map((s) => s.value)).toEqual(['8.204', '2.610', '227']);
+    expect(stages.map((s) => s.width)).toEqual(['100%', '32%', '3%']);
+    expect(stages.at(-1)?.drop).toBeUndefined();
   });
 
   it('should express the drop-off from views to carts as a percentage', () => {
-    expect(buildFunnel(8204, 2610, 227)[0].drop).toBe('↓ 68,2%');
+    expect(buildFunnel(8204, 2610, 227).at(0)?.drop).toBe('↓ 68,2%');
   });
 
   it('should floor a tiny stage width so the bar stays visible', () => {
-    expect(buildFunnel(10000, 5000, 1)[2].width).toBe('2%');
+    expect(buildFunnel(10000, 5000, 1).at(2)?.width).toBe('2%');
   });
 
   it('should render zero counts and no drop-offs when there is no traffic', () => {
