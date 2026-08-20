@@ -9,7 +9,7 @@ import { Button } from '@/components/console/ui/Button';
 import { StatusPill } from '@/components/console/ui/StatusPill';
 import type { PillTone } from '@/components/console/ui/StatusPill';
 
-export type CampaignStatus = 'sent' | 'scheduled' | 'draft';
+export type CampaignStatus = 'sent' | 'scheduled' | 'draft' | 'cancelled';
 
 export interface CampaignRow {
   id: string;
@@ -18,25 +18,21 @@ export interface CampaignRow {
   status: CampaignStatus;
 }
 
-export const CAMPAIGN_ROWS: CampaignRow[] = [
-  { id: 'm1', subject: 'Khuyến mãi tháng 8 — giảm 15%', status: 'sent' },
-  { id: 'm2', subject: 'Sản phẩm mới về — Mô hình máy bay', status: 'scheduled' },
-  { id: 'm3', subject: 'Nhắc giỏ hàng bị bỏ quên', status: 'draft' },
-];
-
 const STATUS_TONE: Record<CampaignStatus, PillTone> = {
   sent: 'ok',
   scheduled: 'busy',
   draft: 'neutral',
+  cancelled: 'fail',
 };
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
   sent: 'Đã gửi',
   scheduled: 'Đã lên lịch',
   draft: 'Bản nháp',
+  cancelled: 'Đã huỷ',
 };
 
-export function CampaignsPanel() {
+export function CampaignsPanel({ rows }: { rows: CampaignRow[] }) {
   return (
     <div className="flex flex-col gap-[14px]">
       <PageHeader
@@ -44,11 +40,11 @@ export function CampaignsPanel() {
         actions={<Button variant="primary">Soạn chiến dịch</Button>}
       />
       <div className="flex flex-col gap-[2px]">
-        {CAMPAIGN_ROWS.map((row, i) => (
+        {rows.map((row, i) => (
           <div
             key={row.id}
             className={`flex items-center gap-3 py-[10px] ${
-              i < CAMPAIGN_ROWS.length - 1 ? 'border-b border-[var(--adm-line)]' : ''
+              i < rows.length - 1 ? 'border-b border-[var(--adm-line)]' : ''
             }`}
           >
             <span className="flex-1 font-medium text-[var(--adm-ink)]">{row.subject}</span>

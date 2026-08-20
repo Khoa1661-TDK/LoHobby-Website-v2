@@ -11,12 +11,19 @@ import { CouponsPanel } from '@/components/console/marketing/CouponsPanel';
 import { GiftCardsPanel } from '@/components/console/marketing/GiftCardsPanel';
 import { CampaignsPanel } from '@/components/console/marketing/CampaignsPanel';
 import { AutoSalePanel } from '@/components/console/marketing/AutoSalePanel';
-import { listCouponRows, listGiftCardRows } from '@/lib/console/marketing';
+import {
+  getAutoSaleFacts,
+  listCampaignRows,
+  listCouponRows,
+  listGiftCardRows,
+} from '@/lib/console/marketing';
 
 export default async function MarketingPage() {
-  const [couponRows, giftCardRows] = await Promise.all([
+  const [couponRows, giftCardRows, campaignRows, autoSaleFacts] = await Promise.all([
     listCouponRows(),
     listGiftCardRows(),
+    listCampaignRows(),
+    getAutoSaleFacts(),
   ]);
 
   return (
@@ -25,8 +32,8 @@ export default async function MarketingPage() {
         panels={{
           coupons: <CouponsPanel rows={couponRows} />,
           'gift-cards': <GiftCardsPanel rows={giftCardRows} />,
-          campaigns: <CampaignsPanel />,
-          'auto-sale': <AutoSalePanel />,
+          campaigns: <CampaignsPanel rows={campaignRows} />,
+          'auto-sale': <AutoSalePanel facts={autoSaleFacts} />,
         }}
       />
     </div>
