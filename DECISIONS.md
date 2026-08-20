@@ -408,3 +408,38 @@ See `rules/common/decisions.md` for the logging format and rules.
 **Revisit if:** The owner wants urgency messaging on auto slides (needs a per-product sale-end date, which does not exist yet), or a seasonal sale routinely discounts more than six products and the cap starts hiding real inventory.
 
 ---
+
+## 2026-08-20 — Admin console is built presentation-first, with fixtures before data
+**Chosen:** Build all 23 console screens as presentational React components over typed module-scope fixtures lifted verbatim from the design artboards, with the exported row/detail types as the contract, and wire Payload/Prisma data as a separate later pass.
+**Alternatives:** Build each screen complete (UI + queries + actions) one at a time; build the data layer first and lay UI over it; skip fixtures and render against live Payload from the start.
+**Why:** The design was delivered as 27 static HTML artboards, so translating them is mechanical work with an objective right answer — which made it safe to delegate to the local model and to verify mechanically (every visible artboard string must survive into the code). Screen-complete tasks would have mixed that mechanical work with query design, ownership checks and cache-tag decisions, which are judgement calls that need the whole system in view. Fixtures also keep the delegated tasks genuinely independent: disjoint component directories meant several could run concurrently without collision, which a shared data layer would have prevented. The exported types are the real deliverable of this pass — the data layer implements shapes that already exist rather than inventing them.
+**Trade-offs:** Every screen currently lies — it renders convincing Vietnamese data that comes from nowhere, so the console looks finished while being entirely inert, and anyone opening it could mistake it for working software. Some fixture shapes will prove wrong once real queries land (join depth, nullable fields, pagination), forcing rework in components already marked done. Three screens (crawler launcher, live progress, review queue) have no backend at all yet, so their fixtures encode guesses about data that does not exist.
+**Revisit if:** The data-wiring pass finds it is rewriting component internals rather than just replacing the fixture import — that would mean the type contracts were drawn at the wrong level and should have been derived from Payload's generated types instead.
+
+---
+
+## 2026-08-20 — One artboard per delegated spec
+**Chosen:** Each task handed to the local model contains exactly one design artboard. Multi-board tasks are split, even when the boards are two states of one screen.
+**Why:** Measured across 23 screens. Every single-board spec scored 96–100% on artboard-string fidelity; every second-or-later board inside a multi-board spec degraded — queue detail 14%, job progress 74%, mobile orders 77%, order detail 83%. The cause is context: a multi-board spec ran 7–10k tokens, and once the harness read repo files and generated output it compacted, dropping the artboard — after which the model reconstructed the screen from surrounding files and produced something that type-checked cleanly and was entirely invented. Fidelity tracked spec size, not task difficulty. Raising the per-slot window from 32k to 49k helped but did not fix it; splitting the specs did.
+**Trade-offs:** More tasks to launch and track, and boards that share a component file (a list and its mobile layout) are now written by two runs that cannot see each other, so shared fixtures must be reconciled by hand afterwards — that is exactly how the mobile board ended up missing an order row the desktop board never showed.
+**Revisit if:** A future model handles the full spec without compacting, or the harness gains artboard re-reading so a lost attachment can be recovered rather than guessed.
+
+---
+
+## 2026-08-20 — Colour in the console comes only from tokens, enforced by a no-hex rule
+**Chosen:** No hex literal may appear in console component code. Every colour resolves to an `--adm-*` custom property in `app/admin-theme.css`; a colour with no token is left as an explicit `TODO(design):` marker naming the hex, never approximated or inlined.
+**Alternatives:** Let each screen use the artboard's hex values directly; map colours to the storefront's existing `:root` variables; allow `dark:` Tailwind variants per component.
+**Why:** The console is monochrome with colour reserved for status, while the storefront ships a blue-accented palette — sharing variables would drag blue into a console designed without it. The no-hex rule turned out to matter more as a *detector* than as a style rule: it surfaced five real gaps in the token set (`--adm-placeholder`, `--adm-action-ink-2`, `--adm-line-2`, `--adm-fill`, `--adm-fill-2`), because the design's five-step grey ramp had been flattened to three in the first pass. Without the rule those shades would have been silently hardcoded by whichever screen needed them first and never reconciled. Theme switching also stays correct by construction: tokens flip under `[data-theme='dark']`, so a screen drawn from the dark artboard needs no dark-specific code.
+**Trade-offs:** Adds a round-trip whenever a genuinely new shade appears, and the token names encode role rather than value, so a contributor who wants "that light grey" must know which role they mean.
+**Revisit if:** The token count grows past what one file can hold legibly, or a second surface (storefront) needs the same ramp — at which point the ramp should move to a shared layer rather than being duplicated.
+
+---
+
+## 2026-08-20 — Vietnamese TTS: VieNeu-TTS, because everything better is non-commercial
+**Chosen:** VieNeu-TTS v3 Turbo (Apache 2.0, code and weights) for the Shopee Live AI host's voice, cloned from a Mozilla Common Voice Vietnamese clip (CC0), with Piper VN (MIT) as the failover. Runs on CPU via ONNX Runtime.
+**Alternatives:** viXTTS / XTTS-v2 (the default recommendation everywhere and the best-sounding option), VietTTS by dangvansam, F5-TTS Vietnamese fine-tunes, Piper alone.
+**Why:** The host sells products on a live commercial channel, so every model in the runtime path must permit commercial use, and almost none of the Vietnamese voice-cloning ecosystem does. XTTS-v2's weights are under the Coqui Public Model License — non-commercial — and Coqui shut down in January 2024, so the "buy a commercial licence" escape hatch no longer has anyone on the other end of it. VietTTS ships Apache 2.0 code with CC BY-NC weights; F5-TTS's base weights are CC-BY-NC and the Vietnamese fine-tunes inherit it. Wav2Lip was ruled out of the lip-sync slot for the same reason. VieNeu-TTS was the only option found that is Apache 2.0 throughout, clones from 3-5s of reference, and speaks Vietnamese. Its CPU/ONNX path turned out to be a bonus rather than a compromise: TTS uses zero VRAM, which left both GPUs free for the LLM and MuseTalk and turned a tight hardware budget into a comfortable one.
+**Trade-offs:** Likely a step down in raw voice quality from XTTS-v2, which is the model every tutorial points at. The CC0 reference corpus is read-aloud speech, so the clip has to be auditioned for a conversational speaker or the host inherits a reading voice. Piper failover is audibly robotic — acceptable only because a robotic sentence beats dead air on a livestream.
+**Revisit if:** An Apache/MIT Vietnamese voice-cloning model with better prosody appears, or the shop obtains a commercial licence for a stronger model from a vendor that still exists.
+
+---
