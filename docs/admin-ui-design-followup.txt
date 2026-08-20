@@ -1,0 +1,53 @@
+Two gaps from the first pass — please add to the same canvas, matching the system
+already established (Paper/Carbon tokens, IBM Plex Sans + Mono, VN copy, status
+pills only).
+
+## 1. Missing artboard — Dashboard (screen 2 from the brief)
+
+It was in the brief but no artboard was produced; "Bảng điều khiển" currently exists
+only as a nav item in the shell. Add it at full fidelity, placed in Row 0 after the
+app shell, since it is the landing screen.
+
+Build it from the event data the app actually collects — these are real tables, use
+these exact dimensions:
+
+  VisitSession      — source, medium, campaign, referrer, landingPath,
+                      firstSeenAt / lastSeenAt  (traffic attribution)
+  ProductViewEvent  — productHandle, dwellMs, createdAt  (views + engagement depth)
+  AddToCartEvent    — productHandle, quantity, createdAt
+  PurchaseEvent     — orderCode, createdAt
+  ProductCtrDaily   — productId, day, impressions, clicks  (daily CTR rollup)
+
+Panels to include:
+  - revenue over time, VND, with a period selector (7 / 30 / 90 ngày)
+  - conversion funnel: lượt xem → thêm vào giỏ → mua hàng, with drop-off percentages
+    between stages. This is the centrepiece — it is the one view that makes the event
+    data worth collecting.
+  - top products by CTR from ProductCtrDaily — impressions, clicks, CTR %, using the
+    real long Vietnamese product titles so truncation is designed, not assumed
+  - traffic by source/medium
+  - recent orders, linking through to order detail
+  - a compact crawler status strip: last crawl, when, how many products found, and
+    whether the desktop worker is currently online. Reuse the "Ngoại tuyến" pill
+    already designed in the style tile — do not invent a second offline treatment.
+
+Density over decoration, consistent with the rest of the console: this is a morning
+status check, not a marketing dashboard. Tabular figures in IBM Plex Mono everywhere
+a number appears.
+
+## 2. Small fix — variant table is missing SKU
+
+The variant table inside the product editor (artboard 7) has name, price and stock but
+no SKU column. SKU is the field the crawler matches on when re-crawling a shop, so it
+has to be visible and editable. Add it as a monospace column. Real format looks like
+sp-11085546208-0 — long enough that column width is a real decision.
+
+## Note on what you swapped, no change needed
+
+The brief asked for the crawler review queue as grid + per-product detail, and
+deliberately deferred the product editor on the grounds that the detail view would
+establish the gallery/variant/price vocabulary first. You built the product editor
+instead and left the review-queue detail out. That is fine — the vocabulary got
+solved either way. Flagging only so the review-queue detail is understood as
+outstanding rather than forgotten; add it if it is cheap, otherwise it can inherit
+from artboard 7 at build time.

@@ -1,0 +1,193 @@
+/* app/admin-theme.css
+ *
+ * Token scope for the custom admin console (the screens replacing Payload's
+ * admin UI). Deliberately NOT the storefront's :root variables.
+ *
+ * Why a separate scope: the storefront ships a blue-accented palette
+ * ("redesign-3" in globals.css) while the console is monochrome with colour
+ * reserved for status. Sharing --surface/--ink would mean either dragging blue
+ * into a console designed without it, or restyling the storefront as a side
+ * effect of building the console. Both are wrong.
+ *
+ * Every value here is LIFTED from the design canvas, not approximated — light
+ * values from the style tile and app shell, dark values from the Carbon orders
+ * artboard. Where the canvas and this file disagree, the canvas is right.
+ *
+ * Scope is [data-admin], so importing this file changes nothing until a layout
+ * opts in.
+ */
+
+[data-admin] {
+  /* Paper — light. Three surfaces, not two: the content well behind the cards
+   * is #fafafa, distinct from both the card white and the sidebar grey. */
+  --adm-surface: #ffffff;
+  --adm-raised: #f5f5f5;
+  --adm-well: #fafafa;
+  --adm-line: #e5e5e5;
+
+  /* Ink ramp — four steps. The canvas uses all four and they are not
+   * interchangeable: body/heading, nav item + icon stroke, secondary text, and
+   * the uppercase group labels in the sidebar. */
+  --adm-ink: #111111;
+  --adm-ink-2: #3a3a3a;
+  --adm-ink-3: #6b6b6b;
+  --adm-ink-4: #9a9a9a;
+
+  /* Primary action is ink itself (black fill, white label). No chromatic
+   * accent exists outside status pills. */
+  --adm-action: #111111;
+  --adm-action-ink: #ffffff;
+
+  /* Semantic status — PILLS ONLY. Never layout, buttons, borders, decoration.
+   * Each state is a triplet: pill fill, pill label, and the 6px leading dot,
+   * which is a darker, more saturated cut of the label colour.
+   *   ok    paid · delivered · found
+   *   wait  pending · queued
+   *   fail  failed · canceled · error
+   *   busy  processing · running · info
+   */
+  --adm-ok-bg: #e5f3ea;
+  --adm-ok-ink: #146138;
+  --adm-ok-dot: #1a7f4b;
+  --adm-wait-bg: #f8edd9;
+  --adm-wait-ink: #8a5a06;
+  --adm-wait-dot: #92600a;
+  --adm-fail-bg: #fbe9e8;
+  --adm-fail-ink: #8f1f19;
+  --adm-fail-dot: #b3261e;
+  --adm-busy-bg: #e8f0fd;
+  --adm-busy-ink: #1a4a9c;
+  --adm-busy-dot: #1f5fc4;
+
+  /* One family. Numeric alignment comes from right-alignment plus a fixed
+   * column width (see .adm-num); tabular-nums is an enhancement, not a
+   * dependency — the Google Fonts Vietnamese subset was not verified to carry
+   * the tnum feature. --font-plex is set by next/font in the console layout;
+   * the stack degrades cleanly if absent. */
+  --adm-font: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+
+  /* Spacing — 4px base. Dense by intent: a tool used for hours. */
+  --adm-space-1: 4px;
+  --adm-space-2: 8px;
+  --adm-space-3: 12px;
+  --adm-space-4: 16px;
+  --adm-space-5: 24px;
+  --adm-space-6: 32px;
+
+  /* 3px everywhere. The canvas uses exactly one 999px radius in 26 artboards,
+   * so pills are squared-off too — a pill here is a shape, not a capsule. 50%
+   * is reserved for the status dot and avatars. */
+  --adm-radius: 3px;
+
+  /* Chrome measurements, tokenised because every screen must agree on them or
+   * the console feels stitched together from separate tools. */
+  /* Subtle filled regions — progress tracks, chart bars, skeleton/ghost bars in
+   * the wireframe screens, empty drop zones. Two steps because the canvas uses
+   * both across 13 boards and distinguishes them: --adm-fill for a quiet fill,
+   * --adm-fill-2 one step stronger for the element it sits behind (a title bar
+   * over body bars). Together with --adm-raised, --adm-placeholder and
+   * --adm-line this completes the grey ramp: f5f5f5 f0f0f0 eeeeee e5e5e5 cccccc. */
+  --adm-fill: #f0f0f0;
+  --adm-fill-2: #e8e8e8;
+
+  /* A second, darker line for DASHED placeholder outlines — the "add image"
+   * slot and empty drop targets. The canvas uses two dashed borders and means
+   * them differently: --adm-line dashed for a quiet divider, this for an
+   * actionable empty slot that should read as a target. */
+  --adm-line-2: #cccccc;
+
+  /* Media placeholder. The canvas draws every missing product photo as a flat
+   * #eeeeee square (42 of them across the artboards) — lighter than --adm-raised,
+   * because a thumbnail slot must read as "image goes here", not as a panel.
+   * Distinct token rather than reusing --adm-raised so the two can diverge. */
+  --adm-placeholder: #eeeeee;
+
+  /* Muted label ON an ink-filled surface — the selected-row bar and the dark
+   * bulk-action strip. --adm-ink-3 is unreadable there and --adm-action-ink is
+   * too loud for a secondary label, so this is the third value the pair needs. */
+  --adm-action-ink-2: #cfcfcf;
+
+  --adm-sidebar-w: 260px;
+  --adm-bar-h: 64px;
+  --adm-row-h: 44px;
+}
+
+[data-admin][data-theme='dark'],
+.dark [data-admin] {
+  /* Carbon — dark. Values lifted from the dark orders artboard. Status pills
+   * darken the fill and lighten the label rather than shifting hue, so a red
+   * still reads as red. */
+  --adm-surface: #0b0b0b;
+  --adm-raised: #181818;
+  --adm-well: #0b0b0b;
+  --adm-line: #2a2a2a;
+
+  --adm-ink: #f5f5f5;
+  --adm-ink-2: #d0d0d0;
+  --adm-ink-3: #a0a0a0;
+  --adm-ink-4: #767676;
+
+  --adm-action: #f5f5f5;
+  --adm-action-ink: #0b0b0b;
+
+  --adm-fill: #202020;
+  --adm-fill-2: #262626;
+  --adm-line-2: #3a3a3a;
+  --adm-placeholder: #232323;
+  --adm-action-ink-2: #4a4a4a;
+
+  --adm-ok-bg: #132a1c;
+  --adm-ok-ink: #4fbd7c;
+  --adm-ok-dot: #4fbd7c;
+  --adm-wait-bg: #2a2410;
+  --adm-wait-ink: #e0b23c;
+  --adm-wait-dot: #e0b23c;
+  --adm-fail-bg: #331414;
+  --adm-fail-ink: #e2665f;
+  --adm-fail-dot: #e2665f;
+  --adm-busy-bg: #12213d;
+  --adm-busy-ink: #5b9bec;
+  --adm-busy-dot: #5b9bec;
+}
+
+[data-admin] {
+  background-color: var(--adm-surface);
+  color: var(--adm-ink);
+  font-family: var(--adm-font);
+}
+
+/* Numeric cells: money, quantities, counts, CTR. Right-alignment plus an
+ * explicit column width is what makes the column scan; tabular-nums tightens
+ * it further where the font supports it. */
+.adm-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Status pill. Callers set --adm-pill-* from one of the triplets above; the
+ * pill never picks its own colour, which is what keeps "pills only" an
+ * enforceable rule rather than an aspiration. */
+.adm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--adm-radius);
+  width: fit-content;
+  background: var(--adm-pill-bg, var(--adm-raised));
+  color: var(--adm-pill-ink, var(--adm-ink-3));
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.adm-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--adm-pill-dot, currentColor);
+  flex: none;
+}

@@ -22,7 +22,7 @@ export default async function AdminCampaignsPage(): Promise<ReactElement> {
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-6 md:p-10">
       <header>
-        <Link href="/admin/hub" className="text-sm text-neutral-500 hover:text-neutral-800">
+        <Link href="/admin/console" className="text-sm text-neutral-500 hover:text-neutral-800">
           ← Hub
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-neutral-900">Email campaigns</h1>

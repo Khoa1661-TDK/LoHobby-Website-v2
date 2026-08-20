@@ -1,0 +1,111 @@
+## Deliverable format / layout
+
+One canvas, artboards in labelled horizontal rows by section — not a single long
+column. Rows in this order, because it reads as "foundations → the new thing → daily
+drivers → the rest":
+
+  Row 0  Foundations   style tile, app shell (expanded + collapsed)
+  Row 1  Shopee crawler   launcher, live progress, review queue, product detail
+  Row 2  Catalogue     products list, product editor, categories, media library
+  Row 3  Orders        orders list, order detail, mobile orders
+  Row 4  Content       pages, blog editor, redirects
+  Row 5  Marketing     coupons, gift cards, campaigns, auto-sale
+  Row 6  People        customers, reviews/messages queues
+  Row 7  System        settings group, AI assistant panel
+
+Put the style tile top-left as the canvas entry point.
+
+## Fidelity
+
+Two tiers, deliberately.
+
+Round-one screens: full fidelity. Real type scale, real tokens, real Vietnamese
+product names and VND prices, real states (hover, selected, empty, loading, error).
+These get rebuilt in code line-for-line, so ambiguity here costs real time.
+
+Everything else: structural wireframe. Correct layout, hierarchy and component
+choices, greeked body copy, no pixel polish. They inherit the system from round one,
+so designing them at high fidelity before the system is proven is wasted work.
+
+## Round one — full attention
+
+Five, in this order:
+
+  1. Style tile + app shell — everything else inherits this, so it goes first
+  2. Screen 5, crawler review & publish queue — the genuinely new problem, and the
+     one no existing product solves for me. Bulk throughput over 100+ crawled
+     products with re-crawl diffing is the hard design question in this whole set.
+  3. Screen 3, crawler launcher — small but carries the "worker offline" state, a
+     pattern that recurs everywhere and needs solving once, properly.
+  4. Screen 6, products list — the daily driver. Bulk inline editing across hundreds
+     of rows sets the table pattern that orders, customers and media all reuse.
+  5. Screen 10, order detail — the other daily driver, and the only screen where
+     getting the action hierarchy wrong costs money.
+
+Deliberately NOT in round one: screen 7, the product editor. The review-queue detail
+view in screen 5 already has to solve image gallery + variant table + price editing.
+Once that exists the product editor is largely a re-skin of it, so designing it first
+would mean solving the same problem twice and probably inconsistently.
+
+## Default theme
+
+Light. The storefront design system calls it "Paper" — #ffffff surface, #f5f5f5
+raised, #111111 ink, #e5e5e5 hairlines. It's a tool used in daylight, and the light
+theme is where dense tables are hardest to get right.
+
+Render ONE round-one screen in dark ("Carbon": #0b0b0b surface, #181818 raised,
+#f5f5f5 ink, #2a2a2a line) to prove the tokens actually invert — the orders list is
+the best test since it's the most chrome-heavy.
+
+## Colour — one important divergence
+
+Inherit the neutral ramp above from the storefront, but NOT its rule that there is no
+chromatic accent. The storefront is deliberately zero-chroma; an admin console can't
+be. Payment status (pending / paid / failed / refunded), order status (5 states) and
+crawl state (queued / running / error) all need to be distinguishable at a glance in
+a dense table, and weight-and-scale alone won't carry that.
+
+So: add a minimal semantic set — one green, one amber, one red, one blue — used ONLY
+in status pills, never in layout, buttons, or decoration. Primary actions stay the
+black pill on white / white pill on black from the storefront. Anything beyond status
+pills stays monochrome.
+
+## Default locale
+
+Vietnamese. It's the operator's actual language, and it's the stress case — Vietnamese
+strings run 15-25% longer than English, and diacritics affect line height. If the
+layout holds in Vietnamese it holds in English; the reverse is not true. Show one
+artboard in English to confirm nothing collapses when strings get shorter.
+
+## Real content to use
+
+Shop name: Lô Hobby Store. It sells 3D-printed hobby models, keychains and figures.
+Shopee shop URL for the crawler screens: https://shopee.vn/lohobby
+
+Real categories (use these exact five):
+  Mô hình (models) · Móc khóa (keychains) · Phụ kiện (accessories) · Figure ·
+  Quà tặng (gifts)
+
+Real product titles — use these verbatim, they show how long real titles get:
+  Mô Hình Game Roblox Rival AKEY-47 Phụ Kiện Trang Trí Siêu Đẹp
+  Móc Khóa Hình Áo bóng đá Việt Nam | Mãnh liệt tinh thần yêu nước
+  Móc Khóa Game Minecraft Totem Hồi Sinh (Totem of Undying) Phụ kiện trang trí
+  Mô Hình Keyvolver Roblox Rival Cao Cấp - Phụ Kiện Trang Trí Bàn Làm Việc
+  Mô hình kit lắp ráp máy bay dân sự nhanh nhất thế giới Concorde
+  Mô Hình Máy Bay Tiêm Kích J20 Chengdu - Đồ Chơi Lắp Ráp Trưng Bày
+  Mô hình đạn xe tank 37mm - Tỉ Lệ 1:1
+  Móc khóa T1 6 Sao dành cho Tê con
+
+Note the titles are long, keyword-stuffed and inconsistently capitalised — that is
+what real Shopee data looks like. Do not tidy them up. Truncation behaviour in table
+rows is a real design decision here, not an edge case.
+
+Real prices (VND, integers, no decimals): catalogue spans 5.000 ₫ to 269.000 ₫,
+median 79.000 ₫. Typical values: 25.000 ₫, 26.000 ₫, 89.000 ₫, 129.000 ₫, 269.000 ₫.
+Format as 89.000 ₫ — dot thousands separator, space before ₫.
+
+Catalogue size for realistic table density: 118 products, ~5 categories, and a crawl
+run that finds 109-120 products of which roughly a third have video.
+
+Variant example (most products have one variation group): "Màu" with options
+Đen / Trắng / Xám / Đỏ, each with its own price and stock.

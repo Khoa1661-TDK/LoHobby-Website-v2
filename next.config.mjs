@@ -101,6 +101,7 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      { source: '/admin/hub', destination: '/admin/console', permanent: false },
       { source: '/admin/cms', destination: '/admin', permanent: false },
       { source: '/admin/cms/:path*', destination: '/admin/:path*', permanent: false },
       { source: '/admin/order', destination: '/admin/collections/orders', permanent: false },
